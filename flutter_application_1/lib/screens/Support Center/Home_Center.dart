@@ -400,7 +400,7 @@ class _SupportCenterPageState extends State<SupportCenterPage> {
                             ),
                           ),
                           Container(
-                            width: 200,
+                            width: 210,
                             color: Colors.white,
                             child: Container(
                               constraints: BoxConstraints(
