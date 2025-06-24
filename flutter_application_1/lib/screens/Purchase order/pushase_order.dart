@@ -469,52 +469,148 @@ class PurchaseOrderPageState extends State<PurchaseOrderPage> {
   }
 
   Widget _buildFiltersRow() {
-    return Wrap(
-      alignment: WrapAlignment.spaceBetween,
-      runSpacing: 8,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        DropdownButton<String>(
-          hint: const Text('Filter by Priority'),
-          value: _priorityFilter,
-          items: <String>['High', 'Medium', 'Low']
-              .map((priority) => DropdownMenuItem(value: priority, child: Text(priority)))
-              .toList(),
-          onChanged: (value) {
-            setState(() {
-              _priorityFilter = value;
-            });
-          },
-        ),
-        DropdownButton<String>(
-          hint: const Text('Filter by Status'),
-          value: _statusFilter,
-          items: <String>['Pending', 'Approved', 'Rejected']
-              .map((status) => DropdownMenuItem(value: status, child: Text(status)))
-              .toList(),
-          onChanged: (value) {
-            setState(() {
-              _statusFilter = value;
-            });
-          },
-        ),
-        ElevatedButton(
-          onPressed: () => _selectDate(context, true),
-          child: Text(_selectedSubmissionDate == null
-              ? 'Filter by Submission Date'
-              : 'Submission: ${_dateFormat.format(_selectedSubmissionDate!)}'),
-        ),
-        ElevatedButton(
-          onPressed: () => _selectDate(context, false),
-          child: Text(_selectedDueDate == null
-              ? 'Filter by Due Date'
-              : 'Due: ${_dateFormat.format(_selectedDueDate!)}'),
-        ),
-        TextButton(
-          onPressed: _clearFilters,
-          child: const Text('Clear Filters'),
-        ),
-      ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Filter by Priority
+          OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              backgroundColor: const Color(0xFFF7F3FF),
+              foregroundColor: Colors.deepPurple,
+              side: BorderSide.none,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+              elevation: 0,
+            ),
+            onPressed: () async {
+              final value = await showMenu<String>(
+                context: context,
+                position: const RelativeRect.fromLTRB(100, 100, 0, 0),
+                items: [
+                  const PopupMenuItem(value: 'High', child: Text('High')),
+                  const PopupMenuItem(value: 'Medium', child: Text('Medium')),
+                  const PopupMenuItem(value: 'Low', child: Text('Low')),
+                  if (_priorityFilter != null)
+                    const PopupMenuItem(value: null, child: Text('Clear Priority')),
+                ],
+              );
+              setState(() {
+                _priorityFilter = value;
+              });
+            },
+            child: Row(
+              children: [
+                Text(
+                  _priorityFilter == null ? 'Filter by Priority' : 'Priority: $_priorityFilter',
+                  style: const TextStyle(
+                    color: Colors.deepPurple,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const Icon(Icons.arrow_drop_down, color: Colors.deepPurple),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Filter by Status
+          OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              backgroundColor: const Color(0xFFF7F3FF),
+              foregroundColor: Colors.deepPurple,
+              side: BorderSide.none,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+              elevation: 0,
+            ),
+            onPressed: () async {
+              final value = await showMenu<String>(
+                context: context,
+                position: const RelativeRect.fromLTRB(200, 100, 0, 0),
+                items: [
+                  const PopupMenuItem(value: 'Pending', child: Text('Pending')),
+                  const PopupMenuItem(value: 'Approved', child: Text('Approved')),
+                  const PopupMenuItem(value: 'Rejected', child: Text('Rejected')),
+                  if (_statusFilter != null)
+                    const PopupMenuItem(value: null, child: Text('Clear Status')),
+                ],
+              );
+              setState(() {
+                _statusFilter = value;
+              });
+            },
+            child: Row(
+              children: [
+                Text(
+                  _statusFilter == null ? 'Filter by Status' : 'Status: $_statusFilter',
+                  style: const TextStyle(
+                    color: Colors.deepPurple,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const Icon(Icons.arrow_drop_down, color: Colors.deepPurple),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Filter by Submission Date
+          OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              backgroundColor: const Color(0xFFF7F3FF),
+              foregroundColor: Colors.deepPurple,
+              side: BorderSide.none,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+              elevation: 0,
+            ),
+            onPressed: () => _selectDate(context, true),
+            child: Text(
+              _selectedSubmissionDate == null
+                  ? 'Filter by Submission Date'
+                  : 'Submission: ${_dateFormat.format(_selectedSubmissionDate!)}',
+              style: const TextStyle(
+                color: Colors.deepPurple,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Filter by Due Date
+          OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              backgroundColor: const Color(0xFFF7F3FF),
+              foregroundColor: Colors.deepPurple,
+              side: BorderSide.none,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+              elevation: 0,
+            ),
+            onPressed: () => _selectDate(context, false),
+            child: Text(
+              _selectedDueDate == null
+                  ? 'Filter by Due Date'
+                  : 'Due: ${_dateFormat.format(_selectedDueDate!)}',
+              style: const TextStyle(
+                color: Colors.deepPurple,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Clear Filters
+          TextButton(
+            onPressed: _clearFilters,
+            child: const Text(
+              'Clear Filters',
+              style: TextStyle(
+                color: Colors.deepPurple,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

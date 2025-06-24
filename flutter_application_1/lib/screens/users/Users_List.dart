@@ -319,12 +319,7 @@ class _UserListPageState extends State<UserListPage> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => ProfilePage(user: {
-                              'email': user.email,
-                              'name': user.name,
-                              'status': user.status,
-                              'permission': user.permission,
-                            }), // <-- Passe un Map<String, String>
+                            builder: (_) => ModifyUserPage(), // <-- Use ProfileUserPage, not ProfilePage
                           ),
                         );
                       },

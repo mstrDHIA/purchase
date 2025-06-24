@@ -52,6 +52,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
       'quantity': quantityController,
       'brand': brandController,
       'unitPrice': unitPriceController,
+      'remise': TextEditingController(text: '0'), // <-- Remise ajoutée
       'totalPrice': totalPriceController,
     });
 
@@ -61,6 +62,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
       'quantity': TextEditingController(text: '1500'),
       'brand': TextEditingController(text: 'Logitech'),
       'unitPrice': TextEditingController(text: '\$25.00'),
+      'remise': TextEditingController(text: '0'), // <-- Remise ajoutée
       'totalPrice': TextEditingController(text: '\$37500.00'),
     });
   }
@@ -158,19 +160,19 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
       final quantityCtrl = TextEditingController();
       final brandCtrl = TextEditingController();
       final unitPriceCtrl = TextEditingController();
+      final remiseCtrl = TextEditingController(text: '0'); // <-- Remise ajoutée
       final totalPriceCtrl = TextEditingController();
-      // Automatically calculate total price when quantity or price changes
-      quantityCtrl.addListener(() {
-        _updateProductTotal(productCtrl, quantityCtrl, unitPriceCtrl, totalPriceCtrl);
-      });
-      unitPriceCtrl.addListener(() {
-        _updateProductTotal(productCtrl, quantityCtrl, unitPriceCtrl, totalPriceCtrl);
-      });
+      // Automatically calculate total price when quantity, price or remise changes
+      void update() => _updateProductTotal(productCtrl, quantityCtrl, unitPriceCtrl, remiseCtrl, totalPriceCtrl);
+      quantityCtrl.addListener(update);
+      unitPriceCtrl.addListener(update);
+      remiseCtrl.addListener(update);
       products.add({
         'product': productCtrl,
         'quantity': quantityCtrl,
         'brand': brandCtrl,
         'unitPrice': unitPriceCtrl,
+        'remise': remiseCtrl,
         'totalPrice': totalPriceCtrl,
       });
     });
@@ -180,11 +182,13 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
     TextEditingController productCtrl,
     TextEditingController quantityCtrl,
     TextEditingController unitPriceCtrl,
+    TextEditingController remiseCtrl,
     TextEditingController totalPriceCtrl,
   ) {
     final q = int.tryParse(quantityCtrl.text) ?? 0;
     final up = double.tryParse(unitPriceCtrl.text.replaceAll('\$', '').replaceAll(',', '.')) ?? 0.0;
-    final total = q * up;
+    final remise = double.tryParse(remiseCtrl.text.replaceAll('%', '').replaceAll(',', '.')) ?? 0.0;
+    final total = q * up * (1 - remise / 100);
     totalPriceCtrl.text = total == 0 ? '' : '\$${total.toStringAsFixed(2)}';
     _updateOrderTotal();
   }
@@ -216,7 +220,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Supplier name, Submitted Date, Due date, Priority sur la même ligne
+            // Supplier name, Submitted Date, Due date, Priority on the same row
             Row(
               children: [
                 _buildField('Supplier name', supplierNameController, width: 220, readOnly: false),
@@ -240,27 +244,31 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                     _buildField('Product', map['product']!, width: 140),
                     const SizedBox(width: 8),
                     _buildField('Quantity', map['quantity']!, width: 90, keyboardType: TextInputType.number, onChanged: (_) {
-                      _updateProductTotal(map['product']!, map['quantity']!, map['unitPrice']!, map['totalPrice']!);
+                      _updateProductTotal(map['product']!, map['quantity']!, map['unitPrice']!, map['remise']!, map['totalPrice']!);
                     }),
                     const SizedBox(width: 8),
-                    // BRAND: Editable
-                    _buildField(
-                      'Brand',
-                      map['brand']!,
-                      width: 110,
-                      readOnly: false, // <-- Editable
-                    ),
+                    _buildField('Brand', map['brand']!, width: 110, readOnly: false),
                     const SizedBox(width: 8),
-                    // UNIT PRICE: Editable
                     _buildField(
                       'Unit Price',
                       map['unitPrice']!,
                       width: 100,
                       prefixText: '\$',
                       keyboardType: TextInputType.numberWithOptions(decimal: true),
-                      readOnly: false, // <-- Editable
+                      readOnly: false,
                       onChanged: (_) {
-                        _updateProductTotal(map['product']!, map['quantity']!, map['unitPrice']!, map['totalPrice']!);
+                        _updateProductTotal(map['product']!, map['quantity']!, map['unitPrice']!, map['remise']!, map['totalPrice']!);
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                    _buildField(
+                      'Discount (%)', // <-- Translated
+                      map['remise']!,
+                      width: 90,
+                      keyboardType: TextInputType.numberWithOptions(decimal: true),
+                      readOnly: false,
+                      onChanged: (_) {
+                        _updateProductTotal(map['product']!, map['quantity']!, map['unitPrice']!, map['remise']!, map['totalPrice']!);
                       },
                     ),
                     const SizedBox(width: 8),
@@ -286,7 +294,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
               ],
             ),
             const SizedBox(height: 24),
-            // Note field (prend toute la largeur)
+            // Note field (full width)
             const Text('Note', style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             TextField(
@@ -321,11 +329,11 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
               ),
             ),
             const SizedBox(height: 32),
-            // Status sous la note, à gauche de la ligne des boutons
+            // Status below the note, to the left of the buttons row
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // Status à gauche
+                // Status on the left
                 _buildField('Status', statusController, width: 160, readOnly: true),
                 const Spacer(),
                 if (!isApproved) // Show buttons only if not approved
@@ -345,7 +353,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                                   SizedBox(width: 16),
                                   Expanded(
                                     child: Text(
-                                      "Demande accepted",
+                                      "Request accepted", // <-- Translated
                                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                                     ),
                                   ),
