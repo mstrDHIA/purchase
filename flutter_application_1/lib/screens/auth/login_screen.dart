@@ -6,7 +6,9 @@ import 'package:flutter_application_1/screens/Home.dart';
 import 'package:flutter_application_1/screens/auth/Forget_password.dart';
 
 import 'package:flutter_application_1/screens/auth/signup_screen.dart';
+import 'package:flutter_application_1/screens/home/home_screen.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:go_router/go_router.dart';
 
 class SignInPage extends StatefulWidget {
   const SignInPage({super.key});
@@ -166,6 +168,35 @@ class _SignInPageState extends State<SignInPage> {
                               },
                             ),
                             const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: () {
+                                // context.go("home_screen");
+                                // context.
+                                Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (context) => const HomeScreen(),
+                                    ),
+                                  );
+                                // if (_formKey.currentState!.validate()) {
+                                //   // Handle login logic here
+                                //   Navigator.of(context).push(
+                                //     MaterialPageRoute(
+                                //       builder: (context) => const MainPage(),
+                                //     ),
+                                //   );
+                                // }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                              ),
+                              child: const Text(
+                                "Log In",
+                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                              ),
+                            ),
                             Align(
                               alignment: Alignment.centerRight,
                               child: TextButton(

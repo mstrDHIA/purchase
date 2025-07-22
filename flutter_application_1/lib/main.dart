@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'package:flutter_application_1/models/user_model.dart';
 import 'package:flutter_application_1/screens/Dashboard/Dashboard.dart' as dashboard;
 import 'package:flutter_application_1/screens/Home.dart' as home;
@@ -15,16 +16,18 @@ import 'package:flutter_application_1/screens/Supplier/Edit_suplier.dart';
 import 'package:flutter_application_1/screens/Supplier/Supplier_registration.dart';
 import 'package:flutter_application_1/screens/Supplier/View_supplier.dart';
 import 'package:flutter_application_1/screens/Support%20Center/Home_Center.dart';
+import 'package:flutter_application_1/screens/auth/login_screen.dart';
 import 'package:flutter_application_1/screens/users/Password.dart';
 import 'package:flutter_application_1/screens/users/Role.dart';
 import 'package:flutter_application_1/screens/users/Users_List.dart' as users_list;
-import 'package:flutter_application_1/screens/auth/login.dart';
+// import 'package:flutter_application_1/screens/auth/login.dart';
 import 'package:flutter_application_1/screens/users/Add_user.dart';
 import 'package:flutter_application_1/screens/users/Modify_user.dart';
 import 'package:flutter_application_1/screens/users/permission.dart';
 import 'package:flutter_application_1/screens/users/profile.dart';
 import 'package:flutter_application_1/screens/users/profile_user.dart';
 import 'package:flutter_application_1/screens/users/users.dart';
+import 'package:flutter_application_1/utils/router.dart';
 import 'widgets/sidebar.dart';
 
 void main() {
@@ -41,7 +44,8 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
+      routerConfig: router,
       title: 'Purchase Requestor',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
@@ -62,33 +66,35 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      initialRoute: '/login',
-      routes: {
-        '/login': (context) => const SignInPage(),
-        '/password': (context) => const PasswordPage(),
-        '/users': (context) => const users_list.UserListPage(),
-        '/role': (context) => const RolePage(),
-        '/permission': (context) => const PermissionPage(),
-        '/profile': (context) => ProfilePage(user: {}),
-        '/requestor_order': (context) => requestor_order.PurchaseRequestPage(),
-        '/purchase_order': (context) => const PurchaseOrderPage(),
-        '/supplier_registration': (context) => const SupplierRegistrationPage(),
-        '/edit_supplier': (context) => const EditSupplierPage(),
-        '/view_supplier': (context) => const ViewSupplierPage(),
-        '/add_supplier': (context) => const AddSupplierPage(),
-        '/dashboard': (context) => const dashboard.DashboardPage(),
-        '/product': (context) => const ProductPage(),
-        '/requestor_form': (context) => PurchaseRequestorForm(
-          onSave: (order) {
-            // TODO: Implement save logic
-          },
-          initialOrder: <String, dynamic>{},
-        ),
-        // Add any additional routes here
-      },
+      // initialRoute: '/requestor_order',
+      // routes: {
+      //   '/login': (context) => const SignInPage(),
+      //   '/password': (context) => const PasswordPage(),
+      //   '/users': (context) => const users_list.UserListPage(),
+      //   '/role': (context) => const RolePage(),
+      //   '/permission': (context) => const PermissionPage(),
+      //   '/profile': (context) => ProfilePage(user: {}),
+      //   '/requestor_order': (context) => requestor_order.PurchaseRequestPage(),
+      //   '/purchase_order': (context) => const PurchaseOrderPage(),
+      //   '/supplier_registration': (context) => const SupplierRegistrationPage(),
+      //   '/edit_supplier': (context) => const EditSupplierPage(),
+      //   '/view_supplier': (context) => const ViewSupplierPage(),
+      //   '/add_supplier': (context) => const AddSupplierPage(),
+      //   '/dashboard': (context) => const dashboard.DashboardPage(),
+      //   '/product': (context) => const ProductPage(),
+      //   '/requestor_form': (context) => PurchaseRequestorForm(
+      //     onSave: (order) {
+      //       // TODO: Implement save logic
+      //     },
+      //     initialOrder: <String, dynamic>{},
+      //   ),
+      //   // Add any additional routes here
+      // },
+
     );
   }
 }
+
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -144,3 +150,4 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 }
+
