@@ -1,60 +1,48 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // Import for Clipboard
-import 'package:flutter_application_1/screens/Purchase%20order/Purchase_form.dart';
-import 'package:flutter_application_1/screens/Purchase%20order/pushase_order.dart'; // Add this import at the top if not present
-import 'dart:io';
-import 'package:image_picker/image_picker.dart';
-// Assuming '../auth/login.dart' points to your login page
-import '../auth/login.dart'; 
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_application_1/models/profile.dart';
+import 'package:flutter_application_1/screens/auth/login.dart';
+import 'package:image_picker/image_picker.dart';
+
+
+class Profileuserpage extends StatelessWidget {
+  final Profile profile;
+  const Profileuserpage({Key? key, required this.profile}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Profile Page',
-      theme: ThemeData(
-        primarySwatch: Colors.deepPurple, 
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-        useMaterial3: true,
-        // Define text selection theme for a better user experience
-        textSelectionTheme: TextSelectionThemeData(
-          cursorColor: Colors.deepPurple, // Custom cursor color
-          // ignore: deprecated_member_use
-          selectionColor: Colors.deepPurple.withOpacity(0.3), // Custom selection highlight color
-          selectionHandleColor: Colors.deepPurple, // Custom selection handles
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          // Apply consistent styling to all text fields
-          filled: true,
-          fillColor: Colors.grey[100],
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: Colors.deepPurple, width: 2.0), // Thicker, purple border on focus
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: Colors.red, width: 2.0), // Clear error indication
-          ),
-          focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: Colors.red, width: 2.0),
-          ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          labelStyle: TextStyle(color: Colors.grey[700]), // Style for floating labels
-          hintStyle: TextStyle(color: Colors.grey[500]), // Style for hints
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('User Profile'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('First Name: ${profile.firstName ?? "-"}', style: const TextStyle(fontSize: 20)),
+            const SizedBox(height: 12),
+            Text('Last Name: ${profile.lastName ?? "-"}', style: const TextStyle(fontSize: 18)),
+            const SizedBox(height: 12),
+            Text('Bio: ${profile.bio ?? "-"}', style: const TextStyle(fontSize: 18)),
+            const SizedBox(height: 12),
+            Text('Location: ${profile.location ?? "-"}', style: const TextStyle(fontSize: 18)),
+            const SizedBox(height: 12),
+            Text('Country: ${profile.country ?? "-"}', style: const TextStyle(fontSize: 18)),
+            const SizedBox(height: 12),
+            Text('State: ${profile.state ?? "-"}', style: const TextStyle(fontSize: 18)),
+            const SizedBox(height: 12),
+            Text('City: ${profile.city ?? "-"}', style: const TextStyle(fontSize: 18)),
+            const SizedBox(height: 12),
+            Text('Zip Code: ${profile.zipCode?.toString() ?? "-"}', style: const TextStyle(fontSize: 18)),
+            const SizedBox(height: 12),
+            Text('Address: ${profile.address ?? "-"}', style: const TextStyle(fontSize: 18)),
+          ],
         ),
       ),
-      home: const ProfilePage(user: {'name': 'Amélie', 'email': 'Amélie@untitleddui.com'}),
     );
   }
 }
@@ -328,14 +316,19 @@ class _ProfilePageState extends State<ProfilePage> {
         Row(
           children: [
             Expanded(
-              child: _buildGreyTextField(
-                controller1,
-                focusNode: focusNode1,
-                hintText: hintText1,
-                textCapitalization: TextCapitalization.words,
-                textInputAction: TextInputAction.next,
-                onSubmitted: (_) => focusNode2?.requestFocus(),
-                enabled: enabled, // Pass enabled
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildGreyTextField(
+                    controller1,
+                    focusNode: focusNode1,
+                    hintText: hintText1,
+                    textCapitalization: TextCapitalization.words,
+                    textInputAction: TextInputAction.next,
+                    onSubmitted: (_) => focusNode2?.requestFocus(),
+                    enabled: enabled, // Pass enabled
+                  ),
+                ],
               ),
             ),
             const SizedBox(width: 16),
@@ -533,12 +526,6 @@ class _ProfilePageState extends State<ProfilePage> {
       textInputAction: textInputAction,
       onSubmitted: onSubmitted,
       textCapitalization: textCapitalization,
-      decoration: InputDecoration(
-        prefixIcon: icon != null ? Icon(icon, color: Colors.grey[600]) : null,
-        suffixIcon: suffixIcon != null ? Icon(suffixIcon, color: Colors.grey[600]) : null,
-        hintText: hintText,
-      ),
-      style: TextStyle(color: Colors.grey[800]),
     );
   }
 }

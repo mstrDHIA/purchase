@@ -475,82 +475,80 @@ class PurchaseOrderPageState extends State<PurchaseOrderPage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           // Filter by Priority
-          OutlinedButton(
-            style: OutlinedButton.styleFrom(
-              backgroundColor: const Color(0xFFF7F3FF),
-              foregroundColor: Colors.deepPurple,
-              side: BorderSide.none,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-              elevation: 0,
-            ),
-            onPressed: () async {
-              final value = await showMenu<String>(
-                context: context,
-                position: const RelativeRect.fromLTRB(100, 100, 0, 0),
-                items: [
-                  const PopupMenuItem(value: 'High', child: Text('High')),
-                  const PopupMenuItem(value: 'Medium', child: Text('Medium')),
-                  const PopupMenuItem(value: 'Low', child: Text('Low')),
-                  if (_priorityFilter != null)
-                    const PopupMenuItem(value: null, child: Text('Clear Priority')),
-                ],
-              );
+          PopupMenuButton<String>(
+            onSelected: (value) {
               setState(() {
                 _priorityFilter = value;
               });
             },
-            child: Row(
-              children: [
-                Text(
-                  _priorityFilter == null ? 'Filter by Priority' : 'Priority: $_priorityFilter',
-                  style: const TextStyle(
-                    color: Colors.deepPurple,
-                    fontWeight: FontWeight.w500,
+            itemBuilder: (context) => [
+              const PopupMenuItem(value: 'High', child: Text('High')),
+              const PopupMenuItem(value: 'Medium', child: Text('Medium')),
+              const PopupMenuItem(value: 'Low', child: Text('Low')),
+              if (_priorityFilter != null)
+                const PopupMenuItem(value: null, child: Text('Clear Priority')),
+            ],
+            child: OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                backgroundColor: const Color(0xFFF7F3FF),
+                foregroundColor: Colors.deepPurple,
+                side: BorderSide.none,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                elevation: 0,
+              ),
+              onPressed: null, // Désactive le onPressed ici
+              child: Row(
+                children: [
+                  Text(
+                    _priorityFilter == null ? 'Filter by Priority' : 'Priority: $_priorityFilter',
+                    style: const TextStyle(
+                      color: Colors.deepPurple,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-                const Icon(Icons.arrow_drop_down, color: Colors.deepPurple),
-              ],
+                  const Icon(Icons.arrow_drop_down, color: Colors.deepPurple),
+                ],
+              ),
             ),
           ),
           const SizedBox(width: 8),
           // Filter by Status
-          OutlinedButton(
-            style: OutlinedButton.styleFrom(
-              backgroundColor: const Color(0xFFF7F3FF),
-              foregroundColor: Colors.deepPurple,
-              side: BorderSide.none,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-              elevation: 0,
-            ),
-            onPressed: () async {
-              final value = await showMenu<String>(
-                context: context,
-                position: const RelativeRect.fromLTRB(200, 100, 0, 0),
-                items: [
-                  const PopupMenuItem(value: 'Pending', child: Text('Pending')),
-                  const PopupMenuItem(value: 'Approved', child: Text('Approved')),
-                  const PopupMenuItem(value: 'Rejected', child: Text('Rejected')),
-                  if (_statusFilter != null)
-                    const PopupMenuItem(value: null, child: Text('Clear Status')),
-                ],
-              );
+          PopupMenuButton<String>(
+            onSelected: (value) {
               setState(() {
                 _statusFilter = value;
               });
             },
-            child: Row(
-              children: [
-                Text(
-                  _statusFilter == null ? 'Filter by Status' : 'Status: $_statusFilter',
-                  style: const TextStyle(
-                    color: Colors.deepPurple,
-                    fontWeight: FontWeight.w500,
+            itemBuilder: (context) => [
+              const PopupMenuItem(value: 'Pending', child: Text('Pending')),
+              const PopupMenuItem(value: 'Approved', child: Text('Approved')),
+              const PopupMenuItem(value: 'Rejected', child: Text('Rejected')),
+              if (_statusFilter != null)
+                const PopupMenuItem(value: null, child: Text('Clear Status')),
+            ],
+            child: OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                backgroundColor: const Color(0xFFF7F3FF),
+                foregroundColor: Colors.deepPurple,
+                side: BorderSide.none,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                elevation: 0,
+              ),
+              onPressed: null,
+              child: Row(
+                children: [
+                  Text(
+                    _statusFilter == null ? 'Filter by Status' : 'Status: $_statusFilter',
+                    style: const TextStyle(
+                      color: Colors.deepPurple,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-                const Icon(Icons.arrow_drop_down, color: Colors.deepPurple),
-              ],
+                  const Icon(Icons.arrow_drop_down, color: Colors.deepPurple),
+                ],
+              ),
             ),
           ),
           const SizedBox(width: 8),

@@ -3,39 +3,44 @@ import 'package:flutter_application_1/screens/users/Add_Role.dart';
 import 'package:flutter_application_1/screens/users/View_Role.dart';
 import 'package:flutter_application_1/screens/users/Edit_Role.dart';
 
-class RolePage extends StatelessWidget {
+class RolePage extends StatefulWidget {
   const RolePage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final roles = [
-      {
-        'title': 'Owner',
-        'desc': 'The owner complete control over workspace and organization, including billing and account management. There is only one owner per organization',
-        'teammates': 1,
-      },
-      {
-        'title': 'Admin',
-        'desc': 'Admins have complete control over the workspace, except for the Owner role and following permissions like billing and payments.',
-        'teammates': 2,
-      },
-      {
-        'title': 'Editor',
-        'desc': 'Editors can access almost all features, including automation and contact management.',
-        'teammates': 2,
-      },
-      {
-        'title': 'LiveChat agent',
-        'desc': 'LiveChat agents can access and communicate with bot-subscribed contacts inside the LiveChat module.',
-        'teammates': 3,
-      },
-      {
-        'title': 'Member',
-        'desc': 'Members can access almost all features with "view only" mode.',
-        'teammates': 6,
-      },
-    ];
+  State<RolePage> createState() => _RolePageState();
+}
 
+class _RolePageState extends State<RolePage> {
+  final List<Map<String, dynamic>> roles = [
+    {
+      'title': 'Owner',
+      'desc': 'The owner complete control over workspace and organization, including billing and account management. There is only one owner per organization',
+      'teammates': 1,
+    },
+    {
+      'title': 'Admin',
+      'desc': 'Admins have complete control over the workspace, except for the Owner role and following permissions like billing and payments.',
+      'teammates': 2,
+    },
+    {
+      'title': 'Editor',
+      'desc': 'Editors can access almost all features, including automation and contact management.',
+      'teammates': 2,
+    },
+    {
+      'title': 'LiveChat agent',
+      'desc': 'LiveChat agents can access and communicate with bot-subscribed contacts inside the LiveChat module.',
+      'teammates': 3,
+    },
+    {
+      'title': 'Member',
+      'desc': 'Members can access almost all features with "view only" mode.',
+      'teammates': 6,
+    },
+  ];
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F8FB),
       body: Padding(
@@ -67,18 +72,20 @@ class RolePage extends StatelessWidget {
                 const Spacer(),
                 ElevatedButton.icon(
                   onPressed: () async {
-                    await showDialog(
-                      context: context,
-                      builder: (context) => Dialog(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: SizedBox(
-                          width: 500,
-                          child: AddRolePage(),
-                        ),
-                      ),
+                    final newRole = await Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const AddRolePage()),
                     );
+                    if (newRole != null) {
+                      setState(() {
+                        roles.add({
+                          'title': newRole['name'] ?? '',
+                          'desc': newRole['description'] ?? '',
+                          'teammates': 0, // ou une valeur par défaut
+                          'permissions': newRole['permissions'] ?? [],
+                        });
+                      });
+                    }
                   },
                   icon: const Icon(Icons.add),
                   style: ElevatedButton.styleFrom(

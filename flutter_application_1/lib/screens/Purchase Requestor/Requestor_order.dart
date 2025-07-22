@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/screens/Purchase%20Requestor/Request_Edit.dart';
 import 'package:flutter_application_1/screens/Purchase%20Requestor/Requestor_Form.dart';
 import 'package:flutter_application_1/screens/Purchase%20Requestor/request_view.dart';
 import 'package:flutter_application_1/screens/Purchase%20order/pushase_order.dart' as purchase_order;
@@ -61,7 +62,17 @@ class _PurchaseRequestDataSource extends DataTableSource {
             ),
             IconButton(
               icon: const Icon(Icons.edit_outlined),
-              onPressed: () => onEdit(item),
+              onPressed: () {
+                Navigator.push(
+                  _context,
+                  MaterialPageRoute(
+                    builder: (context) => RequestEditPage(
+                      request: item,
+                      onSave: (_) {},
+                    ),
+                  ),
+                );
+              },
               tooltip: 'Edit',
             ),
             IconButton(

@@ -1,13 +1,24 @@
+import 'dart:convert';
 import 'dart:io';
-import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/main.dart';
+import 'package:flutter_application_1/models/profile.dart';
+import 'package:flutter_application_1/models/user_model.dart';
+import 'package:flutter_application_1/network/profile_network.dart';
+import 'package:image_picker/image_picker.dart';
 
+import 'package:flutter_application_1/models/user.dart'; // <-- Assure-toi que ce chemin est correct
+import 'package:flutter_application_1/network/user_network.dart'; // <-- Assure-toi que ce chemin est correct
+
+void main() {
+  runApp(MyApp());
+}
 
 class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'add user',
+      title: 'Add User',
       theme: ThemeData(
         primarySwatch: Colors.deepPurple,
         inputDecorationTheme: InputDecorationTheme(
@@ -27,58 +38,57 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: AddUserPage(),
+      
     );
   }
 }
 
+
+
 class AddUserPage extends StatefulWidget {
+  final String? email;
+  final int? userId;
+  const AddUserPage({Key? key, this.email, this.userId}) : super(key: key);
+
   @override
-  _AddProfilePageState createState() => _AddProfilePageState();
+  _AddUserPageState createState() => _AddUserPageState();
 }
 
-class _AddProfilePageState extends State< AddUserPage> {
-  final _emailController = TextEditingController();
+class _AddUserPageState extends State<AddUserPage> {
+  Future<bool> _userExists(String username, String email) async {
+    final users = await UserNetwork().uesresList();
+    return users.any((u) => u.username == username || u.email == email);
+  }
+  // final _emailController = TextEditingController();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _addressController = TextEditingController();
   final _cityController = TextEditingController();
   final _stateController = TextEditingController();
   final _zipController = TextEditingController();
-  final _countryController = TextEditingController(text: 'Tunisia');
-
-  String? _selectedRole = 'Member';
+  // final _passwordController = TextEditingController();
+  String _selectedCountry = 'Tunisia';
+  // String? _selectedRole = 'Member';
 
   final List<String> _countries = [
-    'Tunisia',
-    'Poland',
-    'France',
-    'Germany',
-    'Spain',
-    'Italy',
-    'USA',
-    'Canada',
-    'Morocco',
-    'Japan',
-    'China',
+    'Tunisia', 'Poland', 'France', 'Germany', 'Spain',
+    'Italy', 'USA', 'Canada', 'Morocco', 'Japan', 'China',
   ];
 
   File? _profileImage;
+  String? _selectedAssetImage;
 
   @override
   void dispose() {
-    _emailController.dispose();
+    // _emailController.dispose();
     _firstNameController.dispose();
     _lastNameController.dispose();
     _addressController.dispose();
     _cityController.dispose();
     _stateController.dispose();
     _zipController.dispose();
-    _countryController.dispose();
     super.dispose();
   }
-
-  
 
   Future<void> _pickProfileImageFromFile() async {
     final picker = ImagePicker();
@@ -86,12 +96,10 @@ class _AddProfilePageState extends State< AddUserPage> {
     if (picked != null) {
       setState(() {
         _profileImage = File(picked.path);
-        _selectedAssetImage = null; // Clear asset image if any
+        _selectedAssetImage = null;
       });
     }
   }
-
-  String? _selectedAssetImage;
 
   Widget sectionTitle(String title) {
     return Padding(
@@ -148,73 +156,83 @@ class _AddProfilePageState extends State< AddUserPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header row with title and buttons
+            // Buttons
             Row(
               children: [
-                Expanded(
-                  child: Text(
-                    '',
-                    style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-                  ),
-                ),
+                Expanded(child: SizedBox()),
                 Column(
                   children: [
                     ElevatedButton(
-                      onPressed: () {
-                        // TODO: Save logic
+                      onPressed: () async {
+                        if (_firstNameController.text.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('First Name is required')),
+                          );
+                          return;
+                        }
+
+                        // Vérification doublon username/email (ici username = firstName, email = '')
+                        
+
+                        // 1. Créer l'utilisateur (User)
+                        // Créer le profil lié à cet utilisateur déjà créé (userId transmis)
+                        if (widget.userId == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text("Erreur : ID utilisateur manquant pour le profil.")),
+                          );
+                          return;
+                        }
+                        Profile profile = Profile(
+                          userId: widget.userId!,
+                          firstName: _firstNameController.text,
+                          lastName: _lastNameController.text,
+                          address: _addressController.text,
+                          city: _cityController.text,
+                          state: _stateController.text,
+                          country: _selectedCountry,
+                        );
+                        final message = await ProfileNetwork().addProfile(profile);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(message)),
+                        );
+                        // Navigate to main screen after saving
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (context) => MainScreen()),
+                        );
+// Dummy main screen, replace with your actual main page
+// class MainScreen extends StatelessWidget {
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       appBar: AppBar(title: Text('Main Screen')),
+//       body: Center(child: Text('Welcome to the main screen!')),
+//     );
+//   }
+// }
                       },
                       child: Text('Save'),
                     ),
                     SizedBox(height: 8),
-                    ElevatedButton(
-                      onPressed: () {
-                        // TODO: Save and Add Another
-                      },
-                      child: Text('Save & Add Another'),
-                      style: ElevatedButton.styleFrom(backgroundColor: const Color.fromARGB(255, 255, 255, 255)),
-                    ),
+                    
                     SizedBox(height: 8),
-                    OutlinedButton(
-                      onPressed: () {
-                        Navigator.pop(context); // <-- Ferme la page et retourne en arrière
-                      },
-                      child: Text('Cancel'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.black,
-                        backgroundColor: Colors.grey[200],
-                        side: BorderSide.none,
-                      ),
-                    ),
+                   
                   ],
                 ),
               ],
             ),
             SizedBox(height: 32),
 
-            // Profile picture selector
+            // Profile picture
             Center(
               child: Column(
                 children: [
-                  // Show selected image (from file or asset) immediately
                   if (_profileImage != null)
-                    Image.file(
-                      _profileImage!,
-                      width: 120,
-                      height: 120,
-                      fit: BoxFit.cover,
-                    )
+                    Image.file(_profileImage!, width: 120, height: 120, fit: BoxFit.cover)
                   else if (_selectedAssetImage != null)
-                    Image.asset(
-                      _selectedAssetImage!,
-                      width: 120,
-                      height: 120,
-                      fit: BoxFit.cover,
-                    )
+                    Image.asset(_selectedAssetImage!, width: 120, height: 120, fit: BoxFit.cover)
                   else
-                    const CircleAvatar(
-                      radius: 48,
-                      child: Icon(Icons.person, size: 48),
-                    ),
+                    const CircleAvatar(radius: 48, child: Icon(Icons.person, size: 48)),
                   const SizedBox(height: 8),
                   ElevatedButton.icon(
                     onPressed: _pickProfileImageFromFile,
@@ -229,14 +247,8 @@ class _AddProfilePageState extends State< AddUserPage> {
             ),
             const SizedBox(height: 24),
 
-            _buildLabeledBox(
-              'Email',
-              TextField(
-                controller: _emailController,
-                decoration: InputDecoration(hintText: 'email@example.com'),
-              ),
-            ),
-            SizedBox(height: 24),
+
+
 
             Row(
               children: [
@@ -263,18 +275,7 @@ class _AddProfilePageState extends State< AddUserPage> {
             ),
             SizedBox(height: 24),
 
-            _buildLabeledBox(
-              'Role',
-              DropdownButtonFormField<String>(
-                value: _selectedRole,
-                items: ['Member', 'Admin', 'Editor', 'Viewer']
-                    .map((role) => DropdownMenuItem(value: role, child: Text(role)))
-                    .toList(),
-                onChanged: (newRole) => setState(() => _selectedRole = newRole),
-                decoration: InputDecoration(),
-              ),
-            ),
-            SizedBox(height: 24),
+
 
             _buildLabeledBox(
               'Address',
@@ -314,17 +315,16 @@ class _AddProfilePageState extends State< AddUserPage> {
                   child: _buildLabeledBox(
                     'Country',
                     DropdownButtonFormField<String>(
-                      value: _countryController.text,
+                      value: _selectedCountry,
                       onChanged: (value) {
                         setState(() {
-                          _countryController.text = value!;
+                          _selectedCountry = value!;
                         });
                       },
                       items: _countries.map((country) => DropdownMenuItem(
                         value: country,
                         child: Text(country),
                       )).toList(),
-                      decoration: InputDecoration(),
                     ),
                   ),
                 ),

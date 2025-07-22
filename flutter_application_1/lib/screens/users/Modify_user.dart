@@ -1,34 +1,35 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/models/user_model.dart';
+import 'package:flutter_application_1/network/user_network.dart';
 import 'package:image_picker/image_picker.dart';
 
-
-
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'User Profile',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: ModifyUserPage(),
-    );
-  }
-}
-
 class ModifyUserPage extends StatefulWidget {
+  final User user;
+  const ModifyUserPage({required this.user});
+
   @override
-  _UserProfilePageState createState() => _UserProfilePageState();
+  _ModifyUserPageState createState() => _ModifyUserPageState();
 }
 
-class _UserProfilePageState extends State<ModifyUserPage> {
-  // Controllers for text fields
-  final TextEditingController _firstNameController = TextEditingController(text: 'Amélie');
-  final TextEditingController _lastNameController = TextEditingController(text: 'Laurent');
-  final TextEditingController _emailController = TextEditingController(text: 'Amélie@untitledui.com');
-  final TextEditingController _usernameController = TextEditingController(text: 'amelie');
+class _ModifyUserPageState extends State<ModifyUserPage> {
+  late TextEditingController _passwordController;
+  // Text controllers for fields
+  late TextEditingController _firstNameController;
+  late TextEditingController _lastNameController;
+  late TextEditingController _emailController;
+  late TextEditingController _usernameController;
+  @override
+  void initState() {
+    super.initState();
+    _firstNameController = TextEditingController(text: widget.user.firstName);
+    _lastNameController = TextEditingController(text: widget.user.lastName);
+    _emailController = TextEditingController(text: widget.user.email);
+    _usernameController = TextEditingController(text: widget.user.username);
+    _passwordController = TextEditingController();
+  }
 
+  // For profile image
   File? _profileImageFile;
 
   Future<void> _pickImage() async {
@@ -47,6 +48,7 @@ class _UserProfilePageState extends State<ModifyUserPage> {
     _lastNameController.dispose();
     _emailController.dispose();
     _usernameController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -72,27 +74,28 @@ class _UserProfilePageState extends State<ModifyUserPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              
               Row(
                 children: [
                   CircleAvatar(
                     radius: 40,
-                    backgroundImage: AssetImage('assets/images/j.png'), 
-                    onBackgroundImageError: (_, __) {}, // 
+                    backgroundImage: _profileImageFile != null
+                        ? FileImage(_profileImageFile!)
+                        : AssetImage('assets/images/j.png') as ImageProvider,
+                    onBackgroundImageError: (_, __) {}, // Handle any error for background image
                   ),
                   SizedBox(width: 16.0),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Amélie Laurent',
+                        'Amélie Laurent', // You can dynamically change the name here
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       Text(
-                        'Amélie@untitledui.com',
+                        'Amélie@untitledui.com', // You can dynamically change the email here
                         style: TextStyle(
                           fontSize: 16,
                           color: Colors.grey[600],
@@ -103,7 +106,7 @@ class _UserProfilePageState extends State<ModifyUserPage> {
                   Spacer(),
                   ElevatedButton(
                     onPressed: () {
-                      // Handle copy link
+                      // Handle copy link or any other action
                     },
                     child: Text('Copy link'),
                   ),
@@ -268,15 +271,47 @@ class _UserProfilePageState extends State<ModifyUserPage> {
                   ),
                   SizedBox(width: 16.0),
                   ElevatedButton(
-                    onPressed: () {
-                      // Save changes (simulate)
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Changes saved')),
+                    onPressed: () async {
+                      // Récupère les valeurs modifiées depuis tes contrôleurs ou ton formulaire
+                      User updatedUser = User(
+                        id: widget.user.id,
+                        username: _usernameController.text,
+                        email: _emailController.text,
+                        firstName: _firstNameController.text,
+                        lastName: _lastNameController.text,
+                        isSuperuser: widget.user.isSuperuser,
+                        password: _passwordController.text,
                       );
-                      Navigator.pop(context); // Go back after saving
+
+                      print(updatedUser.toJson());
+
+                      String result = await UserNetwork().updateUser(updatedUser);
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(result)),
+                      );
+
+                      if (result.contains('success')) {
+                        Navigator.pop(context); // Retour à la liste après succès
+                      }
                     },
                     child: const Text('Save changes'),
                   ),
+              // Password field
+              const Text(
+                'Password',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8.0),
+              TextField(
+                controller: _passwordController,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  hintText: 'Enter password',
+                ),
+              ),
+              SizedBox(height: 16.0),
                 ],
               ),
             ],
@@ -286,6 +321,7 @@ class _UserProfilePageState extends State<ModifyUserPage> {
     );
   }
 
+  // Function to handle profile photo change
   Widget _buildProfilePhotoField(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

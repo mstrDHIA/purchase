@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/models/user_model.dart';
 import 'package:flutter_application_1/screens/Dashboard/Dashboard.dart' as dashboard;
 import 'package:flutter_application_1/screens/Home.dart' as home;
 import 'package:flutter_application_1/screens/Product/Product.dart';
@@ -21,13 +22,17 @@ import 'package:flutter_application_1/screens/auth/login.dart';
 import 'package:flutter_application_1/screens/users/Add_user.dart';
 import 'package:flutter_application_1/screens/users/Modify_user.dart';
 import 'package:flutter_application_1/screens/users/permission.dart';
+import 'package:flutter_application_1/screens/users/profile.dart';
 import 'package:flutter_application_1/screens/users/profile_user.dart';
 import 'package:flutter_application_1/screens/users/users.dart';
 import 'widgets/sidebar.dart';
 
 void main() {
   runApp(const MaterialApp(
-    home: MainScreen(),
+     // Replace with a valid User object
+    // home: MainScreen(),
+    home: SignInPage(),
+    
   ));
 }
 
@@ -57,7 +62,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      initialRoute: '/requestor_order',
+      initialRoute: '/login',
       routes: {
         '/login': (context) => const SignInPage(),
         '/password': (context) => const PasswordPage(),

@@ -21,6 +21,8 @@ class _AddTicketPageState extends State<AddTicketPage> {
   final List<String> _categories = ['Technical', 'Billing', 'Support', 'Other'];
   final List<String> _periorities = ['High', 'Medium', 'Low'];
   final List<String> _keywords = ['Connection', 'Payment', 'Error', 'Request', 'Other'];
+  int _selectedStatusIndex = 0;
+  final List<String> _statuses = ['New', 'On hold', 'In progress', 'Treated'];
 
   Future<void> _pickFile() async {
     final result = await FilePicker.platform.pickFiles();
@@ -33,10 +35,23 @@ class _AddTicketPageState extends State<AddTicketPage> {
 
   void _saveTicket() {
     if (_formKey.currentState!.validate()) {
+      final newTicket = {
+        'id': '#${DateTime.now().millisecondsSinceEpoch}', // Génère un ID unique
+        'subject': _subject ?? '',
+        'requester': 'John smith', // Ou récupère le vrai utilisateur si besoin
+        'category': _selectedCategory ?? '',
+        'periority': _selectedPeriority ?? '',
+        'createdOn': '${DateTime.now().day.toString().padLeft(2, '0')}/'
+            '${DateTime.now().month.toString().padLeft(2, '0')}/'
+            '${DateTime.now().year}',
+        'status': _statuses[_selectedStatusIndex],
+        'keywords': _selectedKeyword ?? '',
+        'description': _descriptionController.text,
+      };
+      Navigator.of(context).pop(newTicket); // <-- renvoie le ticket à la page précédente
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Ticket added!')),
       );
-      Navigator.of(context).pop();
     }
   }
 
@@ -44,7 +59,8 @@ class _AddTicketPageState extends State<AddTicketPage> {
     Navigator.of(context).pop();
   }
 
-  Widget _statusTab(String label, bool selected) {
+  Widget _statusTab(String label, int index) {
+    final selected = _selectedStatusIndex == index;
     return Padding(
       padding: const EdgeInsets.only(right: 2),
       child: TextButton(
@@ -55,9 +71,9 @@ class _AddTicketPageState extends State<AddTicketPage> {
           minimumSize: const Size(80, 36),
         ),
         onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('$label status selected')),
-          );
+          setState(() {
+            _selectedStatusIndex = index;
+          });
         },
         child: Text(
           label,
@@ -123,7 +139,12 @@ class _AddTicketPageState extends State<AddTicketPage> {
               Row(
                 children: [
                   ElevatedButton(
-                    onPressed: _saveTicket,
+                    onPressed: () {
+                      _saveTicket();
+                      setState(() {
+                        _selectedStatusIndex = 1; // Passe à "On hold" après ajout
+                      });
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue,
                       foregroundColor: Colors.white,
@@ -138,10 +159,8 @@ class _AddTicketPageState extends State<AddTicketPage> {
                     child: const Text('Cancel', style: TextStyle(fontSize: 16)),
                   ),
                   const Spacer(),
-                  _statusTab('New', true),
-                  _statusTab('On hold', false),
-                  _statusTab('In progress', false),
-                  _statusTab('Treated', false),
+                  for (int i = 0; i < _statuses.length; i++)
+                    _statusTab(_statuses[i], i),
                 ],
               ),
               const SizedBox(height: 24),
