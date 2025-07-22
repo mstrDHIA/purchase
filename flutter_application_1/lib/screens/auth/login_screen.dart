@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/main.dart';
+import 'package:flutter_application_1/network/user_network.dart';
+import 'package:flutter_application_1/screens/Home.dart';
 
 import 'package:flutter_application_1/screens/auth/Forget_password.dart';
 
@@ -215,7 +217,37 @@ class _SignInPageState extends State<SignInPage> {
                               ),
                             ),
                             const SizedBox(height: 24),
-                           
+                           ElevatedButton(onPressed: (){
+                            // if (_formKey.currentState!.validate()) {
+                              // Simulate a login action
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Logging in...')),
+                              );
+                              // Navigate to the main page after successful login
+                              UserNetwork userNetwork = UserNetwork();
+                              var catchError = userNetwork.login(_emailController.text, _passwordController.text)
+                                .then((message) {
+                                  // ScaffoldMessenger.of(context).showSnackBar(
+                                  //   SnackBar(content: Text(message)),
+                                  // );
+                                  // Navigate to the main page
+                                  Navigator.of(context).pushReplacement(
+                                    MaterialPageRoute(builder: (context) => const MainScreen()),
+                                  );
+                                })
+                                .catchError((error) {
+                                  print(error);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Login failed: $error')),
+
+                                  );
+                                });
+                              // Navigator.of(context).pushReplacement(
+                              //   MaterialPageRoute(builder: (context) => const MainPage()),
+                              // );
+                            // }
+                           }, child: Text('Login'))
+                      
                           ],
                         ),
                       ),

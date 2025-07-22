@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/screens/Support Center/Add_Ticket.dart';
+import 'package:flutter_application_1/screens/Support Center/View_Ticket.dart';
+import 'package:flutter_application_1/screens/Support%20Center/Edit_Ticket.dart';
 
 class SupportCenterPage extends StatefulWidget {
   const SupportCenterPage({super.key});
@@ -207,11 +209,16 @@ class _SupportCenterPageState extends State<SupportCenterPage> {
                   ),
                   const Spacer(),
                   ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.push(
+                    onPressed: () async {
+                      final newTicket = await Navigator.push(
                         context,
                         MaterialPageRoute(builder: (context) => const AddTicketPage()),
                       );
+                      if (newTicket != null) {
+                        setState(() {
+                          tickets.add(newTicket);
+                        });
+                      }
                     },
                     icon: const Icon(Icons.add),
                     label: const Text('Add Ticket'),
@@ -399,16 +406,11 @@ class _SupportCenterPageState extends State<SupportCenterPage> {
                               style: const TextStyle(fontSize: 15),
                             ),
                           ),
-                          Container(
-                            width: 210,
-                            color: Colors.white,
+                          // --------- Periority badge column ---------
+                          SizedBox(
+                            width: 70,
                             child: Container(
-                              constraints: BoxConstraints(
-                                maxWidth: 80,
-                              ),
-
-                              width: 80,
-                              padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 2),
+                              padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 0),
                               decoration: BoxDecoration(
                                 color: ticket['periority'] == 'High'
                                     ? const Color(0xFFF87171)
@@ -417,30 +419,33 @@ class _SupportCenterPageState extends State<SupportCenterPage> {
                                         : ticket['periority'] == 'Low'
                                             ? const Color(0xFFA7F3D0)
                                             : Colors.grey,
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(8),
                               ),
-                              child: Center(
-                                child: Text(
-                                  ticket['periority'],
-                                  style: const TextStyle(
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 13,
-                                  ),
-                                  textAlign: TextAlign.center,
+                              alignment: Alignment.center,
+                              child: Text(
+                                ticket['periority'],
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 11,
                                 ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ),
+                          // --------- Created on column (date only) ---------
                           Expanded(
                             child: Text(
                               ticket['createdOn'],
                               style: const TextStyle(fontSize: 15),
                             ),
                           ),
-                          Expanded(
+                          // --------- Status badge column ---------
+                          SizedBox(
+                            width: 70,
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+                              padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 0),
                               decoration: BoxDecoration(
                                 color: ticket['status'] == 'Open'
                                     ? const Color(0xFF60A5FA)
@@ -453,17 +458,20 @@ class _SupportCenterPageState extends State<SupportCenterPage> {
                                                 : Colors.grey,
                                 borderRadius: BorderRadius.circular(8),
                               ),
+                              alignment: Alignment.center,
                               child: Text(
                                 ticket['status'],
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
-                                  fontSize: 14,
+                                  fontSize: 11,
                                 ),
-                                textAlign: TextAlign.center,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ),
+                          // ...actions...
                           SizedBox(
                             width: 120,
                             child: Row(
@@ -473,14 +481,81 @@ class _SupportCenterPageState extends State<SupportCenterPage> {
                                   message: 'View',
                                   child: IconButton(
                                     icon: const Icon(Icons.remove_red_eye_outlined, color: Color.fromARGB(255, 0, 0, 0)),
-                                    onPressed: () => _onView(ticket),
+                                    onPressed: () {
+                                      showGeneralDialog(
+                                        context: context,
+                                        barrierDismissible: true,
+                                        barrierLabel: 'View Ticket',
+                                        transitionDuration: const Duration(milliseconds: 300),
+                                        pageBuilder: (context, animation, secondaryAnimation) {
+                                          return Align(
+                                            alignment: Alignment.center,
+                                            child: Material(
+                                              color: Colors.transparent,
+                                              child: Container(
+                                                width: 600,
+                                                margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white,
+                                                  borderRadius: BorderRadius.circular(18),
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: Colors.black.withOpacity(0.08),
+                                                      blurRadius: 24,
+                                                      offset: const Offset(0, 8),
+                                                    ),
+                                                  ],
+                                                ),
+                                                child: Stack(
+                                                  children: [
+                                                    Padding(
+                                                      padding: const EdgeInsets.all(0),
+                                                      child: ViewTicketPage(ticket: ticket),
+                                                    ),
+                                                    Positioned(
+                                                      top: 8,
+                                                      right: 8,
+                                                      child: IconButton(
+                                                        icon: const Icon(Icons.close, size: 28),
+                                                        onPressed: () => Navigator.of(context).pop(),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        transitionBuilder: (context, animation, secondaryAnimation, child) {
+                                          return SlideTransition(
+                                            position: Tween<Offset>(
+                                              begin: const Offset(0, -0.1),
+                                              end: Offset.zero,
+                                            ).animate(animation),
+                                            child: FadeTransition(
+                                              opacity: animation,
+                                              child: child,
+                                            ),
+                                          );
+                                        },
+                                      );
+                                    },
                                   ),
                                 ),
                                 Tooltip(
                                   message: 'Edit',
                                   child: IconButton(
                                     icon: const Icon(Icons.edit_outlined, color: Color.fromARGB(255, 0, 0, 0)),
-                                    onPressed: () => _onEdit(ticket),
+                                    onPressed: () async {
+                                      // Wait for EditTicketPage to return (if you want to refresh after editing)
+                                      await Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => EditTicketPage(ticket: ticket),
+                                        ),
+                                      );
+                                      setState(() {}); // Refresh after editing
+                                    },
                                   ),
                                 ),
                                 Tooltip(

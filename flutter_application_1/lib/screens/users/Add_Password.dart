@@ -141,12 +141,12 @@ class _AddPasswordPageState extends State<AddPasswordPage> {
                           ),
                         );
                         // Naviguer vers la page AddUser après un court délai pour laisser le SnackBar s'afficher
-                        Future.delayed(const Duration(milliseconds: 800), () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (context) => AddUserPage()),
-                          );
-                        });
+                        // Future.delayed(const Duration(milliseconds: 800), () {
+                        //   Navigator.pushReplacement(
+                        //     context,
+                        //     MaterialPageRoute(builder: (context) => AddUserPage()),
+                        //   );
+                        // });
                       }
                     },
                   ),
