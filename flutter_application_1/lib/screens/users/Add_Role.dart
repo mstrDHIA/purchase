@@ -26,6 +26,12 @@ class _AddRolePageState extends State<AddRolePage> {
 
   void _submit() {
     if (_formKey.currentState!.validate()) {
+      final newRole = {
+        'name': _roleNameController.text.trim(),
+        'description': _roleDescriptionController.text.trim(),
+        'permissions': _selectedPermissions.toList(),
+      };
+      Navigator.pop(context, newRole); // <-- renvoie le rôle à la page précédente
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
@@ -39,7 +45,6 @@ class _AddRolePageState extends State<AddRolePage> {
           duration: const Duration(seconds: 2),
         ),
       );
-      Navigator.pop(context);
     }
   }
 

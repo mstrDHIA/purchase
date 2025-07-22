@@ -1,293 +1,255 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // Import for Clipboard
-import 'package:flutter_application_1/screens/Purchase%20order/Purchase_form.dart';
 import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:flutter_application_1/models/user_model.dart';
+import 'package:flutter_application_1/network/user_network.dart';
 import 'package:image_picker/image_picker.dart';
-// Assuming '../auth/login.dart' points to your login page
-import '../auth/login.dart'; // Make sure this path is correct
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Profile Page',
-      theme: ThemeData(
-        primarySwatch: Colors.deepPurple, // Changed to a more consistent purple theme
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-        useMaterial3: true,
-        // Define text selection theme for a better user experience
-        textSelectionTheme: TextSelectionThemeData(
-          cursorColor: Colors.deepPurple, // Custom cursor color
-          selectionColor: Colors.deepPurple.withOpacity(0.3), // Custom selection highlight color
-          selectionHandleColor: Colors.deepPurple, // Custom selection handles
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          // Apply consistent styling to all text fields
-          filled: true,
-          fillColor: Colors.grey[100],
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: Colors.deepPurple, width: 2.0), // Thicker, purple border on focus
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: Colors.red, width: 2.0), // Clear error indication
-          ),
-          focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: Colors.red, width: 2.0),
-          ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          labelStyle: TextStyle(color: Colors.grey[700]), // Style for floating labels
-          hintStyle: TextStyle(color: Colors.grey[500]), // Style for hints
-        ),
-      ),
-      home: const ProfilePage(),
-    );
-  }
-}
-
-class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key});
+class Profileuserpage extends StatefulWidget {
+  final User user;
+  const Profileuserpage({required this.user});
 
   @override
-  State<ProfilePage> createState() => _ProfilePageState();
+  _ProfileuserpageState createState() => _ProfileuserpageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> {
-  final TextEditingController _nameController = TextEditingController(text: 'Amélie');
+class _ProfileuserpageState extends State<Profileuserpage> {
+  // Text controllers for fields
+  final TextEditingController _firstNameController = TextEditingController(text: 'Amélie');
   final TextEditingController _lastNameController = TextEditingController(text: 'Laurent');
-  final TextEditingController _emailController = TextEditingController(text: 'Amélie@untitleddui.com');
+  final TextEditingController _emailController = TextEditingController(text: 'Amélie@untitledui.com');
   final TextEditingController _usernameController = TextEditingController(text: 'amelie');
-  final List<String> _roles = ['Member', 'Admin', 'Editor', 'Viewer'];
-  String _role = 'Member';
+
+  // For profile image
   File? _profileImageFile;
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _profileImageFile = File(pickedFile.path);
+      });
+    }
+  }
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _firstNameController.dispose();
     _lastNameController.dispose();
     _emailController.dispose();
     _usernameController.dispose();
     super.dispose();
   }
 
-  Future<void> _pickProfileImage() async {
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.gallery);
-    if (picked != null) {
-      setState(() {
-        _profileImageFile = File(picked.path);
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F7F7),
-      body: Center(
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 700),
-          margin: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
-          padding: const EdgeInsets.all(32),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.08),
-                blurRadius: 24,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+       
+      ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Profile picture and name
               Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  GestureDetector(
-                    onTap: _pickProfileImage,
-                    child: CircleAvatar(
-                      radius: 48,
-                      backgroundColor: Colors.grey[200],
-                      backgroundImage: _profileImageFile != null
-                          ? FileImage(_profileImageFile!)
-                          : null,
-                      child: _profileImageFile == null
-                          ? const Icon(Icons.person, size: 48, color: Colors.grey)
-                          : null,
-                    ),
+                  CircleAvatar(
+                    radius: 40,
+                    backgroundImage: _profileImageFile != null
+                        ? FileImage(_profileImageFile!)
+                        : AssetImage('assets/images/j.png') as ImageProvider,
+                    onBackgroundImageError: (_, __) {}, // Handle any error for background image
                   ),
-                  const SizedBox(width: 32),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${_nameController.text} ${_lastNameController.text}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 28,
-                          ),
+                  SizedBox(width: 16.0),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Amélie Laurent', // You can dynamically change the name here
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          _emailController.text,
-                          style: const TextStyle(
-                            color: Colors.grey,
-                            fontSize: 16,
-                          ),
+                      ),
+                      Text(
+                        'Amélie@untitledui.com', // You can dynamically change the email here
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey[600],
                         ),
-                        const SizedBox(height: 8),
-                        OutlinedButton.icon(
-                          onPressed: () {
-                            final url = 'https://untitledui.com/${_usernameController.text}';
-                            Clipboard.setData(ClipboardData(text: url));
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Profile link copied!')),
-                            );
-                          },
-                          icon: const Icon(Icons.link, size: 18),
-                          label: const Text('Copy profile link'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.deepPurple,
-                            side: const BorderSide(color: Colors.deepPurple),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
+                  ),
+                  Spacer(),
+                  ElevatedButton(
+                    onPressed: () {
+                      // Handle copy link or any other action
+                    },
+                    child: Text('Copy link'),
                   ),
                 ],
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 32.0),
+
               // Form fields
+              const Text(
+                'Name',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8.0),
               Row(
                 children: [
                   Expanded(
                     child: TextField(
-                      controller: _nameController,
-                      decoration: InputDecoration(
-                        labelText: 'First name',
-                        filled: true,
-                        fillColor: Colors.grey[100],
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                      controller: _firstNameController,
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                        hintText: 'First Name',
                       ),
+                      enabled: false,
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 16.0),
                   Expanded(
                     child: TextField(
                       controller: _lastNameController,
                       decoration: InputDecoration(
-                        labelText: 'Last name',
-                        filled: true,
-                        fillColor: Colors.grey[100],
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                        border: OutlineInputBorder(),
+                        hintText: 'Last Name',
                       ),
+                      enabled: false,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 18),
+              SizedBox(height: 16.0),
+
+              Text(
+                'Email address',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 8.0),
               TextField(
                 controller: _emailController,
                 decoration: InputDecoration(
-                  labelText: 'Email address',
-                  filled: true,
-                  fillColor: Colors.grey[100],
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                  prefixIcon: Icon(Icons.email_outlined),
+                  border: OutlineInputBorder(),
                 ),
+                enabled: false,
               ),
-              const SizedBox(height: 18),
+              SizedBox(height: 16.0),
+
+              Text(
+                'Username',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 8.0),
               Row(
                 children: [
-                  const Text(
-                    'untitledui.com/',
-                    style: TextStyle(color: Colors.grey, fontSize: 16),
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 14.0),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(4.0),
+                        bottomLeft: Radius.circular(4.0),
+                      ),
+                    ),
+                    child: Text('untitledui.com/', style: TextStyle(color: Colors.grey[700])),
                   ),
-                  const SizedBox(width: 4),
                   Expanded(
                     child: TextField(
                       controller: _usernameController,
                       decoration: InputDecoration(
-                        labelText: 'Username',
-                        filled: true,
-                        fillColor: Colors.grey[100],
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.only(
+                            topRight: Radius.circular(4.0),
+                            bottomRight: Radius.circular(4.0),
+                          ),
+                        ),
+                        suffixIcon: Icon(Icons.check_circle, color: Colors.blue), // Example check icon
                       ),
+                      enabled: false,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 18),
-              DropdownButtonFormField<String>(
-                value: _role,
-                items: _roles
-                    .map((role) => DropdownMenuItem(
-                          value: role,
-                          child: Text(role),
-                        ))
-                    .toList(),
-                onChanged: (val) {
-                  if (val != null) setState(() => _role = val);
-                },
-                decoration: InputDecoration(
-                  labelText: 'Role',
-                  filled: true,
-                  fillColor: Colors.grey[100],
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-                ),
+              SizedBox(height: 16.0),
+
+              Text(
+                'Role',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 32),
-              // Action buttons
+              SizedBox(height: 8.0),
+              DropdownButtonFormField<String>(
+                value: 'Member', // Initial value
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(),
+                ),
+                items: <String>['Member', 'Admin', 'Editor', 'Viewer']
+                    .map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }).toList(),
+                onChanged: null, // Disable changing role
+                disabledHint: Text('Member'),
+              ),
+              SizedBox(height: 32.0),
+
+              // Profile photo section
+             
+              SizedBox(height: 48.0),
+
+              // Bottom buttons
               Row(
-                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  OutlinedButton.icon(
+                  TextButton.icon(
                     onPressed: () {
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(builder: (_) => const SignInPage()),
+                      // Show confirmation dialog before deleting
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Delete User',),
+                          content: const Text('Are you sure you want to delete this user?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('Cancel'),
+                            ),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                                foregroundColor: Colors.white,
+                              ),
+                              onPressed: () {
+                                Navigator.pop(context); // Close dialog
+                                Navigator.pop(context); // Go back to previous page
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('User deleted')),
+                                );
+                              },
+                              child: const Text('Delete'),
+                            ),
+                          ],
+                        ),
                       );
                     },
-                    icon: const Icon(Icons.logout, color: Colors.deepPurple),
-                    label: const Text('Log out', style: TextStyle(color: Colors.deepPurple)),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.deepPurple),
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    icon: const Icon(Icons.delete_outline, color: Colors.red),
+                    label: const Text(
+                      'Delete user',
+                      style: TextStyle(color: Colors.red),
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Changes saved!')),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepPurple,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      elevation: 0,
-                    ),
-                    child: const Text('Save changes'),
-                  ),
+                  Spacer(),
+                  
+                  SizedBox(width: 16.0),
+                 
                 ],
               ),
             ],
@@ -296,4 +258,7 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
     );
   }
+
+  // Function to handle profile photo change
+ 
 }

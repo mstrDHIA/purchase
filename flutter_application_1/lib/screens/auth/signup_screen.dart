@@ -1,5 +1,8 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/network/user_network.dart';
 import 'package:flutter_application_1/screens/auth/login.dart';
+import 'package:flutter_application_1/screens/users/Add_user.dart';
 import 'package:flutter_application_1/screens/users/Modify_user.dart';
 
 
@@ -31,6 +34,7 @@ class _SignUpPageState extends State<SignUpPage> {
   bool _isPasswordVisible = false;
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
 
   String? _passwordError;
   String? _confirmPasswordError;
@@ -132,6 +136,7 @@ class _SignUpPageState extends State<SignUpPage> {
                       ),
                       const SizedBox(height: 8),
                       TextFormField(
+                        controller: _emailController,
                         decoration: InputDecoration(
                           hintText: 'abc123g@gmail.com',
                           filled: true,
@@ -258,11 +263,57 @@ class _SignUpPageState extends State<SignUpPage> {
                             if (_passwordError == null &&
                                 _confirmPasswordError == null &&
                                 _agreeToTerms) {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) => const SignInPage(),
-                                ),
-                              );
+                              // Appel API d'inscription ici
+                              // print()
+                              UserNetwork()
+                                  .register(
+                                    password: _passwordController.text,
+                                    username: _emailController.text,
+                                  )
+                                  .then((result) async {
+                                    print('Résultat inscription: $result');
+                                    int? userId;
+                                    try {
+                                      if (result is Map) {
+                                        print('Réponse Map: $result');
+                                        final map = result as Map<String, dynamic>;
+                                        if (map.containsKey('id')) {
+                                          userId = int.tryParse(map['id'].toString());
+                                        } else {
+                                          print('Clé "id" non trouvée dans la Map. Clés disponibles: \\${map.keys}');
+                                        }
+                                      } else {
+                                        print('Réponse String: $result');
+                                        final map = jsonDecode(result);
+                                        if (map is Map && map.containsKey('id')) {
+                                          userId = int.tryParse(map['id'].toString());
+                                        } else {
+                                          print('Clé "id" non trouvée dans la String. Clés disponibles: \\${map.keys}');
+                                        }
+                                      }
+                                    } catch (e) {
+                                      print('Erreur parsing ID: $e');
+                                    }
+                                    if (userId == null) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text("Erreur lors de la création de l'utilisateur. Impossible de récupérer l'ID. Regarde la console pour le debug.")),
+                                      );
+                                      return;
+                                    }
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Inscription réussie.')),
+                                    );
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) => AddUserPage(email: _emailController.text, userId: userId),
+                                      ),
+                                    );
+                                  }).catchError((error) {
+                                    print(error);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Registration failed: $error')),
+                                    );
+                                  });
                             }
                           },
                           style: ElevatedButton.styleFrom(
