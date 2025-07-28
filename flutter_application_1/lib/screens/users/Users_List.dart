@@ -69,7 +69,7 @@ class _UserListPageState extends State<UserListPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Titre et bouton
+            // Titre, bouton et refresh
             Row(
               children: [
                 const Expanded(
@@ -77,6 +77,11 @@ class _UserListPageState extends State<UserListPage> {
                     "User’s List",
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.refresh, color: Colors.deepPurple, size: 28),
+                  tooltip: 'Rafraîchir',
+                  onPressed: _loadUsers,
                 ),
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
@@ -150,154 +155,156 @@ class _UserListPageState extends State<UserListPage> {
                     ? const Center(child: CircularProgressIndicator())
                     : SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
-                        child:ConstrainedBox(constraints: BoxConstraints(
-                          minWidth: MediaQuery.of(context).size.width,
-                        ),
-                        child: DataTable(
-                          sortColumnIndex: _sortColumnIndex,
-                          sortAscending: _sortAscending,
-                          columnSpacing: 48,
-                          headingRowColor: MaterialStateProperty.all(const Color(0xFFF5F5F5)),
-                          dataRowHeight: 56,
-                          dividerThickness: 0.6,
-                          columns: [
-                            DataColumn(
-                              label: const Text('Email', style: TextStyle(fontWeight: FontWeight.bold)),
-                              onSort: (columnIndex, ascending) {
-                                setState(() {
-                                  _sortColumnIndex = columnIndex;
-                                  _sortAscending = ascending;
-                                  filteredUsers.sort((a, b) => ascending
-                                      ? a.email.compareTo(b.email)
-                                      : b.email.compareTo(a.email));
-                                });
-                              },
-                            ),
-                            DataColumn(
-                              label: const Text('Name', style: TextStyle(fontWeight: FontWeight.bold)),
-                              onSort: (columnIndex, ascending) {
-                                setState(() {
-                                  _sortColumnIndex = columnIndex;
-                                  _sortAscending = ascending;
-                                  filteredUsers.sort((a, b) => ascending
-                                      ? a.username.compareTo(b.username)
-                                      : b.username.compareTo(a.username));
-                                });
-                              },
-                            ),
-                            DataColumn(
-                              label: const Text('Status', style: TextStyle(fontWeight: FontWeight.bold)),
-                              onSort: (columnIndex, ascending) {
-                                setState(() {
-                                  _sortColumnIndex = columnIndex;
-                                  _sortAscending = ascending;
-                                  filteredUsers.sort((a, b) => ascending
-                                      ? a.status.compareTo(b.status)
-                                      : b.status.compareTo(a.status));
-                                });
-                              },
-                            ),
-                            DataColumn(
-                              label: const Text('User Permission', style: TextStyle(fontWeight: FontWeight.bold)),
-                              onSort: (columnIndex, ascending) {
-                                setState(() {
-                                  _sortColumnIndex = columnIndex;
-                                  _sortAscending = ascending;
-                                  filteredUsers.sort((a, b) => ascending
-                                      ? a.permission.compareTo(b.permission)
-                                      : b.permission.compareTo(a.permission));
-                                });
-                              },
-                            ),
-                            const DataColumn(label: Text('Actions', style: TextStyle(fontWeight: FontWeight.bold))),
-                          ],
-                          rows: filteredUsers.map((user) {
-                            return DataRow(
-                              cells: [
-                                DataCell(Text(user.email, style: const TextStyle(fontSize: 15))),      // 1
-                                DataCell(Text(user.username, style: const TextStyle(fontSize: 15))),   // 2
-                                DataCell(
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                                    decoration: BoxDecoration(
-                                      color: user.status == 'Active'
-                                          ? Colors.green.shade100
-                                          : Colors.red.shade200,
-                                      borderRadius: BorderRadius.circular(18),
-                                    ),
-                                    child: Text(
-                                      user.status,
-                                      style: TextStyle(
-                                        color: user.status == 'Active'
-                                            ? Colors.green.shade800
-                                            : Colors.red.shade800,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ),
-                                ), // 3
-                                DataCell(Text(user.permission, style: const TextStyle(fontSize: 15))), // 4
-                                DataCell(Row(
-                                  children: [
-                                    IconButton(
-                                      icon: const Icon(Icons.edit, size: 20, color: Color(0xFF6F4DBF)),
-                                      onPressed: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => ModifyUserPage(user: user),
-                                          ),
-                                        );
-                                      },
-                                      tooltip: 'Edit',
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.visibility, size: 18, color: Color(0xFF6F4DBF)),
-                                      onPressed: () async {
-                                        // Charge le profil depuis l'API
-                                        final profile = await ProfileNetwork().viewProfile(user.profileId ?? user.id);
-                                        if (profile != null) {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (_) => profile_user.ProfilePage(user: {
-                                                "first_name": profile.firstName ?? "",
-                                                "last_name": profile.lastName ?? "",
-                                                "bio": profile.bio ?? "",
-                                                "location": profile.location ?? "",
-                                                "country": profile.country ?? "",
-                                                "state": profile.state ?? "",
-                                                "city": profile.city ?? "",
-                                                "zip_code": profile.zipCode?.toString() ?? "",
-                                                "address": profile.address ?? "",
-                                              }),
-                                            ),
-                                          );
-                                        } else {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            const SnackBar(content: Text('Impossible de charger le profil utilisateur.')),
-                                          );
-                                        }
-                                      },
-                                      tooltip: 'View',
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.delete, size: 20, color: Color(0xFF6F4DBF)),
-                                      onPressed: () {
-                                        _deleteUser(user);
-                                      },
-                                      tooltip: 'Delete',
-                                    ),
-                                  ],
-                                )), // 5
+                        child: SizedBox(
+                          width: MediaQuery.of(context).size.width,
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.vertical,
+                            child: DataTable(
+                              sortColumnIndex: _sortColumnIndex,
+                              sortAscending: _sortAscending,
+                              columnSpacing: 48,
+                              headingRowColor: MaterialStateProperty.all(const Color(0xFFF5F5F5)),
+                              dataRowHeight: 56,
+                              dividerThickness: 0.6,
+                              columns: [
+                                DataColumn(
+                                  label: const Text('Email', style: TextStyle(fontWeight: FontWeight.bold)),
+                                  onSort: (columnIndex, ascending) {
+                                    setState(() {
+                                      _sortColumnIndex = columnIndex;
+                                      _sortAscending = ascending;
+                                      filteredUsers.sort((a, b) => ascending
+                                          ? a.email.compareTo(b.email)
+                                          : b.email.compareTo(a.email));
+                                    });
+                                  },
+                                ),
+                                DataColumn(
+                                  label: const Text('Name', style: TextStyle(fontWeight: FontWeight.bold)),
+                                  onSort: (columnIndex, ascending) {
+                                    setState(() {
+                                      _sortColumnIndex = columnIndex;
+                                      _sortAscending = ascending;
+                                      filteredUsers.sort((a, b) => ascending
+                                          ? a.username.compareTo(b.username)
+                                          : b.username.compareTo(a.username));
+                                    });
+                                  },
+                                ),
+                                DataColumn(
+                                  label: const Text('Status', style: TextStyle(fontWeight: FontWeight.bold)),
+                                  onSort: (columnIndex, ascending) {
+                                    setState(() {
+                                      _sortColumnIndex = columnIndex;
+                                      _sortAscending = ascending;
+                                      filteredUsers.sort((a, b) => ascending
+                                          ? a.status.compareTo(b.status)
+                                          : b.status.compareTo(a.status));
+                                    });
+                                  },
+                                ),
+                                DataColumn(
+                                  label: const Text('User Permission', style: TextStyle(fontWeight: FontWeight.bold)),
+                                  onSort: (columnIndex, ascending) {
+                                    setState(() {
+                                      _sortColumnIndex = columnIndex;
+                                      _sortAscending = ascending;
+                                      filteredUsers.sort((a, b) => ascending
+                                          ? a.permission.compareTo(b.permission)
+                                          : b.permission.compareTo(a.permission));
+                                    });
+                                  },
+                                ),
+                                const DataColumn(label: Text('Actions', style: TextStyle(fontWeight: FontWeight.bold))),
                               ],
-                            );
-                          }).toList(),
+                              rows: filteredUsers.map((user) {
+                                return DataRow(
+                                  cells: [
+                                    DataCell(Text(user.email, style: const TextStyle(fontSize: 15))),      // 1
+                                    DataCell(Text(user.username, style: const TextStyle(fontSize: 15))),   // 2
+                                    DataCell(
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                                        decoration: BoxDecoration(
+                                          color: user.status == 'Active'
+                                              ? Colors.green.shade100
+                                              : Colors.red.shade200,
+                                          borderRadius: BorderRadius.circular(18),
+                                        ),
+                                        child: Text(
+                                          user.status,
+                                          style: TextStyle(
+                                            color: user.status == 'Active'
+                                                ? Colors.green.shade800
+                                                : Colors.red.shade800,
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ),
+                                    ), // 3
+                                    DataCell(Text(user.permission, style: const TextStyle(fontSize: 15))), // 4
+                                    DataCell(Row(
+                                      children: [
+                                        IconButton(
+                                          icon: const Icon(Icons.edit, size: 20, color: Color(0xFF6F4DBF)),
+                                          onPressed: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) => ModifyUserPage(user: user),
+                                              ),
+                                            );
+                                          },
+                                          tooltip: 'Edit',
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.visibility, size: 18, color: Color(0xFF6F4DBF)),
+                                          onPressed: () async {
+                                            // Charge le profil depuis l'API
+                                            final profile = await ProfileNetwork().viewProfile(user.profileId ?? user.id);
+                                            if (profile != null) {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (_) => profile_user.ProfilePage(user: {
+                                                    "first_name": profile.firstName ?? "",
+                                                    "last_name": profile.lastName ?? "",
+                                                    "bio": profile.bio ?? "",
+                                                    "location": profile.location ?? "",
+                                                    "country": profile.country ?? "",
+                                                    "state": profile.state ?? "",
+                                                    "city": profile.city ?? "",
+                                                    "zip_code": profile.zipCode?.toString() ?? "",
+                                                    "address": profile.address ?? "",
+                                                  }),
+                                                ),
+                                              );
+                                            } else {
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(content: Text('Impossible de charger le profil utilisateur.')),
+                                              );
+                                            }
+                                          },
+                                          tooltip: 'View',
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.delete, size: 20, color: Color(0xFF6F4DBF)),
+                                          onPressed: () {
+                                            _deleteUser(user);
+                                          },
+                                          tooltip: 'Delete',
+                                        ),
+                                      ],
+                                    )), // 5
+                                  ],
+                                );
+                              }).toList(),
+                            ),
+                          ),
                         ),
                       ),
               ),
-            ),
             ),
           ],
         ),
