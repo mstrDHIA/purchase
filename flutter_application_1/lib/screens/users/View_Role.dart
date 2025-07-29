@@ -8,11 +8,15 @@ class ViewRolePage extends StatelessWidget {
 
   const ViewRolePage({
     Key? key,
-    required this.roleName,
-    required this.description,
-    required this.permissions,
-    required this.teammates,
-  }) : super(key: key);
+    String? roleName,
+    String? description,
+    List<String>? permissions,
+    int? teammates,
+  })  : roleName = roleName ?? '',
+        description = description ?? '',
+        permissions = permissions ?? const [],
+        teammates = teammates ?? 0,
+        super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -48,12 +52,12 @@ class ViewRolePage extends StatelessWidget {
               ),
               const SizedBox(height: 18),
               Text(
-                roleName,
+                (roleName.isNotEmpty ? roleName : '(Sans nom)'),
                 style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 6),
               Text(
-                description,
+                (description.isNotEmpty ? description : '(Aucune description)'),
                 style: const TextStyle(fontSize: 15, color: Colors.black87),
               ),
               const SizedBox(height: 18),
@@ -73,11 +77,13 @@ class ViewRolePage extends StatelessWidget {
                 style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
               ),
               const SizedBox(height: 8),
-              permissions.isEmpty
+              permissions.isEmpty || permissions.whereType<String>().isEmpty
                   ? const Text("No permissions assigned.", style: TextStyle(color: Colors.black54))
                   : Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: permissions
+                          .whereType<String>()
+                          .where((perm) => perm.isNotEmpty)
                           .map((perm) => Padding(
                                 padding: const EdgeInsets.symmetric(vertical: 2),
                                 child: Row(

@@ -74,7 +74,12 @@ class _EditRolePageState extends State<EditRolePage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Role updated successfully!')),
         );
-        Navigator.pop(context);
+        Navigator.pop(context, {
+          'id': widget.id,
+          'name': _roleNameController.text.trim(),
+          'description': _roleDescriptionController.text.trim(),
+          'permissions': _selectedPermissions.toList(),
+        });
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Failed to update role!'), backgroundColor: Colors.red),

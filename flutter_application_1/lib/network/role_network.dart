@@ -3,6 +3,25 @@ import 'package:dio/dio.dart';
 import 'api.dart';
 
 class RoleNetwork {
+  // Voir un rôle par id
+  Future<Map<String, dynamic>?> viewRole(int id) async {
+    try {
+      final response = await _dio.get(
+        APIS.baseUrl + 'role/roles/$id/',
+        options: Options(headers: {
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU0MzEyMzYxLCJpYXQiOjE3NTM3MDc1NjEsImp0aSI6ImYzYzg0MmY1OTEwMjQ4YWU5ZjMwYjdmOTc1OGY3YTI3IiwidXNlcl9pZCI6Mzd9.nHBidPRwwtBQ3WloMCMV9p9sQ0Oz7LZlf4rcYUag3_A',
+          'ngrok-skip-browser-warning': 'true'}),
+      );
+      if (response.statusCode == 200) {
+        return Map<String, dynamic>.from(response.data);
+      } else {
+        return null;
+      }
+    } catch (e) {
+      print('Erreur lors de la récupération du rôle: $e');
+      return null;
+    }
+  }
   final Dio _dio = Dio();
 
   Future<List<Map<String, dynamic>>> fetchRoles() async {
@@ -46,11 +65,10 @@ class RoleNetwork {
   }
 
   // Supprimer un rôle
-  Future<bool> deleteRole(String role) async {
+  Future<bool> deleteRole(dynamic id) async {
     try {
       final response = await _dio.delete(
-        APIS.baseUrl + 'role/roles/',
-        data: {'role': role},
+        APIS.baseUrl + 'role/roles/$id/',
         options: Options(headers: {
           'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU0MzEyMzYxLCJpYXQiOjE3NTM3MDc1NjEsImp0aSI6ImYzYzg0MmY1OTEwMjQ4YWU5ZjMwYjdmOTc1OGY3YTI3IiwidXNlcl9pZCI6Mzd9.nHBidPRwwtBQ3WloMCMV9p9sQ0Oz7LZlf4rcYUag3_A',
           'ngrok-skip-browser-warning': 'true'}),
