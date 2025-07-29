@@ -33,35 +33,22 @@ class UserNetwork {
     return response.data;
   }
   // user list
-   Future<List<User>> uesresList() async {
-    print(1);
-      // Simulate a network call
-      
-      // Here you would typically make an HTTP request to the API
-      // For example:
+    uesresList() async {
+  
       final response = await api.dio.get(
         options: Options(
             headers: {
               'ngrok-skip-browser-warning': 'true',
-              'Authorization':' Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU0MzEyMzYxLCJpYXQiOjE3NTM3MDc1NjEsImp0aSI6ImYzYzg0MmY1OTEwMjQ4YWU5ZjMwYjdmOTc1OGY3YTI3IiwidXNlcl9pZCI6Mzd9.nHBidPRwwtBQ3WloMCMV9p9sQ0Oz7LZlf4rcYUag3_A'
+              'Authorization':' Bearer ${APIS().token}',
+
 
             }),
         '${APIS.baseUrl}user/users/',
       );
       
-      // For now, we will just return a success message
-      final  data = response.data ;
-      
-      List<User> users =[];
-      for(int i=0;i<data.length;i++){
-        users.add(User.fromJson(data[i] as Map<String, dynamic>));
-        // print(data[i]);
-      }
-    // List<User> users= data.map<User>((json) => User.fromJson(json as Map<String, dynamic>)).toList();
+   
     
-    print(users);
-    
-    return users;
+    return response;
     }
 
   callUser(String email) {}
@@ -74,7 +61,8 @@ class UserNetwork {
         data: user.toJson(),
         options: Options(
           headers: {
-            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU0MzEyMzYxLCJpYXQiOjE3NTM3MDc1NjEsImp0aSI6ImYzYzg0MmY1OTEwMjQ4YWU5ZjMwYjdmOTc1OGY3YTI3IiwidXNlcl9pZCI6Mzd9.nHBidPRwwtBQ3WloMCMV9p9sQ0Oz7LZlf4rcYUag3_A',
+            'Authorization': 'Bearer ${APIS().token}',
+
             'ngrok-skip-browser-warning': 'true',
           },
         ),
@@ -96,7 +84,8 @@ class UserNetwork {
         '${APIS.baseUrl}${APIS.deleteUser}$userId/',
         options: Options(
           headers: {
-            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU0MzEyMzYxLCJpYXQiOjE3NTM3MDc1NjEsImp0aSI6ImYzYzg0MmY1OTEwMjQ4YWU5ZjMwYjdmOTc1OGY3YTI3IiwidXNlcl9pZCI6Mzd9.nHBidPRwwtBQ3WloMCMV9p9sQ0Oz7LZlf4rcYUag3_A',
+            'Authorization': 'Bearer ${APIS().token}',
+
             'ngrok-skip-browser-warning': 'true'
           },
         ),
@@ -119,7 +108,8 @@ class UserNetwork {
         data: user.toJson(),
         options: Options(
           headers: {
-            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU0MzEyMzYxLCJpYXQiOjE3NTM3MDc1NjEsImp0aSI6ImYzYzg0MmY1OTEwMjQ4YWU5ZjMwYjdmOTc1OGY3YTI3IiwidXNlcl9pZCI6Mzd9.nHBidPRwwtBQ3WloMCMV9p9sQ0Oz7LZlf4rcYUag3_A', // ton token ici
+            'Authorization': 'Bearer ${APIS().token}', // ton token ici
+
             'ngrok-skip-browser-warning': 'true',
           },
         ),

@@ -231,9 +231,10 @@ class _SignInPageState extends State<SignInPage> {
                                   //   SnackBar(content: Text(message)),
                                   // );
                                   // Navigate to the main page
-                                  Navigator.of(context).pushReplacement(
-                                    MaterialPageRoute(builder: (context) => const MainScreen()),
-                                  );
+                                  (context).go('/main_screen');
+                                  // Navigator.of(context).pushReplacement(
+                                  //   MaterialPageRoute(builder: (context) => const MainScreen()),
+                                  // );
                                 })
                                 .catchError((error) {
                                   print(error);

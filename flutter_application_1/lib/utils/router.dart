@@ -1,3 +1,4 @@
+import 'package:flutter_application_1/main.dart';
 import 'package:flutter_application_1/screens/Product/Product.dart';
 import 'package:flutter_application_1/screens/Purchase%20order/pushase_order.dart';
 import 'package:flutter_application_1/screens/Supplier/Add_supplier.dart';
@@ -22,6 +23,10 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: '/login',
       builder: (context, state) => SignInPage(),
+    ),
+    GoRoute(
+      path: '/main_screen',
+      builder: (context, state) => MainScreen(),
     ),
     GoRoute(
       path: '/password',
