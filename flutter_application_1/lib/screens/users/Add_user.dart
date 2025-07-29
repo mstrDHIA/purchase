@@ -10,38 +10,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter_application_1/models/user.dart'; // <-- Assure-toi que ce chemin est correct
 import 'package:flutter_application_1/network/user_network.dart'; // <-- Assure-toi que ce chemin est correct
 
-void main() {
-  runApp(MyApp());
-}
 
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Add User',
-      theme: ThemeData(
-        primarySwatch: Colors.deepPurple,
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: Colors.grey[200],
-          border: OutlineInputBorder(
-            borderSide: BorderSide.none,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.deepPurple,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          ),
-        ),
-      ),
-      
-    );
-  }
-}
+
 
 
 
@@ -55,10 +25,10 @@ class AddUserPage extends StatefulWidget {
 }
 
 class _AddUserPageState extends State<AddUserPage> {
-  Future<bool> _userExists(String username, String email) async {
-    final users = await UserNetwork().uesresList();
-    return users.any((u) => u.username == username || u.email == email);
-  }
+  // Future<bool> _userExists(String username, String email) async {
+  //   final users = await UserNetwork().uesresList();
+  //   return users.any((u) => u.username == username || u.email == email);
+  // }
   // final _emailController = TextEditingController();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
@@ -121,22 +91,22 @@ class _AddUserPageState extends State<AddUserPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            DrawerHeader(child: Text('Navigation')),
-            ListTile(title: Text('Home'), onTap: () {}),
-            ListTile(title: Text('Dashboard'), onTap: () {}),
-            ListTile(title: Text('Users'), selected: true, selectedTileColor: Colors.grey[200], onTap: () {}),
-            ListTile(title: Text('Password'), onTap: () {}),
-            ListTile(title: Text('Request Order'), onTap: () {}),
-            ListTile(title: Text('Purchase Order'), onTap: () {}),
-            ListTile(title: Text('Roles and Access'), onTap: () {}),
-            ListTile(title: Text('Support Centre'), onTap: () {}),
-          ],
-        ),
-      ),
+      // drawer: Drawer(
+      //   child: ListView(
+      //     padding: EdgeInsets.zero,
+      //     children: [
+      //       DrawerHeader(child: Text('Navigation')),
+      //       ListTile(title: Text('Home'), onTap: () {}),
+      //       ListTile(title: Text('Dashboard'), onTap: () {}),
+      //       ListTile(title: Text('Users'), selected: true, selectedTileColor: Colors.grey[200], onTap: () {}),
+      //       ListTile(title: Text('Password'), onTap: () {}),
+      //       ListTile(title: Text('Request Order'), onTap: () {}),
+      //       ListTile(title: Text('Purchase Order'), onTap: () {}),
+      //       ListTile(title: Text('Roles and Access'), onTap: () {}),
+      //       ListTile(title: Text('Support Centre'), onTap: () {}),
+      //     ],
+      //   ),
+      // ),
       appBar: AppBar(
         title: Text(
           'User Information Form',

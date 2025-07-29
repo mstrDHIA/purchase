@@ -1,0 +1,101 @@
+import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_application_1/models/user_model.dart';
+import 'package:flutter_application_1/network/user_network.dart';
+
+class UserController extends ChangeNotifier {
+  bool isLoading = false;
+  List<User> users = [];
+  String searchText = '';
+  String? selectedPermission;
+  String? selectedStatus;
+  int? sortColumnIndex;
+  bool sortAscending = true;
+
+  UserNetwork userNetwork = UserNetwork();
+
+  List<User> get filteredUsers {
+    List<User> filtered = users.where((user) {
+      final matchesSearch = searchText.isEmpty ||
+          user.email.toLowerCase().contains(searchText.toLowerCase()) ||
+          user.username.toLowerCase().contains(searchText.toLowerCase());
+      final matchesPermission = selectedPermission == null || user.permission == selectedPermission;
+      final matchesStatus = selectedStatus == null || user.status == selectedStatus;
+      return matchesSearch && matchesPermission && matchesStatus;
+    }).toList();
+
+    if (sortColumnIndex != null) {
+      switch (sortColumnIndex) {
+        case 0:
+          filtered.sort((a, b) => sortAscending
+              ? a.email.compareTo(b.email)
+              : b.email.compareTo(a.email));
+          break;
+        case 1:
+          filtered.sort((a, b) => sortAscending
+              ? a.username.compareTo(b.username)
+              : b.username.compareTo(a.username));
+          break;
+        case 2:
+          filtered.sort((a, b) => sortAscending
+              ? a.status.compareTo(b.status)
+              : b.status.compareTo(a.status));
+          break;
+        case 3:
+          filtered.sort((a, b) => sortAscending
+              ? a.permission.compareTo(b.permission)
+              : b.permission.compareTo(a.permission));
+          break;
+      }
+    }
+    return filtered;
+  }
+
+  Future<void> getUsers() async {
+    isLoading = true;
+    notifyListeners();
+    Response response = await userNetwork.uesresList();
+    if (response.statusCode == 200) {
+      users = (response.data as List).map((user) => User.fromJson(user)).toList();
+      isLoading = false;
+      notifyListeners();
+    } else {
+      isLoading = false;
+      notifyListeners();
+      throw Exception('Failed to load users');
+    }
+  }
+
+  void setSearchText(String value) {
+    searchText = value;
+    notifyListeners();
+  }
+
+  void setPermission(String? value) {
+    selectedPermission = value == 'All' ? null : value;
+    notifyListeners();
+  }
+
+  void setStatus(String? value) {
+    selectedStatus = value == 'All' ? null : value;
+    notifyListeners();
+  }
+
+  void sortUsers(int columnIndex, bool ascending) {
+    sortColumnIndex = columnIndex;
+    sortAscending = ascending;
+    notifyListeners();
+  }
+
+  Future<void> deleteUser(BuildContext context, User user) async {
+    isLoading = true;
+    notifyListeners();
+    await userNetwork.deleteUser(user.id);
+    users.removeWhere((u) => u.id == user.id);
+    isLoading = false;
+    notifyListeners();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${user.username} deleted')),
+    );
+  }
+}

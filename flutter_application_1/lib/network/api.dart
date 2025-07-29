@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 
 class APIS {
   final dio = Dio();
+  String token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU0MzA0NTIwLCJpYXQiOjE3NTM2OTk3MjAsImp0aSI6IjgzZGVlODRhNmU4MDRjMTg4OTliYjJmNzA1MTBlNmRhIiwidXNlcl9pZCI6NTd9.bT37EHYQuzEE4guRXrYvssfYRhvPcOJaE8Ry76irUF8';
 
   APIS() {
     dio.interceptors.add(LogInterceptor(

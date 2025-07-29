@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/controllers/user_controller.dart';
 
 import 'package:flutter_application_1/models/user_model.dart';
 import 'package:flutter_application_1/screens/Dashboard/Dashboard.dart' as dashboard;
@@ -28,15 +29,16 @@ import 'package:flutter_application_1/screens/users/profile.dart';
 import 'package:flutter_application_1/screens/users/profile_user.dart';
 import 'package:flutter_application_1/screens/users/users.dart';
 import 'package:flutter_application_1/utils/router.dart';
+import 'package:provider/provider.dart';
 import 'widgets/sidebar.dart';
 
 void main() {
-  runApp(const MaterialApp(
+  runApp(
      // Replace with a valid User object
     // home: MainScreen(),
-    home: SignInPage(),
+    MyApp(),
     
-  ));
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -44,53 +46,62 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      routerConfig: router,
-      title: 'Purchase Requestor',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.deepPurple,
-        scaffoldBackgroundColor: const Color(0xFFF8F8FB),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            textStyle: const TextStyle(fontSize: 16),
-          ),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: const Color(0xFFEDEDED),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
-          ),
-        ),
-      ),
-      // initialRoute: '/requestor_order',
-      // routes: {
-      //   '/login': (context) => const SignInPage(),
-      //   '/password': (context) => const PasswordPage(),
-      //   '/users': (context) => const users_list.UserListPage(),
-      //   '/role': (context) => const RolePage(),
-      //   '/permission': (context) => const PermissionPage(),
-      //   '/profile': (context) => ProfilePage(user: {}),
-      //   '/requestor_order': (context) => requestor_order.PurchaseRequestPage(),
-      //   '/purchase_order': (context) => const PurchaseOrderPage(),
-      //   '/supplier_registration': (context) => const SupplierRegistrationPage(),
-      //   '/edit_supplier': (context) => const EditSupplierPage(),
-      //   '/view_supplier': (context) => const ViewSupplierPage(),
-      //   '/add_supplier': (context) => const AddSupplierPage(),
-      //   '/dashboard': (context) => const dashboard.DashboardPage(),
-      //   '/product': (context) => const ProductPage(),
-      //   '/requestor_form': (context) => PurchaseRequestorForm(
-      //     onSave: (order) {
-      //       // TODO: Implement save logic
-      //     },
-      //     initialOrder: <String, dynamic>{},
-      //   ),
-      //   // Add any additional routes here
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => UserController()),
+      ],
+      // builder: (context,child) {
+      //   // return 
+        
       // },
-
+      child: MaterialApp.router(
+          routerConfig: router,
+          title: 'Purchase Requestor',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            primarySwatch: Colors.deepPurple,
+            scaffoldBackgroundColor: const Color(0xFFF8F8FB),
+            elevatedButtonTheme: ElevatedButtonThemeData(
+              style: ElevatedButton.styleFrom(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                textStyle: const TextStyle(fontSize: 16),
+              ),
+            ),
+            inputDecorationTheme: InputDecorationTheme(
+              filled: true,
+              fillColor: const Color(0xFFEDEDED),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none,
+              ),
+            ),
+          ),
+          // initialRoute: '/requestor_order',
+          // routes: {
+          //   '/login': (context) => const SignInPage(),
+          //   '/password': (context) => const PasswordPage(),
+          //   '/users': (context) => const users_list.UserListPage(),
+          //   '/role': (context) => const RolePage(),
+          //   '/permission': (context) => const PermissionPage(),
+          //   '/profile': (context) => ProfilePage(user: {}),
+          //   '/requestor_order': (context) => requestor_order.PurchaseRequestPage(),
+          //   '/purchase_order': (context) => const PurchaseOrderPage(),
+          //   '/supplier_registration': (context) => const SupplierRegistrationPage(),
+          //   '/edit_supplier': (context) => const EditSupplierPage(),
+          //   '/view_supplier': (context) => const ViewSupplierPage(),
+          //   '/add_supplier': (context) => const AddSupplierPage(),
+          //   '/dashboard': (context) => const dashboard.DashboardPage(),
+          //   '/product': (context) => const ProductPage(),
+          //   '/requestor_form': (context) => PurchaseRequestorForm(
+          //     onSave: (order) {
+          //       // TODO: Implement save logic
+          //     },
+          //     initialOrder: <String, dynamic>{},
+          //   ),
+          //   // Add any additional routes here
+          // },
+        
+        ),
     );
   }
 }
