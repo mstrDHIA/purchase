@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/screens/users/Add_Role.dart';
 import 'package:flutter_application_1/screens/users/View_Role.dart';
 import 'package:flutter_application_1/screens/users/Edit_Role.dart';
+import 'package:flutter_application_1/network/role_network.dart';
 
 class RolePage extends StatefulWidget {
   const RolePage({super.key});
@@ -11,33 +12,36 @@ class RolePage extends StatefulWidget {
 }
 
 class _RolePageState extends State<RolePage> {
-  final List<Map<String, dynamic>> roles = [
-    {
-      'title': 'Owner',
-      'desc': 'The owner complete control over workspace and organization, including billing and account management. There is only one owner per organization',
-      'teammates': 1,
-    },
-    {
-      'title': 'Admin',
-      'desc': 'Admins have complete control over the workspace, except for the Owner role and following permissions like billing and payments.',
-      'teammates': 2,
-    },
-    {
-      'title': 'Editor',
-      'desc': 'Editors can access almost all features, including automation and contact management.',
-      'teammates': 2,
-    },
-    {
-      'title': 'LiveChat agent',
-      'desc': 'LiveChat agents can access and communicate with bot-subscribed contacts inside the LiveChat module.',
-      'teammates': 3,
-    },
-    {
-      'title': 'Member',
-      'desc': 'Members can access almost all features with "view only" mode.',
-      'teammates': 6,
-    },
-  ];
+  List<Map<String, dynamic>> roles = [];
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchRoles();
+  }
+
+  Future<void> _fetchRoles() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      final List<Map<String, dynamic>> rolesFromApi = await RoleNetwork().fetchRoles();
+      setState(() {
+        roles = rolesFromApi;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = 'Erreur lors du chargement des rôles';
+        _isLoading = false;
+      });
+    }
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -45,9 +49,13 @@ class _RolePageState extends State<RolePage> {
       backgroundColor: const Color(0xFFF8F8FB),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : _error != null
+                ? Center(child: Text(_error!, style: const TextStyle(color: Colors.red)))
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
             // Header
             Row(
               children: [
@@ -103,115 +111,120 @@ class _RolePageState extends State<RolePage> {
             ),
             const SizedBox(height: 18),
             // ListView for roles
-            Card(
-              elevation: 0,
-              margin: EdgeInsets.zero,
-              color: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-                side: const BorderSide(color: Colors.black12),
-              ),
-              child: ListView.separated(
-                shrinkWrap: true, // <-- Important !
-                physics: const NeverScrollableScrollPhysics(), // <-- Important !
-                padding: const EdgeInsets.all(0),
-                itemCount: roles.length + 1,
-                separatorBuilder: (context, index) {
-                  if (index == roles.length) {
-                    return const Divider(
-                      height: 0,
-                      color: Colors.transparent,
-                    );
-                  }
-                  return const Divider(height: 1, color: Color(0xFFE0E0E0));
-                },
-                itemBuilder: (context, index) {
-                  if (index == 0) {
-                    // Header row
-                    return Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                      color: const Color(0xFFF4F4F6),
+            Container(
+              height: MediaQuery.of(context).size.height - 200,
+              child: Card(
+                elevation: 0,
+                margin: EdgeInsets.zero,
+                color: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  side: const BorderSide(color: Colors.black12),
+                ),
+                child: ListView.separated(
+                  shrinkWrap: true, // <-- Important !
+                  // physics: const NeverScrollableScrollPhysics(), // <-- Important !
+                  padding: const EdgeInsets.all(0),
+                  itemCount: roles.length + 1,
+                  separatorBuilder: (context, index) {
+                    if (index == roles.length) {
+                      return const Divider(
+                        height: 0,
+                        color: Colors.transparent,
+                      );
+                    }
+                    return const Divider(height: 1, color: Color(0xFFE0E0E0));
+                  },
+                  itemBuilder: (context, index) {
+                    if (index == 0) {
+                      // Header row
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                        color: const Color(0xFFF4F4F6),
+                        child: Row(
+                          children: const [
+                            Expanded(
+                              flex: 3,
+                              child: Row(
+                                children: [
+                                  Icon(Icons.groups, size: 18, color: Colors.black54),
+                                  SizedBox(width: 8),
+                                  Text('Roles', style: TextStyle(fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                            ),
+                            Expanded(
+                              flex: 1,
+                              child: Text('Teammates', style: TextStyle(fontWeight: FontWeight.bold)),
+                            ),
+                            SizedBox(width: 120),
+                          ],
+                        ),
+                      );
+                    }
+                    final role = roles[index - 1];
+                    final String title = (role['title'] ?? role['name'] ?? '').toString();
+                    final String desc = (role['desc'] ?? role['description'] ?? '').toString();
+                    final int teammates = role['teammates'] is int ? role['teammates'] : 0;
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                       child: Row(
-                        children: const [
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Role info
                           Expanded(
                             flex: 3,
-                            child: Row(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Icon(Icons.groups, size: 18, color: Colors.black54),
-                                SizedBox(width: 8),
-                                Text('Roles', style: TextStyle(fontWeight: FontWeight.bold)),
+                                Text(
+                                  title.isNotEmpty ? title : '(Sans nom)',
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  desc.isNotEmpty ? desc : '(Aucune description)',
+                                  style: const TextStyle(fontSize: 14, color: Colors.black87),
+                                ),
                               ],
                             ),
                           ),
+                          // Teammates
                           Expanded(
                             flex: 1,
-                            child: Text('Teammates', style: TextStyle(fontWeight: FontWeight.bold)),
+                            child: Padding(
+                              padding: const EdgeInsets.only(top: 2),
+                              child: Text(
+                                "${teammates} teammate${teammates == 1 ? '' : 's'}",
+                                style: const TextStyle(fontSize: 15),
+                              ),
+                            ),
                           ),
-                          SizedBox(width: 120),
-                        ],
-                      ),
-                    );
-                  }
-                  final role = roles[index - 1];
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Role info
-                        Expanded(
-                          flex: 3,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          // Actions
+                          Row(
                             children: [
-                              Text(
-                                role['title'] as String,
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                              _actionIcon(
+                                context,
+                                icon: Icons.remove_red_eye,
+                                tooltip: 'View',
+                                onTap: () {
+                                  final roleData = role;
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => ViewRolePage(
+                                      roleName: roleData['title'] as String,
+                                      description: roleData['desc'] as String,
+                                      permissions: const [
+                                        // Remplace par les vraies permissions si tu les as dans tes données
+                                        "View Dashboard",
+                                        "Manage Users",
+                                        "Edit Roles",
+                                      ],
+                                      teammates: roleData['teammates'] as int,
+                                    ),
+                                  );
+                                },
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                role['desc'] as String,
-                                style: const TextStyle(fontSize: 14, color: Colors.black87),
-                              ),
-                            ],
-                          ),
-                        ),
-                        // Teammates
-                        Expanded(
-                          flex: 1,
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 2),
-                            child: Text(
-                              "${role['teammates']} teammate${role['teammates'] == 1 ? '' : 's'}",
-                              style: const TextStyle(fontSize: 15),
-                            ),
-                          ),
-                        ),
-                        // Actions
-                        Row(
-                          children: [
-                            _actionIcon(
-                              context,
-                              icon: Icons.remove_red_eye,
-                              tooltip: 'View',
-                              onTap: () {
-                                final roleData = role;
-                                showDialog(
-                                  context: context,
-                                  builder: (context) => ViewRolePage(
-                                    roleName: roleData['title'] as String,
-                                    description: roleData['desc'] as String,
-                                    permissions: const [
-                                      // Remplace par les vraies permissions si tu les as dans tes données
-                                      "View Dashboard",
-                                      "Manage Users",
-                                      "Edit Roles",
-                                    ],
-                                    teammates: roleData['teammates'] as int,
-                                  ),
-                                );
-                              },
-                            ),
                             _actionIcon(
                               context,
                               icon: Icons.edit,
@@ -225,58 +238,57 @@ class _RolePageState extends State<RolePage> {
                                       borderRadius: BorderRadius.circular(18),
                                     ),
                                     child: EditRolePage(
-                                      initialName: roleData['title'] as String,
-                                      initialDescription: roleData['desc'] as String,
-                                      initialPermissions: const [
-                                        // Remplace par les vraies permissions si tu les as dans tes données
-                                        "View Dashboard",
-                                        "Manage Users",
-                                        "Edit Roles",
-                                      ],
+                                      id: roleData['id'] ?? 0,
+                                      initialName: (roleData['title'] ?? roleData['name'] ?? '').toString(),
+                                      initialDescription: (roleData['desc'] ?? roleData['description'] ?? '').toString(),
+                                      initialPermissions: (roleData['permissions'] is List<String>)
+                                        ? roleData['permissions'] as List<String>
+                                        : <String>[],
                                     ),
                                   ),
                                 );
                               },
                             ),
-                            _actionIcon(
-                              context,
-                              icon: Icons.delete,
-                              tooltip: 'Delete',
-                              onTap: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                    title: const Text('Delete Role'),
-                                    content: Text('Are you sure you want to delete the role "${role['title']}"?'),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () => Navigator.pop(context),
-                                        child: const Text('Cancel'),
-                                      ),
-                                      ElevatedButton(
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.red,
-                                          foregroundColor: Colors.white,
+                              _actionIcon(
+                                context,
+                                icon: Icons.delete,
+                                tooltip: 'Delete',
+                                onTap: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: const Text('Delete Role'),
+                                      content: Text('Are you sure you want to delete the role "${role['title']}"?'),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(context),
+                                          child: const Text('Cancel'),
                                         ),
-                                        onPressed: () {
-                                          Navigator.pop(context);
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text('Role "${role['title']}" deleted')),
-                                          );
-                                        },
-                                        child: const Text('Delete'),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  );
-                },
+                                        ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.red,
+                                            foregroundColor: Colors.white,
+                                          ),
+                                          onPressed: () {
+                                            Navigator.pop(context);
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(content: Text('Role "${role['title']}" deleted')),
+                                            );
+                                          },
+                                          child: const Text('Delete'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
               ),
             ),
           ],

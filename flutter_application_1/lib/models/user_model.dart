@@ -12,6 +12,7 @@ class User {
   final bool isSuperuser;
   final String password;
   final int? profileId;
+  final String? role;
 
   User({
     required this.id,
@@ -22,6 +23,7 @@ class User {
     required this.isSuperuser,
     required this.password,
     this.profileId,
+    this.role,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -34,6 +36,7 @@ class User {
       isSuperuser: json['is_superuser'] ?? false,
       password: json['password'] ?? '',
       profileId: json['profile_id'] ?? json['profileId'],
+      role: json['role'],
     );
   }
 
@@ -47,6 +50,7 @@ class User {
       'is_superuser': isSuperuser,
       'password': password,
       if (profileId != null) 'profile_id': profileId,
+      if (role != null) 'role': role,
     };
   }
 }

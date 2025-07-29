@@ -161,7 +161,7 @@ class _AddUserPageState extends State<AddUserPage> {
                           state: _stateController.text,
                           country: _selectedCountry,
                         );
-                        final message = await ProfileNetwork().addProfile(profile);
+                        final message = await ProfileNetwork().addProfile(profile,widget.userId!);
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text(message)),
                         );

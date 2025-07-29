@@ -35,7 +35,7 @@ class _UserListPageState extends State<UserListPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Titre et bouton
+            // Titre, bouton et refresh
             Row(
               children: [
                 const Expanded(
@@ -43,6 +43,11 @@ class _UserListPageState extends State<UserListPage> {
                     "User’s List",
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.refresh, color: Colors.deepPurple, size: 28),
+                  tooltip: 'Rafraîchir',
+                  onPressed: _loadUsers,
                 ),
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
@@ -240,6 +245,7 @@ class _UserListPageState extends State<UserListPage> {
                   ),
                 );
               },
+
             ),
           ],
         ),

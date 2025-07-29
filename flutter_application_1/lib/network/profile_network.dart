@@ -13,7 +13,7 @@ class ProfileNetwork {
         queryParameters: {'user': userId},
         options: Options(
           headers: {
-            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUzNjk4NzEyLCJpYXQiOjE3NTMwOTM5MTIsImp0aSI6ImMyYzNkZDExM2I4MDRmOTFhODZjNmRmMjYxOGE2MjIxIiwidXNlcl9pZCI6Mzd9.zFuZLd3ioapGACZ5X_B1gA27OiIpzZruJ-I-nUhrvBo',
+            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU0MzEyMzYxLCJpYXQiOjE3NTM3MDc1NjEsImp0aSI6ImYzYzg0MmY1OTEwMjQ4YWU5ZjMwYjdmOTc1OGY3YTI3IiwidXNlcl9pZCI6Mzd9.nHBidPRwwtBQ3WloMCMV9p9sQ0Oz7LZlf4rcYUag3_A',
             'ngrok-skip-browser-warning': 'true',
           },
         ),
@@ -41,14 +41,16 @@ class ProfileNetwork {
   APIS api = APIS();
 
   // Add profile (create user profile)
-  Future<String> addProfile(Profile profile) async {
+  Future<String> addProfile(Profile profile,int userId) async {
     try {
+      Map<String,dynamic> data=profile.toJson();
+      data['user_id'] = userId; // Ajoute l'ID de l'utilisateur au profil
       final response = await api.dio.post(
         '${APIS.baseUrl}${APIS.addProfile}',
-        data: profile.toJson(),
+        data: data,
         options: Options(
           headers: {
-            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUzNjk4NzEyLCJpYXQiOjE3NTMwOTM5MTIsImp0aSI6ImMyYzNkZDExM2I4MDRmOTFhODZjNmRmMjYxOGE2MjIxIiwidXNlcl9pZCI6Mzd9.zFuZLd3ioapGACZ5X_B1gA27OiIpzZruJ-I-nUhrvBo', // Remplace par ton vrai token
+            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU0MzEyMzYxLCJpYXQiOjE3NTM3MDc1NjEsImp0aSI6ImYzYzg0MmY1OTEwMjQ4YWU5ZjMwYjdmOTc1OGY3YTI3IiwidXNlcl9pZCI6Mzd9.nHBidPRwwtBQ3WloMCMV9p9sQ0Oz7LZlf4rcYUag3_A', // Remplace par ton vrai token
             'ngrok-skip-browser-warning': 'true',
           },
         ),

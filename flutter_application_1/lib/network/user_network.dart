@@ -41,6 +41,7 @@ class UserNetwork {
               'ngrok-skip-browser-warning': 'true',
               'Authorization':' Bearer ${APIS().token}',
 
+
             }),
         '${APIS.baseUrl}user/users/',
       );
@@ -61,6 +62,7 @@ class UserNetwork {
         options: Options(
           headers: {
             'Authorization': 'Bearer ${APIS().token}',
+
             'ngrok-skip-browser-warning': 'true',
           },
         ),
@@ -83,6 +85,7 @@ class UserNetwork {
         options: Options(
           headers: {
             'Authorization': 'Bearer ${APIS().token}',
+
             'ngrok-skip-browser-warning': 'true'
           },
         ),
@@ -106,6 +109,7 @@ class UserNetwork {
         options: Options(
           headers: {
             'Authorization': 'Bearer ${APIS().token}', // ton token ici
+
             'ngrok-skip-browser-warning': 'true',
           },
         ),
