@@ -1,10 +1,19 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // Import for Clipboard
+import 'package:flutter_application_1/screens/Purchase%20order/Purchase_form.dart';
+import 'package:flutter_application_1/screens/Purchase%20order/pushase_order.dart'; // Add this import at the top if not present
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+// Assuming '../auth/login.dart' points to your login page
+import '../auth/login_screen.dart'; 
+
 
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_application_1/models/profile.dart';
-import 'package:flutter_application_1/screens/auth/login.dart';
+// import 'package:flutter_application_1/screens/auth/login.dart';
 import 'package:image_picker/image_picker.dart';
 
 

@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/models/user_model.dart';
 import 'package:flutter_application_1/network/user_network.dart';
 import 'package:image_picker/image_picker.dart';
+// Assuming '../auth/login.dart' points to your login page
+import '../auth/login_screen.dart'; // Make sure this path is correct
+
 
 class Profileuserpage extends StatefulWidget {
   final User user;
