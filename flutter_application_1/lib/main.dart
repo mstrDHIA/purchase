@@ -33,8 +33,10 @@ import 'widgets/sidebar.dart';
 void main() {
   runApp(const MaterialApp(
      // Replace with a valid User object
-    // home: MainScreen(),
-    home: SignInPage(),
+    home: MainScreen(),
+
+
+    // home: SignInPage(),
     
   ));
 }
@@ -66,6 +68,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
+
       // initialRoute: '/requestor_order',
       // routes: {
       //   '/login': (context) => const SignInPage(),
@@ -123,7 +126,7 @@ class _MainScreenState extends State<MainScreen> {
       case 'Purchase Order':
         return const PurchaseOrderPage();
       case 'Roles and access':
-        return const PermissionPage();
+        return const RolePage();
       case 'Support centre':
         return const SupportCenterPage();
       default:

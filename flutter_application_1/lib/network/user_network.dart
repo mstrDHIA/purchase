@@ -43,7 +43,7 @@ class UserNetwork {
         options: Options(
             headers: {
               'ngrok-skip-browser-warning': 'true',
-              'Authorization':' Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUzNjk4NzEyLCJpYXQiOjE3NTMwOTM5MTIsImp0aSI6ImMyYzNkZDExM2I4MDRmOTFhODZjNmRmMjYxOGE2MjIxIiwidXNlcl9pZCI6Mzd9.zFuZLd3ioapGACZ5X_B1gA27OiIpzZruJ-I-nUhrvBo'
+              'Authorization':' Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU0MzEyMzYxLCJpYXQiOjE3NTM3MDc1NjEsImp0aSI6ImYzYzg0MmY1OTEwMjQ4YWU5ZjMwYjdmOTc1OGY3YTI3IiwidXNlcl9pZCI6Mzd9.nHBidPRwwtBQ3WloMCMV9p9sQ0Oz7LZlf4rcYUag3_A'
 
             }),
         '${APIS.baseUrl}user/users/',
@@ -74,7 +74,7 @@ class UserNetwork {
         data: user.toJson(),
         options: Options(
           headers: {
-            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUzNjk4NzEyLCJpYXQiOjE3NTMwOTM5MTIsImp0aSI6ImMyYzNkZDExM2I4MDRmOTFhODZjNmRmMjYxOGE2MjIxIiwidXNlcl9pZCI6Mzd9.zFuZLd3ioapGACZ5X_B1gA27OiIpzZruJ-I-nUhrvBo',
+            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU0MzEyMzYxLCJpYXQiOjE3NTM3MDc1NjEsImp0aSI6ImYzYzg0MmY1OTEwMjQ4YWU5ZjMwYjdmOTc1OGY3YTI3IiwidXNlcl9pZCI6Mzd9.nHBidPRwwtBQ3WloMCMV9p9sQ0Oz7LZlf4rcYUag3_A',
             'ngrok-skip-browser-warning': 'true',
           },
         ),
@@ -96,7 +96,7 @@ class UserNetwork {
         '${APIS.baseUrl}${APIS.deleteUser}$userId/',
         options: Options(
           headers: {
-            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUzNjk4NzEyLCJpYXQiOjE3NTMwOTM5MTIsImp0aSI6ImMyYzNkZDExM2I4MDRmOTFhODZjNmRmMjYxOGE2MjIxIiwidXNlcl9pZCI6Mzd9.zFuZLd3ioapGACZ5X_B1gA27OiIpzZruJ-I-nUhrvBo',
+            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU0MzEyMzYxLCJpYXQiOjE3NTM3MDc1NjEsImp0aSI6ImYzYzg0MmY1OTEwMjQ4YWU5ZjMwYjdmOTc1OGY3YTI3IiwidXNlcl9pZCI6Mzd9.nHBidPRwwtBQ3WloMCMV9p9sQ0Oz7LZlf4rcYUag3_A',
             'ngrok-skip-browser-warning': 'true'
           },
         ),
@@ -119,7 +119,7 @@ class UserNetwork {
         data: user.toJson(),
         options: Options(
           headers: {
-            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzUzNjk4NzEyLCJpYXQiOjE3NTMwOTM5MTIsImp0aSI6ImMyYzNkZDExM2I4MDRmOTFhODZjNmRmMjYxOGE2MjIxIiwidXNlcl9pZCI6Mzd9.zFuZLd3ioapGACZ5X_B1gA27OiIpzZruJ-I-nUhrvBo', // ton token ici
+            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU0MzEyMzYxLCJpYXQiOjE3NTM3MDc1NjEsImp0aSI6ImYzYzg0MmY1OTEwMjQ4YWU5ZjMwYjdmOTc1OGY3YTI3IiwidXNlcl9pZCI6Mzd9.nHBidPRwwtBQ3WloMCMV9p9sQ0Oz7LZlf4rcYUag3_A', // ton token ici
             'ngrok-skip-browser-warning': 'true',
           },
         ),

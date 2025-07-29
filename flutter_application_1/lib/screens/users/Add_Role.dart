@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/network/role_network.dart';
 
 class AddRolePage extends StatefulWidget {
   const AddRolePage({Key? key}) : super(key: key);
@@ -24,27 +25,65 @@ class _AddRolePageState extends State<AddRolePage> {
   ];
   final Set<String> _selectedPermissions = {};
 
-  void _submit() {
+  Future<void> _submit() async {
     if (_formKey.currentState!.validate()) {
-      final newRole = {
-        'name': _roleNameController.text.trim(),
-        'description': _roleDescriptionController.text.trim(),
-        'permissions': _selectedPermissions.toList(),
-      };
-      Navigator.pop(context, newRole); // <-- renvoie le rôle à la page précédente
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: const [
-              Icon(Icons.check_circle, color: Colors.white),
-              SizedBox(width: 10),
-              Text("Role created successfully!"),
-            ],
+      final roleName = _roleNameController.text.trim();
+      // Appel API pour ajouter le rôle
+      try {
+        final success = await RoleNetwork().addRole(
+          roleName,
+          _roleDescriptionController.text.trim(),
+        );
+        if (success) {
+          Navigator.pop(context, {
+            
+            'name': roleName,
+            'description': _roleDescriptionController.text.trim(),
+            'permissions': _selectedPermissions.toList(),
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: const [
+                  Icon(Icons.check_circle, color: Colors.white),
+                  SizedBox(width: 10),
+                  Text("Role created successfully!"),
+                ],
+              ),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: const [
+                  Icon(Icons.error, color: Colors.white),
+                  SizedBox(width: 10),
+                  Text("Failed to create role!"),
+                ],
+              ),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error, color: Colors.white),
+                const SizedBox(width: 10),
+                Text("Erreur: $e"),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 2),
           ),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 2),
-        ),
-      );
+        );
+      }
     }
   }
 

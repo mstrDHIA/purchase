@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_application_1/models/profile.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key, required Map<String, String> user});
+  const ProfilePage({super.key, required Map<String, String> user, Profile? profile});
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
