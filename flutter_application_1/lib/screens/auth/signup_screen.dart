@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/screens/auth/login_screen.dart';
 import 'package:flutter_application_1/network/user_network.dart';
 // import 'package:flutter_application_1/screens/auth/login.dart';
-import 'package:flutter_application_1/screens/users/Add_user.dart';
-import 'package:flutter_application_1/screens/users/Modify_user.dart';
+import 'package:flutter_application_1/screens/users/add_user_screen.dart';
+import 'package:flutter_application_1/screens/users/modify_user_screen.dart';
 
 
 

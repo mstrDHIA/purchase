@@ -6,7 +6,7 @@
 // tree, read text, and verify that the values of widget properties are correct.
 
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/screens/users/Add_user.dart' as add_user;
+import 'package:flutter_application_1/screens/users/add_user_screen.dart' as add_user;
 
 import 'package:flutter_test/flutter_test.dart';
 

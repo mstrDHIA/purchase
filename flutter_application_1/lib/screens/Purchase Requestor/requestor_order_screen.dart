@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/screens/Purchase%20Requestor/Request_Edit.dart';
-import 'package:flutter_application_1/screens/Purchase%20Requestor/Requestor_Form.dart';
-import 'package:flutter_application_1/screens/Purchase%20Requestor/request_view.dart';
-import 'package:flutter_application_1/screens/Purchase%20order/pushase_order.dart' as purchase_order;
+import 'package:flutter_application_1/screens/Purchase%20Requestor/Request_Edit_screen.dart';
+import 'package:flutter_application_1/screens/Purchase%20Requestor/requestor_form_screen.dart';
+import 'package:flutter_application_1/screens/Purchase%20Requestor/request_view_screen.dart';
+import 'package:flutter_application_1/screens/Purchase%20order/pushase_order_screen.dart' as purchase_order;
 // Make sure the above import points to the file where addPurchaseOrder is defined as a top-level function.
 import 'package:intl/intl.dart';
 

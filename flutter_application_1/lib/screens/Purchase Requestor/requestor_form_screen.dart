@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/screens/Purchase%20order/pushase_order.dart';
+import 'package:flutter_application_1/screens/Purchase%20order/pushase_order_screen.dart';
 import 'package:intl/intl.dart';
-import '../users/profile_user.dart';
+import '../profile/profile_user_screen.dart';
 
 class PurchaseRequestorForm extends StatefulWidget {
   const PurchaseRequestorForm({super.key, required this.onSave, required this.initialOrder});
