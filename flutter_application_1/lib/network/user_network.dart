@@ -3,6 +3,30 @@ import 'package:flutter_application_1/models/user_model.dart';
 import 'package:flutter_application_1/network/api.dart';
 
 class UserNetwork {
+  // Récupère les détails d'un utilisateur via l'API user/users-with-details/{id}/
+  Future<User?> getUserDetails(int userId) async {
+    try {
+      final response = await api.dio.get(
+        '${APIS.baseUrl}user/users-with-details/$userId/',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer ${APIS().token}',
+            'ngrok-skip-browser-warning': 'true',
+          },
+        ),
+      );
+      if (response.statusCode == 200) {
+        final data = response.data;
+        if (data is Map<String, dynamic>) {
+          return User.fromJson(data);
+        }
+      }
+      return null;
+    } catch (e) {
+      print('Erreur lors de la récupération des détails utilisateur: $e');
+      return null;
+    }
+  }
   APIS api = APIS();
 
 // login
@@ -53,7 +77,7 @@ class UserNetwork {
 
   callUser(String email) {}
 
-  // Update user
+  // add user
   Future<dynamic> addUser(User user) async {
     try {
       final response = await api.dio.post(
@@ -124,7 +148,53 @@ class UserNetwork {
     }
   }
 
-  updateUser(User updatedUser) {}
+  Future<String> updateUser(User updatedUser) async {
+    try {
+      final response = await api.dio.put(
+        '${APIS.baseUrl}${APIS.userList}${updatedUser.id}/',
+        data: updatedUser.toJson(),
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer ${APIS().token}',
+            'ngrok-skip-browser-warning': 'true',
+          },
+        ),
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return 'User updated successfully.';
+      } else {
+        return 'Failed to update user: ${response.statusMessage}';
+      }
+    } catch (e) {
+      return 'Error updating user: $e';
+    }
+  }
 
   // addUser(User newUser) {} // Removed duplicate method
+  Future<User?> viewUser(int userId) async {
+  try {
+    final response = await api.dio.get(
+      '${APIS.baseUrl}user/users/$userId/',
+      options: Options(
+        headers: {
+          'Authorization': 'Bearer ${APIS().token}',
+          'ngrok-skip-browser-warning': 'true',
+        },
+      ),
+    );
+    if (response.statusCode == 200) {
+      // Correction ici : si c'est une liste, prends le premier élément
+      final data = response.data;
+      if (data is List && data.isNotEmpty) {
+        return User.fromJson(data[0]);
+      } else if (data is Map<String, dynamic>) {
+        return User.fromJson(data);
+      }
+    }
+    return null;
+  } catch (e) {
+    print('Erreur lors de la récupération de l\'utilisateur: $e');
+    return null;
+  }
+}
 }

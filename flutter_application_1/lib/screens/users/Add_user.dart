@@ -7,8 +7,8 @@ import 'package:flutter_application_1/models/user_model.dart';
 import 'package:flutter_application_1/network/profile_network.dart';
 import 'package:image_picker/image_picker.dart';
 
-import 'package:flutter_application_1/models/user.dart'; // <-- Assure-toi que ce chemin est correct
-import 'package:flutter_application_1/network/user_network.dart'; // <-- Assure-toi que ce chemin est correct
+
+import 'package:flutter_application_1/network/user_network.dart'; 
 
 
 
