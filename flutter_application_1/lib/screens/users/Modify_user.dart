@@ -555,17 +555,19 @@ class _ModifyUserPageState extends State<ModifyUserPage> {
       //                   lastName: _lastNameController.text,
       //                   isSuperuser: widget.user.isSuperuser,
       //                   password: _passwordController.text,
+      //                   profileId: widget.user.profileId,
+      //                   role: widget.user.role,
       //                 );
-        
+      //
       //                 print(updatedUser.toJson());
-        
+      //
       //                 String result = await UserNetwork().updateUser(updatedUser);
-        
+      //
       //                 ScaffoldMessenger.of(context).showSnackBar(
       //                   SnackBar(content: Text(result)),
       //                 );
-        
-      //                 if (result.contains('success')) {
+      //
+      //                 if (result.contains('successfully')) {
       //                   Navigator.pop(context); // Retour à la liste après succès
       //                 }
       //               },
