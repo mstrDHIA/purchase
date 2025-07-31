@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/network/change_password.dart';
+import 'package:flutter_application_1/models/change_password.dart';
 
 class PasswordPage extends StatefulWidget {
   const PasswordPage({super.key});
@@ -198,21 +200,34 @@ class _PasswordPageState extends State<PasswordPage> {
                                   : () async {
                                       if (_formKey.currentState?.validate() ?? false) {
                                         setState(() => _loading = true);
-                                        await Future.delayed(const Duration(seconds: 1));
-                                        setState(() => _loading = false);
-                                        showDialog(
-                                          context: context,
-                                          builder: (_) => AlertDialog(
-                                            title: const Text('Success'),
-                                            content: const Text('Your password has been updated.'),
-                                            actions: [
-                                              TextButton(
-                                                onPressed: () => Navigator.of(context).pop(),
-                                                child: const Text('OK'),
-                                              ),
-                                            ],
+                                        final success = await ChangePasswordNetwork(api: null).updatePassword(
+                                          ChangePasswordRequest(
+                                            oldPassword: _currentController.text,
+                                            newPassword: _newController.text,
                                           ),
+                                          // Provide the second required argument here, e.g., a context or userId as needed
+                                          context, // <-- Replace with the correct argument type if not context
                                         );
+                                        setState(() => _loading = false);
+                                        if (success) {
+                                          showDialog(
+                                            context: context,
+                                            builder: (_) => AlertDialog(
+                                              title: const Text('Success'),
+                                              content: const Text('Your password has been updated.'),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () => Navigator.of(context).pop(),
+                                                  child: const Text('OK'),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        } else {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(content: Text('Password update failed!')),
+                                          );
+                                        }
                                       }
                                     },
                               child: _loading

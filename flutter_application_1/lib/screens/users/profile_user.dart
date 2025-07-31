@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // Import for Clipboard
+import 'package:flutter_application_1/network/profile_network.dart';
 import 'package:flutter_application_1/screens/Purchase%20order/Purchase_form.dart';
 import 'package:flutter_application_1/screens/Purchase%20order/pushase_order.dart'; // Add this import at the top if not present
 import 'dart:io';
@@ -57,25 +58,27 @@ class Profileuserpage extends StatelessWidget {
 }
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key, required Map<String, String> user});
+  final Map<String, dynamic> user;
+  const ProfilePage({super.key, required this.user});
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  bool _isProfileLoading = false;
   // Add FocusNodes for better keyboard navigation and focus management
   final FocusNode _nameFocusNode = FocusNode();
   final FocusNode _lastNameFocusNode = FocusNode();
   final FocusNode _emailFocusNode = FocusNode();
   final FocusNode _usernameSuffixFocusNode = FocusNode();
 
-  final TextEditingController _nameController = TextEditingController(text: 'Amélie');
-  final TextEditingController _lastNameController = TextEditingController(text: 'Laurent');
-  final TextEditingController _emailController = TextEditingController(text: 'Amélie@untitleddui.com');
-  final TextEditingController _usernamePrefixController = TextEditingController(text: 'untitledui.com/');
-  final TextEditingController _usernameSuffixController = TextEditingController(text: 'amelie');
-  final TextEditingController _roleController = TextEditingController(text: 'Member'); // Consider making this a Dropdown or static text
+  late TextEditingController _nameController;
+  late TextEditingController _lastNameController;
+  late TextEditingController _emailController;
+  late TextEditingController _usernamePrefixController;
+  late TextEditingController _usernameSuffixController;
+  late TextEditingController _roleController;
 
   // Add available roles
   final List<String> _roles = ['Member', 'Admin', 'Editor', 'Viewer'];
@@ -83,6 +86,59 @@ class _ProfilePageState extends State<ProfilePage> {
   File? _profileImageFile;
 
   bool isEditing = false; // Add this variable
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController();
+    _lastNameController = TextEditingController(text: widget.user["profile_id"]["last_name"]?.toString() ?? "");
+    _emailController = TextEditingController(text: widget.user["email"]?.toString() ?? "");
+    _usernamePrefixController = TextEditingController(text: "untitledui.com/");
+    _usernameSuffixController = TextEditingController(text: widget.user["username"]?.toString() ?? "");
+    _roleController = TextEditingController(text: widget.user["role"]?.toString() ?? "Member");
+
+    // Récupère le first_name et last_name depuis le profile si profile_id existe
+    final profileId = widget.user["profile_id"];
+    if (profileId != null) {
+      setState(() {
+        _isProfileLoading = true;
+      });
+      _fetchProfileNames(profileId);
+    } else {
+      _nameController.text = widget.user["first_name"]?.toString() ?? "";
+      _lastNameController.text = widget.user["last_name"]?.toString() ?? "";
+    }
+  }
+
+  Future<void> _fetchProfileNames(dynamic profileId) async {
+    int? pid;
+    if (profileId is int) {
+      pid = profileId;
+    } else if (profileId is String) {
+      pid = int.tryParse(profileId);
+    }
+    if (pid == null) return;
+    try {
+      // Remplace par ton appel réseau réel pour récupérer le profil
+      final profile = await ProfileNetwork().viewProfile(pid);
+      if (profile != null) {
+        setState(() {
+          _nameController.text = profile.firstName ?? "";
+          _lastNameController.text = profile.lastName ?? "";
+          _isProfileLoading = false;
+        });
+      } else {
+        setState(() {
+          _isProfileLoading = false;
+        });
+      }
+    } catch (e) {
+      print("Erreur lors de la récupération du profil: $e");
+      setState(() {
+        _isProfileLoading = false;
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -132,6 +188,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final hasProfile = widget.user["profile_id"] != null;
     return Scaffold(
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
@@ -159,19 +216,29 @@ class _ProfilePageState extends State<ProfilePage> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      '${_nameController.text} ${_lastNameController.text}',
-                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
+                    _isProfileLoading
+                        ? SizedBox(
+                            width: 180,
+                            child: LinearProgressIndicator(minHeight: 2),
+                          )
+                        : Text(
+                            '${_nameController.text} ${_lastNameController.text}',
+                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
                           ),
-                    ),
                     Text(
                       _emailController.text,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: Colors.grey[600],
                           ),
                     ),
+                    if (!hasProfile)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        
+                      ),
                   ],
                 ),
                 const Spacer(),
@@ -197,12 +264,47 @@ class _ProfilePageState extends State<ProfilePage> {
                   child: const Text('Copy link'),
                 ),
                 const SizedBox(width: 12),
-                // EDIT BUTTON
+                
                 OutlinedButton.icon(
-                  onPressed: () {
-                    setState(() {
-                      isEditing = !isEditing;
-                    });
+                  onPressed: () async {
+                    if (isEditing) {
+                      
+                      dynamic idValue = widget.user["id"];
+                      int? userId;
+                      if (idValue is int) {
+                        userId = idValue;
+                      } else if (idValue is String) {
+                        userId = int.tryParse(idValue);
+                      } else {
+                        userId = null;
+                      }
+                      if (userId == null || userId == 0) {
+                        _showSnackBar("ID utilisateur invalide.");
+                        return;
+                      }
+                      print("ID reçu dans widget.user: $idValue");
+                      // Prépare les données à envoyer
+                      final data = {
+                        "first_name": _nameController.text,
+                        "last_name": _lastNameController.text,
+                        "email": _emailController.text,
+                        "username": _usernameSuffixController.text,
+                        "role": _roleController.text,
+                      };
+                      // Appel API
+                      final result = await ProfileNetwork().updateProfile(
+                        Profile.fromJson(data),
+                        userId,
+                      );
+                      _showSnackBar(result);
+                      setState(() {
+                        isEditing = false;
+                      });
+                    } else {
+                      setState(() {
+                        isEditing = true;
+                      });
+                    }
                   },
                   icon: Icon(isEditing ? Icons.check : Icons.edit, color: Colors.deepPurple),
                   label: Text(isEditing ? 'Save' : 'Edit', style: const TextStyle(color: Colors.deepPurple)),
@@ -220,16 +322,41 @@ class _ProfilePageState extends State<ProfilePage> {
             const SizedBox(height: 32),
 
             // Form Fields
-            _buildTextFieldRow(
-              context,
-              labelText: 'Name',
-              controller1: _nameController,
-              controller2: _lastNameController,
-              focusNode1: _nameFocusNode,
-              focusNode2: _lastNameFocusNode,
-              hintText1: 'Amélie',
-              hintText2: 'Laurent',
-              enabled: isEditing, // Pass enabled state
+            // First name
+            Text(
+              'First name',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
+                  ),
+            ),
+            const SizedBox(height: 8),
+            _buildGreyTextField(
+              _nameController,
+              focusNode: _nameFocusNode,
+              hintText: 'Prénom',
+              textCapitalization: TextCapitalization.words,
+              textInputAction: TextInputAction.next,
+              enabled: isEditing,
+            ),
+            const SizedBox(height: 24),
+
+            // Last name
+            Text(
+              'Last name',
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
+                  ),
+            ),
+            const SizedBox(height: 8),
+            _buildGreyTextField(
+              _lastNameController,
+              focusNode: _lastNameFocusNode,
+              hintText: 'Nom',
+              textCapitalization: TextCapitalization.words,
+              textInputAction: TextInputAction.done,
+              enabled: isEditing,
             ),
             const SizedBox(height: 24),
             _buildEmailField(context, _emailController, _emailFocusNode, enabled: isEditing),

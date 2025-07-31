@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+
 import 'package:flutter_application_1/controllers/user_controller.dart';
+import 'package:flutter_application_1/controllers/role_controller.dart';
 
 import 'package:flutter_application_1/models/user_model.dart';
 import 'package:flutter_application_1/screens/Dashboard/Dashboard.dart' as dashboard;
@@ -34,11 +36,7 @@ import 'widgets/sidebar.dart';
 
 void main() {
   runApp(
-     // Replace with a valid User object
-    // home: MainScreen(),
-    MyApp(),
-
-    
+    const MyApp(),
   );
 }
 
@@ -50,60 +48,32 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => UserController()),
+        ChangeNotifierProvider(create: (_) => RoleController()),
       ],
-      // builder: (context,child) {
-      //   // return 
-        
-      // },
-      child: MaterialApp.router(
-          routerConfig: router,
-          title: 'Purchase Requestor',
-          debugShowCheckedModeBanner: false,
-          theme: ThemeData(
-            primarySwatch: Colors.deepPurple,
-            scaffoldBackgroundColor: const Color(0xFFF8F8FB),
-            elevatedButtonTheme: ElevatedButtonThemeData(
-              style: ElevatedButton.styleFrom(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                textStyle: const TextStyle(fontSize: 16),
-              ),
-            ),
-            inputDecorationTheme: InputDecorationTheme(
-              filled: true,
-              fillColor: const Color(0xFFEDEDED),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide.none,
-              ),
+      child: MaterialApp(
+        title: 'Purchase Requestor',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          primarySwatch: Colors.deepPurple,
+          scaffoldBackgroundColor: const Color(0xFFF8F8FB),
+          elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              textStyle: const TextStyle(fontSize: 16),
             ),
           ),
-          // initialRoute: '/requestor_order',
-          // routes: {
-          //   '/login': (context) => const SignInPage(),
-          //   '/password': (context) => const PasswordPage(),
-          //   '/users': (context) => const users_list.UserListPage(),
-          //   '/role': (context) => const RolePage(),
-          //   '/permission': (context) => const PermissionPage(),
-          //   '/profile': (context) => ProfilePage(user: {}),
-          //   '/requestor_order': (context) => requestor_order.PurchaseRequestPage(),
-          //   '/purchase_order': (context) => const PurchaseOrderPage(),
-          //   '/supplier_registration': (context) => const SupplierRegistrationPage(),
-          //   '/edit_supplier': (context) => const EditSupplierPage(),
-          //   '/view_supplier': (context) => const ViewSupplierPage(),
-          //   '/add_supplier': (context) => const AddSupplierPage(),
-          //   '/dashboard': (context) => const dashboard.DashboardPage(),
-          //   '/product': (context) => const ProductPage(),
-          //   '/requestor_form': (context) => PurchaseRequestorForm(
-          //     onSave: (order) {
-          //       // TODO: Implement save logic
-          //     },
-          //     initialOrder: <String, dynamic>{},
-          //   ),
-          //   // Add any additional routes here
-          // },
-        
+          inputDecorationTheme: InputDecorationTheme(
+            filled: true,
+            fillColor: const Color(0xFFEDEDED),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: BorderSide.none,
+            ),
+          ),
         ),
-
+        home: const MainScreen(), // <-- Ajoute cette ligne
+        // routerConfig: router,   // <-- Commente ou supprime cette ligne
+      ),
     );
   }
 }

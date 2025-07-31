@@ -1,3 +1,6 @@
+import 'package:flutter_application_1/models/profile.dart';
+import 'package:flutter_application_1/models/role.dart';
+
 extension UserComputedFields on User {
   String get name => '[200m$firstName $lastName[0m';
   String get status => isSuperuser ? 'Active' : 'Inactive';
@@ -12,10 +15,14 @@ class User {
   final bool isSuperuser;
   final String password;
   final int? profileId;
-  final String? role;
+  final int? role_id;
+  final Profile? profile;
+  final Role? role;
 
-  User({
+  User( {
     required this.id,
+    this.role_id,
+    this.profile,
     required this.username,
     required this.email,
     required this.firstName,
@@ -35,10 +42,27 @@ class User {
       lastName: json['last_name'] ?? '',
       isSuperuser: json['is_superuser'] ?? false,
       password: json['password'] ?? '',
-      profileId: json['profile_id'] ?? json['profileId'],
-      role: json['role'],
+      profile: json['profile_id'] != null
+          ? Profile.fromJson(Map<String, dynamic>.from(json['profile_id']))
+          : null,
+      // profileId: json['profile_id'] ?? json['profileId'],
+      // role: json['role'],
     );
   }
+
+  get bio => null;
+
+  get location => null;
+
+  get country => null;
+
+  get state => null;
+
+  get city => null;
+
+  get zipCode => null;
+
+  get address => null;
 
   Map<String, dynamic> toJson() {
     return {

@@ -7,10 +7,9 @@ class ProfileNetwork {
   // View profile (get user profile by userId)
   Future<Profile?> viewProfile(int userId) async {
     try {
-      print('Fetching profile with userId: ' + userId.toString());
+      print('Fetching profile with profileId: ' + userId.toString());
       final response = await api.dio.get(
-        '${APIS.baseUrl}${APIS.viewProfile}',
-        queryParameters: {'user': userId},
+        '${APIS.baseUrl}${APIS.viewProfile}$userId/',
         options: Options(
           headers: {
             'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU0MzEyMzYxLCJpYXQiOjE3NTM3MDc1NjEsImp0aSI6ImYzYzg0MmY1OTEwMjQ4YWU5ZjMwYjdmOTc1OGY3YTI3IiwidXNlcl9pZCI6Mzd9.nHBidPRwwtBQ3WloMCMV9p9sQ0Oz7LZlf4rcYUag3_A',
@@ -20,13 +19,11 @@ class ProfileNetwork {
       );
       if (response.statusCode == 200) {
         final data = response.data;
-        if (data is List && data.isNotEmpty) {
-          return Profile.fromJson(data[0]);
-        } else if (data is Map && data.isNotEmpty) {
+        if (data is Map && data.isNotEmpty) {
           // Si l'API retourne un seul objet
           return Profile.fromJson(Map<String, dynamic>.from(data));
         } else {
-          print('No profile found for userId: $userId');
+          print('No profile found for profileId: $userId');
           return null;
         }
       } else {
@@ -64,4 +61,29 @@ class ProfileNetwork {
       return 'Error adding profile: $e';
     }
   }
+
+  Future<String> updateProfile(Profile profile, int profileId) async {
+    try {
+      final data = profile.toJson();
+      final response = await api.dio.patch(
+        '${APIS.baseUrl}profile/profiles/$profileId/',
+        data: data,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer ${api.token}',
+            'ngrok-skip-browser-warning': 'true',
+          },
+        ),
+      );
+      if (response.statusCode == 200) {
+        return 'Profile updated successfully.';
+      } else {
+        return 'Failed to update profile: ${response.statusMessage}';
+      }
+    } catch (e) {
+      return 'Error updating profile: $e';
+    }
+  }
+
+  createProfile(Profile profile) {}
 }
