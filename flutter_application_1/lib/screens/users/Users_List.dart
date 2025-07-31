@@ -44,11 +44,11 @@ class _UserListPageState extends State<UserListPage> {
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.refresh, color: Colors.deepPurple, size: 28),
-                  tooltip: 'Rafraîchir',
-                  onPressed: _loadUsers,
-                ),
+                // IconButton(
+                //   icon: const Icon(Icons.refresh, color: Colors.deepPurple, size: 28),
+                //   tooltip: 'Rafraîchir',
+                //   onPressed: _loadUsers,
+                // ),
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.deepPurple,
@@ -200,22 +200,32 @@ class _UserListPageState extends State<UserListPage> {
                                           IconButton(
                                             icon: const Icon(Icons.visibility, size: 18, color: Color(0xFF6F4DBF)),
                                             onPressed: () async {
-                                              // Charge le profil depuis l'API
-                                              final profile = await ProfileNetwork().viewProfile(user.profileId ?? user.id);
-                                              if (profile != null) {
+                                              // Affiche un loader pendant la récupération
+                                              showDialog(
+                                                context: context,
+                                                barrierDismissible: false,
+                                                builder: (_) => const Center(child: CircularProgressIndicator()),
+                                              );
+                                              final userDetails = await UserNetwork().viewUser(user.id);
+                                              Navigator.of(context, rootNavigator: true).pop(); // Ferme le loader
+
+                                              if (userDetails != null) {
                                                 Navigator.push(
                                                   context,
                                                   MaterialPageRoute(
                                                     builder: (_) => profile_user.ProfilePage(user: {
-                                                      "first_name": profile.firstName ?? "",
-                                                      "last_name": profile.lastName ?? "",
-                                                      "bio": profile.bio ?? "",
-                                                      "location": profile.location ?? "",
-                                                      "country": profile.country ?? "",
-                                                      "state": profile.state ?? "",
-                                                      "city": profile.city ?? "",
-                                                      "zip_code": profile.zipCode?.toString() ?? "",
-                                                      "address": profile.address ?? "",
+                                                      "id": user.id,
+                                                      "first_name": userDetails.firstName,
+                                                      "last_name": userDetails.lastName,
+                                                      "bio": userDetails.bio ?? "",
+                                                      "location": userDetails.location ?? "",
+                                                      "country": userDetails.country ?? "",
+                                                      "state": userDetails.state ?? "",
+                                                      "city": userDetails.city ?? "",
+                                                      "zip_code": userDetails.zipCode?.toString() ?? "",
+                                                      "address": userDetails.address ?? "",
+                                                      "email": userDetails.email,
+                                                      "username": userDetails.username,
                                                     }),
                                                   ),
                                                 );
@@ -324,20 +334,21 @@ class _UserListPageState extends State<UserListPage> {
   }
 
   void _confirmDelete(BuildContext context, User user) {
+    final parentContext = context; // Capture le contexte parent
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Delete User'),
         content: Text('Are you sure you want to delete ${user.username}?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () async {
-              Navigator.pop(context);
-              await Provider.of<UserController>(context, listen: false).deleteUser(context, user);
+              Navigator.pop(dialogContext);
+              await Provider.of<UserController>(parentContext, listen: false).deleteUser(parentContext, user);
             },
             child: const Text('Delete'),
           ),
