@@ -44,11 +44,7 @@ class _UserListPageState extends State<UserListPage> {
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                 ),
-                // IconButton(
-                //   icon: const Icon(Icons.refresh, color: Colors.deepPurple, size: 28),
-                //   tooltip: 'Rafraîchir',
-                //   onPressed: _loadUsers,
-                // ),
+
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.deepPurple,
