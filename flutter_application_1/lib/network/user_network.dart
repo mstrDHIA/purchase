@@ -203,4 +203,27 @@ class UserNetwork {
     return null;
   }
 }
+
+
+getDetailedUser(int userId) async {
+    try {
+      final response = await api.dio.get(
+        '${APIS.baseUrl}${APIS.viewProfileByUserId}$userId/',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer ${APIS().token}',
+            'ngrok-skip-browser-warning': 'true',
+          },
+        ),
+      );
+      if (response.statusCode == 200) {
+        return response;
+      } else {
+        throw Exception('Failed to load user details');
+      }
+    } catch (e) {
+      print('Error fetching user details: $e');
+      return null;
+    }
+  }
 }

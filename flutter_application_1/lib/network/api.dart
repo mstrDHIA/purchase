@@ -27,7 +27,7 @@ class APIS {
   static const String addRole = "role/roles/";
   static const String deleteRole = "role/roles/";
   static const String updateRole = "role/roles/";
-  static const String viewProfileByUserId = "user/users-with-details/<userId>/";
+  static const String viewProfileByUserId = "user/users-with-details/";
   static const String updateProfile = "profile/profiles/<profileId>/";
   static const String changePassword = "change-password/";
   static const String viewProfileById = "purchase_request/purchaseRequests/";

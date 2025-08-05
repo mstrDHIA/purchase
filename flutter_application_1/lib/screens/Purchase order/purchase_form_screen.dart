@@ -360,13 +360,13 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
         style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black),
       ),
       actions: [
-        IconButton(
-          icon: const Icon(Icons.person_outline, size: 28),
-          onPressed: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => ProfilePage(user: {})),
-          ),
-          tooltip: 'User Profile',
-        ),
+        // IconButton(
+        //   icon: const Icon(Icons.person_outline, size: 28),
+        //   onPressed: () => Navigator.of(context).push(
+        //     // MaterialPageRoute(builder: (context) => ProfilePage(user: {})),
+        //   ),
+        //   tooltip: 'User Profile',
+        // ),
       ],
     );
   }

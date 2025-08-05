@@ -62,6 +62,7 @@ class MyApp extends StatelessWidget {
       theme: Provider.of<ThemeProvider>(context).currentTheme,
       // home: const SignInPage(), // <-- Ajoute cette ligne
       routerConfig: router,   // <-- Commente ou supprime cette ligne
+      
     );
   }
 }
@@ -84,7 +85,7 @@ class _MainScreenState extends State<MainScreen> {
       case 'Dashboard':
         return const dashboard.DashboardPage();
       case 'Profile':
-        return ProfilePage(user: {});
+        // return ProfilePage(user: {});
       case 'Users':
         return const users_list.UserListPage();
       case 'Password':
