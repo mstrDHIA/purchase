@@ -11,14 +11,15 @@ class UserController extends ChangeNotifier {
   String? selectedStatus;
   int? sortColumnIndex;
   bool sortAscending = true;
+  User selectedUser = User();
 
   UserNetwork userNetwork = UserNetwork();
 
   List<User> get filteredUsers {
     List<User> filtered = users.where((user) {
       final matchesSearch = searchText.isEmpty ||
-          user.email.toLowerCase().contains(searchText.toLowerCase()) ||
-          user.username.toLowerCase().contains(searchText.toLowerCase());
+          user.email!.toLowerCase().contains(searchText.toLowerCase()) ||
+          user.username!.toLowerCase().contains(searchText.toLowerCase());
       final matchesPermission = selectedPermission == null || user.permission == selectedPermission;
       final matchesStatus = selectedStatus == null || user.status == selectedStatus;
       return matchesSearch && matchesPermission && matchesStatus;
@@ -28,13 +29,13 @@ class UserController extends ChangeNotifier {
       switch (sortColumnIndex) {
         case 0:
           filtered.sort((a, b) => sortAscending
-              ? a.email.compareTo(b.email)
-              : b.email.compareTo(a.email));
+              ? a.email!.compareTo(b.email!)
+              : b.email!.compareTo(a.email!));
           break;
         case 1:
           filtered.sort((a, b) => sortAscending
-              ? a.username.compareTo(b.username)
-              : b.username.compareTo(a.username));
+              ? a.username!.compareTo(b.username!)
+              : b.username!.compareTo(a.username!));
           break;
         case 2:
           filtered.sort((a, b) => sortAscending
@@ -90,12 +91,39 @@ class UserController extends ChangeNotifier {
   Future<void> deleteUser(BuildContext context, User user) async {
     isLoading = true;
     notifyListeners();
-    await userNetwork.deleteUser(user.id);
+    await userNetwork.deleteUser(user.id!);
     users.removeWhere((u) => u.id == user.id);
     isLoading = false;
     notifyListeners();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('${user.username} deleted')),
     );
+  }
+
+  Future<User> getDetailedUser(int userId) async {
+    isLoading = true;
+    notifyListeners();
+    print('getting response for user id: $userId');
+    Response response = await userNetwork.getDetailedUser(userId);
+    print('got response: ${response.data}');
+    if (response.statusCode == 200) {
+      print('response 200');
+      User user = User.fromJson(response.data[0]);
+      print('user name: ${user.profile?.firstName}');
+      isLoading = false;
+      // nameController.text = user.firstName ?? '';
+      selectedUser = user; // Store the user in the controller
+      // print( 'User details: ${response.data}');
+      notifyListeners();
+      return user;
+    } else {
+      isLoading = false;
+      notifyListeners();
+      throw Exception('Failed to load user details');
+    }
+  }
+
+  notify(){
+    notifyListeners();
   }
 }

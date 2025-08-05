@@ -46,7 +46,7 @@ final GoRouter router = GoRouter(
     ),
     GoRoute(
       path: '/profile',
-      builder: (context, state) => ProfilePage(user: {},),
+      // builder: (context, state) => ProfilePage(user: {},),
     ),
     GoRoute(
       path: '/purchase_order',
