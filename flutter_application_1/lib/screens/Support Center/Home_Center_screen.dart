@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/screens/Support Center/Add_Ticket.dart';
-import 'package:flutter_application_1/screens/Support Center/View_Ticket.dart';
-import 'package:flutter_application_1/screens/Support%20Center/Edit_Ticket.dart';
+import 'package:flutter_application_1/screens/Support%20Center/Add_Ticket_sreen.dart';
+import 'package:flutter_application_1/screens/Support%20Center/View_Ticket_screen.dart';
+import 'package:flutter_application_1/screens/Support%20Center/Edit_Ticket_screen.dart';
 
 class SupportCenterPage extends StatefulWidget {
   const SupportCenterPage({super.key});

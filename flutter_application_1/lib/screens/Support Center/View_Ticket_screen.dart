@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'Edit_Ticket.dart';
+import 'Edit_Ticket_screen.dart';
 
 class ViewTicketPage extends StatelessWidget {
   final Map<String, dynamic> ticket;

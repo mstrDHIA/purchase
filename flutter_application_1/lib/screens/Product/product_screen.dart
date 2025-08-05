@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/screens/Product/Addproduct.dart';
-import 'package:flutter_application_1/screens/users/Users_List.dart';
-import 'package:flutter_application_1/screens/Product/Addproduct.dart'; // Import de la page AddProductPage
+import 'package:flutter_application_1/screens/Product/add_product_screen.dart';
+import 'package:flutter_application_1/screens/users/users_List_screen.dart';
+import 'package:flutter_application_1/screens/Product/add_product_screen.dart'; // Import de la page AddProductPage
 
 class ProductPage extends StatefulWidget {
   const ProductPage({super.key});

@@ -1,20 +1,27 @@
 import 'package:flutter_application_1/main.dart';
-import 'package:flutter_application_1/screens/Product/Product.dart';
-import 'package:flutter_application_1/screens/Purchase%20order/pushase_order.dart';
-import 'package:flutter_application_1/screens/Supplier/Add_supplier.dart';
-import 'package:flutter_application_1/screens/Supplier/Edit_suplier.dart';
-import 'package:flutter_application_1/screens/Supplier/Supplier_registration.dart';
-import 'package:flutter_application_1/screens/Supplier/View_supplier.dart';
+import 'package:flutter_application_1/screens/Product/product_screen.dart';
+import 'package:flutter_application_1/screens/Purchase%20order/pushase_order_screen.dart';
+import 'package:flutter_application_1/screens/Supplier/Add_supplier_screen.dart';
+import 'package:flutter_application_1/screens/Supplier/Edit_suplier_screen.dart';
+import 'package:flutter_application_1/screens/Supplier/Supplier_registration_screen.dart';
+import 'package:flutter_application_1/screens/Supplier/View_supplier_screen.dart';
 import 'package:flutter_application_1/screens/auth/login_screen.dart';
 import 'package:flutter_application_1/screens/home/home_screen.dart';
-import 'package:flutter_application_1/screens/users/Password.dart';
-import 'package:flutter_application_1/screens/users/Role.dart';
-import 'package:flutter_application_1/screens/users/permission.dart';
-import 'package:flutter_application_1/screens/users/profile_user.dart';
+import 'package:flutter_application_1/screens/profile/profile_user.dart';
+import 'package:flutter_application_1/screens/users/password_screen.dart';
+import 'package:flutter_application_1/screens/Role/Role_screen.dart';
+import 'package:flutter_application_1/screens/users/permission_screen.dart';
+import 'package:flutter_application_1/screens/profile/profile_user_screen.dart';
+
+import 'package:flutter_application_1/screens/users/add_user_screen.dart';
+
 import 'package:go_router/go_router.dart';
 
 final GoRouter router = GoRouter(
   initialLocation: '/login',
+  // redirect: (context, state) => state. == '/login' || state.subloc == '/signup'
+  //     ? null
+  //     : '/main_screen',
   routes: [
     // GoRoute(
     //   path: '/',
@@ -30,7 +37,7 @@ final GoRouter router = GoRouter(
     ),
     GoRoute(
       path: '/password',
-      builder: (context, state) => PasswordPage(),
+      builder: (context, state) => PasswordScreen(),
     ),
     // GoRoute(
     //   path: '/users',
@@ -46,7 +53,8 @@ final GoRouter router = GoRouter(
     ),
     GoRoute(
       path: '/profile',
-      // builder: (context, state) => ProfilePage(user: {},),
+      builder: (context, state) => ProfilePageScreen(),
+      
     ),
     GoRoute(
       path: '/purchase_order',
@@ -75,6 +83,10 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: '/home_screen',
       builder: (context, state) => HomeScreen(),
+    ),
+    GoRoute(
+      path: '/add_user',
+      builder: (context, state) => AddUserPage(),
     ),
     
   ],

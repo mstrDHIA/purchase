@@ -3,10 +3,10 @@ import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter_application_1/models/user_model.dart';
 import 'package:flutter_application_1/network/profile_network.dart';
 import 'package:flutter_application_1/network/user_network.dart';
-import 'package:flutter_application_1/screens/users/Modify_user.dart';
-import 'package:flutter_application_1/screens/users/profile.dart';
-import 'package:flutter_application_1/screens/users/profile_user.dart' as profile_user;
-import 'package:flutter_application_1/screens/users/add_user.dart';
+import 'package:flutter_application_1/screens/profile/profile_user.dart';
+import 'package:flutter_application_1/screens/users/modify_user_screen.dart';
+import 'package:flutter_application_1/screens/profile/profile_user_screen.dart' as profile_user;
+import 'package:flutter_application_1/screens/users/add_user_screen.dart';
 import 'package:provider/provider.dart';
 
 class UserListPage extends StatefulWidget {
@@ -60,7 +60,7 @@ class _UserListPageState extends State<UserListPage> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) =>  AddUserPage()),
+                      MaterialPageRoute(builder: (_) => AddUserPage()),
                     );
                   },
                   icon: const Icon(Icons.add, color: Colors.white),
@@ -210,11 +210,13 @@ class _UserListPageState extends State<UserListPage> {
                                               Navigator.of(context, rootNavigator: true).pop(); // Ferme le loader
 
                                               if (userDetails != null) {
+                                                userController.selectedUserId=user.id!;
                                                 Navigator.push(
                                                   context,
                                                   MaterialPageRoute(
-                                                    builder: (_) => profile_user.ProfilePage(
-                                                      userId: user.id!,
+                                                    builder: (_) => ProfilePageScreen(
+                                                      // userId: user.id!,
+                                                     
                                                     //   user: {
                                                     //   "id": user.id,
                                                     //   "first_name": userDetails.firstName,

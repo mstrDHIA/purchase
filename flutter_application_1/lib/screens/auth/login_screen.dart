@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/main.dart';
 import 'package:flutter_application_1/network/user_network.dart';
 import 'package:flutter_application_1/screens/Home.dart';
+import 'package:flutter_application_1/controllers/user_controller.dart'; // Importez le UserController ici
 
-import 'package:flutter_application_1/screens/auth/Forget_password.dart';
+import 'package:flutter_application_1/screens/auth/forget_password_screen.dart';
 
 import 'package:flutter_application_1/screens/auth/signup_screen.dart';
 import 'package:flutter_application_1/screens/home/home_screen.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart'; // Importez Provider ici
 
 class SignInPage extends StatefulWidget {
   const SignInPage({super.key});
@@ -23,6 +25,13 @@ class _SignInPageState extends State<SignInPage> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   String _selectedRole = 'Utilisateur'; 
+  late UserController userController ;
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    userController = Provider.of<UserController>(context, listen: false);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -217,38 +226,50 @@ class _SignInPageState extends State<SignInPage> {
                               ),
                             ),
                             const SizedBox(height: 24),
-                           ElevatedButton(onPressed: (){
-                            // if (_formKey.currentState!.validate()) {
-                              // Simulate a login action
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Logging in...')),
-                              );
-                              // Navigate to the main page after successful login
-                              UserNetwork userNetwork = UserNetwork();
-                              var catchError = userNetwork.login(_emailController.text, _passwordController.text)
-                                .then((message) {
-                                  // ScaffoldMessenger.of(context).showSnackBar(
-                                  //   SnackBar(content: Text(message)),
-                                  // );
-                                  // Navigate to the main page
-                                  (context).go('/main_screen');
-                                  // Navigator.of(context).pushReplacement(
-                                  //   MaterialPageRoute(builder: (context) => const MainScreen()),
-                                  // );
-                                })
-                                .catchError((error) {
-                                  print(error);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Login failed: $error')),
-
-                                  );
-                                });
-                              // Navigator.of(context).pushReplacement(
-                              //   MaterialPageRoute(builder: (context) => const MainPage()),
-                              // );
-                            // }
-                           }, child: Text('Login'))
-                      
+                            ElevatedButton(
+                              onPressed: () {
+                                userController.login(
+                                  _emailController.text,
+                                  _passwordController.text,
+                                  context
+                                );
+                                // .then((userId) {
+                                //   if (userId != null) {
+                                //     userController.setCurrentUserId(userId);
+                                //     context.go('/main_screen');
+                                //   } else {
+                                //     ScaffoldMessenger.of(context).showSnackBar(
+                                //       const SnackBar(content: Text('Login failed: Invalid credentials')),
+                                //     );
+                                //   }
+                                // }).catchError((error) {
+                                //   ScaffoldMessenger.of(context).showSnackBar(
+                                //     SnackBar(content: Text('Login failed: $error')),
+                                //   );
+                                // });
+                                // ScaffoldMessenger.of(context).showSnackBar(
+                                //   const SnackBar(content: Text('Logging in...')),
+                                // );
+                                // UserNetwork userNetwork = UserNetwork();
+                                // userNetwork.login(_emailController.text, _passwordController.text)
+                                //   .then((userId) {
+                                //     if (userId != null) {
+                                //       Provider.of<UserController>(context, listen: false).setCurrentUserId(userId);
+                                //       context.go('/main_screen');
+                                //     } else {
+                                //       ScaffoldMessenger.of(context).showSnackBar(
+                                //         const SnackBar(content: Text('Login failed: Invalid credentials')),
+                                //       );
+                                //     }
+                                  // })
+                                  // .catchError((error) {
+                                  //   ScaffoldMessenger.of(context).showSnackBar(
+                                  //     SnackBar(content: Text('Login failed: $error')),
+                                  //   );
+                                  // });
+                              },
+                              child: const Text('Login'),
+                            ),
                           ],
                         ),
                       ),

@@ -3,8 +3,8 @@ import 'package:flutter/services.dart'; // Import for Clipboard
 import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter_application_1/models/user_model.dart';
 import 'package:flutter_application_1/network/profile_network.dart';
-import 'package:flutter_application_1/screens/Purchase%20order/Purchase_form.dart';
-import 'package:flutter_application_1/screens/Purchase%20order/pushase_order.dart'; // Add this import at the top if not present
+// import 'package:flutter_application_1/screens/Purchase%20order/Purchase_form.dart';
+// import 'package:flutter_application_1/screens/Purchase%20order/pushase_order.dart'; // Add this import at the top if not present
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';

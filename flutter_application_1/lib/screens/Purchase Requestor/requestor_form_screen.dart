@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/screens/Purchase%20order/pushase_order.dart';
+import 'package:flutter_application_1/controllers/user_controller.dart';
+import 'package:flutter_application_1/network/purchase_request_network.dart'; // <-- Add this import
+import 'package:flutter_application_1/screens/Purchase%20order/pushase_order_screen.dart';
 import 'package:intl/intl.dart';
-import '../users/profile_user.dart';
+import '../profile/profile_user_screen.dart';
+import 'dart:convert';
+import 'package:provider/provider.dart';
 
 class PurchaseRequestorForm extends StatefulWidget {
   const PurchaseRequestorForm({super.key, required this.onSave, required this.initialOrder});
@@ -17,19 +21,21 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
   final TextEditingController quantityController = TextEditingController();
   final TextEditingController noteController = TextEditingController();
   final TextEditingController dueDateController = TextEditingController();
+  final TextEditingController titleController = TextEditingController();
+  final TextEditingController descriptionController = TextEditingController();
 
-  // Define the purchase requests list
   final List<Map<String, dynamic>> _PurchaseRequests = [];
-
   String? selectedPriority;
   DateTime? selectedDueDate;
-
-  // Add this list to store products
   List<Map<String, dynamic>> products = [];
+  late UserController userController;
+
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
+    userController = Provider.of<UserController>(context, listen: false);
     if (widget.initialOrder.isNotEmpty) {
       productController.text = widget.initialOrder['product'] ?? '';
       quantityController.text = widget.initialOrder['quantity']?.toString() ?? '';
@@ -48,6 +54,8 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
     quantityController.dispose();
     noteController.dispose();
     dueDateController.dispose();
+    titleController.dispose();
+    descriptionController.dispose();
     super.dispose();
   }
 
@@ -66,16 +74,13 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
     }
   }
 
-  void _save({bool addAnother = false}) {
-    // Check that at least one product has been added
+  Future<void> _save({bool addAnother = false}) async {
     if (products.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please add at least one product')),
       );
       return;
     }
-
-    // Check that each product has a name and a quantity
     for (final p in products) {
       if ((p['product'] == null || p['product'].toString().isEmpty) ||
           (p['quantity'] == null || p['quantity'].toString().isEmpty)) {
@@ -85,24 +90,18 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
         return;
       }
     }
-
-    // Check due date
     if (selectedDueDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select a due date')),
       );
       return;
     }
-
-    // Check priority
     if (selectedPriority == null || selectedPriority!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select a priority')),
       );
       return;
     }
-
-    // Check that due date is after submission date
     final dateSubmitted = DateTime.now();
     if (!selectedDueDate!.isAfter(dateSubmitted)) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -111,34 +110,51 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
       return;
     }
 
+    final userId = Provider.of<UserController>(context, listen: false).currentUserId;
+
     final order = {
+      'title': 'qqqqq',
+      'description': 'qqqqqq',
       'products': List<Map<String, dynamic>>.from(products),
-      'dueDate': selectedDueDate,
+      'dueDate': selectedDueDate!.toIso8601String(),
       'priority': selectedPriority,
       'note': noteController.text,
-      'dateSubmitted': DateTime.now(),
-      // Ajoute d'autres champs si besoin
+      'dateSubmitted': dateSubmitted.toIso8601String(),
+      'requested_by': userController.currentUserId,
+      'approved_by': null,
     };
 
-    if (addAnother) {
-      // Clear fields for a new entry
-      productController.clear();
-      quantityController.clear();
-      noteController.clear();
-      dueDateController.clear();
-      setState(() {
-        selectedPriority = null;
-        selectedDueDate = null;
-        products.clear(); // Clear the products list
-      });
+    setState(() => _isLoading = true);
 
-      // Notify the user
+    try {
+      // Save to API
+      final api = PurchaseRequestNetwork();
+      await api.createPurchaseRequest(order);
+
+      print(jsonEncode(order));
+
+      if (addAnother) {
+        productController.clear();
+        quantityController.clear();
+        noteController.clear();
+        dueDateController.clear();
+        setState(() {
+          selectedPriority = null;
+          selectedDueDate = null;
+          products.clear();
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Request saved! You can now add another.')),
+        );
+      } else {
+        Navigator.of(context).pop(order);
+      }
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Request saved! You can now add another.')),
+        SnackBar(content: Text('Failed to save: $e')),
       );
-    } else {
-      // Return the order to the previous page
-      Navigator.of(context).pop(order);
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
@@ -163,7 +179,7 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
       context,
       MaterialPageRoute(
         builder: (context) => PurchaseRequestorForm(
-          onSave: (_) {}, // inutile ici
+          onSave: (_) {},
           initialOrder: {},
         ),
       ),
@@ -194,7 +210,7 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () {
-            Navigator.of(context).pop(); // Navigate back to the previous page
+            Navigator.of(context).pop();
           },
         ),
         title: const Text(

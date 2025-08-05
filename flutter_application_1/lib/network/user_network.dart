@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_application_1/models/user_model.dart';
 import 'package:flutter_application_1/network/api.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 
 class UserNetwork {
   // Récupère les détails d'un utilisateur via l'API user/users-with-details/{id}/
@@ -30,27 +31,32 @@ class UserNetwork {
   APIS api = APIS();
 
 // login
-  Future<String> login(String username, String password) async {
-    // Simulate a network call
-    
-    
-    // Here you would typically make an HTTP request to the API
-    // For example:
-    final response = await api.dio.post(
-      '${APIS.baseUrl}${APIS.login}',
-      data: {'username': username, 'password': password},
-    );
-    
-    // For now, we will just return a success message
-    return 'Login successful for user: $username';
+   login(String email, String password) async {
+  final response = await api.dio.post(
+    '${APIS.baseUrl}${APIS.login}',
+    data: {'username': email, 'password': password},
+  );
+  // print(response.data);
+  // print(response.statusCode);
+
+  if (response.statusCode == 200) {
+    final data = response.data;
+    final accessToken = data['access'];
+    if (accessToken != null) {
+      // Map<String, dynamic> decodedToken = JwtDecoder.decode(accessToken);
+      return response; // Retourne les données de l'utilisateur
+      // return decodedToken['user_id'];
+    }
   }
+  return null;
+}
   // register
   Future<dynamic> register({required String username, required String password}) async {
     final response = await api.dio.post(
-      'https://d2e9d48e4ff7.ngrok-free.app/user/register/', // <-- corrige ici si besoin
+      'https://d2e9d48e4ff7.ngrok-free.app/user/register/',
       data: {
         'username': username,
-        'email': username, // ou un champ séparé si tu veux
+        'email': username, 
         'password': password,
       },
     );
@@ -183,7 +189,7 @@ class UserNetwork {
       ),
     );
     if (response.statusCode == 200) {
-      // Correction ici : si c'est une liste, prends le premier élément
+      
       final data = response.data;
       if (data is List && data.isNotEmpty) {
         return User.fromJson(data[0]);

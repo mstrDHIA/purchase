@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/screens/Purchase%20Requestor/request_view.dart';
-import 'package:flutter_application_1/screens/Purchase%20order/pushase_order.dart';
-import 'package:flutter_application_1/screens/Support%20Center/Home_Center.dart';
-import 'package:flutter_application_1/screens/users/Password.dart';
-import 'package:flutter_application_1/screens/users/permission.dart';
-import 'package:flutter_application_1/screens/users/profile_user.dart';
-import 'package:flutter_application_1/screens/Dashboard/Dashboard.dart' as dashboard;
+import 'package:flutter_application_1/screens/Purchase%20Requestor/request_view_screen.dart';
+import 'package:flutter_application_1/screens/Purchase%20order/pushase_order_screen.dart';
+import 'package:flutter_application_1/screens/Support%20Center/Home_Center_screen.dart';
+import 'package:flutter_application_1/screens/users/password_screen.dart';
+import 'package:flutter_application_1/screens/users/permission_screen.dart';
+import 'package:flutter_application_1/screens/profile/profile_user_screen.dart';
+import 'package:flutter_application_1/screens/Dashboard/dashboard_screen.dart' as dashboard;
 import 'package:flutter_application_1/screens/Home.dart' as home;
-import 'package:flutter_application_1/screens/Purchase%20Requestor/Requestor_order.dart' as requestor_order;
-import 'package:flutter_application_1/screens/Purchase%20Requestor/request_view.dart' as request_view;
-import 'package:flutter_application_1/screens/users/Users_List.dart' as users_list;
+import 'package:flutter_application_1/screens/Purchase%20Requestor/requestor_order_screen.dart' as requestor_order;
+import 'package:flutter_application_1/screens/Purchase%20Requestor/request_view_screen.dart' as request_view;
+import 'package:flutter_application_1/screens/users/users_List_screen.dart' as users_list;
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -31,7 +31,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 'Users':
         return const users_list.UserListPage();
       case 'Password':
-        return const PasswordPage();
+        return const PasswordScreen();
       case 'PurchaseRequest':
         return const requestor_order.PurchaseRequestPage();
       case 'Purchase Order':

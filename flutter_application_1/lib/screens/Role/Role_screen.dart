@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/controllers/role_controller.dart';
-import 'package:flutter_application_1/screens/users/Add_Role.dart';
-import 'package:flutter_application_1/screens/users/View_Role.dart';
-import 'package:flutter_application_1/screens/users/Edit_Role.dart';
+import 'package:flutter_application_1/screens/Role/add_Role_screen.dart';
+import 'package:flutter_application_1/screens/Role/edit_Role_screen.dart';
+import 'package:flutter_application_1/screens/Role/view_Role_screen.dart';
 import 'package:provider/provider.dart';
 
 class RolePage extends StatefulWidget {

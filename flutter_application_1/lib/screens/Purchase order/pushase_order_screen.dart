@@ -1,28 +1,30 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/screens/Purchase%20Requestor/Request_Edit.dart';
-import 'package:flutter_application_1/screens/Purchase%20Requestor/Requestor_Form.dart';
-import 'package:flutter_application_1/screens/Purchase%20Requestor/request_view.dart';
-import 'package:flutter_application_1/screens/Purchase%20order/pushase_order.dart' as purchase_order;
-// Make sure the above import points to the file where addPurchaseOrder is defined as a top-level function.
+import 'package:flutter_application_1/screens/Purchase%20order/purchase_form_screen.dart';
+import 'package:flutter_application_1/screens/Purchase%20order/view_purchase_screen.dart';
 import 'package:intl/intl.dart';
 
-class PurchaseRequestPage extends StatefulWidget {
-  const PurchaseRequestPage({super.key});
+class PurchaseOrderPage extends StatefulWidget {
+  const PurchaseOrderPage({super.key});
+
+  static final List<Map<String, dynamic>> purchaseOrders = [];
+
+  static void addPurchaseOrder(Map<String, dynamic> order) {
+    purchaseOrders.add(order);
+  }
 
   @override
-  State<PurchaseRequestPage> createState() => _PurchaseRequestPageState();
+  State<PurchaseOrderPage> createState() => PurchaseOrderPageState();
 }
 
-class _PurchaseRequestDataSource extends DataTableSource {
+class _PurchaseOrderDataSource extends DataTableSource {
   final List<Map<String, dynamic>> _data;
-  // ignore: unused_field
   final BuildContext _context;
   final DateFormat _dateFormat;
   final Function(Map<String, dynamic>) onView;
   final Function(Map<String, dynamic>) onEdit;
   final Function(Map<String, dynamic>) onDelete;
 
-  _PurchaseRequestDataSource(
+  _PurchaseOrderDataSource(
     this._data,
     this._context,
     this._dateFormat, {
@@ -47,37 +49,17 @@ class _PurchaseRequestDataSource extends DataTableSource {
           children: [
             IconButton(
               icon: const Icon(Icons.remove_red_eye_outlined),
-              onPressed: () {
-                Navigator.push(
-                  _context,
-                  MaterialPageRoute(
-                    builder: (context) => PurchaseRequestView(
-                      order: item, // Passe la ligne sélectionnée ici
-                      onSave: (_) {},
-                    ),
-                  ),
-                );
-              },
+              onPressed: () => onView(item),
               tooltip: 'View',
             ),
             IconButton(
               icon: const Icon(Icons.edit_outlined),
-              onPressed: () {
-                Navigator.push(
-                  _context,
-                  MaterialPageRoute(
-                    builder: (context) => RequestEditPage(
-                      request: item,
-                      onSave: (_) {},
-                    ),
-                  ),
-                );
-              },
+              onPressed: () => onEdit(item),
               tooltip: 'Edit',
             ),
             IconButton(
               icon: const Icon(Icons.delete_outline),
-              onPressed: () => onDelete(item), // Fixed typo here
+              onPressed: () => onDelete(item),
               tooltip: 'Delete',
             ),
           ],
@@ -154,11 +136,17 @@ class _PurchaseRequestDataSource extends DataTableSource {
   int get selectedRowCount => 0;
 }
 
-class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
+class PurchaseOrderPageState extends State<PurchaseOrderPage> {
   final DateFormat _dateFormat = DateFormat('MMM dd, yyyy');
 
-  // Ta liste principale
-  final List<Map<String, dynamic>> _PurchaseRequests = [];
+  @override
+  void initState() {
+    super.initState();
+    // Initialiser la liste locale avec les données statiques
+    _purchaseOrders = PurchaseOrderPage.purchaseOrders;
+  }
+
+  List<Map<String, dynamic>> _purchaseOrders = [];
 
   int _rowsPerPage = PaginatedDataTable.defaultRowsPerPage;
   int? _sortColumnIndex;
@@ -170,7 +158,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
   DateTime? _selectedDueDate;
 
   List<Map<String, dynamic>> get _filteredAndSortedOrders {
-    List<Map<String, dynamic>> orders = List.from(_PurchaseRequests);
+    List<Map<String, dynamic>> orders = List.from(_purchaseOrders);
 
     // Filtres
     if (_priorityFilter != null) {
@@ -256,21 +244,21 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
     }
   }
 
-  void viewPurchaseRequest(Map<String, dynamic> order) {
+  void viewPurchaseOrder(Map<String, dynamic> order) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ViewPurchasePage(order: order),
+        builder: (context) => PurchaseOrderView(), // <-- Remplace ici
       ),
     );
   }
 
-  void editPurchaseRequest(Map<String, dynamic> order) async {
+  void editPurchaseOrder(Map<String, dynamic> order) async {
     final updatedOrder = await Navigator.push<Map<String, dynamic>>(
       context,
       MaterialPageRoute(
-        builder: (context) => PurchaseRequestView(
-          order: order,
+        builder: (context) => PurchaseOrderForm(
+          initialOrder: order,
           onSave: (newOrder) {
             Navigator.pop(context, newOrder);
           },
@@ -280,9 +268,9 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
 
     if (updatedOrder != null) {
       setState(() {
-        final index = _PurchaseRequests.indexWhere((o) => o['id'] == updatedOrder['id']);
+        final index = _purchaseOrders.indexWhere((o) => o['id'] == updatedOrder['id']);
         if (index != -1) {
-          _PurchaseRequests[index] = updatedOrder;
+          _purchaseOrders[index] = updatedOrder;
         }
       });
       ScaffoldMessenger.of(context).showSnackBar(
@@ -291,57 +279,65 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
     }
   }
 
-  void deletePurchaseRequest(Map<String, dynamic> order) async {
+  void deletePurchaseOrder(Map<String, dynamic> order) async {
     final bool? confirmed = await showDialog<bool>(
       context: context,
-      barrierColor: Colors.black.withOpacity(0.2),
+      barrierDismissible: false,
       builder: (context) => Dialog(
-        backgroundColor: const Color(0xF7F3F7FF),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(
-            maxWidth: 340, // Taille max du dialog (plus petit)
-            minWidth: 260,
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+        ),
+        backgroundColor: const Color(0xFFF7F2FA),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18), // <-- padding réduit
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: 320, // <-- largeur max réduite
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Delete Purchase',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
+                  'Delete User',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold), // <-- taille réduite
+                  textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 Text(
-                  'Are you sure you want to delete ${order['id']}?.',
-                  style: const TextStyle(fontSize: 16),
+                  'Are you sure you want to delete ${order['actionCreatedBy']}?',
+                  style: const TextStyle(fontSize: 14), // <-- taille réduite
+                  textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 20),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     TextButton(
                       onPressed: () => Navigator.pop(context, false),
                       child: const Text(
                         'Cancel',
-                        style: TextStyle(color: Colors.deepPurple, fontSize: 16),
+                        style: TextStyle(
+                          color: Color(0xFF6F4DBF),
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14, // <-- taille réduite
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 16),
                     ElevatedButton(
                       onPressed: () => Navigator.pop(context, true),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.red,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 10),
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10), // <-- padding réduit
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        elevation: 0,
                       ),
-                      child: const Text('Delete', style: TextStyle(fontSize: 16)),
+                      child: const Text(
+                        'Delete',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14), // <-- taille réduite
+                      ),
                     ),
                   ],
                 ),
@@ -354,10 +350,10 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
 
     if (confirmed == true) {
       setState(() {
-        _PurchaseRequests.removeWhere((o) => o['id'] == order['id']);
+        _purchaseOrders.removeWhere((o) => o['id'] == order['id']);
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Purchase request ${order['id']} deleted')),
+        SnackBar(content: Text('Purchase order ${order['id']} deleted')),
       );
     }
   }
@@ -371,63 +367,40 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
     });
   }
 
-  void _openAddRequestForm() async {
-    final newOrder = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PurchaseRequestorForm(
-          onSave: (_) {},
-          initialOrder: {
-            'priority': 'High', // Définit "High" comme valeur par défaut
-          },
-        ),
-      ),
-    );
-    if (newOrder != null) {
-      setState(() {
-        final id = 'PR${_PurchaseRequests.length + 1}';
-        final order = {
-          'id': id,
-          'actionCreatedBy': 'Moi',
-          'dateSubmitted': newOrder['dateSubmitted'] ?? DateTime.now(),
-          'dueDate': newOrder['dueDate'] ?? DateTime.now().add(const Duration(days: 7)),
-          'priority': newOrder['priority'] ?? 'High', // Défaut "High"
-          'status': 'Pending',
-          ...newOrder,
-        };
-        _PurchaseRequests.add(order.cast<String, dynamic>());
-        // Ajoute aussi à la table des Purchase Orders
-        purchase_order.PurchaseOrderPage.addPurchaseOrder(order.cast<String, dynamic>());
-      });
-    }
-  }
-
-  void _addNewRequest(Map<String, dynamic> request) {
-    setState(() {
-      _PurchaseRequests.add(request); // Ajout local
-      purchase_order.PurchaseOrderPage.addPurchaseOrder(request); // Ajout à la table des orders
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    final dataSource = _PurchaseRequestDataSource(
+    final dataSource = _PurchaseOrderDataSource(
       _filteredAndSortedOrders,
       context,
       _dateFormat,
-      onView: viewPurchaseRequest,
-      onEdit: editPurchaseRequest,
-      onDelete: deletePurchaseRequest,
+      onView: viewPurchaseOrder,
+      onEdit: editPurchaseOrder,
+      onDelete: deletePurchaseOrder,
     );
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Purchase Requests'),
+        title: const Text('Purchase Orders'),
         actions: [
           ElevatedButton.icon(
-            onPressed: _openAddRequestForm,
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => PurchaseOrderForm(
+                    initialOrder: <String, dynamic>{},
+                    onSave: (newOrder) {
+                      setState(() {
+                        _purchaseOrders.add(newOrder);
+                      });
+                      Navigator.pop(context);
+                    },
+                  ),
+                ),
+              );
+            },
             icon: const Icon(Icons.add, color: Colors.white),
-            label: const Text('Add PR'),
+            label: const Text('Add PO'),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.deepPurple,
               foregroundColor: Colors.white,
@@ -451,7 +424,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
               child: Theme(
                 data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
                 child: PaginatedDataTable(
-                  header: const Text('Purchase Requests Table'),
+                  header: const Text('Purchase Orders Table'),
                   rowsPerPage: _rowsPerPage,
                   onRowsPerPageChanged: (r) {
                     if (r != null) {
@@ -462,7 +435,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                   },
                   sortColumnIndex: _sortColumnIndex,
                   sortAscending: _sortAscending,
-                  columnSpacing: 170, 
+                  columnSpacing: 180, 
                   horizontalMargin: 16, 
                   columns: [
                     DataColumn(
@@ -499,55 +472,83 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 0),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center, // <-- Ajouté pour centrer
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           // Filter by Priority
-          OutlinedButton(
-            style: OutlinedButton.styleFrom(
-              backgroundColor: const Color.fromARGB(255, 255, 255, 255),
-              foregroundColor: Colors.deepPurple,
-              side: BorderSide.none,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-              elevation: 0,
-            ),
-            onPressed: () {},
-            child: Row(
-              children: const [
-                Text(
-                  'Filter by Priority',
-                  style: TextStyle(
-                    color: Colors.deepPurple,
-                    fontWeight: FontWeight.w500,
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              setState(() {
+                _priorityFilter = value;
+              });
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(value: 'High', child: Text('High')),
+              const PopupMenuItem(value: 'Medium', child: Text('Medium')),
+              const PopupMenuItem(value: 'Low', child: Text('Low')),
+              if (_priorityFilter != null)
+                const PopupMenuItem(value: null, child: Text('Clear Priority')),
+            ],
+            child: OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                backgroundColor: const Color(0xFFF7F3FF),
+                foregroundColor: Colors.deepPurple,
+                side: BorderSide.none,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                elevation: 0,
+              ),
+              onPressed: null, // Désactive le onPressed ici
+              child: Row(
+                children: [
+                  Text(
+                    _priorityFilter == null ? 'Filter by Priority' : 'Priority: $_priorityFilter',
+                    style: const TextStyle(
+                      color: Colors.deepPurple,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-                Icon(Icons.arrow_drop_down, color: Colors.deepPurple),
-              ],
+                  const Icon(Icons.arrow_drop_down, color: Colors.deepPurple),
+                ],
+              ),
             ),
           ),
           const SizedBox(width: 8),
           // Filter by Status
-          OutlinedButton(
-            style: OutlinedButton.styleFrom(
-              backgroundColor: const Color(0xFFF7F3FF),
-              foregroundColor: Colors.deepPurple,
-              side: BorderSide.none,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-              elevation: 0,
-            ),
-            onPressed: () {},
-            child: Row(
-              children: const [
-                Text(
-                  'Filter by Status',
-                  style: TextStyle(
-                    color: Colors.deepPurple,
-                    fontWeight: FontWeight.w500,
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              setState(() {
+                _statusFilter = value;
+              });
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(value: 'Pending', child: Text('Pending')),
+              const PopupMenuItem(value: 'Approved', child: Text('Approved')),
+              const PopupMenuItem(value: 'Rejected', child: Text('Rejected')),
+              if (_statusFilter != null)
+                const PopupMenuItem(value: null, child: Text('Clear Status')),
+            ],
+            child: OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                backgroundColor: const Color(0xFFF7F3FF),
+                foregroundColor: Colors.deepPurple,
+                side: BorderSide.none,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                elevation: 0,
+              ),
+              onPressed: null,
+              child: Row(
+                children: [
+                  Text(
+                    _statusFilter == null ? 'Filter by Status' : 'Status: $_statusFilter',
+                    style: const TextStyle(
+                      color: Colors.deepPurple,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-                Icon(Icons.arrow_drop_down, color: Colors.deepPurple),
-              ],
+                  const Icon(Icons.arrow_drop_down, color: Colors.deepPurple),
+                ],
+              ),
             ),
           ),
           const SizedBox(width: 8),
@@ -653,11 +654,4 @@ class ViewPurchasePage extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Add a purchase order to your storage or list.
-/// This is a stub implementation. Replace with your actual logic.
-void addPurchaseOrder(Map<String, dynamic> order) {
-  // TODO: Implement the logic to add the purchase order.
-  print('Purchase request $order');
 }

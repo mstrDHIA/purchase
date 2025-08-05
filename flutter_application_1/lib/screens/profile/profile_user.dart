@@ -3,8 +3,8 @@ import 'package:flutter/services.dart'; // Import for Clipboard
 import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter_application_1/models/user_model.dart';
 import 'package:flutter_application_1/network/profile_network.dart';
-import 'package:flutter_application_1/screens/Purchase%20order/Purchase_form.dart';
-import 'package:flutter_application_1/screens/Purchase%20order/pushase_order.dart'; // Add this import at the top if not present
+import 'package:flutter_application_1/screens/Purchase%20order/purchase_form_screen.dart';
+import 'package:flutter_application_1/screens/Purchase%20order/pushase_order_screen.dart'; // Add this import at the top if not present
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -60,16 +60,16 @@ import 'package:image_picker/image_picker.dart';
 //   }
 // }
 
-class ProfilePage extends StatefulWidget {
+class ProfilePageScreen extends StatefulWidget {
   // final Map<String, dynamic> user;
-  final int userId;
-  const ProfilePage({super.key, required this.userId});
+  // final int userId;
+  const ProfilePageScreen({super.key, });
 
   @override
-  State<ProfilePage> createState() => _ProfilePageState();
+  State<ProfilePageScreen> createState() => _ProfilePageScreenState();
 }
 
-class _ProfilePageState extends State<ProfilePage> {
+class _ProfilePageScreenState extends State<ProfilePageScreen> {
   bool _isProfileLoading = false;
   // Add FocusNodes for better keyboard navigation and focus management
   final FocusNode _nameFocusNode = FocusNode();
@@ -106,7 +106,7 @@ class _ProfilePageState extends State<ProfilePage> {
     // _us
     // _roleController = TextEditingController();
     super.initState();
-    _nameController = TextEditingController(text: userController.selectedUser.profile?.firstName ?? userController.selectedUser.firstName);
+    // _nameController = TextEditingController(text: userController.selectedUser.profile?.firstName ?? userController.selectedUser.firstName);
     // _lastNameController = TextEditingController(text: widget.user["profile_id"]["last_name"]?.toString() ?? "");
     // _emailController = TextEditingController(text: widget.user["email"]?.toString() ?? "");
     // _usernamePrefixController = TextEditingController(text: "untitledui.com/");
@@ -161,7 +161,7 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Future<void> didChangeDependencies() async {
     super.didChangeDependencies();
-    final user = await userController.getDetailedUser(widget.userId);
+    final user = await userController.getDetailedUser(userController.selectedUserId!);
     // setState(() {
     //   _nameController.text = 'aaaaaaaa';
     //   // userController.selectedUser.profile?.firstName ?? user.firstName ?? '';
@@ -209,14 +209,14 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   // A helper function to show snackbars
-  void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        duration: const Duration(seconds: 2), // Shorter duration for quick feedback
-      ),
-    );
-  }
+  // void _showSnackBar(String message) {
+  //   ScaffoldMessenger.of(context).showSnackBar(
+  //     SnackBar(
+  //       content: Text(message),
+  //       duration: const Duration(seconds: 2), // Shorter duration for quick feedback
+  //     ),
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -293,7 +293,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     const Spacer(),
                     ElevatedButton(
                       onPressed: () async {
-                        print("name controller text: ${_nameController.text}");
+                        // print("name controller text: ${_nameController.text}");
                         // final String currentUsername = _usernameSuffixController.text.isNotEmpty
                         //     ? _usernameSuffixController.text
                         //     : 'user';
@@ -328,10 +328,10 @@ class _ProfilePageState extends State<ProfilePage> {
                           // } else {
                           //   userId = null;
                           // }
-                          if (widget.userId == null || widget.userId == 0) {
-                            _showSnackBar("ID utilisateur invalide.");
-                            return;
-                          }
+                          // if (widget.userId == null || widget.userId == 0) {
+                          //   _showSnackBar("ID utilisateur invalide.");
+                          //   return;
+                          // }
                           // print("ID reçu dans widget.user: $idValue");
                           // Prépare les données à envoyer
                           final data = {

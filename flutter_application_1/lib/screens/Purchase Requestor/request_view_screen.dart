@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/screens/Purchase%20order/Refuse_Purchase.dart';
-import 'package:flutter_application_1/screens/users/Modify_user.dart';
+import 'package:flutter_application_1/screens/Purchase%20order/refuse_purchase_screen.dart';
+import 'package:flutter_application_1/screens/users/modify_user_screen.dart';
 import 'package:intl/intl.dart';
 
 class PurchaseRequestView extends StatefulWidget {

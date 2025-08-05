@@ -1,7 +1,8 @@
 // ... imports
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/screens/users/profile_user.dart';
-import 'package:flutter_application_1/screens/users/role.dart'; // <-- Ajoute cet import
+import 'package:flutter_application_1/screens/Role/Role_screen.dart';
+// import 'package:flutter_application_1/screens/profile/profile_user_screen.dart';
+// import 'package:flutter_application_1/screens/users/role.dart'; // <-- Ajoute cet import
 
 class PermissionPage extends StatefulWidget {
   const PermissionPage({super.key});
