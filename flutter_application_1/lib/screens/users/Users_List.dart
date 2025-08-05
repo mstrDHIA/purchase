@@ -44,7 +44,11 @@ class _UserListPageState extends State<UserListPage> {
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                 ),
-
+                // IconButton(
+                //   icon: const Icon(Icons.refresh, color: Colors.deepPurple, size: 28),
+                //   tooltip: 'Rafraîchir',
+                //   // onPressed: _loadUsers,
+                // ),
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.deepPurple,
@@ -155,8 +159,8 @@ class _UserListPageState extends State<UserListPage> {
                                 rows: userController.filteredUsers.map((user) {
                                   return DataRow(
                                     cells: [
-                                      DataCell(Text(user.email, style: const TextStyle(fontSize: 15))),
-                                      DataCell(Text(user.username, style: const TextStyle(fontSize: 15))),
+                                      DataCell(Text(user.email!, style: const TextStyle(fontSize: 15))),
+                                      DataCell(Text(user.username!, style: const TextStyle(fontSize: 15))),
                                       DataCell(
                                         Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -202,27 +206,31 @@ class _UserListPageState extends State<UserListPage> {
                                                 barrierDismissible: false,
                                                 builder: (_) => const Center(child: CircularProgressIndicator()),
                                               );
-                                              final userDetails = await UserNetwork().viewUser(user.id);
+                                              final userDetails = await UserNetwork().viewUser(user.id!);
                                               Navigator.of(context, rootNavigator: true).pop(); // Ferme le loader
 
                                               if (userDetails != null) {
                                                 Navigator.push(
                                                   context,
                                                   MaterialPageRoute(
-                                                    builder: (_) => profile_user.ProfilePage(user: {
-                                                      "id": user.id,
-                                                      "first_name": userDetails.firstName,
-                                                      "last_name": userDetails.lastName,
-                                                      "bio": userDetails.bio ?? "",
-                                                      "location": userDetails.location ?? "",
-                                                      "country": userDetails.country ?? "",
-                                                      "state": userDetails.state ?? "",
-                                                      "city": userDetails.city ?? "",
-                                                      "zip_code": userDetails.zipCode?.toString() ?? "",
-                                                      "address": userDetails.address ?? "",
-                                                      "email": userDetails.email,
-                                                      "username": userDetails.username,
-                                                    }),
+                                                    builder: (_) => profile_user.ProfilePage(
+                                                      userId: user.id!,
+                                                    //   user: {
+                                                    //   "id": user.id,
+                                                    //   "first_name": userDetails.firstName,
+                                                    //   "last_name": userDetails.lastName,
+                                                    //   "bio": userDetails.bio ?? "",
+                                                    //   "location": userDetails.location ?? "",
+                                                    //   "country": userDetails.country ?? "",
+                                                    //   "state": userDetails.state ?? "",
+                                                    //   "city": userDetails.city ?? "",
+                                                    //   "zip_code": userDetails.zipCode?.toString() ?? "",
+                                                    //   "address": userDetails.address ?? "",
+                                                    //   "email": userDetails.email,
+                                                    //   "username": userDetails.username,
+                                                    // }
+                                                    )
+                                                    ,
                                                   ),
                                                 );
                                               } else {

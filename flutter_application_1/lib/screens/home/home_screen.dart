@@ -26,8 +26,8 @@ class _HomeScreenState extends State<HomeScreen> {
         return const home.HomePage();
       case 'Dashboard':
         return const dashboard.DashboardPage();
-      case 'Profile':
-        return ProfilePage(user: {});
+      // case 'Profile':
+      //   return ProfilePage(user: {});
       case 'Users':
         return const users_list.UserListPage();
       case 'Password':
