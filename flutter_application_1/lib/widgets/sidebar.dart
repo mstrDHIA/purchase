@@ -100,6 +100,7 @@ class _AppSidebarState extends State<AppSidebar> {
     {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
     {'label': 'Roles and access', 'icon': Icons.security},
     {'label': 'Support centre', 'icon': Icons.help},
+    {'label': 'Settings', 'icon': Icons.settings},
   ];
 
   @override

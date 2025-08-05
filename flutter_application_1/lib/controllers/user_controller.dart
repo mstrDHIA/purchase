@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/models/user_model.dart';
 import 'package:flutter_application_1/network/user_network.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:go_router/go_router.dart';
 
 class UserController extends ChangeNotifier {
   bool isLoading = false;
@@ -11,6 +13,8 @@ class UserController extends ChangeNotifier {
   String? selectedStatus;
   int? sortColumnIndex;
   bool sortAscending = true;
+
+  int? currentUserId; 
 
   UserNetwork userNetwork = UserNetwork();
 
@@ -97,5 +101,29 @@ class UserController extends ChangeNotifier {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('${user.username} deleted')),
     );
+  }
+
+  // void setCurrentUserId(int id) {
+  //   currentUserId = id;
+  //   notifyListeners();
+  // }
+
+
+  login(String email, String password,BuildContext context) async {
+    isLoading = true;
+    notifyListeners();
+    Response response = await userNetwork.login(email, password);
+    if (response.statusCode == 200) {
+      Map<String, dynamic> decodedToken = JwtDecoder.decode(response.data['access']);
+      currentUserId = decodedToken['user_id'];
+      context.go('/main_screen');
+      print(decodedToken);
+      print(response.data);
+      // Handle successful login
+    } else {
+      // Handle login error
+    }
+    isLoading = false;
+    notifyListeners();
   }
 }

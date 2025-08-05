@@ -1,10 +1,10 @@
 import 'package:flutter_application_1/main.dart';
-import 'package:flutter_application_1/screens/Product/Product.dart';
+import 'package:flutter_application_1/screens/Product/product_screen.dart';
 import 'package:flutter_application_1/screens/Purchase%20order/pushase_order_screen.dart';
-import 'package:flutter_application_1/screens/Supplier/Add_supplier.dart';
-import 'package:flutter_application_1/screens/Supplier/Edit_suplier.dart';
-import 'package:flutter_application_1/screens/Supplier/Supplier_registration.dart';
-import 'package:flutter_application_1/screens/Supplier/View_supplier.dart';
+import 'package:flutter_application_1/screens/Supplier/Add_supplier_screen.dart';
+import 'package:flutter_application_1/screens/Supplier/Edit_suplier_screen.dart';
+import 'package:flutter_application_1/screens/Supplier/Supplier_registration_screen.dart';
+import 'package:flutter_application_1/screens/Supplier/View_supplier_screen.dart';
 import 'package:flutter_application_1/screens/auth/login_screen.dart';
 import 'package:flutter_application_1/screens/home/home_screen.dart';
 import 'package:flutter_application_1/screens/users/password_screen.dart';

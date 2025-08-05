@@ -9,7 +9,7 @@ class RoleNetwork {
       final response = await _dio.get(
         APIS.baseUrl + 'role/roles/$id/',
         options: Options(headers: {
-          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU0MzEyMzYxLCJpYXQiOjE3NTM3MDc1NjEsImp0aSI6ImYzYzg0MmY1OTEwMjQ4YWU5ZjMwYjdmOTc1OGY3YTI3IiwidXNlcl9pZCI6Mzd9.nHBidPRwwtBQ3WloMCMV9p9sQ0Oz7LZlf4rcYUag3_A',
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU0OTE1NzQzLCJpYXQiOjE3NTQzMTA5NDMsImp0aSI6IjNjMDAyMjA4N2YxMTQyNjI5NmM4MmNlZTI0ZmQ0NDIzIiwidXNlcl9pZCI6NjF9.XwwEPGmilSuj-5tp-1IrTYkDxvr2hw6F4VRmo21VL9g',
           'ngrok-skip-browser-warning': 'true'}),
       );
       if (response.statusCode == 200) {
@@ -29,7 +29,7 @@ class RoleNetwork {
       final response = await _dio.get(
         APIS.baseUrl + 'role/roles/',
         options: Options(headers: {
-          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU0MzEyMzYxLCJpYXQiOjE3NTM3MDc1NjEsImp0aSI6ImYzYzg0MmY1OTEwMjQ4YWU5ZjMwYjdmOTc1OGY3YTI3IiwidXNlcl9pZCI6Mzd9.nHBidPRwwtBQ3WloMCMV9p9sQ0Oz7LZlf4rcYUag3_A',
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU0OTE1NzQzLCJpYXQiOjE3NTQzMTA5NDMsImp0aSI6IjNjMDAyMjA4N2YxMTQyNjI5NmM4MmNlZTI0ZmQ0NDIzIiwidXNlcl9pZCI6NjF9.XwwEPGmilSuj-5tp-1IrTYkDxvr2hw6F4VRmo21VL9g',
           'ngrok-skip-browser-warning': 'true'}),
       );
       if (response.statusCode == 200) {
@@ -53,7 +53,7 @@ class RoleNetwork {
           'description': description,
         },
         options: Options(headers: {
-          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU0MzEyMzYxLCJpYXQiOjE3NTM3MDc1NjEsImp0aSI6ImYzYzg0MmY1OTEwMjQ4YWU5ZjMwYjdmOTc1OGY3YTI3IiwidXNlcl9pZCI6Mzd9.nHBidPRwwtBQ3WloMCMV9p9sQ0Oz7LZlf4rcYUag3_A',
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU0OTE1NzQzLCJpYXQiOjE3NTQzMTA5NDMsImp0aSI6IjNjMDAyMjA4N2YxMTQyNjI5NmM4MmNlZTI0ZmQ0NDIzIiwidXNlcl9pZCI6NjF9.XwwEPGmilSuj-5tp-1IrTYkDxvr2hw6F4VRmo21VL9g',
           'ngrok-skip-browser-warning': 'true'}),
       );
       print('Status: \\${response.statusCode}, Data: \\${response.data}');
@@ -70,7 +70,7 @@ class RoleNetwork {
       final response = await _dio.delete(
         APIS.baseUrl + 'role/roles/$id/',
         options: Options(headers: {
-          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU0MzEyMzYxLCJpYXQiOjE3NTM3MDc1NjEsImp0aSI6ImYzYzg0MmY1OTEwMjQ4YWU5ZjMwYjdmOTc1OGY3YTI3IiwidXNlcl9pZCI6Mzd9.nHBidPRwwtBQ3WloMCMV9p9sQ0Oz7LZlf4rcYUag3_A',
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU0OTE1NzQzLCJpYXQiOjE3NTQzMTA5NDMsImp0aSI6IjNjMDAyMjA4N2YxMTQyNjI5NmM4MmNlZTI0ZmQ0NDIzIiwidXNlcl9pZCI6NjF9.XwwEPGmilSuj-5tp-1IrTYkDxvr2hw6F4VRmo21VL9g',
           'ngrok-skip-browser-warning': 'true'}),
       );
       return response.statusCode == 204 || response.statusCode == 200;

@@ -5,6 +5,7 @@ import 'package:flutter_application_1/screens/Purchase%20Requestor/request_view_
 import 'package:flutter_application_1/screens/Purchase%20order/pushase_order_screen.dart' as purchase_order;
 // Make sure the above import points to the file where addPurchaseOrder is defined as a top-level function.
 import 'package:intl/intl.dart';
+import 'package:flutter_application_1/network/purchase_request_network.dart';
 
 class PurchaseRequestPage extends StatefulWidget {
   const PurchaseRequestPage({super.key});
@@ -154,20 +155,49 @@ class _PurchaseRequestDataSource extends DataTableSource {
   int get selectedRowCount => 0;
 }
 
+
 class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
   final DateFormat _dateFormat = DateFormat('MMM dd, yyyy');
-
-  // Ta liste principale
   final List<Map<String, dynamic>> _PurchaseRequests = [];
-
   int _rowsPerPage = PaginatedDataTable.defaultRowsPerPage;
   int? _sortColumnIndex;
   bool _sortAscending = true;
-
   String? _priorityFilter;
   String? _statusFilter;
   DateTime? _selectedSubmissionDate;
   DateTime? _selectedDueDate;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchRequestsFromApi();
+  }
+
+  Future<void> _fetchRequestsFromApi() async {
+    setState(() { _isLoading = true; });
+    try {
+      final api = PurchaseRequestNetwork();
+      final List<dynamic> data = await api.fetchPurchaseRequests();
+      setState(() {
+        _PurchaseRequests.clear();
+        _PurchaseRequests.addAll(data.map<Map<String, dynamic>>((item) {
+          return {
+            'id': item['id'].toString(),
+            'actionCreatedBy': item['actionCreatedBy'] ?? '',
+            'dateSubmitted': item['dateSubmitted'] != null ? DateTime.parse(item['dateSubmitted']) : DateTime.now(),
+            'dueDate': item['dueDate'] != null ? DateTime.parse(item['dueDate']) : DateTime.now(),
+            'priority': item['priority'] ?? '',
+            'status': item['status'] ?? '',
+          };
+        }));
+      });
+    } catch (e) {
+      print('Erreur lors du chargement des requests: $e');
+    } finally {
+      setState(() { _isLoading = false; });
+    }
+  }
 
   List<Map<String, dynamic>> get _filteredAndSortedOrders {
     List<Map<String, dynamic>> orders = List.from(_PurchaseRequests);
@@ -441,57 +471,59 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
           const SizedBox(width: 16),
         ],
       ),
-      body: Column(
-        children: [
-          _buildFiltersRow(),
-          const SizedBox(height: 16),
-          Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.vertical,
-              child: Theme(
-                data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-                child: PaginatedDataTable(
-                  header: const Text('Purchase Requests Table'),
-                  rowsPerPage: _rowsPerPage,
-                  onRowsPerPageChanged: (r) {
-                    if (r != null) {
-                      setState(() {
-                        _rowsPerPage = r;
-                      });
-                    }
-                  },
-                  sortColumnIndex: _sortColumnIndex,
-                  sortAscending: _sortAscending,
-                  columnSpacing: 170, 
-                  horizontalMargin: 16, 
-                  columns: [
-                    DataColumn(
-                        label: const Text('ID'),
-                        onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
-                    DataColumn(
-                        label: const Text('Created by'),
-                        onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
-                    DataColumn(
-                        label: const Text('Date submitted'),
-                        onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
-                    DataColumn(
-                        label: const Text('Due date'),
-                        onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
-                    DataColumn(
-                        label: const Text('Priority'),
-                        onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
-                    DataColumn(
-                        label: const Text('Status'),
-                        onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
-                    const DataColumn(label: Text('Actions')),
-                  ],
-                  source: dataSource,
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              children: [
+                _buildFiltersRow(),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.vertical,
+                    child: Theme(
+                      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                      child: PaginatedDataTable(
+                        header: const Text('Purchase Requests Table'),
+                        rowsPerPage: _rowsPerPage,
+                        onRowsPerPageChanged: (r) {
+                          if (r != null) {
+                            setState(() {
+                              _rowsPerPage = r;
+                            });
+                          }
+                        },
+                        sortColumnIndex: _sortColumnIndex,
+                        sortAscending: _sortAscending,
+                        columnSpacing: 170,
+                        horizontalMargin: 16,
+                        columns: [
+                          DataColumn(
+                              label: const Text('ID'),
+                              onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
+                          DataColumn(
+                              label: const Text('Created by'),
+                              onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
+                          DataColumn(
+                              label: const Text('Date submitted'),
+                              onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
+                          DataColumn(
+                              label: const Text('Due date'),
+                              onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
+                          DataColumn(
+                              label: const Text('Priority'),
+                              onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
+                          DataColumn(
+                              label: const Text('Status'),
+                              onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
+                          const DataColumn(label: Text('Actions')),
+                        ],
+                        source: dataSource,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
-          ),
-        ],
-      ),
     );
   }
 

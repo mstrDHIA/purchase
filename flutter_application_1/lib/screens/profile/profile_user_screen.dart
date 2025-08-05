@@ -91,7 +91,12 @@ class _ProfilePageState extends State<ProfilePage> {
   void initState() {
     super.initState();
     _nameController = TextEditingController();
-    _lastNameController = TextEditingController(text: widget.user["profile_id"]["last_name"]?.toString() ?? "");
+    // Fix: Only access last_name if profile_id is a Map
+    if (widget.user["profile_id"] is Map) {
+      _lastNameController = TextEditingController(text: widget.user["profile_id"]["last_name"]?.toString() ?? "");
+    } else {
+      _lastNameController = TextEditingController();
+    }
     _emailController = TextEditingController(text: widget.user["email"]?.toString() ?? "");
     _usernamePrefixController = TextEditingController(text: "untitledui.com/");
     _usernameSuffixController = TextEditingController(text: widget.user["username"]?.toString() ?? "");

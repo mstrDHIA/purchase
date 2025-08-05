@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/screens/Purchase%20Requestor/request_view_screen.dart';
 import 'package:flutter_application_1/screens/Purchase%20order/pushase_order_screen.dart';
-import 'package:flutter_application_1/screens/Support%20Center/Home_Center.dart';
+import 'package:flutter_application_1/screens/Support%20Center/Home_Center_screen.dart';
 import 'package:flutter_application_1/screens/users/password_screen.dart';
 import 'package:flutter_application_1/screens/users/permission_screen.dart';
 import 'package:flutter_application_1/screens/profile/profile_user_screen.dart';
-import 'package:flutter_application_1/screens/Dashboard/Dashboard.dart' as dashboard;
+import 'package:flutter_application_1/screens/Dashboard/dashboard_screen.dart' as dashboard;
 import 'package:flutter_application_1/screens/Home.dart' as home;
 import 'package:flutter_application_1/screens/Purchase%20Requestor/requestor_order_screen.dart' as requestor_order;
 import 'package:flutter_application_1/screens/Purchase%20Requestor/request_view_screen.dart' as request_view;

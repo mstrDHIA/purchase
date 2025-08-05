@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 
 class APIS {
   final dio = Dio();
-  String token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU0NTU4ODIwLCJpYXQiOjE3NTM5NTQwMjAsImp0aSI6ImEwYzNmOTk5YWQzOTRlOWY4OGY3ZmMxY2YxYjE2YTE2IiwidXNlcl9pZCI6NjF9.feS9VVpUMrt9rJQYuQ8Yv9PuIFKtSY0nqxrpQexgGhY';
+  String token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU0OTI0MTA0LCJpYXQiOjE3NTQzMTkzMDQsImp0aSI6IjE4YTM4Y2NjYzU0ODRmYmZiZTg0OTRlNDFmZDc0OTY2IiwidXNlcl9pZCI6NjF9.Pb7BL-_D8ycgAMOfrbbjbOnobZ5oowBTB5xgeTswmB4';
 
   APIS() {
     dio.interceptors.add(LogInterceptor(
@@ -30,6 +30,7 @@ class APIS {
   static const String viewProfileByUserId = "user/users-with-details/<userId>/";
   static const String updateProfile = "profile/profiles/<profileId>/";
   static const String changePassword = "change-password/";
+  static const String viewProfileById = "purchase_request/purchaseRequests/";
 
 
    // adapte selon ton endpoint réel
