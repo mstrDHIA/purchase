@@ -23,6 +23,7 @@ import 'package:flutter_application_1/screens/Supplier/View_supplier_screen.dart
 import 'package:flutter_application_1/screens/Support%20Center/Home_Center_screen.dart';
 import 'package:flutter_application_1/screens/auth/login_screen.dart';
 import 'package:flutter_application_1/screens/auth/signup_screen.dart';
+
 import 'package:flutter_application_1/screens/profile/profile_user.dart';
 import 'package:flutter_application_1/screens/users/password_screen.dart';
 import 'package:flutter_application_1/screens/Role/Role_screen.dart';
@@ -36,6 +37,7 @@ import 'package:flutter_application_1/screens/profile/profile_user_screen.dart';
 
 import 'package:flutter_application_1/utils/router.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_application_1/screens/profile/profile_user.dart';
 import 'widgets/sidebar.dart';
 
 void main() {
@@ -78,6 +80,8 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   String _selected = 'Home';
+  // late UserController userController  ;
+  
 
   Widget _getPage() {
     switch (_selected) {
@@ -105,6 +109,12 @@ class _MainScreenState extends State<MainScreen> {
         return const Center(child: Text('Home Page'));
     }
   }
+  // @override
+  // void initState() {
+  //   // TODO: implement i
+  //   userController = Provider.of<UserController>(context, listen: false);
+  //   super.initState();
+  // }
 
   @override
   Widget build(BuildContext context) {

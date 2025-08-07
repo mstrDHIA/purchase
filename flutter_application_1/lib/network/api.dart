@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 
 class APIS {
   final dio = Dio();
-  String token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU0OTI0MTA0LCJpYXQiOjE3NTQzMTkzMDQsImp0aSI6IjE4YTM4Y2NjYzU0ODRmYmZiZTg0OTRlNDFmZDc0OTY2IiwidXNlcl9pZCI6NjF9.Pb7BL-_D8ycgAMOfrbbjbOnobZ5oowBTB5xgeTswmB4';
+  String token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU1MTYyNzUzLCJpYXQiOjE3NTQ1NTc5NTMsImp0aSI6IjkxM2M0MTJiZTEzNDQ1NTI4NDdhYzc5OTI3NzFkMmRiIiwidXNlcl9pZCI6NjV9.-U_miPcZnbseBsOZ4khZfRFK4OvoTRHZ40G2YrVaePg';
 
   APIS() {
     dio.interceptors.add(LogInterceptor(
@@ -20,7 +20,7 @@ class APIS {
 
   static const String register = "user/register/";
   static const String userList = "user/users/";
-  static const String updateUser = "user/users/";
+  static const String updateUser = "user/users-with-details/";
   static const String deleteUser = "user/users/";
   static const String addProfile = "profile/add-profile/";
   static const String viewProfile = 'profile/profiles/';
@@ -28,8 +28,8 @@ class APIS {
   static const String deleteRole = "role/roles/";
   static const String updateRole = "role/roles/";
   static const String viewProfileByUserId = "user/users-with-details/";
-  static const String updateProfile = "profile/profiles/<profileId>/";
-  static const String changePassword = "change-password/";
+  static const String updateProfile = "profile/profiles/";
+  static const String changePassword = "user/change-password/";
   static const String viewProfileById = "purchase_request/purchaseRequests/";
 
 

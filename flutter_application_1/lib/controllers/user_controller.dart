@@ -6,6 +6,38 @@ import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:go_router/go_router.dart';
 
 class UserController extends ChangeNotifier {
+  // Change password via UserNetwork
+  Future<String> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    try {
+      String result = await userNetwork.changePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+        confirmPassword: confirmPassword,
+      );
+      return result;
+    } catch (e) {
+      return 'Error updating password: $e';
+    }
+  }
+  Future<String> updateUser(User updatedUser) async {
+    isLoading = true;
+    notifyListeners();
+    try {
+      String result = await userNetwork.updateUser(updatedUser);
+      await getUsers(); // Refresh user list after update
+      isLoading = false;
+      notifyListeners();
+      return result;
+    } catch (e) {
+      isLoading = false;
+      notifyListeners();
+      return 'Error updating user: $e';
+    }
+  }
   bool isLoading = false;
   List<User> users = [];
   String searchText = '';
@@ -134,7 +166,7 @@ class UserController extends ChangeNotifier {
     if (response.statusCode == 200) {
       print('response 200');
       User user = User.fromJson(response.data[0]);
-      print('user name: ${user.profile?.firstName}');
+      // print('user name: ${user.profile?.firstName}');
       isLoading = false;
       // nameController.text = user.firstName ?? '';
       selectedUser = user; // Store the user in the controller

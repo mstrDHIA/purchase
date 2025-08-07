@@ -4,6 +4,36 @@ import 'package:flutter_application_1/network/api.dart';
 // import 'package:jwt_decoder/jwt_decoder.dart';
 
 class UserNetwork {
+  // Change password via API user/change-password/
+  Future<String> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    try {
+      final response = await api.dio.post(
+        '${APIS.baseUrl}user/change-password/',
+        data: {
+          'old_password': currentPassword,
+          'new_password': newPassword,
+          // 'confirm_password': confirmPassword,
+        },
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer ${APIS().token}',
+            'ngrok-skip-browser-warning': 'true',
+          },
+        ),
+      );
+      if (response.statusCode == 200) {
+        return 'Password updated successfully';
+      } else {
+        return response.data['detail'] ?? 'Failed to update password';
+      }
+    } catch (e) {
+      return 'Error updating password: $e';
+    }
+  }
   // Récupère les détails d'un utilisateur via l'API user/users-with-details/{id}/
   Future<User?> getUserDetails(int userId) async {
     try {
@@ -16,10 +46,13 @@ class UserNetwork {
           },
         ),
       );
+      print('API response for user details: ${response.data}');
       if (response.statusCode == 200) {
         final data = response.data;
         if (data is Map<String, dynamic>) {
-          return User.fromJson(data);
+          final user = User.fromJson(data);
+          print('User.fromJson output: firstName=${user.firstName}, lastName=${user.lastName}, email=${user.email}, username=${user.username}, role=${user.role?.name}');
+          return user;
         }
       }
       return null;
@@ -154,11 +187,11 @@ class UserNetwork {
     }
   }
 
-  Future<String> updateUser(User updatedUser) async {
+  Future<String> updateUser(User updateUser) async {
     try {
       final response = await api.dio.put(
-        '${APIS.baseUrl}${APIS.userList}${updatedUser.id}/',
-        data: updatedUser.toJson(),
+        '${APIS.baseUrl}${APIS.userList}${updateUser.id}/',
+        data: updateUser.toJson(),
         options: Options(
           headers: {
             'Authorization': 'Bearer ${APIS().token}',
@@ -217,6 +250,7 @@ getDetailedUser(int userId) async {
         ),
       );
       if (response.statusCode == 200) {
+        print( 'User details fetched successfully: ${response.data}');
         return response;
       } else {
         throw Exception('Failed to load user details');

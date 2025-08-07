@@ -9,9 +9,12 @@ class ChangePasswordNetwork {
 
   Future<bool> updatePassword(ChangePasswordRequest request, dynamic api) async {
     try {
+      final payload = request.toJson();
+      print('Change password request payload:');
+      print(payload);
       final response = await _dio.post(
         '${APIS.baseUrl}user/change-password/', // adapte l'URL à ton endpoint
-        data: request.toJson(),
+        data: payload,
         options: Options(
           headers: {
             'Authorization': 'Bearer ${api.token}',
