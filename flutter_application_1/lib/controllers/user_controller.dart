@@ -144,6 +144,8 @@ class UserController extends ChangeNotifier {
     if (response.statusCode == 200) {
       Map<String, dynamic> decodedToken = JwtDecoder.decode(response.data['access']);
       currentUserId = decodedToken['user_id'];
+      selectedUserId = currentUserId;
+      print('current user id: {$currentUserId}');
       context.go('/main_screen');
       print(decodedToken);
       print(response.data);
