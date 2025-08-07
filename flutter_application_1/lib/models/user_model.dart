@@ -34,19 +34,30 @@ class User {
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
+    final profileJson = json['profile'];
+    final profile = profileJson != null ? Profile.fromJson(Map<String, dynamic>.from(profileJson)) : null;
+    final firstName = (json['first_name'] != null && json['first_name'] != '')
+        ? json['first_name']
+        : (profile?.firstName ?? '');
+    final lastName = (json['last_name'] != null && json['last_name'] != '')
+        ? json['last_name']
+        : (profile?.lastName ?? '');
+    final profileId = json['profile_id'] ?? (profile?.id);
+    final roleId = json['role_id'];
+    // Debug print
+    print('User.fromJson: firstName=$firstName, lastName=$lastName, profileId=$profileId, roleId=$roleId');
     return User(
       id: json['id'] ?? 0,
       username: json['username'] ?? '',
       email: json['email'] ?? '',
-      firstName: json['first_name'] ?? '',
-      lastName: json['last_name'] ?? '',
+      firstName: firstName,
+      lastName: lastName,
       isSuperuser: json['is_superuser'] ?? false,
       password: json['password'] ?? '',
-      profile: json['profile'] != null
-          ? Profile.fromJson(Map<String, dynamic>.from(json['profile']))
-          : null,
-      // profileId: json['profile_id'] ?? json['profileId'],
-      // role_id: json['role_id'],
+      profile: profile,
+      profileId: profileId,
+      role_id: roleId,
+      // role: ... // If you want to parse role object, add here
     );
   }
 
@@ -65,17 +76,20 @@ class User {
   // get address => null;
 
   Map<String, dynamic> toJson() {
-    return {
+    final data = {
       'id': id,
       'username': username,
       'email': email,
       'first_name': firstName,
       'last_name': lastName,
       'is_superuser': isSuperuser,
-      'password': password,
       if (profileId != null) 'profile_id': profileId,
       if (role != null) 'role': role,
     };
+    if (password != null && password!.isNotEmpty) {
+      data['password'] = password;
+    }
+    return data;
   }
 }
 

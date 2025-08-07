@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/controllers/user_controller.dart';
+import 'package:provider/provider.dart';
 
 class PasswordScreen extends StatefulWidget {
   const PasswordScreen({Key? key}) : super(key: key);
@@ -90,9 +92,40 @@ class _PasswordScreenState extends State<PasswordScreen> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: null, // Disabled by default
+                      onPressed: () async {
+                        final currentPassword = _currentPasswordController.text.trim();
+                        final newPassword = _newPasswordController.text.trim();
+                        final confirmPassword = _confirmPasswordController.text.trim();
+                        if (currentPassword.isEmpty || newPassword.isEmpty || confirmPassword.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please fill all fields')),
+                          );
+                          return;
+                        }
+                        if (newPassword != confirmPassword) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('New passwords do not match')),
+                          );
+                          return;
+                        }
+                        // Call controller
+                        final userController = Provider.of<UserController>(context, listen: false);
+                        String result = await userController.changePassword(
+                          currentPassword: currentPassword,
+                          newPassword: newPassword,
+                          confirmPassword: confirmPassword,
+                        );
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            backgroundColor: result.contains('success') ? Colors.green : Colors.red,
+                            content: Text(result)),
+                        );
+                        if (result.contains('success')) {
+                          // Navigator.pop(context);
+                        }
+                      },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey[300],
+                        backgroundColor: const Color(0xFF6F4DBF),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 18),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
