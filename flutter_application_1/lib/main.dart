@@ -23,6 +23,7 @@ import 'package:flutter_application_1/screens/Supplier/View_supplier_screen.dart
 import 'package:flutter_application_1/screens/Support%20Center/Home_Center_screen.dart';
 import 'package:flutter_application_1/screens/auth/login_screen.dart';
 import 'package:flutter_application_1/screens/auth/signup_screen.dart';
+import 'package:flutter_application_1/screens/profile/profile_user.dart';
 import 'package:flutter_application_1/screens/users/password_screen.dart';
 import 'package:flutter_application_1/screens/Role/Role_screen.dart';
 import 'package:flutter_application_1/screens/users/users_List_screen.dart' as users_list;
@@ -85,7 +86,7 @@ class _MainScreenState extends State<MainScreen> {
       case 'Dashboard':
         return const dashboard.DashboardPage();
       case 'Profile':
-        // return ProfilePage(user: {});
+        return ProfilePageScreen();
       case 'Users':
         return const users_list.UserListPage();
       case 'Password':

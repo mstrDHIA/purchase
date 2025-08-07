@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_application_1/models/user_model.dart';
 import 'package:flutter_application_1/network/api.dart';
-import 'package:jwt_decoder/jwt_decoder.dart';
+// import 'package:jwt_decoder/jwt_decoder.dart';
 
 class UserNetwork {
   // Récupère les détails d'un utilisateur via l'API user/users-with-details/{id}/
