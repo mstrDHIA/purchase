@@ -11,7 +11,7 @@ import 'package:flutter_application_1/screens/profile/profile_user.dart';
 import 'package:flutter_application_1/screens/users/password_screen.dart';
 import 'package:flutter_application_1/screens/Role/Role_screen.dart';
 import 'package:flutter_application_1/screens/users/permission_screen.dart';
-import 'package:flutter_application_1/screens/profile/profile_user_screen.dart';
+
 
 import 'package:flutter_application_1/screens/users/add_user_screen.dart';
 
@@ -51,11 +51,11 @@ final GoRouter router = GoRouter(
       path: '/permission',
       builder: (context, state) => PermissionPage(),
     ),
-    GoRoute(
-      path: '/profile',
-      builder: (context, state) => ProfilePageScreen(),
+    // GoRoute(
+    //   path: '/profile',
+    //   builder: (context, state) => ProfilePageScreen(),
       
-    ),
+    // ),
     GoRoute(
       path: '/purchase_order',
       builder: (context, state) => PurchaseOrderPage(),

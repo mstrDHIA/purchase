@@ -62,8 +62,8 @@ import 'package:image_picker/image_picker.dart';
 
 class ProfilePageScreen extends StatefulWidget {
   // final Map<String, dynamic> user;
-  // final int userId;
-  const ProfilePageScreen({super.key, });
+  final int userId;
+  const ProfilePageScreen({super.key, required this.userId, });
 
   @override
   State<ProfilePageScreen> createState() => _ProfilePageScreenState();
@@ -162,7 +162,7 @@ class _ProfilePageScreenState extends State<ProfilePageScreen> {
   Future<void> didChangeDependencies() async {
     super.didChangeDependencies();
     print('id: ${userController.selectedUserId}');
-    final user = await userController.getDetailedUser(userController.selectedUserId!);
+    final user = await userController.getDetailedUser(widget.userId);
     // setState(() {
     //   _nameController.text = 'aaaaaaaa';
     //   // userController.selectedUser.profile?.firstName ?? user.firstName ?? '';

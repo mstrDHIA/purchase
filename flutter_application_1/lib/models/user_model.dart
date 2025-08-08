@@ -43,9 +43,9 @@ class User {
         ? json['last_name']
         : (profile?.lastName ?? '');
     final profileId = json['profile_id'] ?? (profile?.id);
-    final roleId = json['role_id'];
+    // final roleId = json['role_id'];
     // Debug print
-    print('User.fromJson: firstName=$firstName, lastName=$lastName, profileId=$profileId, roleId=$roleId');
+    // print('User.fromJson: firstName=$firstName, lastName=$lastName, profileId=$profileId, roleId=$roleId');
     return User(
       id: json['id'] ?? 0,
       username: json['username'] ?? '',
@@ -56,7 +56,7 @@ class User {
       password: json['password'] ?? '',
       profile: profile,
       profileId: profileId,
-      role_id: roleId,
+      // role_id: roleId,
       // role: ... // If you want to parse role object, add here
     );
   }
@@ -80,9 +80,9 @@ class User {
       'id': id,
       'username': username,
       'email': email,
-      'first_name': firstName,
-      'last_name': lastName,
-      'is_superuser': isSuperuser,
+      // 'first_name': firstName,
+      // 'last_name': lastName,
+      // 'is_superuser': isSuperuser,
       if (profileId != null) 'profile_id': profileId,
       if (role != null) 'role': role,
     };
