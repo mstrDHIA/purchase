@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 
 class APIS {
   final dio = Dio();
-  String token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU1MTYyNzUzLCJpYXQiOjE3NTQ1NTc5NTMsImp0aSI6IjkxM2M0MTJiZTEzNDQ1NTI4NDdhYzc5OTI3NzFkMmRiIiwidXNlcl9pZCI6NjV9.-U_miPcZnbseBsOZ4khZfRFK4OvoTRHZ40G2YrVaePg';
+  String token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU1MTgyNzYzLCJpYXQiOjE3NTQ1Nzc5NjMsImp0aSI6IjNlMjk3OTA0YzZiMTRhNjJiMjZkYWNiNmEyNjU3Y2RlIiwidXNlcl9pZCI6NjV9.KRB51RlLQ-StiC4dIJr-8PDulUokqp5tsPDoHBJJGdo';
 
   APIS() {
     dio.interceptors.add(LogInterceptor(
@@ -31,6 +31,7 @@ class APIS {
   static const String updateProfile = "profile/profiles/";
   static const String changePassword = "user/change-password/";
   static const String viewProfileById = "purchase_request/purchaseRequests/";
+  static const String updateAllUsers = "user/users/update-all/";
 
 
    // adapte selon ton endpoint réel
