@@ -26,7 +26,7 @@ class PurchaseRequest {
     if (json['products'] != null) {
       products = <Products>[];
       json['products'].forEach((v) {
-        products!.add(new Products.fromJson(v));
+        products!.add(Products.fromJson(v));
       });
     }
     dueDate = json['dueDate'];
@@ -38,18 +38,18 @@ class PurchaseRequest {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['title'] = this.title;
-    data['description'] = this.description;
-    if (this.products != null) {
-      data['products'] = this.products!.map((v) => v.toJson()).toList();
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['title'] = title;
+    data['description'] = description;
+    if (products != null) {
+      data['products'] = products!.map((v) => v.toJson()).toList();
     }
-    data['dueDate'] = this.dueDate;
-    data['priority'] = this.priority;
-    data['note'] = this.note;
-    data['dateSubmitted'] = this.dateSubmitted;
-    data['requested_by'] = this.requestedBy;
-    data['approved_by'] = this.approvedBy;
+    data['dueDate'] = dueDate;
+    data['priority'] = priority;
+    data['note'] = note;
+    data['dateSubmitted'] = dateSubmitted;
+    data['requested_by'] = requestedBy;
+    data['approved_by'] = approvedBy;
     return data;
   }
 }
@@ -66,9 +66,9 @@ class Products {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['product'] = this.product;
-    data['quantity'] = this.quantity;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['product'] = product;
+    data['quantity'] = quantity;
     return data;
   }
 }

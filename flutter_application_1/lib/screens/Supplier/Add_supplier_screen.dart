@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'dart:typed_data';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:io';

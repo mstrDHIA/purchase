@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/screens/profile/profile_user.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_application_1/providers/theme_provider.dart';
-import 'package:flutter_application_1/screens/profile/profile_user_screen.dart';
 import 'package:flutter_application_1/screens/users/password_screen.dart';
 
 class SettingsScreen extends StatefulWidget {

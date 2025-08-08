@@ -36,17 +36,17 @@ class Profile {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['id'] = this.id;
-    data['bio'] = this.bio;
-    data['location'] = this.location;
-    data['country'] = this.country;
-    data['state'] = this.state;
-    data['city'] = this.city;
-    data['zip_code'] = this.zipCode;
-    data['address'] = this.address;
-    data['first_name'] = this.firstName;
-    data['last_name'] = this.lastName;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['id'] = id;
+    data['bio'] = bio;
+    data['location'] = location;
+    data['country'] = country;
+    data['state'] = state;
+    data['city'] = city;
+    data['zip_code'] = zipCode;
+    data['address'] = address;
+    data['first_name'] = firstName;
+    data['last_name'] = lastName;
     return data;
   }
 }

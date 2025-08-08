@@ -138,7 +138,8 @@ class UserController extends ChangeNotifier {
 
 
   login(String email, String password,BuildContext context) async {
-    isLoading = true;
+    try{
+      isLoading = true;
     notifyListeners();
     Response response = await userNetwork.login(email, password);
     if (response.statusCode == 200) {
@@ -149,14 +150,90 @@ class UserController extends ChangeNotifier {
       context.go('/main_screen');
       print(decodedToken);
       print(response.data);
+      isLoading = false;
+      notifyListeners();
       // Handle successful login
-    } else {
+    } else if (response.statusCode == 401) {
+      isLoading = false;
+      notifyListeners();
+      SnackBar snackBar = SnackBar(
+        backgroundColor: Colors.amber,
+        content: Text('Invalid email or password. Please try again.'),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
       // Handle login error
     }
-    isLoading = false;
-    notifyListeners();
-    
+    else {
+      isLoading = false;
+      notifyListeners();
+      SnackBar snackBar = SnackBar(
+        backgroundColor: Colors.red,
+        content: Text('An error occurred during login. Please try again.'),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      }
+      // Handle unexpected error
+    } catch (e) {
+      isLoading = false;
+      notifyListeners();
+      SnackBar snackBar = SnackBar(
+
+        backgroundColor: Colors.red,
+        content: Text('An error occurred during login'),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      // Handle unexpected error
+    }  
     }
+
+
+      register(String email, String password,BuildContext context) async {
+    try{
+      isLoading = true;
+    notifyListeners();
+    Response response = await userNetwork.register(username: email, password: password);
+    if (response.statusCode == 201) {
+      login(email, password, context);
+      // isLoading = false;
+      // notifyListeners();
+      // Handle successful login
+    } 
+    // else if (response.statusCode == 401) {
+    //   isLoading = false;
+    //   notifyListeners();
+    //   SnackBar snackBar = SnackBar(
+    //     backgroundColor: Colors.amber,
+    //     content: Text('Invalid email or password. Please try again.'),
+    //   );
+    //   ScaffoldMessenger.of(context).showSnackBar(snackBar);
+    //   // Handle login error
+    // }
+    else {
+      isLoading = false;
+      notifyListeners();
+      SnackBar snackBar = SnackBar(
+        backgroundColor: Colors.red,
+        content: Text('An error occurred during register. Please try again.'),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      }
+      // Handle unexpected error
+    } catch (e) {
+      isLoading = false;
+      notifyListeners();
+      SnackBar snackBar = SnackBar(
+
+        backgroundColor: Colors.red,
+        content: Text('An error occurred during register'),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      // Handle unexpected error
+    }  
+    }
+
+
+
+
   Future<User> getDetailedUser(int userId) async {
     isLoading = true;
     notifyListeners();

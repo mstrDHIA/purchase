@@ -1,13 +1,12 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_application_1/models/profile.dart';
-import 'package:flutter_application_1/models/user_model.dart';
 import 'package:flutter_application_1/network/api.dart';
 
 class ProfileNetwork {
   // View profile (get user profile by userId)
   Future<Profile?> viewProfile(int userId) async {
     try {
-      print('Fetching profile with profileId: ' + userId.toString());
+      print('Fetching profile with profileId: $userId');
       final response = await api.dio.get(
         '${APIS.baseUrl}${APIS.viewProfile}$userId/',
         options: Options(

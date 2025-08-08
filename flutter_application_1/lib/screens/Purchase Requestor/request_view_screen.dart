@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/screens/Purchase%20order/refuse_purchase_screen.dart';
-import 'package:flutter_application_1/screens/users/modify_user_screen.dart';
 import 'package:intl/intl.dart';
 
 class PurchaseRequestView extends StatefulWidget {
@@ -158,69 +157,68 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
     );
   }
 
-  void _showDeleteDialog(String userName) {
-  showDialog(
-    context: context,
-    barrierColor: Colors.black.withOpacity(0.2),
-    builder: (context) => Dialog(
-      backgroundColor: const Color(0xF7F3F7FF),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(
-          maxWidth: 340,
-          minWidth: 260,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                "Delete User",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                "Are you sure you want to delete $userName?",
-                style: const TextStyle(fontSize: 16),
-              ),
-              const SizedBox(height: 28),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, false),
-                    child: const Text(
-                      'Cancel',
-                      style: TextStyle(color: Colors.deepPurple, fontSize: 16),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  ElevatedButton(
-                    onPressed: () => Navigator.pop(context, true),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 10),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: const Text('Delete', style: TextStyle(fontSize: 16)),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    ),
-  );
-}
+//   void _showDeleteDialog(String userName) {
+//   showDialog(
+//     context: context,
+//     barrierColor: Colors.black.withOpacity(0.2),
+//     builder: (context) => Dialog(
+//       backgroundColor: const Color(0xF7F3F7FF),
+//       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+//       child: ConstrainedBox(
+//         constraints: const BoxConstraints(
+//           maxWidth: 340,
+//           minWidth: 260,
+//         ),
+//         child: Padding(
+//           padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 28),
+//           child: Column(
+//             mainAxisSize: MainAxisSize.min,
+//             crossAxisAlignment: CrossAxisAlignment.start,
+//             children: [
+//               const Text(
+//                 "Delete User",
+//                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
+//               ),
+//               const SizedBox(height: 16),
+//               Text(
+//                 "Are you sure you want to delete $userName?",
+//                 style: const TextStyle(fontSize: 16),
+//               ),
+//               const SizedBox(height: 28),
+//               Row(
+//                 mainAxisAlignment: MainAxisAlignment.end,
+//                 children: [
+//                   TextButton(
+//                     onPressed: () => Navigator.pop(context, false),
+//                     child: const Text(
+//                       'Cancel',
+//                       style: TextStyle(color: Colors.deepPurple, fontSize: 16),
+//                     ),
+//                   ),
+//                   const SizedBox(width: 12),
+//                   ElevatedButton(
+//                     onPressed: () => Navigator.pop(context, true),
+//                     style: ElevatedButton.styleFrom(
+//                       backgroundColor: Colors.red,
+//                       foregroundColor: Colors.white,
+//                       padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 10),
+//                       shape: RoundedRectangleBorder(
+//                         borderRadius: BorderRadius.circular(24),
+//                       ),
+//                       elevation: 0,
+//                     ),
+//                     child: const Text('Delete', style: TextStyle(fontSize: 16)),
+//                   ),
+//                 ],
+//               ),
+//             ],
+//           ),
+//         ),
+//       ),
+//     ),
+//   );
+// }
 
-    // Ajoute d'autres rôles/étapes ici...
 
 
   @override

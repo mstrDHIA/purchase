@@ -54,12 +54,12 @@ class _PermissionPageState extends State<PermissionPage> {
                 children: [
                   // Header
                   Row(
-                    children: [
-                      const Text(
+                    children: const [
+                      Text(
                         'Roles and permissions',
                         style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
                       ),
-                      const Spacer(),
+                      Spacer(),
                       // IconButton supprimé ici (profil)
                     ],
                   ),

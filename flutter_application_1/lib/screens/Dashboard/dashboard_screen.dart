@@ -6,10 +6,10 @@ class DashboardPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Fake stats for demo, replace with real data if needed
-    final int suppliers = 31;
-    final int purchaseOrders = 10;
-    final int pendingRequests = 4;
-    final int users = 8;
+    const int suppliers = 31;
+    const int purchaseOrders = 10;
+    const int pendingRequests = 4;
+    const int users = 8;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7FB),
@@ -364,11 +364,11 @@ class DashboardPage extends StatelessWidget {
       height: 60,
       width: double.infinity,
       alignment: Alignment.center,
-      child: const Text("Bar Chart", style: TextStyle(color: Colors.grey)),
       decoration: BoxDecoration(
         color: Colors.grey.shade100,
         borderRadius: BorderRadius.circular(12),
       ),
+      child: const Text("Bar Chart", style: TextStyle(color: Colors.grey)),
     );
   }
 
@@ -378,11 +378,11 @@ class DashboardPage extends StatelessWidget {
       height: 60,
       width: double.infinity,
       alignment: Alignment.center,
-      child: const Text("Line Chart", style: TextStyle(color: Colors.grey)),
       decoration: BoxDecoration(
         color: Colors.grey.shade100,
         borderRadius: BorderRadius.circular(12),
       ),
+      child: const Text("Line Chart", style: TextStyle(color: Colors.grey)),
     );
   }
 

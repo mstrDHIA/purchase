@@ -7,7 +7,7 @@ class RoleNetwork {
   Future<Map<String, dynamic>?> viewRole(int id) async {
     try {
       final response = await _dio.get(
-        APIS.baseUrl + 'role/roles/$id/',
+        '${APIS.baseUrl}role/roles/$id/',
         options: Options(headers: {
           'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU0OTE1NzQzLCJpYXQiOjE3NTQzMTA5NDMsImp0aSI6IjNjMDAyMjA4N2YxMTQyNjI5NmM4MmNlZTI0ZmQ0NDIzIiwidXNlcl9pZCI6NjF9.XwwEPGmilSuj-5tp-1IrTYkDxvr2hw6F4VRmo21VL9g',
           'ngrok-skip-browser-warning': 'true'}),
@@ -27,7 +27,7 @@ class RoleNetwork {
   Future<List<Map<String, dynamic>>> fetchRoles() async {
     try {
       final response = await _dio.get(
-        APIS.baseUrl + 'role/roles/',
+        '${APIS.baseUrl}role/roles/',
         options: Options(headers: {
           'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU0OTE1NzQzLCJpYXQiOjE3NTQzMTA5NDMsImp0aSI6IjNjMDAyMjA4N2YxMTQyNjI5NmM4MmNlZTI0ZmQ0NDIzIiwidXNlcl9pZCI6NjF9.XwwEPGmilSuj-5tp-1IrTYkDxvr2hw6F4VRmo21VL9g',
           'ngrok-skip-browser-warning': 'true'}),
@@ -47,7 +47,7 @@ class RoleNetwork {
   Future<bool> addRole(String name, String description) async {
     try {
       final response = await _dio.post(
-        APIS.baseUrl + 'role/roles/',
+        '${APIS.baseUrl}role/roles/',
         data: {
           'name': name,
           'description': description,
@@ -59,7 +59,7 @@ class RoleNetwork {
       print('Status: \\${response.statusCode}, Data: \\${response.data}');
       return response.statusCode == 201 || response.statusCode == 200;
     } catch (e) {
-      print('Erreur addRole: \\${e}');
+      print('Erreur addRole: \\$e');
       return false;
     }
   }
@@ -68,7 +68,7 @@ class RoleNetwork {
   Future<bool> deleteRole(dynamic id) async {
     try {
       final response = await _dio.delete(
-        APIS.baseUrl + 'role/roles/$id/',
+        '${APIS.baseUrl}role/roles/$id/',
         options: Options(headers: {
           'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU0OTE1NzQzLCJpYXQiOjE3NTQzMTA5NDMsImp0aSI6IjNjMDAyMjA4N2YxMTQyNjI5NmM4MmNlZTI0ZmQ0NDIzIiwidXNlcl9pZCI6NjF9.XwwEPGmilSuj-5tp-1IrTYkDxvr2hw6F4VRmo21VL9g',
           'ngrok-skip-browser-warning': 'true'}),
@@ -83,7 +83,7 @@ class RoleNetwork {
   Future<bool> updateRole(int id, String oldRole, String newRole, String description, List<String> permissions) async {
     try {
       final response = await _dio.put(
-        APIS.baseUrl + 'role/roles/$id/',
+        '${APIS.baseUrl}role/roles/$id/',
         data: {
           'old_role': oldRole,
           'name': newRole,

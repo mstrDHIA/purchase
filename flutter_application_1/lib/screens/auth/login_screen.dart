@@ -1,15 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/main.dart';
-import 'package:flutter_application_1/network/user_network.dart';
-import 'package:flutter_application_1/screens/Home.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart'; // Importez le UserController ici
 
 import 'package:flutter_application_1/screens/auth/forget_password_screen.dart';
 
 import 'package:flutter_application_1/screens/auth/signup_screen.dart';
-import 'package:flutter_application_1/screens/home/home_screen.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart'; // Importez Provider ici
 
 class SignInPage extends StatefulWidget {
@@ -24,7 +19,7 @@ class _SignInPageState extends State<SignInPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
-  String _selectedRole = 'Utilisateur'; 
+  // String _selectedRole = 'Utilisateur'; 
   late UserController userController ;
   @override
   void initState() {
@@ -72,7 +67,7 @@ class _SignInPageState extends State<SignInPage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Text("Already have an account? "),
+                                const Text("Don't have an account?"),
                                 TextButton(
                                   onPressed: () {
                                     Navigator.of(context).push(
@@ -82,7 +77,7 @@ class _SignInPageState extends State<SignInPage> {
                                     );
                                   },
                                   child: const Text(
-                                    "Sign In",
+                                    "Sign Up",
                                     style: TextStyle(fontWeight: FontWeight.bold),
                                   ),
                                 ),
@@ -159,53 +154,9 @@ class _SignInPageState extends State<SignInPage> {
                                 return null;
                               },
                             ),
+                            
                             const SizedBox(height: 16),
-                            DropdownButtonFormField<String>(
-                              value: _selectedRole,
-                              decoration: const InputDecoration(
-                                labelText: 'Role',
-                                border: OutlineInputBorder(),
-                              ),
-                              items: const [
-                                DropdownMenuItem(value: 'Chef', child: Text('Chef')),
-                                DropdownMenuItem(value: 'Utilisateur', child: Text('Utilisateur')),
-                              ],
-                              onChanged: (value) {
-                                setState(() {
-                                  _selectedRole = value!;
-                                });
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                            ElevatedButton(
-                              onPressed: () {
-                                // context.go("home_screen");
-                                // context.
-                                Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (context) => const HomeScreen(),
-                                    ),
-                                  );
-                                // if (_formKey.currentState!.validate()) {
-                                //   // Handle login logic here
-                                //   Navigator.of(context).push(
-                                //     MaterialPageRoute(
-                                //       builder: (context) => const MainPage(),
-                                //     ),
-                                //   );
-                                // }
-                              },
-                              style: ElevatedButton.styleFrom(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30),
-                                ),
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                              ),
-                              child: const Text(
-                                "Log In",
-                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                              ),
-                            ),
+
                             Align(
                               alignment: Alignment.centerRight,
                               child: TextButton(
@@ -226,49 +177,29 @@ class _SignInPageState extends State<SignInPage> {
                               ),
                             ),
                             const SizedBox(height: 24),
-                            ElevatedButton(
-                              onPressed: () {
-                                userController.login(
-                                  _emailController.text,
-                                  _passwordController.text,
-                                  context
+                            Consumer<UserController>(
+                              builder: (context, userController, child) {
+                                if (userController.isLoading) {
+                                  return const Center(child: CircularProgressIndicator());
+                                }
+                                else{
+                                  return ElevatedButton(
+                                  onPressed: () {
+                                    userController.login(
+                                      _emailController.text,
+                                      _passwordController.text,
+                                      context
+                                    );
+                                  },
+                                  child: SizedBox(
+                                 
+                                    height: 40,
+                                    width: double.infinity,
+                                    child: Center(child: const Text('Login'))),
                                 );
-                                // .then((userId) {
-                                //   if (userId != null) {
-                                //     userController.setCurrentUserId(userId);
-                                //     context.go('/main_screen');
-                                //   } else {
-                                //     ScaffoldMessenger.of(context).showSnackBar(
-                                //       const SnackBar(content: Text('Login failed: Invalid credentials')),
-                                //     );
-                                //   }
-                                // }).catchError((error) {
-                                //   ScaffoldMessenger.of(context).showSnackBar(
-                                //     SnackBar(content: Text('Login failed: $error')),
-                                //   );
-                                // });
-                                // ScaffoldMessenger.of(context).showSnackBar(
-                                //   const SnackBar(content: Text('Logging in...')),
-                                // );
-                                // UserNetwork userNetwork = UserNetwork();
-                                // userNetwork.login(_emailController.text, _passwordController.text)
-                                //   .then((userId) {
-                                //     if (userId != null) {
-                                //       Provider.of<UserController>(context, listen: false).setCurrentUserId(userId);
-                                //       context.go('/main_screen');
-                                //     } else {
-                                //       ScaffoldMessenger.of(context).showSnackBar(
-                                //         const SnackBar(content: Text('Login failed: Invalid credentials')),
-                                //       );
-                                //     }
-                                  // })
-                                  // .catchError((error) {
-                                  //   ScaffoldMessenger.of(context).showSnackBar(
-                                  //     SnackBar(content: Text('Login failed: $error')),
-                                  //   );
-                                  // });
-                              },
-                              child: const Text('Login'),
+                                }
+                                
+                              }
                             ),
                           ],
                         ),

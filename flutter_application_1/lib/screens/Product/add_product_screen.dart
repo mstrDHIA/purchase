@@ -1,6 +1,5 @@
 // main.dart
 import 'dart:typed_data';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -22,7 +21,7 @@ class _AddProductPageState extends State<AddProductPage> {
   final TextEditingController _supplierCtrl = TextEditingController();
   final TextEditingController _brandCtrl = TextEditingController();
 
-  XFile? _photo;
+  // XFile? _photo;
   Uint8List? _photoBytes;
 
   Future<void> _pickPhoto() async {
@@ -31,7 +30,7 @@ class _AddProductPageState extends State<AddProductPage> {
     if (picked != null) {
       final bytes = await picked.readAsBytes();
       setState(() {
-        _photo = picked;
+        // _photo = picked;
         _photoBytes = bytes;
       });
     }
@@ -56,7 +55,7 @@ class _AddProductPageState extends State<AddProductPage> {
     if (addAnother) {
       _formKey.currentState?.reset();
       setState(() {
-        _photo = null;
+        // _photo = null;
         _photoBytes = null;
       });
     } else {

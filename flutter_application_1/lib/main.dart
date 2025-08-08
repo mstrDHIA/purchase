@@ -4,40 +4,22 @@ import 'package:flutter_application_1/Settings/settings_screen.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter_application_1/controllers/role_controller.dart';
 
-import 'package:flutter_application_1/models/user_model.dart';
 import 'package:flutter_application_1/providers/theme_provider.dart';
 import 'package:flutter_application_1/screens/Dashboard/dashboard_screen.dart' as dashboard;
 import 'package:flutter_application_1/screens/Home.dart' as home;
-import 'package:flutter_application_1/screens/Product/product_screen.dart';
-import 'package:flutter_application_1/screens/Purchase%20Requestor/requestor_form_screen.dart';
 import 'package:flutter_application_1/screens/Purchase%20Requestor/requestor_order_screen.dart' as requestor_order;
-import 'package:flutter_application_1/screens/Purchase%20Requestor/request_view_screen.dart' as request_view;
-import 'package:flutter_application_1/screens/Purchase%20order/purchase_form_screen.dart';
-import 'package:flutter_application_1/screens/Purchase%20order/refuse_purchase_screen.dart';
-import 'package:flutter_application_1/screens/Purchase%20order/view_purchase_screen.dart';
 import 'package:flutter_application_1/screens/Purchase%20order/pushase_order_screen.dart';
-import 'package:flutter_application_1/screens/Supplier/Add_supplier_screen.dart';
-import 'package:flutter_application_1/screens/Supplier/Edit_suplier_screen.dart';
-import 'package:flutter_application_1/screens/Supplier/Supplier_registration_screen.dart';
-import 'package:flutter_application_1/screens/Supplier/View_supplier_screen.dart';
 import 'package:flutter_application_1/screens/Support%20Center/Home_Center_screen.dart';
-import 'package:flutter_application_1/screens/auth/login_screen.dart';
-import 'package:flutter_application_1/screens/auth/signup_screen.dart';
 
 import 'package:flutter_application_1/screens/profile/profile_user.dart';
 import 'package:flutter_application_1/screens/users/password_screen.dart';
 import 'package:flutter_application_1/screens/Role/Role_screen.dart';
 import 'package:flutter_application_1/screens/users/users_List_screen.dart' as users_list;
 // import 'package:flutter_application_1/screens/auth/login.dart';
-import 'package:flutter_application_1/screens/users/add_user_screen.dart';
-import 'package:flutter_application_1/screens/users/modify_user_screen.dart';
-import 'package:flutter_application_1/screens/users/permission_screen.dart';
 
-import 'package:flutter_application_1/screens/profile/profile_user_screen.dart';
 
 import 'package:flutter_application_1/utils/router.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_application_1/screens/profile/profile_user.dart';
 import 'widgets/sidebar.dart';
 
 void main() {

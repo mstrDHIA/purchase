@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/screens/users/modify_user_screen.dart';
 import 'package:flutter_application_1/screens/Purchase%20order/refuse_purchase_screen.dart';
 
 class PurchaseOrderView extends StatefulWidget {
@@ -10,7 +9,6 @@ class PurchaseOrderView extends StatefulWidget {
 }
 
 class _PurchaseOrderViewState extends State<PurchaseOrderView> {
-  // Use TextEditingController to make fields editable
   late TextEditingController supplierNameController;
   late TextEditingController productController;
   late TextEditingController quantityController;
@@ -71,7 +69,9 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
   void dispose() {
     supplierNameController.dispose();
     for (var map in products) {
-      map.values.forEach((c) => c.dispose());
+      for (var c in map.values) {
+        c.dispose();
+      }
     }
     totalOrderPriceController.dispose();
     dueDateController.dispose();
@@ -83,100 +83,100 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
     super.dispose();
   }
 
-  void _editRequest() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        final TextEditingController productCtrl = TextEditingController(text: productController.text);
-        final TextEditingController quantityCtrl = TextEditingController(text: quantityController.text);
-        return AlertDialog(
-          title: const Text('Edit Request'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(controller: productCtrl, decoration: const InputDecoration(labelText: 'Product')),
-              TextField(controller: quantityCtrl, decoration: const InputDecoration(labelText: 'Quantity'), keyboardType: TextInputType.number),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  productController.text = productCtrl.text;
-                  quantityController.text = quantityCtrl.text;
-                });
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Request updated")),
-                );
-              },
-              child: const Text('Save'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-          ],
-        );
-      },
-    );
-  }
+  // void _editRequest() {
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) {
+  //       final TextEditingController productCtrl = TextEditingController(text: productController.text);
+  //       final TextEditingController quantityCtrl = TextEditingController(text: quantityController.text);
+  //       return AlertDialog(
+  //         title: const Text('Edit Request'),
+  //         content: Column(
+  //           mainAxisSize: MainAxisSize.min,
+  //           children: [
+  //             TextField(controller: productCtrl, decoration: const InputDecoration(labelText: 'Product')),
+  //             TextField(controller: quantityCtrl, decoration: const InputDecoration(labelText: 'Quantity'), keyboardType: TextInputType.number),
+  //           ],
+  //         ),
+  //         actions: [
+  //           TextButton(
+  //             onPressed: () {
+  //               setState(() {
+  //                 productController.text = productCtrl.text;
+  //                 quantityController.text = quantityCtrl.text;
+  //               });
+  //               Navigator.pop(context);
+  //               ScaffoldMessenger.of(context).showSnackBar(
+  //                 const SnackBar(content: Text("Request updated")),
+  //               );
+  //             },
+  //             child: const Text('Save'),
+  //           ),
+  //           TextButton(
+  //             onPressed: () => Navigator.pop(context),
+  //             child: const Text('Cancel'),
+  //           ),
+  //         ],
+  //       );
+  //     },
+  //   );
+  // }
 
-  void _deleteRequest() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Delete Request"),
-        content: const Text("Are you sure you want to delete this request?"),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Request deleted")),
-              );
-              setState(() {
-                supplierNameController.text = '';
-                productController.text = '';
-                quantityController.text = '';
-                dueDateController.text = '';
-                noteController.text = '';
-              });
-            },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-        ],
-      ),
-    );
-  }
+  // void _deleteRequest() {
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) => AlertDialog(
+  //       title: const Text("Delete Request"),
+  //       content: const Text("Are you sure you want to delete this request?"),
+  //       actions: [
+  //         TextButton(
+  //           onPressed: () {
+  //             Navigator.pop(context);
+  //             ScaffoldMessenger.of(context).showSnackBar(
+  //               const SnackBar(content: Text("Request deleted")),
+  //             );
+  //             setState(() {
+  //               supplierNameController.text = '';
+  //               productController.text = '';
+  //               quantityController.text = '';
+  //               dueDateController.text = '';
+  //               noteController.text = '';
+  //             });
+  //           },
+  //           child: const Text('Delete', style: TextStyle(color: Colors.red)),
+  //         ),
+  //         TextButton(
+  //           onPressed: () => Navigator.pop(context),
+  //           child: const Text('Cancel'),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
-  void _addProduct() {
-    setState(() {
-      final productCtrl = TextEditingController();
-      final quantityCtrl = TextEditingController();
-      final brandCtrl = TextEditingController();
-      final unitPriceCtrl = TextEditingController();
-      final remiseCtrl = TextEditingController(text: '0'); // <-- Remise ajoutée
-      final totalPriceCtrl = TextEditingController();
-      // Automatically calculate total price when quantity, price or remise changes
-      void update() => _updateProductTotal(productCtrl, quantityCtrl, unitPriceCtrl, remiseCtrl, totalPriceCtrl);
-      quantityCtrl.addListener(update);
-      unitPriceCtrl.addListener(update);
-      remiseCtrl.addListener(update);
-      products.add({
-        'product': productCtrl,
-        'quantity': quantityCtrl,
-        'brand': brandCtrl,
-        'unitPrice': unitPriceCtrl,
-        'remise': remiseCtrl,
-        'totalPrice': totalPriceCtrl,
-      });
-    });
-  }
+  // void _addProduct() {
+  //   setState(() {
+  //     final productCtrl = TextEditingController();
+  //     final quantityCtrl = TextEditingController();
+  //     final brandCtrl = TextEditingController();
+  //     final unitPriceCtrl = TextEditingController();
+  //     final remiseCtrl = TextEditingController(text: '0'); // <-- Remise ajoutée
+  //     final totalPriceCtrl = TextEditingController();
+  //     // Automatically calculate total price when quantity, price or remise changes
+  //     void update() => _updateProductTotal(productCtrl, quantityCtrl, unitPriceCtrl, remiseCtrl, totalPriceCtrl);
+  //     quantityCtrl.addListener(update);
+  //     unitPriceCtrl.addListener(update);
+  //     remiseCtrl.addListener(update);
+  //     products.add({
+  //       'product': productCtrl,
+  //       'quantity': quantityCtrl,
+  //       'brand': brandCtrl,
+  //       'unitPrice': unitPriceCtrl,
+  //       'remise': remiseCtrl,
+  //       'totalPrice': totalPriceCtrl,
+  //     });
+  //   });
+  // }
 
   void _updateProductTotal(
     TextEditingController productCtrl,
