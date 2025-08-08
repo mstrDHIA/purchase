@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/screens/Product/add_product_screen.dart';
-import 'package:flutter_application_1/screens/users/users_List_screen.dart';
-import 'package:flutter_application_1/screens/Product/add_product_screen.dart'; // Import de la page AddProductPage
+// Import de la page AddProductPage
 
 class ProductPage extends StatefulWidget {
   const ProductPage({super.key});
@@ -31,9 +30,9 @@ class _ProductPageState extends State<ProductPage> {
     // ... add more products as needed
   ];
 
-  int _rowsPerPage = 5;
+  final int _rowsPerPage = 5;
   int _page = 0;
-  String _search = '';
+  // final String _search = '';
 
   String? _selectedCategory;
   String? _selectedSupplier;
@@ -42,11 +41,11 @@ class _ProductPageState extends State<ProductPage> {
 
   @override
   Widget build(BuildContext context) {
-    final filtered = products.where((p) {
-      final name = p['name'].toString().toLowerCase();
-      final filter = _nameFilterController.text.toLowerCase();
-      return filter.isEmpty || name.contains(filter);
-    }).toList();
+    // final filtered = products.where((p) {
+    //   final name = p['name'].toString().toLowerCase();
+    //   final filter = _nameFilterController.text.toLowerCase();
+    //   return filter.isEmpty || name.contains(filter);
+    // }).toList();
 
     return Scaffold(
       body: Row(
@@ -230,9 +229,9 @@ class _ProductPageState extends State<ProductPage> {
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(minWidth: 1700), // optionnel, adapte si tu veux une largeur min
                         child: DataTable(
-                          dataRowColor: MaterialStateProperty.resolveWith<Color?>(
-                            (Set<MaterialState> states) {
-                              if (states.contains(MaterialState.selected)) {
+                          dataRowColor: WidgetStateProperty.resolveWith<Color?>(
+                            (Set<WidgetState> states) {
+                              if (states.contains(WidgetState.selected)) {
                                 return Colors.deepPurple.withOpacity(0.08);
                               }
                               return Colors.white;
@@ -251,8 +250,8 @@ class _ProductPageState extends State<ProductPage> {
                             final index = entry.key;
                             final product = entry.value;
                             return DataRow(
-                              color: MaterialStateProperty.resolveWith<Color?>(
-                                (Set<MaterialState> states) {
+                              color: WidgetStateProperty.resolveWith<Color?>(
+                                (Set<WidgetState> states) {
                                   return index.isEven ? Colors.white : Colors.grey.shade50;
                                 },
                               ),

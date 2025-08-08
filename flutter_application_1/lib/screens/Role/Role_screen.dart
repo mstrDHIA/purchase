@@ -43,14 +43,14 @@ class _RolePageState extends State<RolePage> {
                     children: [
                       // Header
                       Row(
-                        children: [
-                          const Icon(Icons.assignment_ind_outlined, size: 32, color: Colors.black87),
-                          const SizedBox(width: 12),
-                          const Text(
+                        children: const [
+                          Icon(Icons.assignment_ind_outlined, size: 32, color: Colors.black87),
+                          SizedBox(width: 12),
+                          Text(
                             'Roles',
                             style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
                           ),
-                          const Spacer(),
+                          Spacer(),
                         ],
                       ),
                       const SizedBox(height: 18),

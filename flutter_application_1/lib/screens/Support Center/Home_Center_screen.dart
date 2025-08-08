@@ -82,86 +82,86 @@ class _SupportCenterPageState extends State<SupportCenterPage> {
     }).toList();
   }
 
-  Color _periorityColor(String periority) {
-    switch (periority) {
-      case 'High':
-        return const Color.fromARGB(255, 110, 2, 2);
-      case 'Medium':
-        return const Color.fromARGB(255, 238, 183, 45);
-      case 'Low':
-        return const Color.fromARGB(255, 1, 83, 53);
-      default:
-        return Colors.grey;
-    }
-  }
+  // Color _periorityColor(String periority) {
+  //   switch (periority) {
+  //     case 'High':
+  //       return const Color.fromARGB(255, 110, 2, 2);
+  //     case 'Medium':
+  //       return const Color.fromARGB(255, 238, 183, 45);
+  //     case 'Low':
+  //       return const Color.fromARGB(255, 1, 83, 53);
+  //     default:
+  //       return Colors.grey;
+  //   }
+  // }
 
-  Color _statusColor(String status) {
-    switch (status) {
-      case 'Open':
-        return const Color.fromARGB(255, 0, 42, 93);
-      case 'Resolved':
-        return const Color.fromARGB(255, 0, 71, 45);
-      case 'Pending':
-        return const Color(0xFFFBBF24);
-      case 'Treated':
-        return const Color(0xFF9CA3AF);
-      default:
-        return Colors.grey;
-    }
-  }
+  // Color _statusColor(String status) {
+  //   switch (status) {
+  //     case 'Open':
+  //       return const Color.fromARGB(255, 0, 42, 93);
+  //     case 'Resolved':
+  //       return const Color.fromARGB(255, 0, 71, 45);
+  //     case 'Pending':
+  //       return const Color(0xFFFBBF24);
+  //     case 'Treated':
+  //       return const Color(0xFF9CA3AF);
+  //     default:
+  //       return Colors.grey;
+  //   }
+  // }
 
-  void _onView(Map<String, dynamic> ticket) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Ticket Details'),
-        content: Text(
-          'ID: ${ticket['id']}\n'
-          'Subject: ${ticket['subject']}\n'
-          'Requester: ${ticket['requester']}\n'
-          'Category: ${ticket['category']}\n'
-          'Periority: ${ticket['periority']}\n'
-          'Created on: ${ticket['createdOn']}\n'
-          'Status: ${ticket['status']}',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
+  // void _onView(Map<String, dynamic> ticket) {
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) => AlertDialog(
+  //       title: Text('Ticket Details'),
+  //       content: Text(
+  //         'ID: ${ticket['id']}\n'
+  //         'Subject: ${ticket['subject']}\n'
+  //         'Requester: ${ticket['requester']}\n'
+  //         'Category: ${ticket['category']}\n'
+  //         'Periority: ${ticket['periority']}\n'
+  //         'Created on: ${ticket['createdOn']}\n'
+  //         'Status: ${ticket['status']}',
+  //       ),
+  //       actions: [
+  //         TextButton(
+  //           onPressed: () => Navigator.pop(context),
+  //           child: const Text('Close'),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
-  void _onEdit(Map<String, dynamic> ticket) {
-    final TextEditingController subjectController = TextEditingController(text: ticket['subject']);
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Ticket'),
-        content: TextField(
-          controller: subjectController,
-          decoration: const InputDecoration(labelText: 'Subject'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                ticket['subject'] = subjectController.text;
-              });
-              Navigator.pop(context);
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-  }
+  // void _onEdit(Map<String, dynamic> ticket) {
+  //   final TextEditingController subjectController = TextEditingController(text: ticket['subject']);
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) => AlertDialog(
+  //       title: const Text('Edit Ticket'),
+  //       content: TextField(
+  //         controller: subjectController,
+  //         decoration: const InputDecoration(labelText: 'Subject'),
+  //       ),
+  //       actions: [
+  //         TextButton(
+  //           onPressed: () => Navigator.pop(context),
+  //           child: const Text('Cancel'),
+  //         ),
+  //         ElevatedButton(
+  //           onPressed: () {
+  //             setState(() {
+  //               ticket['subject'] = subjectController.text;
+  //             });
+  //             Navigator.pop(context);
+  //           },
+  //           child: const Text('Save'),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   void _onDelete(Map<String, dynamic> ticket) {
     showDialog(

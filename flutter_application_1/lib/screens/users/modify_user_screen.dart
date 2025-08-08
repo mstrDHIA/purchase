@@ -10,7 +10,7 @@ import 'package:provider/provider.dart';
 
 class ModifyUserPage extends StatefulWidget {
   final User user;
-  const ModifyUserPage({required this.user});
+  const ModifyUserPage({super.key, required this.user});
 
   @override
   _ModifyUserPageState createState() => _ModifyUserPageState();
@@ -289,45 +289,45 @@ class _ModifyUserPageState extends State<ModifyUserPage> {
   }
 
   // Function to handle profile photo change
-  Widget _buildProfilePhotoField(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Profile photo',
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
-              ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            CircleAvatar(
-              radius: 32,
-              backgroundColor: Colors.grey[300],
-              backgroundImage: _profileImageFile != null
-                  ? FileImage(_profileImageFile!)
-                  : null,
-              child: _profileImageFile == null
-                  ? const Icon(Icons.person, size: 32, color: Colors.white)
-                  : null,
-            ),
-            const SizedBox(width: 16),
-            ElevatedButton(
-              onPressed: _pickImage,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.grey[200],
-                foregroundColor: Colors.black,
-                elevation: 0,
-              ),
-              child: const Text('Click to replace'),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
+  // Widget _buildProfilePhotoField(BuildContext context) {
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       Text(
+  //         'Profile photo',
+  //         style: Theme.of(context).textTheme.titleSmall?.copyWith(
+  //               fontWeight: FontWeight.w600,
+  //               color: Colors.black,
+  //             ),
+  //       ),
+  //       const SizedBox(height: 8),
+  //       Row(
+  //         children: [
+  //           CircleAvatar(
+  //             radius: 32,
+  //             backgroundColor: Colors.grey[300],
+  //             backgroundImage: _profileImageFile != null
+  //                 ? FileImage(_profileImageFile!)
+  //                 : null,
+  //             child: _profileImageFile == null
+  //                 ? const Icon(Icons.person, size: 32, color: Colors.white)
+  //                 : null,
+  //           ),
+  //           const SizedBox(width: 16),
+  //           ElevatedButton(
+  //             onPressed: _pickImage,
+  //             style: ElevatedButton.styleFrom(
+  //               backgroundColor: Colors.grey[200],
+  //               foregroundColor: Colors.black,
+  //               elevation: 0,
+  //             ),
+  //             child: const Text('Click to replace'),
+  //           ),
+  //         ],
+  //       ),
+  //     ],
+  //   );
+  // }
 
   // Add this method to pick an image from gallery
   Future<void> _pickImage() async {

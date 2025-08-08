@@ -102,14 +102,14 @@ class UserNetwork {
   // register
   Future<dynamic> register({required String username, required String password}) async {
     final response = await api.dio.post(
-      'https://d2e9d48e4ff7.ngrok-free.app/user/register/',
+      '${APIS.baseUrl}${APIS.register}',
       data: {
         'username': username,
         'email': username, 
         'password': password,
       },
     );
-    return response.data;
+    return response;
   }
   // user list
     uesresList() async {

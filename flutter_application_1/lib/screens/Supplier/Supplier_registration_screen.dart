@@ -50,7 +50,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
     // Récupère toutes les catégories uniques
     final categories = suppliers.map((s) => s.category).toSet().toList();
 
-    final int _totalPages = (filteredSuppliers.length / _suppliersPerPage).ceil();
+    final int totalPages = (filteredSuppliers.length / _suppliersPerPage).ceil();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F8FB),
@@ -303,18 +303,18 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                         );
                       }),
                       // Ellipsis and last page
-                      if (_totalPages > 4) ...[
+                      if (totalPages > 4) ...[
                         const Text(' ... ', style: TextStyle(fontSize: 14)),
                         GestureDetector(
-                          onTap: () => setState(() => _currentPage = _totalPages),
+                          onTap: () => setState(() => _currentPage = totalPages),
                           child: CircleAvatar(
                             radius: 12,
-                            backgroundColor: _currentPage == _totalPages ? Colors.blue : Colors.grey.shade200,
+                            backgroundColor: _currentPage == totalPages ? Colors.blue : Colors.grey.shade200,
                             child: Text(
-                              '$_totalPages',
+                              '$totalPages',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: _currentPage == _totalPages ? Colors.white : Colors.black,
+                                color: _currentPage == totalPages ? Colors.white : Colors.black,
                               ),
                             ),
                           ),
@@ -323,7 +323,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                       // Next page
                       IconButton(
                         icon: const Icon(Icons.chevron_right, size: 20),
-                        onPressed: _currentPage < _totalPages
+                        onPressed: _currentPage < totalPages
                             ? () => setState(() => _currentPage++)
                             : null,
                       ),

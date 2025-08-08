@@ -111,7 +111,7 @@ class _AppSidebarState extends State<AppSidebar> {
       width: isCollapsed ? 72 : 220,
       decoration: BoxDecoration(
         color: const Color.fromARGB(255, 227, 227, 233),
-        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)],
+        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4)],
       ),
       child: Column(
         children: [

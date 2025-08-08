@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter_application_1/models/user_model.dart';
-import 'package:flutter_application_1/network/profile_network.dart';
 import 'package:flutter_application_1/network/user_network.dart';
 import 'package:flutter_application_1/screens/profile/profile_user.dart';
 import 'package:flutter_application_1/screens/users/modify_user_screen.dart';
@@ -126,7 +125,7 @@ class _UserListPageState extends State<UserListPage> {
                                 sortColumnIndex: userController.sortColumnIndex,
                                 sortAscending: userController.sortAscending,
                                 columnSpacing: 48,
-                                headingRowColor: MaterialStateProperty.all(const Color(0xFFF5F5F5)),
+                                headingRowColor: WidgetStateProperty.all(const Color(0xFFF5F5F5)),
                                 dataRowHeight: 56,
                                 dividerThickness: 0.6,
                                 columns: [

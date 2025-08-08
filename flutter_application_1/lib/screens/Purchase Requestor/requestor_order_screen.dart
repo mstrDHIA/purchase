@@ -407,7 +407,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
       MaterialPageRoute(
         builder: (context) => PurchaseRequestorForm(
           onSave: (_) {},
-          initialOrder: {
+          initialOrder: const {
             'priority': 'High', // Définit "High" comme valeur par défaut
           },
         ),
@@ -432,12 +432,12 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
     }
   }
 
-  void _addNewRequest(Map<String, dynamic> request) {
-    setState(() {
-      _PurchaseRequests.add(request); // Ajout local
-      purchase_order.PurchaseOrderPage.addPurchaseOrder(request); // Ajout à la table des orders
-    });
-  }
+  // void _addNewRequest(Map<String, dynamic> request) {
+  //   setState(() {
+  //     _PurchaseRequests.add(request); // Ajout local
+  //     purchase_order.PurchaseOrderPage.addPurchaseOrder(request); // Ajout à la table des orders
+  //   });
+  // }
 
   @override
   Widget build(BuildContext context) {

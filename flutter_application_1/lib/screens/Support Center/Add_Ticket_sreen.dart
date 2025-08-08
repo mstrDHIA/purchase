@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:file_picker/src/platform_file.dart';
 
 class AddTicketPage extends StatefulWidget {
   const AddTicketPage({Key? key}) : super(key: key);
@@ -104,12 +103,12 @@ class _AddTicketPageState extends State<AddTicketPage> {
             children: [
               // Header
               Row(
-                children: [
-                  const Text(
+                children: const [
+                  Text(
                     'Support centre',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 32),
                   ),
-                  const Spacer(),
+                  Spacer(),
                   // IconButton(
                   //   icon: const Icon(Icons.account_circle_outlined, size: 32),
                   //   onPressed: () {},

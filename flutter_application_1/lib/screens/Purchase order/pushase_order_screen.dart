@@ -18,7 +18,6 @@ class PurchaseOrderPage extends StatefulWidget {
 
 class _PurchaseOrderDataSource extends DataTableSource {
   final List<Map<String, dynamic>> _data;
-  final BuildContext _context;
   final DateFormat _dateFormat;
   final Function(Map<String, dynamic>) onView;
   final Function(Map<String, dynamic>) onEdit;
@@ -26,7 +25,6 @@ class _PurchaseOrderDataSource extends DataTableSource {
 
   _PurchaseOrderDataSource(
     this._data,
-    this._context,
     this._dateFormat, {
     required this.onView,
     required this.onEdit,
@@ -371,7 +369,6 @@ class PurchaseOrderPageState extends State<PurchaseOrderPage> {
   Widget build(BuildContext context) {
     final dataSource = _PurchaseOrderDataSource(
       _filteredAndSortedOrders,
-      context,
       _dateFormat,
       onView: viewPurchaseOrder,
       onEdit: editPurchaseOrder,
@@ -388,7 +385,7 @@ class PurchaseOrderPageState extends State<PurchaseOrderPage> {
                 context,
                 MaterialPageRoute(
                   builder: (context) => PurchaseOrderForm(
-                    initialOrder: <String, dynamic>{},
+                    initialOrder: const <String, dynamic>{},
                     onSave: (newOrder) {
                       setState(() {
                         _purchaseOrders.add(newOrder);

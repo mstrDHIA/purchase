@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter_application_1/network/purchase_request_network.dart'; // <-- Add this import
-import 'package:flutter_application_1/screens/Purchase%20order/pushase_order_screen.dart';
 import 'package:intl/intl.dart';
 
 import 'dart:convert';
@@ -24,13 +23,11 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
   final TextEditingController titleController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
 
-  final List<Map<String, dynamic>> _PurchaseRequests = [];
   String? selectedPriority;
   DateTime? selectedDueDate;
   List<Map<String, dynamic>> products = [];
   late UserController userController;
 
-  bool _isLoading = false;
 
   @override
   void initState() {
@@ -110,7 +107,6 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
       return;
     }
 
-    final userId = Provider.of<UserController>(context, listen: false).currentUserId;
 
     final order = {
       'title': 'qqqqq',
@@ -124,7 +120,6 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
       'approved_by': null,
     };
 
-    setState(() => _isLoading = true);
 
     try {
       // Save to API
@@ -154,7 +149,6 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
         SnackBar(content: Text('Failed to save: $e')),
       );
     } finally {
-      setState(() => _isLoading = false);
     }
   }
 
@@ -174,31 +168,31 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
     });
   }
 
-  void _openAddRequestForm() async {
-    final newOrder = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PurchaseRequestorForm(
-          onSave: (_) {},
-          initialOrder: {},
-        ),
-      ),
-    );
-    if (newOrder != null) {
-      setState(() {
-        final id = 'P${(_PurchaseRequests.length + 1).toString().padLeft(2, '0')}';
-        _PurchaseRequests.add({
-          'id': id,
-          'actionCreatedBy': 'Moi',
-          'dateSubmitted': newOrder['dateSubmitted'],
-          'dueDate': newOrder['dueDate'],
-          'priority': newOrder['priority'],
-          'status': 'Pending',
-          ...newOrder,
-        });
-      });
-    }
-  }
+  // void _openAddRequestForm() async {
+  //   final newOrder = await Navigator.push(
+  //     context,
+  //     MaterialPageRoute(
+  //       builder: (context) => PurchaseRequestorForm(
+  //         onSave: (_) {},
+  //         initialOrder: const {},
+  //       ),
+  //     ),
+  //   );
+  //   if (newOrder != null) {
+  //     setState(() {
+  //       final id = 'P${(_PurchaseRequests.length + 1).toString().padLeft(2, '0')}';
+  //       _PurchaseRequests.add({
+  //         'id': id,
+  //         'actionCreatedBy': 'Moi',
+  //         'dateSubmitted': newOrder['dateSubmitted'],
+  //         'dueDate': newOrder['dueDate'],
+  //         'priority': newOrder['priority'],
+  //         'status': 'Pending',
+  //         ...newOrder,
+  //       });
+  //     });
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
