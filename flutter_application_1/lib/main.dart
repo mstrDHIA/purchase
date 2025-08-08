@@ -63,16 +63,18 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   String _selected = 'Home';
   // late UserController userController  ;
+  late UserController userController;
+
   
 
-  Widget _getPage() {
+  Widget _getPage({required int id}) {
     switch (_selected) {
       case 'Home':
         return const home.HomePage();
       case 'Dashboard':
         return const dashboard.DashboardPage();
       case 'Profile':
-        return ProfilePageScreen();
+        return ProfilePageScreen(userId: id);
       case 'Users':
         return const users_list.UserListPage();
       case 'Password':
@@ -97,7 +99,11 @@ class _MainScreenState extends State<MainScreen> {
   //   userController = Provider.of<UserController>(context, listen: false);
   //   super.initState();
   // }
-
+  @override
+  void initState() {
+    // TODO: implement initState
+    userController = Provider.of<UserController>(context, listen: false);
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -111,7 +117,7 @@ class _MainScreenState extends State<MainScreen> {
               });
             },
           ),
-          Expanded(child: _getPage()),
+          Expanded(child: _getPage(id:userController.currentUserId!)),
         ],
       ),
     );

@@ -27,40 +27,56 @@ class UserNetwork {
       );
       if (response.statusCode == 200) {
         return 'Password updated successfully';
-      } else {
-        return response.data['detail'] ?? 'Failed to update password';
       }
-    } catch (e) {
-      return 'Error updating password: $e';
-    }
+      else {
+        return 'Failed to update password: ${response.statusMessage}';
+      }
+      }catch (e) {
+        return 'Error updating password: $e';
+      }
   }
-  // Récupère les détails d'un utilisateur via l'API user/users-with-details/{id}/
-  Future<User?> getUserDetails(int userId) async {
+   
+   updateUser(data,id) async {
     try {
-      final response = await api.dio.get(
-        '${APIS.baseUrl}user/users-with-details/$userId/',
+      // final payload = data.toJson();
+      print('updateAllUsers payload:');
+      // print(payload);
+      final response = await api.dio.put(
+        '${APIS.baseUrl}${APIS.updateAllUsers}$id/',
+        data: data,
         options: Options(
           headers: {
             'Authorization': 'Bearer ${APIS().token}',
+            'Content-Type': 'application/json',
             'ngrok-skip-browser-warning': 'true',
           },
         ),
       );
-      print('API response for user details: ${response.data}');
-      if (response.statusCode == 200) {
-        final data = response.data;
-        if (data is Map<String, dynamic>) {
-          final user = User.fromJson(data);
-          print('User.fromJson output: firstName=${user.firstName}, lastName=${user.lastName}, email=${user.email}, username=${user.username}, role=${user.role?.name}');
-          return user;
-        }
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return 'User updated successfully.';
+      } else {
+        return 'Failed to update user: ${response.statusMessage}';
       }
-      return null;
     } catch (e) {
-      print('Erreur lors de la récupération des détails utilisateur: $e');
-      return null;
+      return 'Error updating user: $e';
     }
-  }
+      // print('API response for user details: ${response.data}');
+      // if (response.statusCode == 200) {
+      //   final data = response.data;
+      //   if (data is Map<String, dynamic>) {
+      //     final user = User.fromJson(data);
+      //     print('User.fromJson output: firstName=${user.firstName}, lastName=${user.lastName}, email=${user.email}, username=${user.username}, role=${user.role?.name}');
+      //     return user;
+      //   }
+      // }
+      // return null;
+    } 
+  //   catch (e) {
+  //     print('Erreur lors de la récupération des détails utilisateur: $e');
+  //     return null;
+  //   }
+  // }
+  
   APIS api = APIS();
 
 // login
@@ -187,27 +203,27 @@ class UserNetwork {
     }
   }
 
-  Future<String> updateUser(User updateUser) async {
-    try {
-      final response = await api.dio.put(
-        '${APIS.baseUrl}${APIS.userList}${updateUser.id}/',
-        data: updateUser.toJson(),
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer ${APIS().token}',
-            'ngrok-skip-browser-warning': 'true',
-          },
-        ),
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return 'User updated successfully.';
-      } else {
-        return 'Failed to update user: ${response.statusMessage}';
-      }
-    } catch (e) {
-      return 'Error updating user: $e';
-    }
-  }
+  // Future<String> updateUser(User updateUser) async {
+  //   try {
+  //     final response = await api.dio.put(
+  //       '${APIS.baseUrl}${APIS.userList}${updateUser.id}/',
+  //       data: updateUser.toJson(),
+  //       options: Options(
+  //         headers: {
+  //           'Authorization': 'Bearer ${APIS().token}',
+  //           'ngrok-skip-browser-warning': 'true',
+  //         },
+  //       ),
+  //     );
+  //     if (response.statusCode == 200 || response.statusCode == 201) {
+  //       return 'User updated successfully.';
+  //     } else {
+  //       return 'Failed to update user: ${response.statusMessage}';
+  //     }
+  //   } catch (e) {
+  //     return 'Error updating user: $e';
+  //   }
+  // }
 
   // addUser(User newUser) {} // Removed duplicate method
   Future<User?> viewUser(int userId) async {
@@ -260,4 +276,30 @@ getDetailedUser(int userId) async {
       return null;
     }
   }
+
+   updateAllUsers( Map<String,dynamic> data, int id) async {
+    print(0);
+  try {
+    print(1);
+    print('user data $data');
+    print(2);
+    final response = await api.dio.put(
+      '${APIS.baseUrl}${APIS.updateAllUsers}$id/',
+      data: data,
+      options: Options(
+        headers: {
+          'Authorization': 'Bearer ${APIS().token}',
+          'ngrok-skip-browser-warning': 'true',
+        },
+      ),
+    );
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return response;
+    } else {
+      // return 'Failed to update all users: ${response.statusMessage}';
+    }
+  } catch (e) {
+    print('Error updating all users: $e');
+  }
+}
 }

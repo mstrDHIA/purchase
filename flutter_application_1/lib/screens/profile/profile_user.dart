@@ -8,7 +8,9 @@ import '../auth/login_screen.dart';
 
 class ProfilePageScreen extends StatefulWidget {
 
-  const ProfilePageScreen({super.key, });
+  // final Map<String, dynamic> user;
+  final int userId;
+  const ProfilePageScreen({super.key, required this.userId, });
 
   @override
   State<ProfilePageScreen> createState() => _ProfilePageScreenState();
@@ -36,8 +38,9 @@ class _ProfilePageScreenState extends State<ProfilePageScreen> {
   Future<void> didChangeDependencies() async {
     super.didChangeDependencies();
     print('id: ${userController.selectedUserId}');
-     await userController.getDetailedUser(userController.selectedUserId!);
-  
+
+    final user = await userController.getDetailedUser(widget.userId);
+
   }
   @override
   void dispose() {

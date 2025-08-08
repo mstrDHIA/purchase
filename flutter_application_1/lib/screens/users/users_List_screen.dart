@@ -4,6 +4,7 @@ import 'package:flutter_application_1/models/user_model.dart';
 import 'package:flutter_application_1/network/user_network.dart';
 import 'package:flutter_application_1/screens/profile/profile_user.dart';
 import 'package:flutter_application_1/screens/users/modify_user_screen.dart';
+
 import 'package:flutter_application_1/screens/users/add_user_screen.dart';
 import 'package:provider/provider.dart';
 
@@ -186,6 +187,8 @@ class _UserListPageState extends State<UserListPage> {
                                           IconButton(
                                             icon: const Icon(Icons.edit, size: 20, color: Color(0xFF6F4DBF)),
                                             onPressed: () {
+                                              userController.selectedUserId = user.id!;
+                                              userController.selectedUser = user;
                                               Navigator.push(
                                                 context,
                                                 MaterialPageRoute(
@@ -213,7 +216,7 @@ class _UserListPageState extends State<UserListPage> {
                                                   context,
                                                   MaterialPageRoute(
                                                     builder: (_) => ProfilePageScreen(
-                                                      // userId: user.id!,
+                                                      userId: userController.selectedUserId!,
                                                      
                                                     //   user: {
                                                     //   "id": user.id,

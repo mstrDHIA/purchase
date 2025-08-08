@@ -20,7 +20,7 @@ class Profile {
       this.zipCode,
       this.address,
       this.firstName,
-      this.lastName, required int userId});
+      this.lastName,  int? userId});
 
   Profile.fromJson(Map<String, dynamic> json) {
     id = json['id'];

@@ -23,21 +23,21 @@ class UserController extends ChangeNotifier {
       return 'Error updating password: $e';
     }
   }
-  Future<String> updateUser(User updatedUser) async {
-    isLoading = true;
-    notifyListeners();
-    try {
-      String result = await userNetwork.updateUser(updatedUser);
-      await getUsers(); // Refresh user list after update
-      isLoading = false;
-      notifyListeners();
-      return result;
-    } catch (e) {
-      isLoading = false;
-      notifyListeners();
-      return 'Error updating user: $e';
-    }
-  }
+  // Future<String> updateUser(User updatedUser) async {
+  //   isLoading = true;
+  //   notifyListeners();
+  //   try {
+  //     String result = await userNetwork.updateUser(updatedUser,selectedUserId);
+  //     await getUsers(); // Refresh user list after update
+  //     isLoading = false;
+  //     notifyListeners();
+  //     return result;
+  //   } catch (e) {
+  //     isLoading = false;
+  //     notifyListeners();
+  //     return 'Error updating user: $e';
+  //   }
+  // }
   bool isLoading = false;
   List<User> users = [];
   String searchText = '';
@@ -46,6 +46,7 @@ class UserController extends ChangeNotifier {
   int? sortColumnIndex;
   bool sortAscending = true;
   User selectedUser = User();
+  User currentUser = User();
   int? currentUserId;
   int? selectedUserId;
 
@@ -237,11 +238,11 @@ class UserController extends ChangeNotifier {
   Future<User> getDetailedUser(int userId) async {
     isLoading = true;
     notifyListeners();
-    print('getting response for user id: $userId');
+    // print('getting response for user id: $userId');
     Response response = await userNetwork.getDetailedUser(userId);
-    print('got response: ${response.data}');
+    // print('got response: ${response.data}');
     if (response.statusCode == 200) {
-      print('response 200');
+      // print('response 200');
       User user = User.fromJson(response.data[0]);
       // print('user name: ${user.profile?.firstName}');
       isLoading = false;
@@ -254,6 +255,72 @@ class UserController extends ChangeNotifier {
       isLoading = false;
       notifyListeners();
       throw Exception('Failed to load user details');
+    }
+  }
+
+   updateAllUser(firstName, lastName, email, username, country, state, city, address, location, zipCode) async {
+    print('aaaaa');
+  
+    isLoading = true;
+    print('bbb ');
+    notifyListeners();
+    try {
+      print('ccc');
+      final Map<String, dynamic> data ={
+      
+};
+Map<String,dynamic> profileData={};
+if(username!=selectedUser.username){
+  data['username'] = username;
+}
+if(email!=selectedUser.email){
+  data['email'] = email;
+}
+if(firstName!=selectedUser.profile?.firstName||lastName!=selectedUser.profile?.lastName||country!=selectedUser.profile?.country||
+    state!=selectedUser.profile?.state||city!=selectedUser.profile?.city||
+    address!=selectedUser.profile?.address||location!=selectedUser.profile?.location||
+    zipCode!=selectedUser.profile?.zipCode){
+ if(firstName!=selectedUser.profile?.firstName){
+  profileData['first_name'] = firstName;
+}
+if(lastName!=selectedUser.profile?.lastName){
+  profileData['last_name'] = lastName;
+}
+if(country!=selectedUser.profile?.country){
+  profileData['country'] = country;
+}
+if(state!=selectedUser.profile?.state){
+  profileData['state'] = state;
+}
+if(city!=selectedUser.profile?.city){
+  profileData['city'] = city;
+}
+if(address!=selectedUser.profile?.address){
+  profileData['address'] = address;
+}
+if(location!=selectedUser.profile?.location){
+  profileData['location'] = location;
+}
+if(zipCode!=selectedUser.profile?.zipCode){
+  profileData['zip_code'] = zipCode;
+}
+data['profile'] = profileData;
+}
+
+print('ddd');
+      // Map<String, dynamic> data = user.toJson();
+      Response result = await userNetwork.updateAllUsers(data, selectedUserId!);
+      print('eee');
+      print(result);
+      print(result.data);
+      // await getUsers(); // Refresh user list after update
+      isLoading = false;
+      notifyListeners();
+      // return result;
+    } catch (e) {
+      isLoading = false;
+      notifyListeners();
+      return 'Error updating user: $e';
     }
   }
 
