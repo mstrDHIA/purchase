@@ -1,9 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter_application_1/main.dart';
 import 'package:flutter_application_1/models/profile.dart';
 import 'package:flutter_application_1/network/profile_network.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 
 
 
@@ -27,12 +29,10 @@ class _AddUserPageState extends State<AddUserPage> {
   //   return users.any((u) => u.username == username || u.email == email);
   // }
   // final _emailController = TextEditingController();
-  final _firstNameController = TextEditingController();
-  final _lastNameController = TextEditingController();
-  final _addressController = TextEditingController();
-  final _cityController = TextEditingController();
-  final _stateController = TextEditingController();
-  final _zipController = TextEditingController();
+  final _usernameController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  
   // final _passwordController = TextEditingController();
   String _selectedCountry = 'Tunisia';
   // String? _selectedRole = 'Member';
@@ -48,12 +48,10 @@ class _AddUserPageState extends State<AddUserPage> {
   @override
   void dispose() {
     // _emailController.dispose();
-    _firstNameController.dispose();
-    _lastNameController.dispose();
-    _addressController.dispose();
-    _cityController.dispose();
-    _stateController.dispose();
-    _zipController.dispose();
+    _usernameController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+
     super.dispose();
   }
 
@@ -124,70 +122,61 @@ class _AddUserPageState extends State<AddUserPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Buttons
-            Row(
-              children: [
-                Expanded(child: SizedBox()),
-                Column(
-                  children: [
-                    ElevatedButton(
-                      onPressed: () async {
-                        if (_firstNameController.text.isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('First Name is required')),
-                          );
-                          return;
-                        }
+            // Row(
+            //   children: [
+            //     Expanded(child: SizedBox()),
+            //     Column(
+            //       children: [
+//                     ElevatedButton(
+//                       onPressed: () async {
+//                         if (_usernameController.text.isEmpty) {
+//                           ScaffoldMessenger.of(context).showSnackBar(
+//                             SnackBar(content: Text('First Name is required')),
+//                           );
+//                           return;
+//                         }
 
-                        // Vérification doublon username/email (ici username = firstName, email = '')
+//                         // Vérification doublon username/email (ici username = firstName, email = '')
                         
 
-                        // 1. Créer l'utilisateur (User)
-                        // Créer le profil lié à cet utilisateur déjà créé (userId transmis)
-                        if (widget.userId == null) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("Erreur : ID utilisateur manquant pour le profil.")),
-                          );
-                          return;
-                        }
-                        Profile profile = Profile(
-                          userId: widget.userId!,
-                          firstName: _firstNameController.text,
-                          lastName: _lastNameController.text,
-                          address: _addressController.text,
-                          city: _cityController.text,
-                          state: _stateController.text,
-                          country: _selectedCountry,
-                        );
-                        final message = await ProfileNetwork().addProfile(profile,widget.userId!);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(message)),
-                        );
-                        // Navigate to main screen after saving
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (context) => MainScreen()),
-                        );
-// Dummy main screen, replace with your actual main page
-// class MainScreen extends StatelessWidget {
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(title: Text('Main Screen')),
-//       body: Center(child: Text('Welcome to the main screen!')),
-//     );
-//   }
-// }
-                      },
-                      child: Text('Save'),
-                    ),
+//                         // 1. Créer l'utilisateur (User)
+//                         // Créer le profil lié à cet utilisateur déjà créé (userId transmis)
+//                         if (widget.userId == null) {
+//                           ScaffoldMessenger.of(context).showSnackBar(
+//                             SnackBar(content: Text("Erreur : ID utilisateur manquant pour le profil.")),
+//                           );
+//                           return;
+//                         }
+                        
+//                         // ScaffoldMessenger.of(context).showSnackBar(
+//                         //   SnackBar(content: Text(message)),
+//                         // );
+//                         // Navigate to main screen after saving
+//                         Navigator.pushReplacement(
+//                           context,
+//                           MaterialPageRoute(builder: (context) => MainScreen()),
+//                         );
+// // Dummy main screen, replace with your actual main page
+// // class MainScreen extends StatelessWidget {
+// //   @override
+// //   Widget build(BuildContext context) {
+// //     return Scaffold(
+// //       appBar: AppBar(title: Text('Main Screen')),
+// //       body: Center(child: Text('Welcome to the main screen!')),
+// //     );
+// //   }
+// // }
+//                       },
+//                       child: Text('Save'),
+//                     ),
                     SizedBox(height: 8),
                     
                     SizedBox(height: 8),
                    
-                  ],
-                ),
-              ],
-            ),
+            //       ],
+            //     ),
+            //   ],
+            // ),
             SizedBox(height: 32),
 
             // Profile picture
@@ -215,88 +204,221 @@ class _AddUserPageState extends State<AddUserPage> {
             const SizedBox(height: 24),
 
 
+            const SizedBox(height: 60),
+
+                      const Text(
+                        'Username',
+                        style: TextStyle(fontSize: 18, color: Colors.black54),
+                      ),
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        controller: _usernameController,
+                        decoration: InputDecoration(
+                          hintText: 'Enter your username',
+                          filled: true,
+                          fillColor: Colors.blue.shade50,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                        keyboardType: TextInputType.emailAddress,
+                      ),
+                      const SizedBox(height: 24),
+
+                      const Text(
+                        'Password',
+                        style: TextStyle(fontSize: 18, color: Colors.black54),
+                      ),
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        controller: _passwordController,
+                        // obscureText: !_isPasswordVisible,
+                        // onChanged: _checkPasswordStrength,
+                        decoration: InputDecoration(
+                          hintText: 'Enter your password',
+                          filled: true,
+                          fillColor: Colors.blue.shade50,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide.none,
+                          ),
+                          // suffixIcon: IconButton(
+                          //   icon: Icon(
+                          //     _isPasswordVisible
+                          //         ? Icons.visibility
+                          //         : Icons.visibility_off,
+                          //     color: Colors.grey,
+                          //   ),
+                          //   onPressed: () {
+                          //     setState(() {
+                          //       _isPasswordVisible = !_isPasswordVisible;
+                          //     });
+                          //   },
+                          // ),
+                          // errorText: _passwordError,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      // if (_passwordStrength.isNotEmpty)
+                      //   Column(
+                      //     crossAxisAlignment: CrossAxisAlignment.start,
+                      //     children: [
+                      //       LinearProgressIndicator(
+                      //         value: _passwordStrength == 'Weak'
+                      //             ? 0.33
+                      //             : _passwordStrength == 'Medium'
+                      //                 ? 0.66
+                      //                 : 1.0,
+                      //         backgroundColor: Colors.grey.shade300,
+                      //         valueColor:
+                      //             AlwaysStoppedAnimation<Color>(_strengthColor),
+                      //         minHeight: 8,
+                      //       ),
+                      //       const SizedBox(height: 6),
+                      //       Text(
+                      //         'Password strength: $_passwordStrength',
+                      //         style: TextStyle(
+                      //           color: _strengthColor,
+                      //           fontWeight: FontWeight.w600,
+                      //         ),
+                      //       ),
+                      //     ],
+                      //   ),
+
+                      const SizedBox(height: 24),
+
+                      const Text(
+                        'Confirm Password',
+                        style: TextStyle(fontSize: 18, color: Colors.black54),
+                      ),
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        controller: _confirmPasswordController,
+                        obscureText: true,
+                        decoration: InputDecoration(
+                          hintText: 'Re-enter your password',
+                          filled: true,
+                          fillColor: Colors.blue.shade50,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide.none,
+                          ),
+                          // errorText: _confirmPasswordError,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
 
 
-            Row(
-              children: [
-                Expanded(
-                  child: _buildLabeledBox(
-                    'First Name',
-                    TextField(
-                      controller: _firstNameController,
-                      decoration: const InputDecoration(hintText: 'Enter first name'),
-                    ),
-                  ),
-                ),
-                SizedBox(width: 16),
-                Expanded(
-                  child: _buildLabeledBox(
-                    'Last Name',
-                    TextField(
-                      controller: _lastNameController,
-                      decoration: const InputDecoration(hintText: 'Enter last name'),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 24),
+                      Consumer<UserController>(
+                        builder: (context, userController, child) {
+                          return ElevatedButton(onPressed: (){
+                            if (_usernameController.text.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Username is required')),
+                              );
+                              return;
+                            }
+                            if (_passwordController.text.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Password is required')),
+                              );
+                              return;
+                            }
+                            if (_confirmPasswordController.text != _passwordController.text) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Passwords do not match')),
+                              );
+                              return;
+                            }
+                            userController.addUser(_usernameController.text, _passwordController.text, context);
+                          
+                                               
+                            
+                          }, child: Text('Save'));
+                        }
+                      ),
+
+            // Row(
+            //   children: [
+            //     Expanded(
+            //       child: _buildLabeledBox(
+            //         'First Name',
+            //         TextField(
+            //           controller: _firstNameController,
+            //           decoration: const InputDecoration(hintText: 'Enter first name'),
+            //         ),
+            //       ),
+            //     ),
+            //     SizedBox(width: 16),
+            //     Expanded(
+            //       child: _buildLabeledBox(
+            //         'Last Name',
+            //         TextField(
+            //           controller: _lastNameController,
+            //           decoration: const InputDecoration(hintText: 'Enter last name'),
+            //         ),
+            //       ),
+            //     ),
+            //   ],
+            // ),
+            // SizedBox(height: 24),
 
 
 
-            _buildLabeledBox(
-              'Address',
-              TextField(controller: _addressController),
-            ),
-            SizedBox(height: 24),
+            // _buildLabeledBox(
+            //   'Address',
+            //   TextField(controller: _addressController),
+            // ),
+            // SizedBox(height: 24),
 
-            Row(
-              children: [
-                Expanded(
-                  child: _buildLabeledBox(
-                    'City',
-                    TextField(controller: _cityController),
-                  ),
-                ),
-                SizedBox(width: 16),
-                Expanded(
-                  child: _buildLabeledBox(
-                    'State',
-                    TextField(controller: _stateController),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 24),
+            // Row(
+            //   children: [
+            //     Expanded(
+            //       child: _buildLabeledBox(
+            //         'City',
+            //         TextField(controller: _cityController),
+            //       ),
+            //     ),
+            //     SizedBox(width: 16),
+            //     Expanded(
+            //       child: _buildLabeledBox(
+            //         'State',
+            //         TextField(controller: _stateController),
+            //       ),
+            //     ),
+            //   ],
+            // ),
+            // SizedBox(height: 24),
 
-            Row(
-              children: [
-                Expanded(
-                  child: _buildLabeledBox(
-                    'ZIP',
-                    TextField(controller: _zipController),
-                  ),
-                ),
-                SizedBox(width: 16),
-                Expanded(
-                  child: _buildLabeledBox(
-                    'Country',
-                    DropdownButtonFormField<String>(
-                      value: _selectedCountry,
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedCountry = value!;
-                        });
-                      },
-                      items: _countries.map((country) => DropdownMenuItem(
-                        value: country,
-                        child: Text(country),
-                      )).toList(),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+            // Row(
+            //   children: [
+            //     Expanded(
+            //       child: _buildLabeledBox(
+            //         'ZIP',
+            //         TextField(controller: _zipController),
+            //       ),
+            //     ),
+            //     SizedBox(width: 16),
+            //     Expanded(
+            //       child: _buildLabeledBox(
+            //         'Country',
+            //         DropdownButtonFormField<String>(
+            //           value: _selectedCountry,
+            //           onChanged: (value) {
+            //             setState(() {
+            //               _selectedCountry = value!;
+            //             });
+            //           },
+            //           items: _countries.map((country) => DropdownMenuItem(
+            //             value: country,
+            //             child: Text(country),
+            //           )).toList(),
+            //         ),
+            //       ),
+            //     ),
+            //   ],
+            // ),
           ],
         ),
       ),

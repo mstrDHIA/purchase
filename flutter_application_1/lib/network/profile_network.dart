@@ -69,7 +69,7 @@ class ProfileNetwork {
         data: data,
         options: Options(
           headers: {
-            'Authorization': 'Bearer ${api.token}',
+            'Authorization': 'Bearer ${APIS.token}',
             'ngrok-skip-browser-warning': 'true',
           },
         ),

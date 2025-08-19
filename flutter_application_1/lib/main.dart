@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/Settings/settings_screen.dart';
+import 'package:flutter_application_1/controllers/purchase_request_controller.dart';
 
 import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter_application_1/controllers/role_controller.dart';
@@ -7,7 +8,7 @@ import 'package:flutter_application_1/controllers/role_controller.dart';
 import 'package:flutter_application_1/providers/theme_provider.dart';
 import 'package:flutter_application_1/screens/Dashboard/dashboard_screen.dart' as dashboard;
 import 'package:flutter_application_1/screens/Home.dart' as home;
-import 'package:flutter_application_1/screens/Purchase%20Requestor/requestor_order_screen.dart' as requestor_order;
+import 'package:flutter_application_1/screens/Purchase%20Request/purchase_request_list_screen.dart' as requestor_order;
 import 'package:flutter_application_1/screens/Purchase%20order/pushase_order_screen.dart';
 import 'package:flutter_application_1/screens/Support%20Center/Home_Center_screen.dart';
 
@@ -26,9 +27,10 @@ void main() {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => ThemeProvider()), // <-- AJOUTE CETTE LIGNE
+        ChangeNotifierProvider(create: (_) => ThemeProvider()), 
         ChangeNotifierProvider(create: (_) => UserController()),
         ChangeNotifierProvider(create: (_) => RoleController()),
+        ChangeNotifierProvider(create: (_) => PurchaseRequestController()),
       ],
       child: const MyApp(),
     ),
@@ -95,14 +97,18 @@ class _MainScreenState extends State<MainScreen> {
   }
   // @override
   // void initState() {
-  //   // TODO: implement i
   //   userController = Provider.of<UserController>(context, listen: false);
   //   super.initState();
   // }
   @override
   void initState() {
-    // TODO: implement initState
     userController = Provider.of<UserController>(context, listen: false);
+    
+    //temporary fix to ensure user is logged in
+    if(userController.currentUserId == null) {
+      userController.login('admin', 'admin',context);
+    }
+    super.initState();
   }
   @override
   Widget build(BuildContext context) {

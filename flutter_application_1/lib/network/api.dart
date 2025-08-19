@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 
 class APIS {
   final dio = Dio();
-  String token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU1MTgyNzYzLCJpYXQiOjE3NTQ1Nzc5NjMsImp0aSI6IjNlMjk3OTA0YzZiMTRhNjJiMjZkYWNiNmEyNjU3Y2RlIiwidXNlcl9pZCI6NjV9.KRB51RlLQ-StiC4dIJr-8PDulUokqp5tsPDoHBJJGdo';
+  static String token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU1MTgyNzYzLCJpYXQiOjE3NTQ1Nzc5NjMsImp0aSI6IjNlMjk3OTA0YzZiMTRhNjJiMjZkYWNiNmEyNjU3Y2RlIiwidXNlcl9pZCI6NjV9.KRB51RlLQ-StiC4dIJr-8PDulUokqp5tsPDoHBJJGdo';
 
   APIS() {
     dio.interceptors.add(LogInterceptor(
@@ -14,7 +14,7 @@ class APIS {
     ));
   }
 
-  static const String baseUrl = "https://d2e9d48e4ff7.ngrok-free.app/";
+  static const String baseUrl = "https://06909429cd0e.ngrok-free.app/";
 
   static const String login = "user/login/";
 
@@ -28,6 +28,7 @@ class APIS {
   static const String deleteRole = "role/roles/";
   static const String updateRole = "role/roles/";
   static const String viewProfileByUserId = "user/users-with-details/";
+  static const String userListDetailed = "user/users-with-details-list/";
   static const String updateProfile = "profile/profiles/";
   static const String changePassword = "user/change-password/";
   static const String viewProfileById = "purchase_request/purchaseRequests/";
