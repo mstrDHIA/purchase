@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/controllers/user_controller.dart';
+import 'package:provider/provider.dart';
 
 
 class MyApp extends StatelessWidget {
@@ -88,21 +90,116 @@ class AppSidebar extends StatefulWidget {
 }
 
 class _AppSidebarState extends State<AppSidebar> {
+  late UserController userController;
+
   bool isCollapsed = false;
 
   final items = [
-    {'label': 'Home', 'icon': Icons.home},
-    {'label': 'Dashboard', 'icon': Icons.dashboard},
-    {'label': 'Profile', 'icon': Icons.account_circle},
-    {'label': 'Users', 'icon': Icons.people},
-    {'label': 'Password', 'icon': Icons.lock},
-    {'label': 'PurchaseRequest', 'icon': Icons.note_add},
-    {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
-    {'label': 'Roles and access', 'icon': Icons.security},
-    {'label': 'Support centre', 'icon': Icons.help},
-    {'label': 'Settings', 'icon': Icons.settings},
+    // {'label': 'Home', 'icon': Icons.home},
+    // {'label': 'Dashboard', 'icon': Icons.dashboard},
+    // {'label': 'Profile', 'icon': Icons.account_circle},
+    // {'label': 'Users', 'icon': Icons.people},
+    // {'label': 'Password', 'icon': Icons.lock},
+    // {'label': 'PurchaseRequest', 'icon': Icons.note_add},
+    // {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
+    // {'label': 'Roles and access', 'icon': Icons.security},
+    // {'label': 'Support centre', 'icon': Icons.help},
+    // {'label': 'Settings', 'icon': Icons.settings},
   ];
 
+
+  initSideBarItems() {
+    print("role id: ${userController.currentUser.role_id}");
+    print(userController.currentUser.role!.id);
+    if(userController.currentUser.role_id==32){
+      items.addAll([
+      // {'label': 'Home', 'icon': Icons.home},
+      {'label': 'Dashboard', 'icon': Icons.dashboard},
+      // {'label': 'Profile', 'icon': Icons.account_circle},
+      {'label': 'Users', 'icon': Icons.people},
+      {'label': 'Password', 'icon': Icons.lock},
+      {'label': 'PurchaseRequest', 'icon': Icons.note_add},
+      {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
+      {'label': 'Roles and access', 'icon': Icons.security},
+      {'label': 'Support centre', 'icon': Icons.help},
+      {'label': 'Settings', 'icon': Icons.settings},
+    ]);
+    }
+    else if(userController.currentUser.role_id==33){
+      items.addAll([
+      // {'label': 'Home', 'icon': Icons.home},
+      // {'label': 'Dashboard', 'icon': Icons.dashboard},
+      {'label': 'Profile', 'icon': Icons.account_circle},
+      // {'label': 'Users', 'icon': Icons.people},
+      {'label': 'Password', 'icon': Icons.lock},
+      {'label': 'PurchaseRequest', 'icon': Icons.note_add},
+      // {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
+      {'label': 'Support centre', 'icon': Icons.help},
+      {'label': 'Settings', 'icon': Icons.settings},
+    ]);
+    }
+    else if(userController.currentUser.role_id==34){
+      items.addAll([
+      // {'label': 'Home', 'icon': Icons.home},
+      // {'label': 'Dashboard', 'icon': Icons.dashboard},
+      {'label': 'Profile', 'icon': Icons.account_circle},
+      // {'label': 'Users', 'icon': Icons.people},
+      {'label': 'Password', 'icon': Icons.lock},
+      {'label': 'PurchaseRequest', 'icon': Icons.note_add},
+      // {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
+      {'label': 'Support centre', 'icon': Icons.help},
+      {'label': 'Settings', 'icon': Icons.settings},
+    ]);
+    }
+    else if(userController.currentUser.role_id==35){
+      items.addAll([
+      // {'label': 'Home', 'icon': Icons.home},
+      // {'label': 'Dashboard', 'icon': Icons.dashboard},
+      {'label': 'Profile', 'icon': Icons.account_circle},
+      // {'label': 'Users', 'icon': Icons.people},
+      {'label': 'Password', 'icon': Icons.lock},
+      // {'label': 'PurchaseRequest', 'icon': Icons.note_add},
+      {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
+      {'label': 'Support centre', 'icon': Icons.help},
+      {'label': 'Settings', 'icon': Icons.settings},
+    ]);
+    }
+    else if(userController.currentUser.role_id==36){
+       items.addAll([
+      // {'label': 'Home', 'icon': Icons.home},
+      // {'label': 'Dashboard', 'icon': Icons.dashboard},
+      {'label': 'Profile', 'icon': Icons.account_circle},
+      // {'label': 'Users', 'icon': Icons.people},
+      {'label': 'Password', 'icon': Icons.lock},
+      // {'label': 'PurchaseRequest', 'icon': Icons.note_add},
+      // {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
+      {'label': 'Support centre', 'icon': Icons.help},
+      {'label': 'Settings', 'icon': Icons.settings},
+    ]);
+    }
+    else{
+       items.addAll([
+      // {'label': 'Home', 'icon': Icons.home},
+      // {'label': 'Dashboard', 'icon': Icons.dashboard},
+      {'label': 'Profile', 'icon': Icons.account_circle},
+      // {'label': 'Users', 'icon': Icons.people},
+      {'label': 'Password', 'icon': Icons.lock},
+      // {'label': 'PurchaseRequest', 'icon': Icons.note_add},
+      // {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
+      {'label': 'Support centre', 'icon': Icons.help},
+      {'label': 'Settings', 'icon': Icons.settings},
+    ]);
+    }
+    
+  }
+
+  @override
+  void initState() {
+    userController = Provider.of<UserController>(context, listen: false);
+    initSideBarItems();
+    // TODO: implement initState
+    super.initState();
+  }
   @override
   Widget build(BuildContext context) {
     return AnimatedContainer(

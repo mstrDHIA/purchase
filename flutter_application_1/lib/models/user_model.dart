@@ -3,7 +3,6 @@ import 'package:flutter_application_1/models/role.dart';
 
 extension UserComputedFields on User {
   // String get name => '[200m$firstName $lastName[0m';
-  String get status => isSuperuser! ? 'Active' : 'Inactive';
   String get permission => isSuperuser! ? 'Admin' : 'User';
 }
 class User {
@@ -17,7 +16,8 @@ class User {
   final int? profileId;
   final int? role_id;
   final Profile? profile;
-  final Role? role;
+   Role? role;
+   bool? isActive;
 
   User( {
      this.id,
@@ -31,11 +31,14 @@ class User {
      this.password,
     this.profileId,
     this.role,
+    this.isActive, 
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
     final profileJson = json['profile'];
     final profile = profileJson != null ? Profile.fromJson(Map<String, dynamic>.from(profileJson)) : null;
+    final roleJson = json['role'];
+    final role = roleJson != null ? Role.fromJson(Map<String, dynamic>.from(roleJson)) : null;
     final firstName = (json['first_name'] != null && json['first_name'] != '')
         ? json['first_name']
         : (profile?.firstName ?? '');
@@ -43,7 +46,8 @@ class User {
         ? json['last_name']
         : (profile?.lastName ?? '');
     final profileId = json['profile_id'] ?? (profile?.id);
-    // final roleId = json['role_id'];
+    final roleId = json['role_id'];
+    final isActive = json['is_active'] ?? true; // Default to true if not provided
     // Debug print
     // print('User.fromJson: firstName=$firstName, lastName=$lastName, profileId=$profileId, roleId=$roleId');
     return User(
@@ -56,8 +60,9 @@ class User {
       password: json['password'] ?? '',
       profile: profile,
       profileId: profileId,
-      // role_id: roleId,
-      // role: ... // If you want to parse role object, add here
+      role_id: roleId,
+      role: role, // If you want to parse role object, add here,
+      isActive: isActive,
     );
   }
 

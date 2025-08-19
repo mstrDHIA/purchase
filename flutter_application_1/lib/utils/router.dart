@@ -7,7 +7,7 @@ import 'package:flutter_application_1/screens/Supplier/Supplier_registration_scr
 import 'package:flutter_application_1/screens/Supplier/View_supplier_screen.dart';
 import 'package:flutter_application_1/screens/auth/login_screen.dart';
 import 'package:flutter_application_1/screens/home/home_screen.dart';
-import 'package:flutter_application_1/screens/profile/profile_user.dart';
+// import 'package:flutter_application_1/screens/profile/profile_user.dart';
 import 'package:flutter_application_1/screens/users/password_screen.dart';
 import 'package:flutter_application_1/screens/Role/Role_screen.dart';
 import 'package:flutter_application_1/screens/users/permission_screen.dart';
@@ -88,6 +88,7 @@ final GoRouter router = GoRouter(
       path: '/add_user',
       builder: (context, state) => AddUserPage(),
     ),
+    
     
   ],
 );

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // Import for Clipboard
 import 'package:flutter_application_1/controllers/user_controller.dart';
+import 'package:flutter_application_1/screens/profile/edit_profile_screen.dart';
+import 'package:flutter_application_1/screens/users/modify_user_screen.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -39,7 +41,7 @@ class _ProfilePageScreenState extends State<ProfilePageScreen> {
     super.didChangeDependencies();
     print('id: ${userController.selectedUserId}');
 
-    final user = await userController.getDetailedUser(widget.userId);
+     await userController.getDetailedUser(widget.userId);
 
   }
   @override
@@ -128,15 +130,33 @@ class _ProfilePageScreenState extends State<ProfilePageScreen> {
                     
                     OutlinedButton.icon(
                       onPressed: () async {
-                        if (isEditing) {
-                          setState(() {
-                            isEditing = false;
-                          });
-                        } else {
-                          setState(() {
-                            isEditing = true;
-                          });
-                        }
+                        // userController.selectedUserId = userController.currentUserId!;
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (context) =>  ModifyUserPage(user: userController.selectedUser)),
+                          
+                        ).then((value) async {
+                          if(userController.displaySnackBar) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('User updated successfully.'),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                            userController.displaySnackBar = false;
+                            await userController.getDetailedUser(widget.userId);
+                          }
+                          
+                        });
+                        
+                        // if (isEditing) {
+                        //   setState(() {
+                        //     isEditing = false;
+                        //   });
+                        // } else {
+                        //   setState(() {
+                        //     isEditing = true;
+                        //   });
+                        // }
                       },
                       icon: Icon(isEditing ? Icons.check : Icons.edit, color: Colors.deepPurple),
                       label: Text(isEditing ? 'Save' : 'Edit', style: const TextStyle(color: Colors.deepPurple)),
@@ -207,55 +227,67 @@ class _ProfilePageScreenState extends State<ProfilePageScreen> {
                 InfoWidget(txt: "Zip Code is not set",field: 'Zip Code'),
                   ],
                 ),
+                const SizedBox(height: 24),
+                Divider(),
+                const SizedBox(height: 24),
+                Text("Role",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.deepPurple[700],
+                ),
+                ),
+                const SizedBox(height: 24),
+                InfoWidget(txt: userController.selectedUser.role?.name ?? "Role is not set", field: 'Role'),
                 const SizedBox(height: 32),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    OutlinedButton.icon(
-                      onPressed: () {
-                        showDialog(
-                          context: context,
-                          builder: (BuildContext dialogContext) {
-                            return AlertDialog(
-                              title: const Text('Log out?'),
-                              content: const Text('Are you sure you want to log out?'),
-                              actions: <Widget>[
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.of(dialogContext).pop();
-                                  },
-                                  child: const Text('Cancel'),
-                                ),
-                                ElevatedButton(
-                                  onPressed: () {
-                                    Navigator.of(dialogContext).pop();
-                                    Navigator.of(context).pushAndRemoveUntil(
-                                      MaterialPageRoute(builder: (context) => SignInPage()),
-                                      (route) => false,
-                                    );
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.red,
-                                    foregroundColor: Colors.white,
-                                  ),
-                                  child: const Text('Log out'),
-                                ),
-                              ],
-                            );
-                          },
-                        );
-                      },
-                      icon: const Icon(Icons.logout, color: Colors.deepPurple),
-                      label: const Text('Log out', style: TextStyle(color: Colors.deepPurple)),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Colors.deepPurple),
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        overlayColor: Colors.deepPurple.withOpacity(0.05),
-                      ),
-                    ),
+                    // OutlinedButton.icon(
+                    //   onPressed: () {
+                    //     showDialog(
+                    //       context: context,
+                    //       builder: (BuildContext dialogContext) {
+                    //         return AlertDialog(
+                    //           title: const Text('Log out?'),
+                    //           content: const Text('Are you sure you want to log out?'),
+                    //           actions: <Widget>[
+                    //             TextButton(
+                    //               onPressed: () {
+                    //                 Navigator.of(dialogContext).pop();
+                    //               },
+                    //               child: const Text('Cancel'),
+                    //             ),
+                    //             ElevatedButton(
+                    //               onPressed: () {
+                    //                 Navigator.of(dialogContext).pop();
+                    //                 Navigator.of(context).pushAndRemoveUntil(
+                    //                   MaterialPageRoute(builder: (context) => SignInPage()),
+                    //                   (route) => false,
+                    //                 );
+                    //               },
+                    //               style: ElevatedButton.styleFrom(
+                    //                 backgroundColor: Colors.red,
+                    //                 foregroundColor: Colors.white,
+                    //               ),
+                    //               child: const Text('Log out'),
+                    //             ),
+                    //           ],
+                    //         );
+                    //       },
+                    //     );
+                    //   },
+                    //   icon: const Icon(Icons.logout, color: Colors.deepPurple),
+                    //   label: const Text('Log out', style: TextStyle(color: Colors.deepPurple)),
+                    //   style: OutlinedButton.styleFrom(
+                    //     side: const BorderSide(color: Colors.deepPurple),
+                    //     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    //     shape: RoundedRectangleBorder(
+                    //       borderRadius: BorderRadius.circular(8),
+                    //     ),
+                    //     overlayColor: Colors.deepPurple.withOpacity(0.05),
+                    //   ),
+                    // ),
                     const Spacer(),
                     const SizedBox(width: 12),
                   ],

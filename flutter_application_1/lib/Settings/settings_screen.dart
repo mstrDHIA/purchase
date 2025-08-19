@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/controllers/user_controller.dart';
+import 'package:flutter_application_1/models/user_model.dart';
+import 'package:flutter_application_1/screens/auth/login_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_application_1/providers/theme_provider.dart';
@@ -12,6 +15,7 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  late UserController userController;
   bool _notificationsEnabled = true;
   String _selectedLanguage = "Français";
   
@@ -19,6 +23,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   void initState() {
+    userController = Provider.of<UserController>(context, listen: false);
     super.initState();
     _loadLanguagePreference();
   }
@@ -258,7 +263,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                           TextButton(
                             onPressed: () {
-                              Navigator.pop(context);
+                              // Navigator.pop(context);
+                              
+                              userController.logout(context);
                               // Execute logout here
                             },
                             child: const Text("Logout"),

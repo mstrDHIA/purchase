@@ -259,16 +259,16 @@ class _SignUpPageState extends State<SignUpPage> {
                             width: double.infinity,
                             child: ElevatedButton(
                               onPressed: () {
-                                _validateForm();
-                                if (_passwordError == null &&
-                                    _confirmPasswordError == null &&
-                                    _agreeToTerms) {
+                                // _validateForm();
+                                // if (_passwordError == null &&
+                                //     _confirmPasswordError == null &&
+                                //     _agreeToTerms) {
                                 userController.register(
                                    _emailController.text,
                                    _passwordController.text,
                                    context,
                                 );
-                              }
+                              // }
                                 // _validateForm();
                                 // Only navigate if the form is valid
                                 // if (_passwordError == null &&
