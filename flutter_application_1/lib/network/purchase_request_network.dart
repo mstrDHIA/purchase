@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 class PurchaseRequestNetwork {
   final String baseUrl;
 
-  PurchaseRequestNetwork({this.baseUrl = "https://d2e9d48e4ff7.ngrok-free.app/"});
+  PurchaseRequestNetwork({this.baseUrl = "https://771a56af4864.ngrok-free.app/"});
 
   Map<String, String> get _headers => {
     'Content-Type': 'application/json',

@@ -139,56 +139,63 @@ class UserController extends ChangeNotifier {
 
 
   login(String email, String password,BuildContext context) async {
-    try{
-      isLoading = true;
+  try {
+    isLoading = true;
     notifyListeners();
     Response response = await userNetwork.login(email, password);
+    print('Login response: ${response.data}');
     if (response.statusCode == 200) {
       Map<String, dynamic> decodedToken = JwtDecoder.decode(response.data['access']);
+      print('Decoded token: $decodedToken');
       currentUserId = decodedToken['user_id'];
       selectedUserId = currentUserId;
-      print('current user id: {$currentUserId}');
-      context.go('/main_screen');
-      print(decodedToken);
-      print(response.data);
-      isLoading = false;
-      notifyListeners();
-      // Handle successful login
-    } else if (response.statusCode == 401) {
-      isLoading = false;
-      notifyListeners();
-      SnackBar snackBar = SnackBar(
-        backgroundColor: Colors.amber,
-        content: Text('Invalid email or password. Please try again.'),
-      );
-      ScaffoldMessenger.of(context).showSnackBar(snackBar);
-      // Handle login error
-    }
-    else {
-      isLoading = false;
-      notifyListeners();
-      SnackBar snackBar = SnackBar(
-        backgroundColor: Colors.red,
-        content: Text('An error occurred during login. Please try again.'),
-      );
-      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      Response userResponse = await userNetwork.getUserById(currentUserId!);
+      print('User response: ${userResponse.data}');
+      if (userResponse.statusCode == 200) {
+        currentUser = User.fromJson(userResponse.data);
+        print('Current user: ${currentUser.username}, id: ${currentUser.id}');
+        
+        context.go('/main_screen');
+      } else {
+        print('User not found');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            backgroundColor: Colors.red,
+            content: Text('Utilisateur non trouvé après login.'),
+          ),
+        );
       }
-      // Handle unexpected error
-    } catch (e) {
       isLoading = false;
       notifyListeners();
-      SnackBar snackBar = SnackBar(
-
+    } else {
+      print('Login failed: ${response.statusCode}');
+      isLoading = false;
+      notifyListeners();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          backgroundColor: Colors.red,
+          content: Text('An error occurred during login. Please try again.'),
+        ),
+      );
+    }
+  } catch (e) {
+    print('Login error: $e');
+    isLoading = false;
+    notifyListeners();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
         backgroundColor: Colors.red,
         content: Text('An error occurred during login'),
-      );
-      ScaffoldMessenger.of(context).showSnackBar(snackBar);
-      // Handle unexpected error
-    }  
-    }
+      ),
+    );
+  }
 
 
-      register(String email, String password,BuildContext context) async {
+     
+
+
+  }
+   register(String email, String password,BuildContext context) async {
     try{
       isLoading = true;
     notifyListeners();
@@ -243,12 +250,9 @@ class UserController extends ChangeNotifier {
     // print('got response: ${response.data}');
     if (response.statusCode == 200) {
       // print('response 200');
-      User user = User.fromJson(response.data[0]);
-      // print('user name: ${user.profile?.firstName}');
+      User user = User.fromJson(response.data); // <-- Utilise directement response.data
       isLoading = false;
-      // nameController.text = user.firstName ?? '';
-      selectedUser = user; // Store the user in the controller
-      // print( 'User details: ${response.data}');
+      selectedUser = user;
       notifyListeners();
       return user;
     } else {
@@ -258,7 +262,7 @@ class UserController extends ChangeNotifier {
     }
   }
 
-   updateAllUser(firstName, lastName, email, username, country, state, city, address, location, zipCode) async {
+   updateAllUser(firstName, lastName, email, username, country, state, city, address, location, zipCode, context) async {
     print('aaaaa');
   
     isLoading = true;
@@ -316,6 +320,7 @@ print('ddd');
       // await getUsers(); // Refresh user list after update
       isLoading = false;
       notifyListeners();
+      Navigator.pop(context);
       // return result;
     } catch (e) {
       isLoading = false;
@@ -328,3 +333,11 @@ print('ddd');
     notifyListeners();
   }
 }
+
+
+  // void register(String text, String text2, BuildContext context) {}
+
+  // getDetailedUser(int userId) {}
+
+  // updateAllUser(String text, String text2, String text3, String text4, String text5, String text6, String text7, String text8, String text9, int? tryParse, BuildContext context) {}
+// }

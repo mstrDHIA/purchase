@@ -61,6 +61,8 @@ class User {
     );
   }
 
+  get name => null;
+
   // get bio => null;
 
   // get location => null;

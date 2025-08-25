@@ -2,19 +2,19 @@ import 'package:dio/dio.dart';
 
 class APIS {
   final dio = Dio();
-  String token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU1MTgyNzYzLCJpYXQiOjE3NTQ1Nzc5NjMsImp0aSI6IjNlMjk3OTA0YzZiMTRhNjJiMjZkYWNiNmEyNjU3Y2RlIiwidXNlcl9pZCI6NjV9.KRB51RlLQ-StiC4dIJr-8PDulUokqp5tsPDoHBJJGdo';
+  String token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU1NTkzMzU3LCJpYXQiOjE3NTQ5ODg1NTcsImp0aSI6IjAwMDcwNzEyN2QxOTRhZGY4Yjc0YzFkYWUzZDQ5ZDliIiwidXNlcl9pZCI6Njl9.gEJjldt5VzJYi47Xemd1UqzYUCu2v-uXo2juz3qEwzI';
 
-  APIS() {
-    dio.interceptors.add(LogInterceptor(
-      request: true,
-      requestBody: true,
-      responseBody: true,
-      responseHeader: false,
-      error: true,
-    ));
-  }
+  // APIS() {
+  //   dio.interceptors.add(LogInterceptor(
+  //     request: true,
+  //     requestBody: true,
+  //     responseBody: true,
+  //     responseHeader: false,
+  //     error: true,
+  //   ));
+  // }
 
-  static const String baseUrl = "https://d2e9d48e4ff7.ngrok-free.app/";
+  static const String baseUrl = "72.60.90.60:8000/";
 
   static const String login = "user/login/";
 

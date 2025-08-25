@@ -418,15 +418,19 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
         final id = 'PR${_PurchaseRequests.length + 1}';
         final order = {
           'id': id,
-          'actionCreatedBy': 'Moi',
-          'dateSubmitted': newOrder['dateSubmitted'] ?? DateTime.now(),
-          'dueDate': newOrder['dueDate'] ?? DateTime.now().add(const Duration(days: 7)),
-          'priority': newOrder['priority'] ?? 'High', // Défaut "High"
+          'actionCreatedBy': newOrder['actionCreatedBy'] ?? 'Moi',
+          'dateSubmitted': newOrder['dateSubmitted'] is String
+              ? DateTime.parse(newOrder['dateSubmitted'])
+              : (newOrder['dateSubmitted'] ?? DateTime.now()),
+          'dueDate': newOrder['dueDate'] is String
+              ? DateTime.parse(newOrder['dueDate'])
+              : (newOrder['dueDate'] ?? DateTime.now().add(const Duration(days: 7))),
+          'priority': newOrder['priority'] ?? 'High',
           'status': 'Pending',
+          'requested_by': newOrder['requested_by'], // Use the value from the form, which should be the correct user ID
           ...newOrder,
         };
         _PurchaseRequests.add(order.cast<String, dynamic>());
-        // Ajoute aussi à la table des Purchase Orders
         purchase_order.PurchaseOrderPage.addPurchaseOrder(order.cast<String, dynamic>());
       });
     }
@@ -652,6 +656,13 @@ class ViewPurchasePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('yyyy-MM-dd');
+    // Conversion sécurisée des dates
+    final dateSubmitted = order['dateSubmitted'] is String
+        ? DateTime.parse(order['dateSubmitted'])
+        : order['dateSubmitted'];
+    final dueDate = order['dueDate'] is String
+        ? DateTime.parse(order['dueDate'])
+        : order['dueDate'];
     return Scaffold(
       appBar: AppBar(title: Text('View Purchase Order ${order['id']}')),
       body: Padding(
@@ -662,8 +673,8 @@ class ViewPurchasePage extends StatelessWidget {
             Text('ID: ${order['id']}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             Text('Created by: ${order['actionCreatedBy']}'),
-            Text('Date submitted: ${dateFormat.format(order['dateSubmitted'])}'),
-            Text('Due date: ${dateFormat.format(order['dueDate'])}'),
+            Text('Date submitted: ${dateFormat.format(dateSubmitted)}'),
+            Text('Due date: ${dateFormat.format(dueDate)}'),
             Text('Priority: ${order['priority']}'),
             Text('Status: ${order['status']}'),
             const SizedBox(height: 32),

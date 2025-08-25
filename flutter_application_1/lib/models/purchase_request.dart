@@ -1,55 +1,35 @@
 class PurchaseRequest {
-  String? title;
-  String? description;
+  int? id;
+  Null? startDate;
+  Null? endDate;
   List<Products>? products;
-  String? dueDate;
-  String? priority;
-  String? note;
-  String? dateSubmitted;
-  int? requestedBy;
-  int? approvedBy;
+  String? title = 'qqqqq';
+  String? description = 'Description of the purchase request';
 
-  PurchaseRequest(
-      {this.title,
-      this.description,
-      this.products,
-      this.dueDate,
-      this.priority,
-      this.note,
-      this.dateSubmitted,
-      this.requestedBy,
-      this.approvedBy});
+  PurchaseRequest({this.id, this.startDate, this.endDate, this.products});
 
   PurchaseRequest.fromJson(Map<String, dynamic> json) {
     title = json['title'];
     description = json['description'];
+    id = json['id'];
+    startDate = json['start_date'];
+    endDate = json['end_date'];
     if (json['products'] != null) {
       products = <Products>[];
       json['products'].forEach((v) {
-        products!.add(Products.fromJson(v));
+        products!.add(new Products.fromJson(v));
       });
     }
-    dueDate = json['dueDate'];
-    priority = json['priority'];
-    note = json['note'];
-    dateSubmitted = json['dateSubmitted'];
-    requestedBy = json['requested_by'];
-    approvedBy = json['approved_by'];
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    data['title'] = title;
-    data['description'] = description;
-    if (products != null) {
-      data['products'] = products!.map((v) => v.toJson()).toList();
+    final Map<String, dynamic> data = new Map<String, dynamic>();
+    data['id'] = this.id;
+    data['start_date'] = this.startDate;
+    data['end_date'] = this.endDate;
+    if (this.products != null) {
+      data['products'] = this.products!.map((v) => v.toJson()).toList();
     }
-    data['dueDate'] = dueDate;
-    data['priority'] = priority;
-    data['note'] = note;
-    data['dateSubmitted'] = dateSubmitted;
-    data['requested_by'] = requestedBy;
-    data['approved_by'] = approvedBy;
     return data;
   }
 }
@@ -66,9 +46,9 @@ class Products {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = <String, dynamic>{};
-    data['product'] = product;
-    data['quantity'] = quantity;
+    final Map<String, dynamic> data = new Map<String, dynamic>();
+    data['product'] = this.product;
+    data['quantity'] = this.quantity;
     return data;
   }
 }

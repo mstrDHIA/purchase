@@ -27,6 +27,8 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
   DateTime? selectedDueDate;
   List<Map<String, dynamic>> products = [];
   late UserController userController;
+  
+  get order => null;
 
 
   @override
@@ -38,9 +40,16 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
       quantityController.text = widget.initialOrder['quantity']?.toString() ?? '';
       noteController.text = widget.initialOrder['note'] ?? '';
       selectedPriority = widget.initialOrder['priority'];
-      selectedDueDate = widget.initialOrder['dueDate'];
+      var dueDateValue = widget.initialOrder['dueDate'];
+      if (dueDateValue is String) {
+        selectedDueDate = DateTime.tryParse(dueDateValue);
+      } else if (dueDateValue is DateTime) {
+        selectedDueDate = dueDateValue;
+      } else {
+        selectedDueDate = null;
+      }
       if (selectedDueDate != null) {
-        dueDateController.text = DateFormat('dd-MM-yyyy').format(selectedDueDate!);
+        dueDateController.text = DateFormat('MMM dd, yyyy').format(selectedDueDate!);
       }
     }
   }
@@ -72,6 +81,13 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
   }
 
   Future<void> _save({bool addAnother = false}) async {
+    print('Current user id: ${userController.currentUser.id}'); 
+    if (userController.currentUser.id == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erreur: utilisateur non connecté ou id manquant')),
+      );
+      return;
+    }
     if (products.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please add at least one product')),
@@ -109,15 +125,17 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
 
 
     final order = {
-      'title': 'qqqqq',
-      'description': 'qqqqqq',
-      'products': List<Map<String, dynamic>>.from(products),
-      'dueDate': selectedDueDate!.toIso8601String(),
-      'priority': selectedPriority,
+      'title': titleController.text.isNotEmpty ? titleController.text : 'Demande d\'achat',
+      'description': descriptionController.text.isNotEmpty ? descriptionController.text : 'Description par défaut',
+      'requested_by': userController.currentUser.id,
+      'createdBy': userController.currentUser.username ?? 'Inconnu',
+      'product': productController.text,
+      'quantity': int.tryParse(quantityController.text) ?? 0,
       'note': noteController.text,
-      'dateSubmitted': dateSubmitted.toIso8601String(),
-      'requested_by': userController.currentUserId,
-      'approved_by': null,
+      'priority': selectedPriority,
+      'dueDate': selectedDueDate?.toIso8601String(),
+      'actionCreatedBy': userController.currentUser.firstName ?? userController.currentUser.username ?? 'Moi',
+      'dateSubmitted': DateTime.now().toIso8601String(),
     };
 
 
@@ -146,9 +164,8 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to save: $e')),
+        SnackBar(content: Text('Failed to save request: $e')),
       );
-    } finally {
     }
   }
 
