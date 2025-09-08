@@ -1,8 +1,10 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/models/role.dart';
 import '../network/role_network.dart';
 
 class RoleController extends ChangeNotifier {
-  List<Map<String, dynamic>> roles = [];
+  List<Role> roles = [];
   bool isLoading = false;
   String? error;
 
@@ -16,8 +18,25 @@ class RoleController extends ChangeNotifier {
     error = null;
     notifyListeners();
     try {
-      final List<Map<String, dynamic>> rolesFromApi = await RoleNetwork().fetchRoles();
-      roles = rolesFromApi;
+      final Response response = await RoleNetwork().fetchRoles();
+      if(response.statusCode == 200) {
+        roles = (response.data as List)
+            .map((roleData) => Role.fromJson(Map<String, dynamic>.from(roleData)))
+            .toList();
+
+        isLoading = false;
+        
+        notifyListeners();
+        // return;
+      }
+      else{
+        error = 'Failed to load roles';
+        isLoading = false;
+        notifyListeners();
+        // return;
+      }
+      
+      // roles = rolesFromApi;
       isLoading = false;
       error = null;
     } catch (e) {

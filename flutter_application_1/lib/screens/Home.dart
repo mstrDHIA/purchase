@@ -102,7 +102,7 @@ class HomePage extends StatelessWidget {
                     label: 'Create Purchase Request',
                     color: Colors.indigo,
                     onTap: () {
-                      Navigator.of(context).pushNamed('/PurchaseRequest');
+                      Navigator.of(context).pushNamed('/requestor_form_screen');
                     },
                     description: 'Start a new purchase request for your needs.',
                   ),
@@ -111,7 +111,7 @@ class HomePage extends StatelessWidget {
                     label: 'View Purchase Orders',
                     color: Colors.green,
                     onTap: () {
-                      Navigator.of(context).pushNamed('/Purchase Order');
+                      Navigator.of(context).pushNamed('/purchase_order_screen');
                     },
                     description: 'Browse and manage all purchase orders.',
                   ),
@@ -120,7 +120,7 @@ class HomePage extends StatelessWidget {
                     label: 'Manage Users',
                     color: Colors.orange,
                     onTap: () {
-                      Navigator.of(context).pushNamed('/Users');
+                      Navigator.of(context).pushNamed('/users_List_screen');
                     },
                     description: 'Add, edit, or remove users and permissions.',
                   ),
@@ -195,7 +195,7 @@ class _HomeCard extends StatelessWidget {
         hoverColor: color.withOpacity(0.18),
         child: Container(
           width: 220,
-          height: 150,
+          height: 185,
           padding: const EdgeInsets.all(18),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -212,11 +212,15 @@ class _HomeCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 6),
-              Text(
-                description,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.black87,
+              Flexible(
+                child: Text(
+                  description,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Colors.black87,
+                  ),
                 ),
               ),
             ],

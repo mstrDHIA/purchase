@@ -165,6 +165,36 @@ class _PasswordScreenState extends State<PasswordScreen> {
             TextField(
               controller: controller,
               obscureText: !showPassword,
+              onSubmitted: label.toLowerCase().contains('confirm')
+                  ? (_) async {
+                      final currentPassword = _currentPasswordController.text.trim();
+                      final newPassword = _newPasswordController.text.trim();
+                      final confirmPassword = _confirmPasswordController.text.trim();
+                      if (currentPassword.isEmpty || newPassword.isEmpty || confirmPassword.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Please fill all fields')),
+                        );
+                        return;
+                      }
+                      if (newPassword != confirmPassword) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('New passwords do not match')),
+                        );
+                        return;
+                      }
+                      final userController = Provider.of<UserController>(context, listen: false);
+                      String result = await userController.changePassword(
+                        currentPassword: currentPassword,
+                        newPassword: newPassword,
+                        confirmPassword: confirmPassword,
+                      );
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          backgroundColor: result.contains('success') ? Colors.green : Colors.red,
+                          content: Text(result)),
+                      );
+                    }
+                  : null,
               decoration: InputDecoration(
                 filled: true,
                 fillColor: const Color(0xFFF4F4F4),

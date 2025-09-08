@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/screens/Purchase%20Requestor/Request_Edit_screen.dart';
+// import 'package:flutter_application_1/screens/Purchase%20Requestor/Request_Edit_screen.dart';
 import 'package:flutter_application_1/screens/Purchase%20Requestor/requestor_form_screen.dart';
-import 'package:flutter_application_1/screens/Purchase%20Requestor/request_view_screen.dart';
+// import 'package:flutter_application_1/screens/Purchase%20Requestor/request_view_screen.dart';
 import 'package:flutter_application_1/screens/Purchase%20order/pushase_order_screen.dart' as purchase_order;
 // Make sure the above import points to the file where addPurchaseOrder is defined as a top-level function.
 import 'package:intl/intl.dart';
@@ -20,7 +20,7 @@ class _PurchaseRequestDataSource extends DataTableSource {
   final BuildContext _context;
   final DateFormat _dateFormat;
   final Function(Map<String, dynamic>) onView;
-  final Function(Map<String, dynamic>) onEdit;
+  // final Function(Map<String, dynamic>) onEdit;
   final Function(Map<String, dynamic>) onDelete;
 
   _PurchaseRequestDataSource(
@@ -28,7 +28,7 @@ class _PurchaseRequestDataSource extends DataTableSource {
     this._context,
     this._dateFormat, {
     required this.onView,
-    required this.onEdit,
+    // required this.onEdit,
     required this.onDelete,
   });
 
@@ -49,30 +49,30 @@ class _PurchaseRequestDataSource extends DataTableSource {
             IconButton(
               icon: const Icon(Icons.remove_red_eye_outlined),
               onPressed: () {
-                Navigator.push(
-                  _context,
-                  MaterialPageRoute(
-                    builder: (context) => PurchaseRequestView(
-                      order: item, // Passe la ligne sélectionnée ici
-                      onSave: (_) {},
-                    ),
-                  ),
-                );
+                // Navigator.push(
+                //   _context,
+                //   MaterialPageRoute(
+                //     builder: (context) => PurchaseRequestView(
+                //       order: item, // Passe la ligne sélectionnée ici
+                //       onSave: (_) {},
+                //     ),
+                //   ),
+                // );
               },
               tooltip: 'View',
             ),
             IconButton(
               icon: const Icon(Icons.edit_outlined),
               onPressed: () {
-                Navigator.push(
-                  _context,
-                  MaterialPageRoute(
-                    builder: (context) => RequestEditPage(
-                      request: item,
-                      onSave: (_) {},
-                    ),
-                  ),
-                );
+                // Navigator.push(
+                //   _context,
+                //   MaterialPageRoute(
+                //     builder: (context) => RequestEditPage(
+                //       request: item,
+                //       onSave: (_) {},
+                //     ),
+                //   ),
+                // );
               },
               tooltip: 'Edit',
             ),
@@ -178,7 +178,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
     setState(() { _isLoading = true; });
     try {
       final api = PurchaseRequestNetwork();
-      final List<dynamic> data = await api.fetchPurchaseRequests();
+      final List<dynamic> data = (await api.fetchPurchaseRequests()) as List;
       setState(() {
         _PurchaseRequests.clear();
         _PurchaseRequests.addAll(data.map<Map<String, dynamic>>((item) {
@@ -295,31 +295,31 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
     );
   }
 
-  void editPurchaseRequest(Map<String, dynamic> order) async {
-    final updatedOrder = await Navigator.push<Map<String, dynamic>>(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PurchaseRequestView(
-          order: order,
-          onSave: (newOrder) {
-            Navigator.pop(context, newOrder);
-          },
-        ),
-      ),
-    );
+  // void editPurchaseRequest(Map<String, dynamic> order) async {
+  //   final updatedOrder = await Navigator.push<Map<String, dynamic>>(
+  //     context,
+  //     MaterialPageRoute(
+  //       builder: (context) => PurchaseRequestView(
+  //         order: order,
+  //         onSave: (newOrder) {
+  //           Navigator.pop(context, newOrder);
+  //         },
+  //       ),
+  //     ),
+  //   );
 
-    if (updatedOrder != null) {
-      setState(() {
-        final index = _PurchaseRequests.indexWhere((o) => o['id'] == updatedOrder['id']);
-        if (index != -1) {
-          _PurchaseRequests[index] = updatedOrder;
-        }
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Purchase order ${updatedOrder['id']} updated')),
-      );
-    }
-  }
+  //   if (updatedOrder != null) {
+  //     setState(() {
+  //       final index = _PurchaseRequests.indexWhere((o) => o['id'] == updatedOrder['id']);
+  //       if (index != -1) {
+  //         _PurchaseRequests[index] = updatedOrder;
+  //       }
+  //     });
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text('Purchase order ${updatedOrder['id']} updated')),
+  //     );
+  //   }
+  // }
 
   void deletePurchaseRequest(Map<String, dynamic> order) async {
     final bool? confirmed = await showDialog<bool>(
@@ -401,40 +401,40 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
     });
   }
 
-  void _openAddRequestForm() async {
-    final newOrder = await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PurchaseRequestorForm(
-          onSave: (_) {},
-          initialOrder: const {
-            'priority': 'High', // Définit "High" comme valeur par défaut
-          },
-        ),
-      ),
-    );
-    if (newOrder != null) {
-      setState(() {
-        final id = 'PR${_PurchaseRequests.length + 1}';
-        final order = {
-          'id': id,
-          'actionCreatedBy': newOrder['actionCreatedBy'] ?? 'Moi',
-          'dateSubmitted': newOrder['dateSubmitted'] is String
-              ? DateTime.parse(newOrder['dateSubmitted'])
-              : (newOrder['dateSubmitted'] ?? DateTime.now()),
-          'dueDate': newOrder['dueDate'] is String
-              ? DateTime.parse(newOrder['dueDate'])
-              : (newOrder['dueDate'] ?? DateTime.now().add(const Duration(days: 7))),
-          'priority': newOrder['priority'] ?? 'High',
-          'status': 'Pending',
-          'requested_by': newOrder['requested_by'], // Use the value from the form, which should be the correct user ID
-          ...newOrder,
-        };
-        _PurchaseRequests.add(order.cast<String, dynamic>());
-        purchase_order.PurchaseOrderPage.addPurchaseOrder(order.cast<String, dynamic>());
-      });
-    }
-  }
+  // void _openAddRequestForm() async {
+  //   final newOrder = await Navigator.push(
+  //     context,
+  //     MaterialPageRoute(
+  //       builder: (context) => PurchaseRequestorForm(
+  //         onSave: (_) {},
+  //         initialOrder: const {
+  //           'priority': 'High', // Définit "High" comme valeur par défaut
+  //         },
+  //       ),
+  //     ),
+  //   );
+  //   if (newOrder != null) {
+  //     setState(() {
+  //       final id = 'PR${_PurchaseRequests.length + 1}';
+  //       final order = {
+  //         'id': id,
+  //         'actionCreatedBy': newOrder['actionCreatedBy'] ?? 'Moi',
+  //         'dateSubmitted': newOrder['dateSubmitted'] is String
+  //             ? DateTime.parse(newOrder['dateSubmitted'])
+  //             : (newOrder['dateSubmitted'] ?? DateTime.now()),
+  //         'dueDate': newOrder['dueDate'] is String
+  //             ? DateTime.parse(newOrder['dueDate'])
+  //             : (newOrder['dueDate'] ?? DateTime.now().add(const Duration(days: 7))),
+  //         'priority': newOrder['priority'] ?? 'High',
+  //         'status': 'Pending',
+  //         'requested_by': newOrder['requested_by'], // Use the value from the form, which should be the correct user ID
+  //         ...newOrder,
+  //       };
+  //       _PurchaseRequests.add(order.cast<String, dynamic>());
+  //       purchase_order.PurchaseOrderPage.addPurchaseOrder(order.cast<String, dynamic>());
+  //     });
+  //   }
+  // }
 
   // void _addNewRequest(Map<String, dynamic> request) {
   //   setState(() {
@@ -450,7 +450,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
       context,
       _dateFormat,
       onView: viewPurchaseRequest,
-      onEdit: editPurchaseRequest,
+      // onEdit: editPurchaseRequest,
       onDelete: deletePurchaseRequest,
     );
 
@@ -459,7 +459,8 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
         title: const Text('Purchase Requests'),
         actions: [
           ElevatedButton.icon(
-            onPressed: _openAddRequestForm,
+            onPressed: null,
+            // _openAddRequestForm,
             icon: const Icon(Icons.add, color: Colors.white),
             label: const Text('Add PR'),
             style: ElevatedButton.styleFrom(

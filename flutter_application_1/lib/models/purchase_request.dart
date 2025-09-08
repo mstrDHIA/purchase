@@ -1,54 +1,71 @@
+import 'package:flutter_application_1/screens/Purchase order/purchase_form_screen.dart';
+
 class PurchaseRequest {
   int? id;
-  Null? startDate;
-  Null? endDate;
-  List<Products>? products;
-  String? title = 'qqqqq';
-  String? description = 'Description of the purchase request';
+  DateTime? startDate;
+  DateTime? endDate;
+  List<dynamic>? products;
+  String? title;
+  String? description;
+  String? status;
+  DateTime? createdAt;
+  DateTime? updatedAt;
+  String? approvedBy;
+  int? requestedBy;
 
-  PurchaseRequest({this.id, this.startDate, this.endDate, this.products});
+  PurchaseRequest(
+      {this.id,
+      this.startDate,
+      this.endDate,
+      this.products,
+      this.title,
+      this.description,
+      this.status,
+      this.createdAt,
+      this.updatedAt,
+      this.approvedBy,
+      this.requestedBy});
 
   PurchaseRequest.fromJson(Map<String, dynamic> json) {
+    id = json['id'];
+    startDate = DateTime.parse(json['start_date']);
+    endDate = DateTime.parse(json['end_date']);
+    products = (json['products'] as List<dynamic>?)
+        ?.map((item) {
+          return ProductLine(
+            product: item['product'],
+            brand: item['brand'],
+            quantity: item['quantity'] ?? 1,
+            unitPrice: (item['unit_price'] ?? 0).toDouble(),
+          );
+        })
+        .toList();
     title = json['title'];
     description = json['description'];
-    id = json['id'];
-    startDate = json['start_date'];
-    endDate = json['end_date'];
-    if (json['products'] != null) {
-      products = <Products>[];
-      json['products'].forEach((v) {
-        products!.add(new Products.fromJson(v));
-      });
-    }
+    status = json['status'];
+    createdAt = DateTime.parse(json['created_at']);
+    updatedAt = DateTime.parse(json['updated_at']);
+    approvedBy = json['approved_by'];
+    requestedBy = json['requested_by'];
   }
+
+  get priority => null;
+
+  get quantity => null;
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = new Map<String, dynamic>();
     data['id'] = this.id;
     data['start_date'] = this.startDate;
     data['end_date'] = this.endDate;
-    if (this.products != null) {
-      data['products'] = this.products!.map((v) => v.toJson()).toList();
-    }
-    return data;
-  }
-}
-
-class Products {
-  String? product;
-  int? quantity;
-
-  Products({this.product, this.quantity});
-
-  Products.fromJson(Map<String, dynamic> json) {
-    product = json['product'];
-    quantity = json['quantity'];
-  }
-
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['product'] = this.product;
-    data['quantity'] = this.quantity;
+    data['products'] = this.products;
+    data['title'] = this.title;
+    data['description'] = this.description;
+    data['status'] = this.status;
+    data['created_at'] = this.createdAt;
+    data['updated_at'] = this.updatedAt;
+    data['approved_by'] = this.approvedBy;
+    data['requested_by'] = this.requestedBy;
     return data;
   }
 }

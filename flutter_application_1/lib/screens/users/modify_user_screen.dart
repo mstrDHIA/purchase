@@ -1,11 +1,13 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/controllers/role_controller.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
-import 'package:flutter_application_1/models/profile.dart';
 import 'package:flutter_application_1/models/role.dart';
+// import 'package:flutter_application_1/models/profile.dart';
+// import 'package:flutter_application_1/models/role.dart';
 import 'package:flutter_application_1/models/user_model.dart';
-import 'package:flutter_application_1/network/user_network.dart';
-import 'package:image_picker/image_picker.dart';
+// import 'package:flutter_application_1/network/user_network.dart';
+// import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 class ModifyUserPage extends StatefulWidget {
@@ -18,6 +20,7 @@ class ModifyUserPage extends StatefulWidget {
 
 class _ModifyUserPageState extends State<ModifyUserPage> {
   late UserController userController ;
+  late RoleController roleController;
   late TextEditingController _firstNameController;
   late TextEditingController _lastNameController;
   late TextEditingController _emailController;
@@ -33,11 +36,13 @@ class _ModifyUserPageState extends State<ModifyUserPage> {
 
   late Future<User?> _userFuture;
   File? _profileImageFile;
-
+  Role? selectedRole;
   @override
   void initState() {
     super.initState();
     userController = Provider.of<UserController>(context, listen: false);
+    roleController = Provider.of<RoleController>(context, listen: false);
+    roleController.fetchRoles();
     _firstNameController = TextEditingController();
     _lastNameController = TextEditingController();
     _emailController = TextEditingController();
@@ -70,7 +75,7 @@ class _ModifyUserPageState extends State<ModifyUserPage> {
     try {
       final userController = Provider.of<UserController>(context, listen: false);
       final user = await userController.getDetailedUser(widget.user.id!);
-      if (user != null) {
+      // if (user != null) {
         _firstNameController.text = user.firstName ?? user.profile?.firstName ?? '';
         _lastNameController.text = user.lastName ?? user.profile?.lastName ?? '';
         _emailController.text = user.email ?? '';
@@ -83,7 +88,7 @@ class _ModifyUserPageState extends State<ModifyUserPage> {
         _locationController.text = user.profile?.location ?? '';
         _zipCodeController.text = user.profile?.zipCode?.toString() ?? '';
         return user;
-      }
+      // }
     } catch (e) {
       _error = 'Erreur lors de la récupération: $e';
     }
@@ -99,72 +104,84 @@ class _ModifyUserPageState extends State<ModifyUserPage> {
         title: const Text('User Profile', style: TextStyle(color: Colors.white)),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: const Color(0xFF6F4DBF),
-                elevation: 0,
-              ),
-              onPressed: () async {
-                 
-
-                // Prépare la requête pour updateAllUsers
-                // final updateRequest = User(
-                  
-                //   username: _usernameController.text,
-                //   email: _emailController.text,
-                //   // firstName: _firstNameController.text,
-                //   // lastName: _lastNameController.text,
-                //   // isSuperuser: widget.user.isSuperuser,
-                  
-                //   profile: Profile(
-                //     // id: widget.user.profile?.id,
-                //     // bio: widget.user.profile?.bio,
-                //     location: _locationController.text,
-                //     country: _countryController.text,
-                //     state: _stateController.text,
-                //     city: _cityController.text,
-                //     zipCode: int.tryParse(_zipCodeController.text),
-                //     address: _addressController.text,
-                //     firstName: _firstNameController.text,
-                //     lastName: _lastNameController.text,
-                //     // userId: widget.user.id ?? 0,
-                //   ),
-                //   // role: _role != null ? Role(name: _role!, description: '') : widget.user.role,
-                // );
-
-
-
-                // Appel API updateAllUsers
-                // final result = await UserNetwork().updateAllUsers(updateRequest, widget.user.id!);
-                await userController.updateAllUser(
-
-                   _firstNameController.text,
-                   _lastNameController.text,
-                   _emailController.text,
-                   _usernameController.text,
-                   _countryController.text,
-                   _stateController.text,
-                   _cityController.text,
-                   _addressController.text,
-                   _locationController.text,
-                   int.tryParse(_zipCodeController.text),
-                    context
-  
-  
-
-                );
+          Consumer<UserController>(
+            builder: (context, userController, child) {
+              if(userController.isLoading) {
+                return const Center(child: CircularProgressIndicator(
+                  color: Colors.white,
+                ));
+              }
+              else
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: const Color(0xFF6F4DBF),
+                    elevation: 0,
+                  ),
+                  onPressed: () async {
+                     
+              
+                    // Prépare la requête pour updateAllUsers
+                    // final updateRequest = User(
+                      
+                    //   username: _usernameController.text,
+                    //   email: _emailController.text,
+                    //   // firstName: _firstNameController.text,
+                    //   // lastName: _lastNameController.text,
+                    //   // isSuperuser: widget.user.isSuperuser,
+                      
+                    //   profile: Profile(
+                    //     // id: widget.user.profile?.id,
+                    //     // bio: widget.user.profile?.bio,
+                    //     location: _locationController.text,
+                    //     country: _countryController.text,
+                    //     state: _stateController.text,
+                    //     city: _cityController.text,
+                    //     zipCode: int.tryParse(_zipCodeController.text),
+                    //     address: _addressController.text,
+                    //     firstName: _firstNameController.text,
+                    //     lastName: _lastNameController.text,
+                    //     // userId: widget.user.id ?? 0,
+                    //   ),
+                    //   // role: _role != null ? Role(name: _role!, description: '') : widget.user.role,
+                    // );
+              
+              
+              
+                    // Appel API updateAllUsers
+                    // final result = await UserNetwork().updateAllUsers(updateRequest, widget.user.id!);
+                    await userController.updateAllUser(
+              
+                       _firstNameController.text,
+                       _lastNameController.text,
+                       _emailController.text,
+                       _usernameController.text,
+                       _countryController.text,
+                       _stateController.text,
+                       _cityController.text,
+                       _addressController.text,
+                       _locationController.text,
+                       int.tryParse(_zipCodeController.text),
+                       selectedRole!,
+                       context
+                       
                 
-                // Affiche le résultat
-                // ScaffoldMessenger.of(context).showSnackBar(
-                //   SnackBar(content: Text(result)),
-                // );
-              },
-              icon: const Icon(Icons.save, size: 18),
-              label: const Text('Save'),
-            ),
+                
+              
+                    );
+                    
+                    // Affiche le résultat
+                    // ScaffoldMessenger.of(context).showSnackBar(
+                    //   SnackBar(content: Text(result)),
+                    // );
+                  },
+                  icon: const Icon(Icons.save, size: 18),
+                  label: const Text('Save'),
+                ),
+              );
+            }
           ),
         ],
       ),
@@ -281,6 +298,43 @@ class _ModifyUserPageState extends State<ModifyUserPage> {
                     border: OutlineInputBorder(),
                   ),
                 ),
+
+                const Divider(height: 32),
+                const Text('Role', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF6F4DBF))),
+                const SizedBox(height: 16),
+                Consumer<RoleController>(
+                  builder: (context, roleController, child) {
+                    // Find the matching role instance from the list
+                    
+                    if (widget.user.role != null) {
+                      selectedRole = roleController.roles.firstWhere(
+                        (role) => role.id == widget.user.role!.id,
+                        // orElse: () => roleController.roles.isNotEmpty ? roleController.roles.first : null,
+                      );
+                    }
+
+                    return DropdownButtonFormField<Role>(
+                      value: selectedRole,
+                      items: roleController.roles.map((role) {
+                        return DropdownMenuItem<Role>(
+                          value: role,
+                          child: Text(role.name ?? 'Member'),
+                        );
+                      }).toList(),
+                      onChanged: (role) {
+                        if (role != null) {
+                          setState(() {
+                            widget.user.role = role;
+                          });
+                        }
+                      },
+                      decoration: const InputDecoration(
+                        labelText: 'Select Role',
+                        border: OutlineInputBorder(),
+                      ),
+                    );
+                  },
+                ),
               ],
             ),
           );
@@ -331,13 +385,13 @@ class _ModifyUserPageState extends State<ModifyUserPage> {
   // }
 
   // Add this method to pick an image from gallery
-  Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        _profileImageFile = File(pickedFile.path);
-      });
-    }
-  }
+  // Future<void> _pickImage() async {
+  //   final picker = ImagePicker();
+  //   final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+  //   if (pickedFile != null) {
+  //     setState(() {
+  //       _profileImageFile = File(pickedFile.path);
+  //     });
+  //   }
+  // }
 }

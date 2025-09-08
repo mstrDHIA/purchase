@@ -1,82 +1,99 @@
 import 'dart:convert';
+import 'package:dio/dio.dart';
 import 'package:flutter_application_1/network/api.dart';
-import 'package:http/http.dart' as http;
 
 class PurchaseRequestNetwork {
-  final String baseUrl;
-
-  PurchaseRequestNetwork({this.baseUrl = "https://771a56af4864.ngrok-free.app/"});
-
-  Map<String, String> get _headers => {
-    'Content-Type': 'application/json',
-    'Authorization': 'Bearer ${APIS().token}',
-    'ngrok-skip-browser-warning': 'true',
-  };
+  APIS api = APIS();
 
   // Fetch all purchase requests
-  Future<List<dynamic>> fetchPurchaseRequests() async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/purchase_request/purchaseRequests/'),
-      headers: _headers,
+  Future<Response> fetchPurchaseRequests() async {
+    Response response = await api.dio.get(
+      '${APIS.baseUrl}/purchase_request/purchaseRequests/',
+      options: Options(
+        headers: {
+          'Authorization': 'Bearer ${APIS.token}',
+          'ngrok-skip-browser-warning': 'true',
+        },
+      ),
     );
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return response;
     } else {
       throw Exception('Failed to load purchase requests');
     }
   }
 
-  // Fetch a single purchase request by ID
-  Future<Map<String, dynamic>> fetchPurchaseRequestById(int id) async {
-    final response = await http.get(
-      Uri.parse('$baseUrl/purchase_request/purchaseRequests/$id'),
-      headers: _headers,
-    );
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      throw Exception('Failed to load purchase request');
-    }
-  }
-
   // Create a new purchase request
-  Future<Map<String, dynamic>> createPurchaseRequest(Map<String, dynamic> data) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/purchase_request/purchaseRequests/'),
-      headers: _headers,
-      body: jsonEncode(data),
-    );
-    if (response.statusCode == 201) {
-      return jsonDecode(response.body);
-    } else {
-      print('Status: ${response.statusCode}');
-      print('Body: ${response.body}');
-      throw Exception('Failed to create purchase request');
+  createPurchaseRequest(Map<String, dynamic> data) async {
+    try {
+      print(data);
+      Response response = await api.dio.post(
+        '${APIS.baseUrl}/purchase_request/purchaseRequests/',
+        data: data,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer ${APIS.token}',
+            'Content-Type': 'application/json',
+            'ngrok-skip-browser-warning': 'true',
+          },
+        ),
+      );
+      if (response.statusCode == 201) {
+        return response;
+      } else {
+        print('Status: ${response.statusCode}');
+        print('Body: ${response.data}');
+        throw Exception('Failed to create purchase request');
+      }
+    } catch (e) {
+      print('error network: $e');
     }
   }
 
   // Update a purchase request
   Future<Map<String, dynamic>> updatePurchaseRequest(int id, Map<String, dynamic> data) async {
-    final response = await http.put(
-      Uri.parse('$baseUrl/purchase_request/purchaseRequests/$id'),
-      headers: _headers,
-      body: jsonEncode(data),
+    Response response = await api.dio.put(
+      '${APIS.baseUrl}/purchase_request/purchaseRequests/$id/',
+      data: jsonEncode(data),
+      options: Options(
+        headers: {
+          'Authorization': 'Bearer ${APIS.token}',
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
+        },
+      ),
     );
+    print('PUT update response: status=${response.statusCode}, data=${response.data}');
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return response.data;
     } else {
-      throw Exception('Failed to update purchase request');
+      throw Exception('Failed to update purchase request: status=${response.statusCode}, body=${response.data}');
     }
   }
 
   // Delete a purchase request
   Future<void> deletePurchaseRequest(int id) async {
-    final response = await http.delete(
-      Uri.parse('$baseUrl/purchase_request/purchaseRequests/$id'),
-      headers: _headers,
-    );
-    if (response.statusCode != 204) {
-      throw Exception('Failed to delete purchase request');
+    try {
+      final url = '${APIS.baseUrl}/purchase_request/purchaseRequests/$id/';
+     
+      Response response = await api.dio.delete(
+        url,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer ${APIS.token}',
+            'ngrok-skip-browser-warning': 'true',
+          },
+        ),
+      );
+      
+      if (response.statusCode != 204 && response.statusCode != 200 && response.statusCode != 202) {
+        throw Exception('Failed to delete purchase request');
+        
+      }
+      
+    } catch (e) {
+      print('Error during delete: $e');
+      rethrow;
     }
   }
 }

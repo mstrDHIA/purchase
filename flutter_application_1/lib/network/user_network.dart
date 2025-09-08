@@ -20,7 +20,7 @@ class UserNetwork {
         },
         options: Options(
           headers: {
-            'Authorization': 'Bearer ${APIS().token}',
+            'Authorization': 'Bearer ${APIS.token}',
             'ngrok-skip-browser-warning': 'true',
           },
         ),
@@ -46,7 +46,7 @@ class UserNetwork {
         data: data,
         options: Options(
           headers: {
-            'Authorization': 'Bearer ${APIS().token}',
+            'Authorization': 'Bearer ${APIS.token}',
             'Content-Type': 'application/json',
             'ngrok-skip-browser-warning': 'true',
           },
@@ -98,6 +98,7 @@ class UserNetwork {
   // print(response.statusCode);
 
   if (response.statusCode == 200) {
+    APIS.token = response.data['access'];
     final data = response.data;
     final accessToken = data['access'];
     if (accessToken != null) {
@@ -114,7 +115,8 @@ class UserNetwork {
       '${APIS.baseUrl}${APIS.register}',
       data: {
         'username': username,
-        'email': username, 
+        'role_id': 5, 
+        // 'email': username, 
         'password': password,
       },
     );
@@ -124,14 +126,12 @@ class UserNetwork {
     uesresList() async {
   
       final response = await api.dio.get(
+        '${APIS.baseUrl}${APIS.userListDetailed}',
         options: Options(
             headers: {
               'ngrok-skip-browser-warning': 'true',
-              'Authorization':' Bearer ${APIS().token}',
-
-
+              'Authorization': 'Bearer ${APIS.token}',
             }),
-        '${APIS.baseUrl}user/users/',
       );
       
    
@@ -149,7 +149,7 @@ class UserNetwork {
         data: user.toJson(),
         options: Options(
           headers: {
-            'Authorization': 'Bearer ${APIS().token}',
+            'Authorization': 'Bearer ${APIS.token}',
 
             'ngrok-skip-browser-warning': 'true',
           },
@@ -172,7 +172,7 @@ class UserNetwork {
         '${APIS.baseUrl}${APIS.deleteUser}$userId/',
         options: Options(
           headers: {
-            'Authorization': 'Bearer ${APIS().token}',
+            'Authorization': 'Bearer ${APIS.token}',
 
             'ngrok-skip-browser-warning': 'true'
           },
@@ -196,7 +196,7 @@ class UserNetwork {
         data: user.toJson(),
         options: Options(
           headers: {
-            'Authorization': 'Bearer ${APIS().token}', // ton token ici
+            'Authorization': 'Bearer ${APIS.token}', // ton token ici
 
             'ngrok-skip-browser-warning': 'true',
           },
@@ -219,7 +219,7 @@ class UserNetwork {
   //       data: updateUser.toJson(),
   //       options: Options(
   //         headers: {
-  //           'Authorization': 'Bearer ${APIS().token}',
+  //           'Authorization': 'Bearer ${APIS.token}',
   //           'ngrok-skip-browser-warning': 'true',
   //         },
   //       ),
@@ -241,7 +241,7 @@ class UserNetwork {
       '${APIS.baseUrl}user/users/$userId/',
       options: Options(
         headers: {
-          'Authorization': 'Bearer ${APIS().token}',
+          'Authorization': 'Bearer ${APIS.token}',
           'ngrok-skip-browser-warning': 'true',
         },
       ),
@@ -269,7 +269,7 @@ getDetailedUser(int userId) async {
         '${APIS.baseUrl}${APIS.viewProfileByUserId}$userId/',
         options: Options(
           headers: {
-            'Authorization': 'Bearer ${APIS().token}',
+            'Authorization': 'Bearer ${APIS.token}',
             'ngrok-skip-browser-warning': 'true',
           },
         ),
@@ -297,7 +297,7 @@ getDetailedUser(int userId) async {
       data: data,
       options: Options(
         headers: {
-          'Authorization': 'Bearer ${APIS().token}',
+          'Authorization': 'Bearer ${APIS.token}',
           'ngrok-skip-browser-warning': 'true',
         },
       ),

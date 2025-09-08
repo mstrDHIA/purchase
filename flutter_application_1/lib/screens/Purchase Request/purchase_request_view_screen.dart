@@ -1,13 +1,14 @@
+import 'package:flutter_application_1/network/purchase_request_network.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/screens/Purchase%20order/refuse_purchase_screen.dart';
-import 'package:intl/intl.dart';
+import 'package:flutter_application_1/models/purchase_request.dart';
+import 'package:flutter_application_1/screens/Purchase%20order/purchase_form_screen.dart';
 
 class PurchaseRequestView extends StatefulWidget {
-  final Map<String, dynamic> order;
+  final PurchaseRequest purchaseRequest;
   const PurchaseRequestView({
     super.key,
-    required this.order,
-    required Null Function(dynamic newOrder) onSave,
+    required this.purchaseRequest, required Map<String, dynamic> order, required Null Function(dynamic newOrder) onSave,
+    // required Null Function(dynamic newpurchaseRequest) onSave,
   });
 
   @override
@@ -15,75 +16,172 @@ class PurchaseRequestView extends StatefulWidget {
 }
 
 class _PurchaseRequestViewState extends State<PurchaseRequestView> {
-  String requestor = 'jasser';
-  String product = 'Souris';
-  String quantity = '7000';
-  String product2 = '';   // Nouveau champ
-  String quantity2 = '';  // Nouveau champ
-  String dueDate = '15-05-2025';
-  String submittedDate = '01-01-2025';
-  String note = '';
-  String status = "";
-  String priority = "";
+  Future<void> _showRefuseDialog() async {
+    final reasonController = TextEditingController();
+    final commentController = TextEditingController();
+    bool submitting = false;
+    String? errorText;
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+              titlePadding: const EdgeInsets.only(top: 24, left: 24, right: 24, bottom: 0),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              title: Row(
+                children: const [
+                  Icon(Icons.error, color: Colors.red, size: 28),
+                  SizedBox(width: 10),
+                  Text('Purchase Request', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22)),
+                ],
+              ),
+              content: SizedBox(
+                width: 350,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 8),
+                    const Text('Please provide a reason for refusing this request:', style: TextStyle(fontSize: 15)),
+                    const SizedBox(height: 16),
+                    const Text('Reason (required)', style: TextStyle(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: reasonController,
+                      minLines: 2,
+                      maxLines: 3,
+                      decoration: InputDecoration(
+                        hintText: 'Example: The requested item exceeds the approved budget for this quarter.',
+                        filled: true,
+                        fillColor: const Color(0xFFF1F1F1),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide.none,
+                        ),
+                        errorText: errorText,
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    const Text('Additional Comments (optional)', style: TextStyle(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: commentController,
+                      minLines: 2,
+                      maxLines: 3,
+                      decoration: InputDecoration(
+                        hintText: 'Provide any further details or context, if necessary.',
+                        filled: true,
+                        fillColor: const Color(0xFFF1F1F1),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actionsPadding: const EdgeInsets.only(left: 24, right: 24, bottom: 18, top: 8),
+              actions: [
+                ElevatedButton(
+                  onPressed: submitting
+                      ? null
+                      : () async {
+                          setState(() { errorText = null; });
+                          if (reasonController.text.trim().isEmpty) {
+                            setState(() { errorText = 'Reason is required'; });
+                            return;
+                          }
+                          setState(() { submitting = true; });
+                          await _deletePurchaseFromServer();
+                          if (mounted) Navigator.of(context).pop();
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF635BFF),
+                    foregroundColor: Colors.white,
+                    minimumSize: const Size(120, 44),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    elevation: 0,
+                  ),
+                  child: submitting
+                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      : const Text('Submit'),
+                ),
+                TextButton(
+                  onPressed: submitting ? null : () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _deletePurchaseFromServer() async {
+    try {
+      final id = widget.purchaseRequest.id;
+      if (id == null) throw Exception('ID manquant');
+      await PurchaseRequestNetwork().deletePurchaseRequest(id);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(backgroundColor: Color.fromARGB(255, 245, 3, 3), content: Text('Purchase deleted!')),
+        );
+        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(backgroundColor: const Color.fromARGB(255, 245, 3, 3), content: Text('Error: $e')),
+      );
+    }
+  }
+  bool _showActionButtons = true;
+  String? _status;
 
   @override
   void initState() {
-    super.initState();
-    requestor = widget.order['actionCreatedBy']?.toString() ?? '';
-    product = widget.order['products']?[0]?['product']?.toString() ?? '';
-    quantity = widget.order['products']?[0]?['quantity']?.toString() ?? '';
-    // Ajout pour un deuxième produit/quantité si présent
-    product2 = (widget.order['products']?.length ?? 0) > 1
-        ? (widget.order['products']?[1]?['product']?.toString() ?? '')
-        : '';
-    quantity2 = (widget.order['products']?.length ?? 0) > 1
-        ? (widget.order['products']?[1]?['quantity']?.toString() ?? '')
-        : '';
-    dueDate = widget.order['dueDate'] != null
-        ? DateFormat('dd-MM-yyyy').format(widget.order['dueDate'])
-        : '';
-    submittedDate = widget.order['dateSubmitted'] != null
-        ? DateFormat('dd-MM-yyyy').format(widget.order['dateSubmitted'])
-        : '';
-    note = widget.order['note']?.toString() ?? '';
-    status = widget.order['status']?.toString() ?? '';
-    priority = widget.order['priority']?.toString() ?? '';
+  super.initState();
+  _status = widget.purchaseRequest.status?.toString() ?? '';
   }
 
   void _editRequest() {
     showDialog(
       context: context,
       builder: (context) {
-        final TextEditingController productCtrl = TextEditingController(text: product);
-        final TextEditingController quantityCtrl = TextEditingController(text: quantity);
+        // final TextEditingController productCtrl = TextEditingController(text: product);
+        // final TextEditingController quantityCtrl = TextEditingController(text: quantity);
         return AlertDialog(
           title: const Text('Modifier la demande'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(controller: productCtrl, decoration: const InputDecoration(labelText: 'Produit')),
-              TextField(controller: quantityCtrl, decoration: const InputDecoration(labelText: 'Quantité'), keyboardType: TextInputType.number),
+              TextField( decoration: const InputDecoration(labelText: 'Produit')),
+              TextField( decoration: const InputDecoration(labelText: 'Quantité'), keyboardType: TextInputType.number),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  product = productCtrl.text;
-                  quantity = quantityCtrl.text;
-                });
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Demande modifiée")),
-                );
-              },
-              child: const Text('Enregistrer'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Annuler'),
-            ),
-          ],
+          // actions: [
+          //   TextButton(
+          //     onPressed: () {
+          //       setState(() {
+          //         // product = productCtrl.text;
+          //         // quantity = quantityCtrl.text;
+          //       });
+          //       Navigator.pop(context);
+          //       ScaffoldMessenger.of(context).showSnackBar(
+          //         const SnackBar(content: Text("Demande modifiée")),
+          //       );
+          //     },
+          //     child: const Text('Enregistrer'),
+          //   ),
+          //   TextButton(
+          //     onPressed: () => Navigator.pop(context),
+          //     child: const Text('Annuler'),
+          //   ),
+          // ],
         );
       },
     );
@@ -113,7 +211,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  "Are you sure you want to delete ${widget.order['id'] ?? 'this purchase'}?",
+                  "Are you sure you want to delete ${widget.purchaseRequest.id ?? 'this purchase'}?",
                   style: const TextStyle(fontSize: 16),
                 ),
                 const SizedBox(height: 28),
@@ -163,7 +261,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
 //     barrierColor: Colors.black.withOpacity(0.2),
 //     builder: (context) => Dialog(
 //       backgroundColor: const Color(0xF7F3F7FF),
-//       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+//       shape: RoundedRectangleBpurchaseRequest(bpurchaseRequestRadius: BpurchaseRequestRadius.circular(24)),
 //       child: ConstrainedBox(
 //         constraints: const BoxConstraints(
 //           maxWidth: 340,
@@ -202,8 +300,8 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
 //                       backgroundColor: Colors.red,
 //                       foregroundColor: Colors.white,
 //                       padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 10),
-//                       shape: RoundedRectangleBorder(
-//                         borderRadius: BorderRadius.circular(24),
+//                       shape: RoundedRectangleBpurchaseRequest(
+//                         bpurchaseRequestRadius: BpurchaseRequestRadius.circular(24),
 //                       ),
 //                       elevation: 0,
 //                     ),
@@ -223,13 +321,24 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
 
   @override
   Widget build(BuildContext context) {
-    bool showActionButtons = status != "Approved"; // Ajout pour cacher les boutons après validation
+    String formatDate(dynamic date) {
+      if (date == null) return '';
+      if (date is String) {
+        final parsed = DateTime.tryParse(date);
+        if (parsed != null) {
+          return '${parsed.year.toString().padLeft(4, '0')}-${parsed.month.toString().padLeft(2, '0')}-${parsed.day.toString().padLeft(2, '0')}';
+        }
+        return date.length >= 10 ? date.substring(0, 10) : date;
+      }
+      if (date is DateTime) {
+        return '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+      }
+      return date.toString();
+    }
 
     return Scaffold(
       body: Row(
         children: [
-          // AppSidebar supprimé ici
-          // const VerticalDivider(width: 1), // Supprimé aussi
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 30),
@@ -256,26 +365,6 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                           ),
                         ],
                       ),
-                      Row(
-                        children: [
-                          Tooltip(
-                            message: 'Modifier',
-                            child: IconButton(
-                              icon: const Icon(Icons.edit, color: Colors.blue),
-                              onPressed: _editRequest,
-                            ),
-                          ),
-                          Tooltip(
-                            message: 'Supprimer',
-                            child: IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.blue),
-                              onPressed: _deleteRequest,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                        
-                        ],
-                      ),
                     ],
                   ),
                   const SizedBox(height: 30),
@@ -287,11 +376,11 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          buildReadOnlyField('Requestor', requestor),
+                          buildReadOnlyField('Requestor', widget.purchaseRequest.requestedBy.toString()),
                           const SizedBox(width: 20),
-                          buildReadOnlyField('Submitted Date', submittedDate),
+                          buildReadOnlyField('Starting Date', formatDate(widget.purchaseRequest.startDate)),
                           const SizedBox(width: 20),
-                          buildReadOnlyField('Due date', dueDate),
+                          buildReadOnlyField('Due date', formatDate(widget.purchaseRequest.endDate)),
                         ],
                       ),
                       const SizedBox(height: 20),
@@ -300,30 +389,18 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          for (ProductLine product in widget.purchaseRequest.products ?? [])
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              buildReadOnlyField('Product', product),
+                              buildReadOnlyField('Product', product.product.toString()),
                               const SizedBox(width: 12),
-                              buildReadOnlyField('Quantity', quantity),
+                              buildReadOnlyField('Quantity', product.quantity.toString()),
                             ],
                           ),
-                          if (product2.isNotEmpty || quantity2.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 12.0),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  buildReadOnlyField('Product', product2),
-                                  const SizedBox(width: 12),
-                                  buildReadOnlyField('Quantity', quantity2),
-                                ],
-                              ),
-                            ),
-                          // Priority sous les produits
                           Padding(
                             padding: const EdgeInsets.only(top: 12.0),
-                            child: buildReadOnlyField('Priority', priority),
+                            child: buildReadOnlyField('Priority', 'High'),
                           ),
                         ],
                       ),
@@ -336,7 +413,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                   TextField(
                     readOnly: true,
                     maxLines: 5,
-                    controller: TextEditingController(text: note.isEmpty ? 'No additional notes' : note),
+                    controller: TextEditingController(text: widget.purchaseRequest.description.toString()),
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: const Color(0xFFF1F1F1),
@@ -348,87 +425,60 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                   ),
                   const SizedBox(height: 30),
 
-                  // Ligne : Status à gauche, boutons à droite
+                  // Ligne : Status à gauche, boutons à droite (comme la capture)
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       // Status à gauche
                       SizedBox(
                         width: 280,
-                        child: buildReadOnlyField('Status', status),
+                        child: buildReadOnlyField('Status', _status ?? ''),
                       ),
                       const Spacer(),
-                      if (showActionButtons)
+                      if (_showActionButtons)
                         Row(
                           children: [
-                            ElevatedButton.icon(
+                            ElevatedButton(
                               onPressed: () {
                                 setState(() {
-                                  status = "Approved";
+                                  _status = 'Approved';
+                                  _showActionButtons = false;
                                 });
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Row(
-                                      children: const [
-                                        Icon(Icons.check_circle, color: Colors.green, size: 28),
-                                        SizedBox(width: 16),
-                                        Expanded(
-                                          child: Text(
-                                            "Demande accepted",
-                                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    backgroundColor: const Color.fromARGB(255, 32, 4, 243),
-                                    behavior: SnackBarBehavior.floating,
-                                    elevation: 8,
-                                    margin: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    duration: const Duration(seconds: 2),
-                                  ),
+                                  const SnackBar(backgroundColor: Color.fromARGB(255, 15, 3, 245), content: Text('Accepted!')),
                                 );
                               },
-                              icon: const Icon(Icons.check),
-                              label: const Text('Accept'),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue,
+                                backgroundColor: const Color(0xFF635BFF),
                                 foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 14),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                minimumSize: const Size(120, 44),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                elevation: 0,
                               ),
+                              child: const Text('Accept'),
                             ),
                             const SizedBox(width: 24),
                             OutlinedButton(
-                              onPressed: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) => RefusePurchaseDialog(),
-                                );
-                              },
+                              onPressed: _showRefuseDialog,
                               style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 14),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                backgroundColor: const Color(0xFFF5F5F5),
+                                foregroundColor: Colors.black87,
+                                minimumSize: const Size(120, 44),
+                                side: const BorderSide(color: Color(0xFFE0E0E0)),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
                               ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: const [
-                                  Icon(Icons.close),
-                                  SizedBox(width: 8),
-                                  Text('Refuse'),
-                                ],
-                              ),
+                              child: const Text('Refuse'),
                             ),
                           ],
                         ),
                     ],
                   ),
                   const SizedBox(height: 30),
-                  
                   const SizedBox(height: 30),
-                  
                 ],
               ),
             ),
@@ -521,8 +571,8 @@ class AppSidebar extends StatelessWidget {
           _sidebarItem(Icons.dashboard, 'Dashboard'),
           _sidebarItem(Icons.people, 'Users', selected: true),
           _sidebarItem(Icons.lock, 'Password'),
-          _sidebarItem(Icons.add, 'Request Order'),
-          _sidebarItem(Icons.shopping_cart, 'Purchase Order'),
+          _sidebarItem(Icons.add, 'Request purchaseRequest'),
+          _sidebarItem(Icons.shopping_cart, 'Purchase purchaseRequest'),
           _sidebarItem(Icons.security, 'Roles and access'),
           _sidebarItem(Icons.help, 'Support centre'),
         ],
