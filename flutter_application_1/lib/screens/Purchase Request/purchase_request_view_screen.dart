@@ -400,7 +400,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                           ),
                           Padding(
                             padding: const EdgeInsets.only(top: 12.0),
-                            child: buildReadOnlyField('Priority', 'High'),
+                            child: buildReadOnlyField('Priority', widget.purchaseRequest.priority.toString()),
                           ),
                         ],
                       ),
@@ -508,6 +508,14 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
       if (value.toLowerCase() == 'high') {
         badgeColor = Colors.red.shade100;
         textColor = Colors.red.shade800;
+      }
+      else if(value.toLowerCase() == 'medium'){
+        badgeColor = Colors.orange.shade100;
+        textColor = Colors.orange.shade800;
+      }
+      else if(value.toLowerCase() == 'low'){
+        badgeColor = Colors.blue.shade100;
+        textColor = Colors.blue.shade800;
       }
     }
 

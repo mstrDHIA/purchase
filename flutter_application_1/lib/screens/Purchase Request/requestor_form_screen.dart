@@ -82,7 +82,7 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
   }
 
   Future<void> _save({bool addAnother = false}) async {
-    print('Current user id: ${userController.currentUser.id}'); 
+    // print('Current user id: ${userController.currentUser.id}'); 
     if (userController.currentUser.id == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Erreur: utilisateur non connecté ou id manquant')),
@@ -133,7 +133,7 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
       'products': products,
       // 'quantity': int.tryParse(quantityController.text) ?? 0,
       'note': noteController.text,
-      // 'priority': selectedPriority,
+      'priority': selectedPriority,
       'end_date': '${selectedDueDate!.year}-${selectedDueDate!.month}-${selectedDueDate!.day}',
       // 'actionCreatedBy': userController.currentUser.firstName ?? userController.currentUser.username ?? 'Moi',
       'start_date': '${DateTime.now().year}-${DateTime.now().month}-${DateTime.now().day}',
@@ -141,7 +141,7 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
 
 
     try {
-      print('order: $order');
+      // print('order: $order');
       await Provider.of<PurchaseRequestController>(context, listen: false).addRequest(order);
       // Save to API
       // final api = PurchaseRequestNetwork();
@@ -329,7 +329,7 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
                         filled: true,
                         fillColor: Colors.white,
                       ),
-                      items: ['High', 'Medium', 'Low']
+                      items: ['high', 'medium', 'low']
                           .map((p) => DropdownMenuItem(value: p, child: Text(p)))
                           .toList(),
                       onChanged: (val) => setState(() => selectedPriority = val),
