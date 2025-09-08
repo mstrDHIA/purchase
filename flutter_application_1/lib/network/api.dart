@@ -14,8 +14,9 @@ class APIS {
     ));
   }
 
-  static const String baseUrl = "https://06909429cd0e.ngrok-free.app/";
+  // static const String baseUrl = "https://06909429cd0e.ngrok-free.app/";
 
+  static const String baseUrl = "http://72.60.90.60:8000/";
   static const String login = "user/login/";
 
   static const String register = "user/register/";
