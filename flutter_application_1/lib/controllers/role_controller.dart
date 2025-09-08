@@ -18,15 +18,11 @@ class RoleController extends ChangeNotifier {
     error = null;
     notifyListeners();
     try {
-      print('aaa');
       final Response response = await RoleNetwork().fetchRoles();
-      print('bbb');
       if(response.statusCode == 200) {
-        print('ccc');
         roles = (response.data as List)
             .map((roleData) => Role.fromJson(Map<String, dynamic>.from(roleData)))
             .toList();
-        print('ddd');
 
         isLoading = false;
         

@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter_application_1/controllers/purchase_request_controller.dart';
+import 'package:flutter_application_1/models/purchase_request.dart';
 import 'package:intl/intl.dart';
+import 'package:dio/dio.dart';
 
 class RequestEditPage extends StatefulWidget {
-  final Map<String, dynamic> request;
-  const RequestEditPage({super.key, required this.request, required Null Function(dynamic _) onSave});
+  final PurchaseRequest purchaseRequest;
+  const RequestEditPage({super.key, required this.purchaseRequest, required Null Function(dynamic _) onSave, required Map order, required Map<String, dynamic> request});
 
   @override
   State<RequestEditPage> createState() => _RequestEditPageState();
 }
 
 class _RequestEditPageState extends State<RequestEditPage> {
+  bool _isLoading = false;
   late TextEditingController requestorController;
   late TextEditingController submittedDateController;
   late TextEditingController dueDateController;
@@ -23,29 +28,58 @@ class _RequestEditPageState extends State<RequestEditPage> {
   // Liste dynamique de produits (chacun avec ses contrôleurs)
   late List<Map<String, TextEditingController>> productControllers;
 
+  // Normalize status to match dropdown items
+  String _normalizeStatus(dynamic value) {
+    if (value == null) return 'Pending';
+    final s = value.toString().toLowerCase();
+    if (s == 'pending') return 'Pending';
+    if (s == 'approved') return 'Approved';
+    if (s == 'rejected') return 'Rejected';
+    return 'Pending';
+  }
+
   @override
   void initState() {
     super.initState();
-    requestorController = TextEditingController(text: widget.request['requestor'] ?? '');
+    final pr = widget.purchaseRequest;
+    requestorController = TextEditingController(text: pr.requestedBy?.toString() ?? '');
     submittedDateController = TextEditingController(
-        text: widget.request['submittedDate'] != null && widget.request['submittedDate'] is DateTime
-            ? _dateFormat.format(widget.request['submittedDate'])
-            : (widget.request['submittedDate'] ?? ''));
+        text: pr.startDate != null ? _dateFormat.format(pr.startDate!) : '');
     dueDateController = TextEditingController(
-        text: widget.request['dueDate'] != null && widget.request['dueDate'] is DateTime
-            ? _dateFormat.format(widget.request['dueDate'])
-            : (widget.request['dueDate'] ?? ''));
-    noteController = TextEditingController(text: widget.request['note'] ?? '');
-    priority = widget.request['priority'] ?? 'High';
-    status = widget.request['status'] ?? 'Pending';
+        text: pr.endDate != null ? _dateFormat.format(pr.endDate!) : '');
+    noteController = TextEditingController(text: pr.description ?? '');
+    priority = pr.priority?.toString() ?? 'High';
+    status = _normalizeStatus(pr.status);
 
     // Initialisation des contrôleurs pour chaque produit
-    final products = (widget.request['products'] ?? []) as List;
+    final products = pr.products ?? [];
     productControllers = products
-        .map<Map<String, TextEditingController>>((prod) => {
-              'name': TextEditingController(text: prod['name'] ?? ''),
-              'quantity': TextEditingController(text: prod['quantity']?.toString() ?? ''),
-            })
+        .map<Map<String, TextEditingController>>((prod) {
+          String name = '';
+          String quantity = '';
+          try {
+            if (prod is Map) {
+              name = prod['name'] ?? prod['productName'] ?? prod['designation'] ?? prod['product']?.toString() ?? prod.toString();
+              quantity = prod['quantity']?.toString() ?? '';
+            } else {
+              // For ProductLine or other objects
+              if (prod.product != null && prod.product is Map) {
+                name = prod.product['name'] ?? prod.product['productName'] ?? prod.product['designation'] ?? prod.product.toString();
+              } else if (prod.product != null && prod.product is String) {
+                name = prod.product;
+              } else {
+                name = prod.name ?? prod.productName ?? prod.designation ?? prod.product?.name ?? prod.product?.productName ?? prod.product?.designation ?? prod.product?.toString() ?? prod.toString();
+              }
+              quantity = prod.quantity?.toString() ?? '';
+            }
+          } catch (e) {
+            name = prod.toString();
+          }
+          return {
+            'name': TextEditingController(text: name),
+            'quantity': TextEditingController(text: quantity),
+          };
+        })
         .toList();
   }
 
@@ -60,6 +94,47 @@ class _RequestEditPageState extends State<RequestEditPage> {
       prod['quantity']?.dispose();
     }
     super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant RequestEditPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final pr = widget.purchaseRequest;
+    requestorController.text = pr.requestedBy?.toString() ?? '';
+    submittedDateController.text = pr.startDate != null ? _dateFormat.format(pr.startDate!) : '';
+    dueDateController.text = pr.endDate != null ? _dateFormat.format(pr.endDate!) : '';
+    noteController.text = pr.description ?? '';
+    priority = pr.priority?.toString() ?? 'High';
+    status = _normalizeStatus(pr.status);
+    final products = pr.products ?? [];
+    productControllers = products
+        .map<Map<String, TextEditingController>>((prod) {
+          String name = '';
+          String quantity = '';
+          try {
+            if (prod is Map) {
+              name = prod['name'] ?? prod['productName'] ?? prod['designation'] ?? prod['product']?.toString() ?? prod.toString();
+              quantity = prod['quantity']?.toString() ?? '';
+            } else {
+              // For ProductLine or other objects
+              if (prod.product != null && prod.product is Map) {
+                name = prod.product['name'] ?? prod.product['productName'] ?? prod.product['designation'] ?? prod.product.toString();
+              } else if (prod.product != null && prod.product is String) {
+                name = prod.product;
+              } else {
+                name = prod.name ?? prod.productName ?? prod.designation ?? prod.product?.name ?? prod.product?.productName ?? prod.product?.designation ?? prod.product?.toString() ?? prod.toString();
+              }
+              quantity = prod.quantity?.toString() ?? '';
+            }
+          } catch (e) {
+            name = prod.toString();
+          }
+          return {
+            'name': TextEditingController(text: name),
+            'quantity': TextEditingController(text: quantity),
+          };
+        })
+        .toList();
   }
 
   Color? _priorityColor(String value) {
@@ -170,7 +245,7 @@ class _RequestEditPageState extends State<RequestEditPage> {
                       child: TextField(
                         controller: prod['name'],
                         decoration: const InputDecoration(
-                          labelText: 'Nom du produit', // <-- Ceci affiche "Nom du produit"
+                          labelText: 'Nom du produit',
                           border: OutlineInputBorder(),
                         ),
                       ),
@@ -196,37 +271,6 @@ class _RequestEditPageState extends State<RequestEditPage> {
                 ),
               );
             }),
-            const SizedBox(height: 16),
-            // Priority Dropdown
-            DropdownButtonFormField<String>(
-              value: priority,
-              decoration: const InputDecoration(
-                labelText: 'Priority',
-                border: OutlineInputBorder(),
-              ),
-              items: ['High', 'Medium', 'Low']
-                  .map((prio) => DropdownMenuItem(
-                        value: prio,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: _priorityColor(prio)!,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            prio,
-                            style: TextStyle(
-                              color: _priorityTextColor(prio),
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ))
-                  .toList(),
-              onChanged: (val) {
-                if (val != null) setState(() => priority = val);
-              },
-            ),
             const SizedBox(height: 16),
             // Status Dropdown
             DropdownButtonFormField<String>(
@@ -260,35 +304,62 @@ class _RequestEditPageState extends State<RequestEditPage> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  final updatedRequest = {
-                    'id': widget.request['id'],
-                    'actionCreatedBy': widget.request['actionCreatedBy'],
-                    'requestor': requestorController.text,
-                    'dateSubmitted': submittedDateController.text.isNotEmpty
-                        ? DateTime.tryParse(submittedDateController.text) ?? widget.request['dateSubmitted']
-                        : widget.request['dateSubmitted'],
-                    'dueDate': dueDateController.text.isNotEmpty
-                        ? DateTime.tryParse(dueDateController.text) ?? widget.request['dueDate']
-                        : widget.request['dueDate'],
-                    'products': productControllers
-                        .map((prod) => {
-                              'name': prod['name']!.text,
-                              'quantity': prod['quantity']!.text,
-                            })
-                        .toList(),
-                    'priority': priority,
-                    'status': status,
-                    'note': noteController.text,
-                  };
-                  Navigator.pop(context, updatedRequest);
-                },
+                onPressed: _isLoading
+                    ? null
+                    : () async {
+                        setState(() => _isLoading = true);
+                        final products = productControllers
+                            .map((prod) => {
+                                  'product': prod['name']!.text,
+                                  'quantity': int.tryParse(prod['quantity']!.text) ?? 0,
+                                })
+                            .toList();
+                        final updateData = {
+                          'start_date': submittedDateController.text,
+                          'end_date': dueDateController.text,
+                          'requested_by': int.tryParse(requestorController.text) ?? 1,
+                          
+                          'description': noteController.text,
+                          'title': 'Demande d\'achat',
+                          'status': status.toLowerCase(),
+                          'products': products,
+                        };
+                        print('updateData envoyé: ' + updateData.toString());
+                        try {
+                          final controller = Provider.of<PurchaseRequestController>(context, listen: false);
+                          await controller.updateRequest(widget.purchaseRequest.id!, updateData, context);
+                          if (!mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Purchase request updated successfully!')),
+                          );
+                          Navigator.pop(context, updateData);
+                        } on DioException catch (e) {
+                          if (!mounted) return;
+                          String errorMsg = 'Failed to update';
+                          if (e.response != null && e.response?.data != null) {
+                            errorMsg = e.response?.data.toString() ?? errorMsg;
+                            print('Erreur serveur (body): ${e.response?.data}');
+                          }
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(errorMsg)),
+                          );
+                        } catch (e) {
+                          if (!mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Failed to update: ${e.toString()}')),
+                          );
+                        } finally {
+                          if (mounted) setState(() => _isLoading = false);
+                        }
+                      },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.deepPurple,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
-                child: const Text('Save Changes'),
+                child: _isLoading
+                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white))
+                    : const Text('Save Changes'),
               ),
             ),
           ],

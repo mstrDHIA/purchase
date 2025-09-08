@@ -107,11 +107,15 @@ class _AppSidebarState extends State<AppSidebar> {
     // {'label': 'Settings', 'icon': Icons.settings},
   ];
 
-
+// 1 admin
+// 2 user
+// 3 manager
+// 4 supervisor
+// 5 visitor
   initSideBarItems() {
     print("role id: ${userController.currentUser.role_id}");
     print(userController.currentUser.role!.id);
-    if(userController.currentUser.role_id==32){
+    if(userController.currentUser.role_id==1){
       items.addAll([
       // {'label': 'Home', 'icon': Icons.home},
       {'label': 'Dashboard', 'icon': Icons.dashboard},
@@ -125,7 +129,7 @@ class _AppSidebarState extends State<AppSidebar> {
       {'label': 'Settings', 'icon': Icons.settings},
     ]);
     }
-    else if(userController.currentUser.role_id==33){
+    else if(userController.currentUser.role_id==2){
       items.addAll([
       // {'label': 'Home', 'icon': Icons.home},
       // {'label': 'Dashboard', 'icon': Icons.dashboard},
@@ -138,7 +142,7 @@ class _AppSidebarState extends State<AppSidebar> {
       {'label': 'Settings', 'icon': Icons.settings},
     ]);
     }
-    else if(userController.currentUser.role_id==34){
+    else if(userController.currentUser.role_id==3){
       items.addAll([
       // {'label': 'Home', 'icon': Icons.home},
       // {'label': 'Dashboard', 'icon': Icons.dashboard},
@@ -151,7 +155,7 @@ class _AppSidebarState extends State<AppSidebar> {
       {'label': 'Settings', 'icon': Icons.settings},
     ]);
     }
-    else if(userController.currentUser.role_id==35){
+    else if(userController.currentUser.role_id==4){
       items.addAll([
       // {'label': 'Home', 'icon': Icons.home},
       // {'label': 'Dashboard', 'icon': Icons.dashboard},
@@ -164,7 +168,7 @@ class _AppSidebarState extends State<AppSidebar> {
       {'label': 'Settings', 'icon': Icons.settings},
     ]);
     }
-    else if(userController.currentUser.role_id==36){
+    else if(userController.currentUser.role_id==5){
        items.addAll([
       // {'label': 'Home', 'icon': Icons.home},
       // {'label': 'Dashboard', 'icon': Icons.dashboard},

@@ -9,6 +9,7 @@ import 'package:flutter_application_1/screens/Dashboard/dashboard_screen.dart' a
 import 'package:flutter_application_1/screens/Home.dart' as home;
 import 'package:flutter_application_1/screens/Purchase%20Request/purchase_request_list_screen.dart' as requestor_order;
 import 'package:flutter_application_1/screens/users/users_List_screen.dart' as users_list;
+import 'package:flutter_application_1/widgets/sidebar.dart' as widgets;
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -49,7 +50,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       body: Row(
         children: [
-          AppSidebar(
+          widgets.AppSidebar(
             selected: _selected,
             onItemSelected: (item) {
               setState(() {

@@ -151,7 +151,7 @@ class _SignUpPageState extends State<SignUpPage> {
                       TextFormField(
                         controller: _passwordController,
                         obscureText: !_isPasswordVisible,
-                        onChanged: _checkPasswordStrength,
+                        // onChanged: _checkPasswordStrength,
                         decoration: InputDecoration(
                           hintText: 'Enter your password',
                           filled: true,

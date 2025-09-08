@@ -82,8 +82,17 @@ class UserNetwork {
 // login
    login(String email, String password) async {
   final response = await api.dio.post(
+
     '${APIS.baseUrl}${APIS.login}',
+
     data: {'username': email, 'password': password},
+    options: Options(
+          headers: {
+            'ngrok-skip-browser-warning': 'true',
+            'Content-Type': 'application/json',
+
+          },
+        ),
   );
   // print(response.data);
   // print(response.statusCode);
@@ -106,7 +115,7 @@ class UserNetwork {
       '${APIS.baseUrl}${APIS.register}',
       data: {
         'username': username,
-        'role_id': 36, 
+        'role_id': 5, 
         // 'email': username, 
         'password': password,
       },
@@ -117,14 +126,12 @@ class UserNetwork {
     uesresList() async {
   
       final response = await api.dio.get(
+        '${APIS.baseUrl}${APIS.userListDetailed}',
         options: Options(
             headers: {
               'ngrok-skip-browser-warning': 'true',
-              'Authorization':' Bearer ${APIS.token}',
-
-
+              'Authorization': 'Bearer ${APIS.token}',
             }),
-        '${APIS.baseUrl}${APIS.userListDetailed}',
       );
       
    
@@ -303,5 +310,8 @@ getDetailedUser(int userId) async {
   } catch (e) {
     print('Error updating all users: $e');
   }
+}
+  Future<Response> getUserById(int id) async {
+  return await api.dio.get('${APIS.baseUrl}user/$id/');
 }
 }

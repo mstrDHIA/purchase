@@ -153,6 +153,13 @@ class _SignInPageState extends State<SignInPage> {
 
                                 return null;
                               },
+                              onFieldSubmitted: (_) {
+                                userController.login(
+                                  _emailController.text,
+                                  _passwordController.text,
+                                  context
+                                );
+                              },
                             ),
                             
                             const SizedBox(height: 16),
