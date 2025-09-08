@@ -12,6 +12,7 @@ class PurchaseRequest {
   DateTime? updatedAt;
   String? approvedBy;
   int? requestedBy;
+  String? priority;
 
   PurchaseRequest(
       {this.id,
@@ -24,7 +25,9 @@ class PurchaseRequest {
       this.createdAt,
       this.updatedAt,
       this.approvedBy,
-      this.requestedBy});
+      this.requestedBy,
+      this.priority
+      });
 
   PurchaseRequest.fromJson(Map<String, dynamic> json) {
     id = json['id'];
@@ -47,11 +50,12 @@ class PurchaseRequest {
     updatedAt = DateTime.parse(json['updated_at']);
     approvedBy = json['approved_by'];
     requestedBy = json['requested_by'];
+    priority = json['priority'];
   }
 
-  get priority => null;
+  // get priority => null;
 
-  get quantity => null;
+  // get quantity => null;
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = new Map<String, dynamic>();
@@ -66,6 +70,7 @@ class PurchaseRequest {
     data['updated_at'] = this.updatedAt;
     data['approved_by'] = this.approvedBy;
     data['requested_by'] = this.requestedBy;
+    data['priority'] = this.priority;
     return data;
   }
 }

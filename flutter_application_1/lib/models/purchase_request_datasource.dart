@@ -35,7 +35,41 @@ class PurchaseRequestDataSource extends DataTableSource {
               ? DateFormat('yyyy-MM-dd').format(DateTime.tryParse(request.endDate.toString()) ?? DateTime.now())
               : ''
         )),
-        DataCell(Text("High")),
+        // DataCell(Container(
+
+        //   decoration: BoxDecoration(
+        //     color: request.priority == 'high' ? Colors.red[300] : request.priority == 'medium' ? Colors.orange[300] : Colors.blue[300],
+        //     borderRadius: BorderRadius.circular(4),
+        //   ),
+        //   child: Padding(
+
+        //     padding: const EdgeInsets.symmetric(horizontal: 4.0,vertical: 0),
+        //     child: Center(child: Text(request.priority?? 'medium',
+        //       style: const TextStyle(
+        //         color: Colors.white),
+        //     )),
+        //   ))),
+        DataCell(Padding(
+          padding: const EdgeInsets.symmetric(
+            vertical: 8.0),
+          child: Container(
+            decoration: BoxDecoration(
+              color: request.priority == 'high' ? Colors.red[300] : request.priority == 'medium' ? Colors.orange[300] : Colors.blue[300],
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(4.0),
+              child: Center(
+                child: Text(
+                  request.priority ?? 'medium',
+                  style: TextStyle(
+                    color: Colors.white
+                  ),
+                ),
+              ),
+            ),
+          ),
+        )),
         DataCell(Padding(
           padding: const EdgeInsets.symmetric(
             vertical: 8.0),
@@ -75,8 +109,8 @@ class PurchaseRequestDataSource extends DataTableSource {
             ),
             IconButton(
               icon: const Icon(Icons.edit_outlined),
-              onPressed: () {
-                Navigator.push(
+              onPressed: () async {
+                await Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => RequestEditPage(
@@ -89,6 +123,7 @@ class PurchaseRequestDataSource extends DataTableSource {
                     ),
                   ),
                 );
+                Provider.of<PurchaseRequestController>(context, listen: false).fetchRequests(context);
               },
               tooltip: 'Edit',
             ),

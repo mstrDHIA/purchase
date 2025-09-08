@@ -70,13 +70,13 @@ class _PurchaseOrderDataSource extends DataTableSource {
     Color color;
     const textColor = Colors.white;
     switch (priority) {
-      case 'High':
+      case 'high':
         color = Colors.red[300]!;
         break;
-      case 'Medium':
+      case 'medium':
         color = Colors.orange[300]!;
         break;
-      case 'Low':
+      case 'low':
         color = Colors.green[300]!;
         break;
       default:
