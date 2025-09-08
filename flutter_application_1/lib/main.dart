@@ -30,7 +30,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => ThemeProvider()), 
         ChangeNotifierProvider(create: (_) => UserController()),
         ChangeNotifierProvider(create: (_) => RoleController()),
-        ChangeNotifierProvider(create: (_) => PurchaseRequestController()),
+        ChangeNotifierProvider(create: (context) => PurchaseRequestController(context)),
       ],
       child: const MyApp(),
     ),
