@@ -58,19 +58,20 @@ class PurchaseRequest {
   // get quantity => null;
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['id'] = this.id;
-    data['start_date'] = this.startDate;
-    data['end_date'] = this.endDate;
-    data['products'] = this.products;
-    data['title'] = this.title;
-    data['description'] = this.description;
-    data['status'] = this.status;
-    data['created_at'] = this.createdAt;
-    data['updated_at'] = this.updatedAt;
-    data['approved_by'] = this.approvedBy;
-    data['requested_by'] = this.requestedBy;
-    data['priority'] = this.priority;
-    return data;
+  final Map<String, dynamic> data = <String, dynamic>{};
+  data['id'] = id;
+  data['start_date'] = startDate?.toIso8601String();
+  data['end_date'] = endDate?.toIso8601String();
+  // Convert ProductLine objects to Map
+  data['products'] = products?.map((item) => item is ProductLine ? item.toJson() : item).toList();
+  data['title'] = title;
+  data['description'] = description;
+  data['status'] = status;
+  data['created_at'] = createdAt?.toIso8601String();
+  data['updated_at'] = updatedAt?.toIso8601String();
+  data['approved_by'] = approvedBy;
+  data['requested_by'] = requestedBy;
+  data['priority'] = priority;
+  return data;
   }
 }

@@ -3,6 +3,14 @@ import 'package:intl/intl.dart';
 
 
 class ProductLine {
+  Map<String, dynamic> toJson() {
+    return {
+      'product': product,
+      'brand': brand,
+      'quantity': quantity,
+      'unit_price': unitPrice,
+    };
+  }
   String? product;
   String? brand;
   int quantity;

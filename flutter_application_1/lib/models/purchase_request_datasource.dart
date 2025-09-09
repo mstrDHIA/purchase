@@ -75,14 +75,14 @@ class PurchaseRequestDataSource extends DataTableSource {
             vertical: 8.0),
           child: Container(
             decoration: BoxDecoration(
-              color: request.status == 'Approved' ? Colors.green : request.status == 'Refused' ? Colors.red:Colors.orange,
+              color: request.status == 'approved' ? Colors.green : request.status == 'rejected' ? Colors.red:Colors.orange,
               borderRadius: BorderRadius.circular(4),
             ),
             child: Padding(
               padding: const EdgeInsets.all(4.0),
               child: Center(
                 child: Text(
-                  request.status ?? 'Pending',
+                  request.status ?? 'pending',
                   style: TextStyle(
                     color: Colors.white
                   ),
@@ -95,7 +95,8 @@ class PurchaseRequestDataSource extends DataTableSource {
           children: [
             IconButton(
               icon: const Icon(Icons.remove_red_eye_outlined),
-              onPressed: () {
+              onPressed: () async {
+                await
                 Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -104,6 +105,7 @@ class PurchaseRequestDataSource extends DataTableSource {
                     ),
                   ),
                 );
+                await Provider.of<PurchaseRequestController>(context, listen: false).fetchRequests(context);
               },
               tooltip: 'View',
             ),
