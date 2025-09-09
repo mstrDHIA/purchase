@@ -501,6 +501,10 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
         badgeColor = Colors.green.shade100;
         textColor = Colors.green.shade800;
       }
+      else if (value.toLowerCase() == 'refused') {
+        badgeColor = Colors.red.shade100;
+        textColor = Colors.red.shade800;
+      }
     }
 
     // Ajout du badge coloré pour Priority
