@@ -1,4 +1,5 @@
 import 'package:flutter_application_1/network/purchase_request_network.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/models/purchase_request.dart';
 import 'package:flutter_application_1/screens/Purchase%20order/purchase_form_screen.dart';
@@ -16,111 +17,111 @@ class PurchaseRequestView extends StatefulWidget {
 }
 
 class _PurchaseRequestViewState extends State<PurchaseRequestView> {
-  Future<void> _showRefuseDialog() async {
-    final reasonController = TextEditingController();
-    final commentController = TextEditingController();
-    bool submitting = false;
-    String? errorText;
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-              titlePadding: const EdgeInsets.only(top: 24, left: 24, right: 24, bottom: 0),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              title: Row(
-                children: const [
-                  Icon(Icons.error, color: Colors.red, size: 28),
-                  SizedBox(width: 10),
-                  Text('Purchase Request', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22)),
-                ],
-              ),
-              content: SizedBox(
-                width: 350,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 8),
-                    const Text('Please provide a reason for refusing this request:', style: TextStyle(fontSize: 15)),
-                    const SizedBox(height: 16),
-                    const Text('Reason (required)', style: TextStyle(fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 6),
-                    TextField(
-                      controller: reasonController,
-                      minLines: 2,
-                      maxLines: 3,
-                      decoration: InputDecoration(
-                        hintText: 'Example: The requested item exceeds the approved budget for this quarter.',
-                        filled: true,
-                        fillColor: const Color(0xFFF1F1F1),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide.none,
-                        ),
-                        errorText: errorText,
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    const Text('Additional Comments (optional)', style: TextStyle(fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 6),
-                    TextField(
-                      controller: commentController,
-                      minLines: 2,
-                      maxLines: 3,
-                      decoration: InputDecoration(
-                        hintText: 'Provide any further details or context, if necessary.',
-                        filled: true,
-                        fillColor: const Color(0xFFF1F1F1),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              actionsPadding: const EdgeInsets.only(left: 24, right: 24, bottom: 18, top: 8),
-              actions: [
-                ElevatedButton(
-                  onPressed: submitting
-                      ? null
-                      : () async {
-                          setState(() { errorText = null; });
-                          if (reasonController.text.trim().isEmpty) {
-                            setState(() { errorText = 'Reason is required'; });
-                            return;
-                          }
-                          setState(() { submitting = true; });
-                          await _deletePurchaseFromServer();
-                          if (mounted) Navigator.of(context).pop();
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF635BFF),
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(120, 44),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    elevation: 0,
-                  ),
-                  child: submitting
-                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                      : const Text('Submit'),
-                ),
-                TextButton(
-                  onPressed: submitting ? null : () => Navigator.of(context).pop(),
-                  child: const Text('Cancel'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
+  // Future<void> _showRefuseDialog() async {
+  //   final reasonController = TextEditingController();
+  //   final commentController = TextEditingController();
+  //   bool submitting = false;
+  //   String? errorText;
+  //   await showDialog(
+  //     context: context,
+  //     barrierDismissible: false,
+  //     builder: (context) {
+  //       return StatefulBuilder(
+  //         builder: (context, setState) {
+  //           return AlertDialog(
+  //             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+  //             titlePadding: const EdgeInsets.only(top: 24, left: 24, right: 24, bottom: 0),
+  //             contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+  //             title: Row(
+  //               children: const [
+  //                 Icon(Icons.error, color: Colors.red, size: 28),
+  //                 SizedBox(width: 10),
+  //                 Text('Purchase Request', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22)),
+  //               ],
+  //             ),
+  //             content: SizedBox(
+  //               width: 350,
+  //               child: Column(
+  //                 mainAxisSize: MainAxisSize.min,
+  //                 crossAxisAlignment: CrossAxisAlignment.start,
+  //                 children: [
+  //                   const SizedBox(height: 8),
+  //                   const Text('Please provide a reason for refusing this request:', style: TextStyle(fontSize: 15)),
+  //                   const SizedBox(height: 16),
+  //                   const Text('Reason (required)', style: TextStyle(fontWeight: FontWeight.w600)),
+  //                   const SizedBox(height: 6),
+  //                   TextField(
+  //                     controller: reasonController,
+  //                     minLines: 2,
+  //                     maxLines: 3,
+  //                     decoration: InputDecoration(
+  //                       hintText: 'Example: The requested item exceeds the approved budget for this quarter.',
+  //                       filled: true,
+  //                       fillColor: const Color(0xFFF1F1F1),
+  //                       border: OutlineInputBorder(
+  //                         borderRadius: BorderRadius.circular(10),
+  //                         borderSide: BorderSide.none,
+  //                       ),
+  //                       errorText: errorText,
+  //                     ),
+  //                   ),
+  //                   const SizedBox(height: 18),
+  //                   const Text('Additional Comments (optional)', style: TextStyle(fontWeight: FontWeight.w600)),
+  //                   const SizedBox(height: 6),
+  //                   TextField(
+  //                     controller: commentController,
+  //                     minLines: 2,
+  //                     maxLines: 3,
+  //                     decoration: InputDecoration(
+  //                       hintText: 'Provide any further details or context, if necessary.',
+  //                       filled: true,
+  //                       fillColor: const Color(0xFFF1F1F1),
+  //                       border: OutlineInputBorder(
+  //                         borderRadius: BorderRadius.circular(10),
+  //                         borderSide: BorderSide.none,
+  //                       ),
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //             ),
+  //             actionsPadding: const EdgeInsets.only(left: 24, right: 24, bottom: 18, top: 8),
+  //             actions: [
+  //               ElevatedButton(
+  //                 onPressed: submitting
+  //                     ? null
+  //                     : () async {
+  //                         setState(() { errorText = null; });
+  //                         if (reasonController.text.trim().isEmpty) {
+  //                           setState(() { errorText = 'Reason is required'; });
+  //                           return;
+  //                         }
+  //                         setState(() { submitting = true; });
+  //                         await _deletePurchaseFromServer();
+  //                         if (mounted) Navigator.of(context).pop();
+  //                       },
+  //                 style: ElevatedButton.styleFrom(
+  //                   backgroundColor: const Color(0xFF635BFF),
+  //                   foregroundColor: Colors.white,
+  //                   minimumSize: const Size(120, 44),
+  //                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+  //                   elevation: 0,
+  //                 ),
+  //                 child: submitting
+  //                     ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+  //                     : const Text('Submit'),
+  //               ),
+  //               TextButton(
+  //                 onPressed: submitting ? null : () => Navigator.of(context).pop(),
+  //                 child: const Text('Cancel'),
+  //               ),
+  //             ],
+  //           );
+  //         },
+  //       );
+  //     },
+  //   );
+  // }
 
   Future<void> _deletePurchaseFromServer() async {
     try {
@@ -336,6 +337,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
       return date.toString();
     }
 
+    final isApproved = (_status ?? '').toLowerCase() == 'approved';
     return Scaffold(
       body: Row(
         children: [
@@ -435,18 +437,32 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                         child: buildReadOnlyField('Status', _status ?? ''),
                       ),
                       const Spacer(),
-                      if (_showActionButtons)
+                      if (_showActionButtons && !isApproved)
                         Row(
                           children: [
                             ElevatedButton(
-                              onPressed: () {
-                                setState(() {
-                                  _status = 'Approved';
-                                  _showActionButtons = false;
-                                });
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(backgroundColor: Color.fromARGB(255, 15, 3, 245), content: Text('Accepted!')),
-                                );
+                              onPressed: () async {
+                                try {
+                                  final id = widget.purchaseRequest.id;
+                                  if (id == null) throw Exception('ID missing');
+                                  final payload = {
+                                    'status': 'approved',
+                                  };
+                                  await PurchaseRequestNetwork().updatePurchaseRequest(id, payload, method: 'PATCH');
+                                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                                    if (mounted) {
+                                      Navigator.pop(context, true); // Indique à la liste de se rafraîchir
+                                    }
+                                  });
+                                } catch (e) {
+                                  String errorMsg = e.toString();
+                                  if (e is DioError && e.response != null) {
+                                    errorMsg = 'Erreur serveur: ' + e.response.toString();
+                                  }
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(backgroundColor: const Color.fromARGB(255, 245, 3, 3), content: Text(errorMsg)),
+                                  );
+                                }
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF635BFF),
@@ -460,9 +476,9 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                               child: const Text('Accept'),
                             ),
                             const SizedBox(width: 24),
-                            OutlinedButton(
-                              onPressed: _showRefuseDialog,
-                              style: OutlinedButton.styleFrom(
+                            ElevatedButton(
+                              // onPressed: _showRefuseDialog,
+                              style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFFF5F5F5),
                                 foregroundColor: Colors.black87,
                                 minimumSize: const Size(120, 44),
@@ -471,6 +487,33 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                               ),
+                              onPressed: () async {
+                                try {
+                                  final id = widget.purchaseRequest.id;
+                                  if (id == null) throw Exception('ID missing');
+                                  final payload = {
+                                    'status': 'rejected',
+                                  };
+                                  await PurchaseRequestNetwork().updatePurchaseRequest(id, payload, method: 'PATCH');
+                                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                                    if (mounted) {
+                                      Navigator.pop(context, true); // Indique à la liste de se rafraîchir
+                                    }
+                                  });
+                                } catch (e) {
+                                  String errorMsg = e.toString();
+                                  if (e is DioError && e.response != null) {
+                                    errorMsg = 'Erreur serveur: ' + e.response.toString();
+                                  }
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(backgroundColor: const Color.fromARGB(255, 245, 3, 3), content: Text(errorMsg)),
+                                  );
+                                }
+                                ;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(backgroundColor: Color.fromARGB(255, 245, 3, 3), content: Text('rejected!')),
+                                );
+                              },
                               child: const Text('Refuse'),
                             ),
                           ],
@@ -501,7 +544,8 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
         badgeColor = Colors.green.shade100;
         textColor = Colors.green.shade800;
       }
-      else if (value.toLowerCase() == 'refused') {
+
+      else if (value.toLowerCase() == 'rejected') {
         badgeColor = Colors.red.shade100;
         textColor = Colors.red.shade800;
       }

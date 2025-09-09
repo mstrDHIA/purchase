@@ -127,15 +127,11 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
 
     final Map<String, dynamic> order = {
       'title': titleController.text.isNotEmpty ? titleController.text : 'Demande d\'achat',
-      'description': descriptionController.text.isNotEmpty ? descriptionController.text : 'Description par défaut',
+      'description': noteController.text.isNotEmpty ? noteController.text : (descriptionController.text.isNotEmpty ? descriptionController.text : 'Description par défaut'),
       'requested_by': userController.currentUser.id,
-      // 'createdBy': userController.currentUser.username ?? 'Inconnu',
       'products': products,
-      // 'quantity': int.tryParse(quantityController.text) ?? 0,
-      'note': noteController.text,
       'priority': selectedPriority,
       'end_date': '${selectedDueDate!.year}-${selectedDueDate!.month}-${selectedDueDate!.day}',
-      // 'actionCreatedBy': userController.currentUser.firstName ?? userController.currentUser.username ?? 'Moi',
       'start_date': '${DateTime.now().year}-${DateTime.now().month}-${DateTime.now().day}',
     };
 
