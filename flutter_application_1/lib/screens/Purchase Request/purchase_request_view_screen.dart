@@ -337,7 +337,8 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
       return date.toString();
     }
 
-    final isApproved = (_status ?? '').toLowerCase() == 'approved';
+  final isApproved = (_status ?? '').toLowerCase() == 'approved';
+  final isRejected = (_status ?? '').toLowerCase() == 'rejected';
     return Scaffold(
       body: Row(
         children: [
@@ -437,7 +438,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                         child: buildReadOnlyField('Status', _status ?? ''),
                       ),
                       const Spacer(),
-                      if (_showActionButtons && !isApproved)
+                      if (_showActionButtons && !isApproved && !isRejected)
                         Row(
                           children: [
                             ElevatedButton(
@@ -449,6 +450,9 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                     'status': 'approved',
                                   };
                                   await PurchaseRequestNetwork().updatePurchaseRequest(id, payload, method: 'PATCH');
+                                  setState(() {
+                                    _showActionButtons = false;
+                                  });
                                   WidgetsBinding.instance.addPostFrameCallback((_) {
                                     if (mounted) {
                                       Navigator.pop(context, true); // Indique à la liste de se rafraîchir
@@ -477,7 +481,6 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                             ),
                             const SizedBox(width: 24),
                             ElevatedButton(
-                              // onPressed: _showRefuseDialog,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFFF5F5F5),
                                 foregroundColor: Colors.black87,
@@ -495,6 +498,9 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                     'status': 'rejected',
                                   };
                                   await PurchaseRequestNetwork().updatePurchaseRequest(id, payload, method: 'PATCH');
+                                  setState(() {
+                                    _showActionButtons = false;
+                                  });
                                   WidgetsBinding.instance.addPostFrameCallback((_) {
                                     if (mounted) {
                                       Navigator.pop(context, true); // Indique à la liste de se rafraîchir
@@ -509,7 +515,6 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                     SnackBar(backgroundColor: const Color.fromARGB(255, 245, 3, 3), content: Text(errorMsg)),
                                   );
                                 }
-                                ;
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(backgroundColor: Color.fromARGB(255, 245, 3, 3), content: Text('rejected!')),
                                 );

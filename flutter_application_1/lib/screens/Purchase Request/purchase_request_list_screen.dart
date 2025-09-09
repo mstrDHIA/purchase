@@ -25,9 +25,9 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
   final List<String> _statusOptions = [
     'pending',
     'approved',
-    'refused',
+    'rejected',
     
-    
+
   ];
   int _rowsPerPage = PaginatedDataTable.defaultRowsPerPage;
   int? _sortColumnIndex;
