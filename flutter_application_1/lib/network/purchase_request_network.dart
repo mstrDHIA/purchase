@@ -51,19 +51,31 @@ class PurchaseRequestNetwork {
   }
 
   // Update a purchase request
-  Future<Map<String, dynamic>> updatePurchaseRequest(int id, Map<String, dynamic> data) async {
-    Response response = await api.dio.put(
-      '${APIS.baseUrl}/purchase_request/purchaseRequests/$id/',
-      data: jsonEncode(data),
-      options: Options(
-        headers: {
-          'Authorization': 'Bearer ${APIS.token}',
-          'Content-Type': 'application/json',
-          'ngrok-skip-browser-warning': 'true',
-        },
-      ),
+  Future<Map<String, dynamic>> updatePurchaseRequest(int id, Map<String, dynamic> data, {required String method}) async {
+    late Response response;
+    final url = '${APIS.baseUrl}/purchase_request/purchaseRequests/$id/';
+    final options = Options(
+      headers: {
+        'Authorization': 'Bearer ${APIS.token}',
+        'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
+      },
     );
-    print('PUT update response: status=${response.statusCode}, data=${response.data}');
+    if (method == 'PATCH') {
+      response = await api.dio.patch(
+        url,
+        data: jsonEncode(data),
+        options: options,
+      );
+      print('PATCH update response: status=[32m${response.statusCode}[0m, data=${response.data}');
+    } else {
+      response = await api.dio.put(
+        url,
+        data: jsonEncode(data),
+        options: options,
+      );
+      print('PUT update response: status=[32m${response.statusCode}[0m, data=${response.data}');
+    }
     if (response.statusCode == 200) {
       return response.data;
     } else {

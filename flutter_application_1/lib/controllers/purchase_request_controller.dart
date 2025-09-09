@@ -75,7 +75,7 @@ class PurchaseRequestController extends ChangeNotifier {
     isLoading = true;
     notifyListeners();
     try {
-      final result = await _network.updatePurchaseRequest(id, data);
+      final result = await _network.updatePurchaseRequest(id, data, method: '');
       PurchaseRequest updatedRequest = PurchaseRequest.fromJson(result);
       // int index = requests.indexWhere((r) => r.id == id);
       // if (index != -1) {

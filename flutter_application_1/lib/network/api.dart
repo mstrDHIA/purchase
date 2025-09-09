@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 
 class APIS {
   final dio = Dio();
-  static String token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU2NzIxMjc3LCJpYXQiOjE3NTYxMTY0NzcsImp0aSI6IjZmZmQxYTc2ZTMyMzQ2MzQ4MDhiNmZkNTcwNWUxNTRjIiwidXNlcl9pZCI6MX0.TSBnhWs_Fb921qMLRnMmvCcNjy1kbRFHaXugW7e7MFM';
+  static String token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU3OTQ5NTU2LCJpYXQiOjE3NTczNDQ3NTYsImp0aSI6ImVlN2YwZTdmMmFmMTRmYTdiZjkzNzdiY2VkN2VlMjJmIiwidXNlcl9pZCI6MX0.YawSov6e2Hc-9R9s_2wBZPairbC5CLRSsA1Q_9wh5Mc';
 
   // APIS() {
   //   dio.interceptors.add(LogInterceptor(

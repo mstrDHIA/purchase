@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/screens/Purchase%20order/refuse_purchase_screen.dart';
 
 class PurchaseOrderView extends StatefulWidget {
   const PurchaseOrderView({super.key});
@@ -336,62 +335,45 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                 // Status on the left
                 _buildField('Status', statusController, width: 160, readOnly: true),
                 const Spacer(),
-                if (!isApproved) // Show buttons only if not approved
-                  Row(
-                    children: [
-                      ElevatedButton(
-                        onPressed: () {
-                          setState(() {
-                            statusController.text = "Approved";
-                            isApproved = true;
-                          });
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Row(
-                                children: const [
-                                  Icon(Icons.check_circle, color: Colors.green, size: 28),
-                                  SizedBox(width: 16),
-                                  Expanded(
-                                    child: Text(
-                                      "Request accepted", // <-- Translated
-                                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                                    ),
-                                  ),
-                                ],
+                if (!isApproved) // Show button only if not approved
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        statusController.text = "Approved";
+                        isApproved = true;
+                      });
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Row(
+                            children: const [
+                              Icon(Icons.check_circle, color: Colors.green, size: 28),
+                              SizedBox(width: 16),
+                              Expanded(
+                                child: Text(
+                                  "Request accepted", // <-- Translated
+                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                                ),
                               ),
-                              backgroundColor: const Color(0xFF3B3BFF),
-                              behavior: SnackBarBehavior.floating,
-                              elevation: 8,
-                              margin: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              duration: const Duration(seconds: 2),
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
+                            ],
+                          ),
                           backgroundColor: const Color(0xFF3B3BFF),
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          behavior: SnackBarBehavior.floating,
+                          elevation: 8,
+                          margin: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          duration: const Duration(seconds: 2),
                         ),
-                        child: const Text('Accept'),
-                      ),
-                      const SizedBox(width: 32),
-                      OutlinedButton(
-                        onPressed: () {
-                          showDialog(context: context, builder: (context) => RefusePurchaseDialog());
-                        },
-                        style: OutlinedButton.styleFrom(
-                          backgroundColor: const Color(0xFFEDEDED),
-                          foregroundColor: Colors.black,
-                          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        ),
-                        child: const Text('Refuse'),
-                      ),
-                    ],
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF3B3BFF),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                    child: const Text('Accept'),
                   ),
               ],
             ),
