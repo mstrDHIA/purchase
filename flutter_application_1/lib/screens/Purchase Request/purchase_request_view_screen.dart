@@ -153,36 +153,15 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
     showDialog(
       context: context,
       builder: (context) {
-        // final TextEditingController productCtrl = TextEditingController(text: product);
-        // final TextEditingController quantityCtrl = TextEditingController(text: quantity);
         return AlertDialog(
-          title: const Text('Modifier la demande'),
+          title: const Text('Edit Request'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField( decoration: const InputDecoration(labelText: 'Produit')),
-              TextField( decoration: const InputDecoration(labelText: 'Quantité'), keyboardType: TextInputType.number),
+              TextField(decoration: const InputDecoration(labelText: 'Product')),
+              TextField(decoration: const InputDecoration(labelText: 'Quantity'), keyboardType: TextInputType.number),
             ],
           ),
-          // actions: [
-          //   TextButton(
-          //     onPressed: () {
-          //       setState(() {
-          //         // product = productCtrl.text;
-          //         // quantity = quantityCtrl.text;
-          //       });
-          //       Navigator.pop(context);
-          //       ScaffoldMessenger.of(context).showSnackBar(
-          //         const SnackBar(content: Text("Demande modifiée")),
-          //       );
-          //     },
-          //     child: const Text('Enregistrer'),
-          //   ),
-          //   TextButton(
-          //     onPressed: () => Navigator.pop(context),
-          //     child: const Text('Annuler'),
-          //   ),
-          // ],
         );
       },
     );
@@ -348,7 +327,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Titre avec bouton retour
+                  // Title with back button
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -356,7 +335,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                         children: [
                           IconButton(
                             icon: const Icon(Icons.arrow_back, color: Colors.blue),
-                            tooltip: 'Retour',
+                            tooltip: 'Back',
                             onPressed: () {
                               Navigator.pop(context);
                             },
@@ -375,20 +354,20 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                     spacing: 20,
                     runSpacing: 20,
                     children: [
-                      // Première ligne : Requestor, Submitted Date, Due date
+                      // First row: Requestor, Submitted Date, Due date
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           buildReadOnlyField('Requestor', widget.purchaseRequest.requestedBy.toString()),
                           const SizedBox(width: 20),
-                          buildReadOnlyField('Starting Date', formatDate(widget.purchaseRequest.startDate)),
+                          buildReadOnlyField('Submission Date', formatDate(widget.purchaseRequest.startDate)),
                           const SizedBox(width: 20),
-                          buildReadOnlyField('Due date', formatDate(widget.purchaseRequest.endDate)),
+                          buildReadOnlyField('Due Date', formatDate(widget.purchaseRequest.endDate)),
                         ],
                       ),
                       const SizedBox(height: 20),
 
-                      // Ensuite les produits et quantités
+                      // Then products and quantities
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -410,7 +389,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                     ],
                   ),
                   const SizedBox(height: 30),
-                  // Note seule sur une ligne
+                  // Note on a single line
                   const Text('Note', style: TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   TextField(
@@ -516,7 +495,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                   );
                                 }
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(backgroundColor: Color.fromARGB(255, 245, 3, 3), content: Text('rejected!')),
+                                  const SnackBar(backgroundColor: Color.fromARGB(255, 9, 37, 250), content: Text('rejected!')),
                                 );
                               },
                               child: const Text('Refuse'),
