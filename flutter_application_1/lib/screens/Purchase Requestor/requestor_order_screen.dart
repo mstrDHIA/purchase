@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/controllers/user_controller.dart';
+import 'package:flutter_application_1/models/user_model.dart';
 // import 'package:flutter_application_1/screens/Purchase%20Requestor/Request_Edit_screen.dart';
 import 'package:flutter_application_1/screens/Purchase%20Requestor/requestor_form_screen.dart';
 // import 'package:flutter_application_1/screens/Purchase%20Requestor/request_view_screen.dart';
@@ -6,6 +8,7 @@ import 'package:flutter_application_1/screens/Purchase%20order/pushase_order_scr
 // Make sure the above import points to the file where addPurchaseOrder is defined as a top-level function.
 import 'package:intl/intl.dart';
 import 'package:flutter_application_1/network/purchase_request_network.dart';
+import 'package:provider/provider.dart';
 
 class PurchaseRequestPage extends StatefulWidget {
   const PurchaseRequestPage({super.key});
@@ -167,9 +170,10 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
   DateTime? _selectedSubmissionDate;
   DateTime? _selectedDueDate;
   bool _isLoading = false;
-
+  late UserController userController; 
   @override
   void initState() {
+    userController= Provider.of<UserController>(context, listen: false);
     super.initState();
     _fetchRequestsFromApi();
   }
@@ -178,7 +182,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
     setState(() { _isLoading = true; });
     try {
       final api = PurchaseRequestNetwork();
-      final List<dynamic> data = (await api.fetchPurchaseRequests()) as List;
+      final List<dynamic> data = (await api.fetchPurchaseRequests(userController.currentUser)) as List;
       setState(() {
         _PurchaseRequests.clear();
         _PurchaseRequests.addAll(data.map<Map<String, dynamic>>((item) {

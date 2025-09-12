@@ -1,20 +1,28 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
+import 'package:flutter_application_1/models/user_model.dart';
 import 'package:flutter_application_1/network/api.dart';
 
 class PurchaseRequestNetwork {
   APIS api = APIS();
 
   // Fetch all purchase requests
-  Future<Response> fetchPurchaseRequests() async {
+  Future<Response> fetchPurchaseRequests(User user) async {
+    Map<String,int> queryParameters = {};
+    if(user.role!.id==2){
+      queryParameters['requested_by']=user.id!;
+    }
     Response response = await api.dio.get(
       '${APIS.baseUrl}/purchase_request/purchaseRequests/',
+      queryParameters: queryParameters,
       options: Options(
+
         headers: {
           'Authorization': 'Bearer ${APIS.token}',
           'ngrok-skip-browser-warning': 'true',
         },
       ),
+
     );
     if (response.statusCode == 200) {
       return response;
