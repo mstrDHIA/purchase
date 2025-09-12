@@ -1,8 +1,10 @@
+import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter_application_1/network/purchase_request_network.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/models/purchase_request.dart';
 import 'package:flutter_application_1/screens/Purchase%20order/purchase_form_screen.dart';
+import 'package:provider/provider.dart';
 
 class PurchaseRequestView extends StatefulWidget {
   final PurchaseRequest purchaseRequest;
@@ -142,11 +144,12 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
   }
   bool _showActionButtons = true;
   String? _status;
-
+  late UserController userController;
   @override
   void initState() {
   super.initState();
   _status = widget.purchaseRequest.status?.toString() ?? '';
+  userController= Provider.of<UserController>(context, listen: false);
   }
 
   void _editRequest() {
@@ -417,7 +420,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                         child: buildReadOnlyField('Status', _status ?? ''),
                       ),
                       const Spacer(),
-                      if (_showActionButtons && !isApproved && !isRejected)
+                      if (_showActionButtons && !isApproved && !isRejected && (userController.currentUser.role!.id == 1 || userController.currentUser.role!.id == 3))
                         Row(
                           children: [
                             ElevatedButton(
@@ -427,11 +430,12 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                   if (id == null) throw Exception('ID missing');
                                   final payload = {
                                     'status': 'approved',
+                                    'approved_by': userController.currentUser.id,
                                   };
                                   await PurchaseRequestNetwork().updatePurchaseRequest(id, payload, method: 'PATCH');
-                                  setState(() {
-                                    _showActionButtons = false;
-                                  });
+                                setState(() {
+                                  _showActionButtons = false;
+                                });
                                   WidgetsBinding.instance.addPostFrameCallback((_) {
                                     if (mounted) {
                                       Navigator.pop(context, true); // Indique à la liste de se rafraîchir
@@ -442,9 +446,9 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                   if (e is DioError && e.response != null) {
                                     errorMsg = 'Erreur serveur: ' + e.response.toString();
                                   }
-                                  ScaffoldMessenger.of(context).showSnackBar(
+                                ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(backgroundColor: const Color.fromARGB(255, 245, 3, 3), content: Text(errorMsg)),
-                                  );
+                                );
                                 }
                               },
                               style: ElevatedButton.styleFrom(
@@ -475,6 +479,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                   if (id == null) throw Exception('ID missing');
                                   final payload = {
                                     'status': 'rejected',
+                                    'approved_by': userController.currentUser.id,
                                   };
                                   await PurchaseRequestNetwork().updatePurchaseRequest(id, payload, method: 'PATCH');
                                   setState(() {
