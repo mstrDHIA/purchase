@@ -16,6 +16,12 @@ class PurchaseRequestPage extends StatefulWidget {
 }
 
 class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
+  void _sort<T>(Comparable<T> Function(dynamic req) getField, int columnIndex, bool ascending) {
+    setState(() {
+      _sortColumnIndex = columnIndex;
+      _sortAscending = ascending;
+    });
+  }
   final List<String> _priorityOptions = [
     'high',
     'medium',
@@ -33,18 +39,26 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
   int? _sortColumnIndex;
   bool _sortAscending = true;
   bool _isLoading = false;
+  int _page = 0;
+  int _totalRows = 0;
+  int _rowsPerPageLocal = PaginatedDataTable.defaultRowsPerPage;
 
   // Filter state
   String? _statusFilter;
   DateTime? _selectedSubmissionDate;
   DateTime? _selectedDueDate;
   final _dateFormat = DateFormat('yyyy-MM-dd');
+  String _searchText = '';
+  final TextEditingController _searchController = TextEditingController();
+
   void _clearFilters() {
     setState(() {
       _statusFilter = null;
       _selectedSubmissionDate = null;
       _selectedDueDate = null;
-  _priorityFilter = null;
+      _priorityFilter = null;
+      _searchText = '';
+      _searchController.clear();
     });
     // TODO: Apply filter logic to data source if needed
   }
@@ -109,7 +123,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
   @override
   Widget build(BuildContext context) {
     
-    return Scaffold(
+  return Scaffold(
       appBar: AppBar(
         title: const Text('Purchase Requests'),
         actions: [
@@ -136,11 +150,35 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
           : Column(
               children: [
                 const SizedBox(height: 16),
-                // --- Filter Bar ---
+                // --- Filter Bar + Search ---
                 SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
+                      // Search Bar
+                      SizedBox(
+                        width: 240,
+                        child: TextField(
+                          controller: _searchController,
+                          onChanged: (value) {
+                            setState(() {
+                              _searchText = value;
+                            });
+                          },
+                          decoration: InputDecoration(
+                            hintText: 'Search...',
+                            prefixIcon: const Icon(Icons.search),
+                            filled: true,
+                            fillColor: Color(0xFFF7F3FF),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(22),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
                       // Filter by Status
                       PopupMenuButton<String>(
                         onSelected: (String value) {
@@ -233,6 +271,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                               ? 'Filter by Submission Date'
                               : 'Submission: ${_dateFormat.format(_selectedSubmissionDate!)}',
                           style: const TextStyle(
+                            
                             color: Colors.deepPurple,
                             fontWeight: FontWeight.w500,
                           ),
@@ -300,45 +339,193 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                           req.endDate!.month == _selectedDueDate!.month &&
                           req.endDate!.day == _selectedDueDate!.day).toList();
                       }
+                      // Apply search filter
+                      if (_searchText.isNotEmpty) {
+                        final searchLower = _searchText.toLowerCase();
+                        filteredRequests = filteredRequests.where((req) {
+                          return (req.id?.toString().toLowerCase().contains(searchLower) ?? false)
+                              || (req.requestedBy?.toString().toLowerCase().contains(searchLower) ?? false)
+                              || (req.status?.toString().toLowerCase().contains(searchLower) ?? false)
+                              || (req.priority?.toString().toLowerCase().contains(searchLower) ?? false)
+                              || (req.startDate?.toString().toLowerCase().contains(searchLower) ?? false)
+                              || (req.endDate?.toString().toLowerCase().contains(searchLower) ?? false);
+                        }).toList();
+                      }
                       final filteredDataSource = PurchaseRequestDataSource(filteredRequests, context, 'filtered');
-                      print('DataSource: $filteredRequests');
-                      return SingleChildScrollView(
-                        scrollDirection: Axis.vertical,
-                        child: Theme(
-                          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-                          child: Container(
-                            child: PaginatedDataTable(
-                              header: const Text('Purchase Requests Table'),
-                              rowsPerPage: _rowsPerPage,
-                              onRowsPerPageChanged: (r) {
-                                if (r != null) {
-                                  setState(() {
-                                    _rowsPerPage = r;
-                                  });
-                                }
-                              },
-                              sortColumnIndex: _sortColumnIndex,
-                              sortAscending: _sortAscending,
-                              columnSpacing: 190,
-                              horizontalMargin: 16,
-                              columns: [
-                                DataColumn(label: const Text('ID')),
-                                DataColumn(label:  Text((userController.currentUser.role!.id!=2)?'Created by':'Validated by')),
-                                DataColumn(label: const Text('Date submitted')),
-                                DataColumn(label: const Text('Due date')),
-                                DataColumn(label: const Text('Priority')),
-                                DataColumn(label: const Text('Status')),
-                                DataColumn(
-                                  label: SizedBox(
-                                    width: 120,
-                                    child: const Center(child: Text('Actions')),
+                      int totalRows = filteredRequests.length;
+                      // Corriger la page si besoin (ex: suppression d'éléments)
+                      if (_page * _rowsPerPageLocal >= totalRows && _page > 0) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          setState(() {
+                            _page = ((totalRows - 1) / _rowsPerPageLocal).floor();
+                            if (_page < 0) _page = 0;
+                          });
+                        });
+                      }
+                      final int start = _page * _rowsPerPageLocal;
+                      final int end = (_page + 1) * _rowsPerPageLocal > totalRows ? totalRows : (_page + 1) * _rowsPerPageLocal;
+                      // Sort filteredRequests if a sort column is selected
+                      if (_sortColumnIndex != null) {
+                        var getField;
+                        switch (_sortColumnIndex) {
+                          case 0:
+                            getField = (req) => req.id ?? 0;
+                            break;
+                          case 1:
+                            getField = (req) => req.requestedBy?.toString() ?? '';
+                            break;
+                          case 2:
+                            getField = (req) => req.startDate?.toString() ?? '';
+                            break;
+                          case 3:
+                            getField = (req) => req.endDate?.toString() ?? '';
+                            break;
+                          case 4:
+                            getField = (req) => req.priority?.toString() ?? '';
+                            break;
+                          case 5:
+                            getField = (req) => req.status?.toString() ?? '';
+                            break;
+                          default:
+                            getField = (req) => req.id ?? 0;
+                        }
+                        filteredRequests.sort((a, b) {
+                          final aValue = getField(a);
+                          final bValue = getField(b);
+                          if (aValue is Comparable && bValue is Comparable) {
+                            return _sortAscending ? Comparable.compare(aValue, bValue) : Comparable.compare(bValue, aValue);
+                          }
+                          return 0;
+                        });
+                      }
+                      final pageRequests = filteredRequests.sublist(start < totalRows ? start : 0, end < totalRows ? end : totalRows);
+                      final pageDataSource = PurchaseRequestDataSource(pageRequests, context, 'filtered');
+                      print('DataSource: $pageRequests');
+                      return Column(
+                        children: [
+                          Expanded(
+                            child: SingleChildScrollView(
+                              scrollDirection: Axis.vertical,
+                              child: Theme(
+                                data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                                child: Container(
+                                  child: PaginatedDataTable(
+                                    header: const Text('Purchase Requests Table'),
+                                    rowsPerPage: _rowsPerPageLocal,
+                                    availableRowsPerPage: const [5, 10, 20, 50, 100],
+                                    onRowsPerPageChanged: (r) {
+                                      if (r != null) {
+                                        setState(() {
+                                          _rowsPerPageLocal = r;
+                                          _rowsPerPage = r;
+                                          _page = 0;
+                                        });
+                                      }
+                                    },
+                                    sortColumnIndex: _sortColumnIndex,
+                                    sortAscending: _sortAscending,
+                                    columnSpacing: 190,
+                                    horizontalMargin: 16,
+                                    columns: [
+                                      DataColumn(
+                                        label: const Text('ID'),
+                                        onSort: (columnIndex, ascending) {
+                                          _sort<num>((req) => req.id ?? 0, columnIndex, ascending);
+                                        },
+                                      ),
+                                      DataColumn(
+                                        label: const Text(userController.currentUser.role!.id!=2)?'Created by':'Validated by'),
+                                        onSort: (columnIndex, ascending) {
+                                          _sort<String>((req) => req.requestedBy?.toString() ?? '', columnIndex, ascending);
+                                        },
+                                      ),
+                                      DataColumn(
+                                        label: const Text('Date submitted'),
+                                        onSort: (columnIndex, ascending) {
+                                          _sort<String>((req) => req.startDate?.toString() ?? '', columnIndex, ascending);
+                                        },
+                                      ),
+                                      DataColumn(
+                                        label: const Text('Due date'),
+                                        onSort: (columnIndex, ascending) {
+                                          _sort<String>((req) => req.endDate?.toString() ?? '', columnIndex, ascending);
+                                        },
+                                      ),
+                                      DataColumn(
+                                        label: const Text('Priority'),
+                                        onSort: (columnIndex, ascending) {
+                                          _sort<String>((req) => req.priority?.toString() ?? '', columnIndex, ascending);
+                                        },
+                                      ),
+                                      DataColumn(
+                                        label: const Text('Status'),
+                                        onSort: (columnIndex, ascending) {
+                                          _sort<String>((req) => req.status?.toString() ?? '', columnIndex, ascending);
+                                        },
+                                      ),
+                                      DataColumn(
+                                        label: SizedBox(
+                                          width: 120,
+                                          child: const Center(child: Text('Actions')),
+                                        ),
+                                      ),
+                                    ],
+                                    source: pageDataSource,
+                                    showFirstLastButtons: false,
                                   ),
                                 ),
-                              ],
-                              source: filteredDataSource,
+                              ),
                             ),
                           ),
-                        ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              ElevatedButton(
+                                onPressed: _page > 0
+                                    ? () {
+                                        setState(() {
+                                          _page--;
+                                        });
+                                      }
+                                    : null,
+                                child: const Text('Previous'),
+                              ),
+                              const SizedBox(width: 8),
+                              // Numérotation des pages
+                              ...List.generate(
+                                (totalRows / _rowsPerPageLocal).ceil(),
+                                (index) => Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: index == _page ? Colors.deepPurple : Colors.grey[200],
+                                      foregroundColor: index == _page ? Colors.white : Colors.deepPurple,
+                                      minimumSize: const Size(36, 36),
+                                      padding: EdgeInsets.zero,
+                                    ),
+                                    onPressed: () {
+                                      setState(() {
+                                        _page = index;
+                                      });
+                                    },
+                                    child: Text('${index + 1}'),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              ElevatedButton(
+                                onPressed: (_page + 1) * _rowsPerPageLocal < totalRows
+                                    ? () {
+                                        setState(() {
+                                          _page++;
+                                        });
+                                      }
+                                    : null,
+                                child: const Text('Next'),
+                              ),
+                            ],
+                          ),
+                        ],
                       );
                     },
                   ),
