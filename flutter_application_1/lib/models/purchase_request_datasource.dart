@@ -185,7 +185,8 @@ class PurchaseRequestDataSource extends DataTableSource {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(shape: const RoundedRectangleBorder(
                           borderRadius: BorderRadius.all(Radius.circular(8)),
-                        ),backgroundColor: const Color.fromARGB(255, 26, 6, 243), content: Text('Purchase request ${request.id} deleted')),
+                        ),backgroundColor: const Color.fromARGB(255, 26, 6, 243), 
+                        content: Text('Purchase request ${request.id} deleted')),
                       );
                     } catch (e) {
                       ScaffoldMessenger.of(context).showSnackBar(

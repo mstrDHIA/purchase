@@ -330,7 +330,11 @@ class _RequestEditPageState extends State<RequestEditPage> {
                           await controller.updateRequest(widget.purchaseRequest.id!, updateData, context);
                           if (!mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Purchase request updated successfully!')),
+                            const SnackBar(backgroundColor: Colors.blue, 
+                            content: Text('Purchase request updated successfully!')
+                            
+                            ),
+
                           );
                           Navigator.pop(context, updateData);
                         } on DioException catch (e) {
