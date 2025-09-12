@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/controllers/user_controller.dart';
+import 'package:flutter_application_1/models/user_model.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_application_1/controllers/purchase_request_controller.dart';
 import 'package:flutter_application_1/screens/Purchase%20Request/requestor_form_screen.dart';
@@ -26,8 +28,6 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
     'pending',
     'approved',
     'rejected',
-    
-
   ];
   int _rowsPerPage = PaginatedDataTable.defaultRowsPerPage;
   int? _sortColumnIndex;
@@ -67,11 +67,12 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
       // TODO: Apply filter logic to data source if needed
     }
   }
-
+  late UserController userController;
   @override
   void initState() {
+    userController= Provider.of<UserController>(context, listen: false);
     purchaseRequestController = Provider.of<PurchaseRequestController>(context, listen: false);
-    purchaseRequestController.fetchRequests(context);
+    purchaseRequestController.fetchRequests(context,userController.currentUser);
     super.initState();
   }
 
@@ -83,7 +84,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
       ),
     ).then((result) {
       if (result == true) {
-        purchaseRequestController.fetchRequests(context);
+        purchaseRequestController.fetchRequests(context,userController.currentUser);
       }
     });
   }
@@ -101,7 +102,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
       ),
     );
     print(newRequest);
-    purchaseRequestController.fetchRequests(context);
+    purchaseRequestController.fetchRequests(context,userController.currentUser);
 
   }
 
@@ -112,6 +113,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
       appBar: AppBar(
         title: const Text('Purchase Requests'),
         actions: [
+          if(userController.currentUser.role!.id==2||userController.currentUser.role!.id==1)
           ElevatedButton.icon(
             onPressed: _openAddRequestForm,
             icon: const Icon(Icons.add, color: Colors.white),
@@ -321,7 +323,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                               horizontalMargin: 16,
                               columns: [
                                 DataColumn(label: const Text('ID')),
-                                DataColumn(label: const Text('Created by')),
+                                DataColumn(label:  Text((userController.currentUser.role!.id!=2)?'Created by':'Validated by')),
                                 DataColumn(label: const Text('Date submitted')),
                                 DataColumn(label: const Text('Due date')),
                                 DataColumn(label: const Text('Priority')),

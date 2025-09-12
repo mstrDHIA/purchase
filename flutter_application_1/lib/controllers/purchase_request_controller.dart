@@ -1,8 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter_application_1/models/purchase_request.dart';
 import 'package:flutter_application_1/models/purchase_request_datasource.dart';
+import 'package:flutter_application_1/models/user_model.dart';
 import 'package:flutter_application_1/network/purchase_request_network.dart';
+import 'package:provider/provider.dart';
 
 class PurchaseRequestController extends ChangeNotifier {
   final PurchaseRequestNetwork _network = PurchaseRequestNetwork();
@@ -18,12 +21,12 @@ class PurchaseRequestController extends ChangeNotifier {
   // List<PurchaseRequest> get requests => _requests;
   String? get error => _error;
 
-  fetchRequests(BuildContext context) async {
+  fetchRequests(BuildContext context,User user) async {
     isLoading = true;
     _error = null;
     notifyListeners();
     try {
-      final Response response = await _network.fetchPurchaseRequests();
+      final Response response = await _network.fetchPurchaseRequests(user);
       if (response.statusCode != 200) {
         throw Exception('Failed to load purchase requests');
       }
@@ -95,7 +98,7 @@ class PurchaseRequestController extends ChangeNotifier {
     notifyListeners();
     try {
       await _network.deletePurchaseRequest(id);
-      await fetchRequests(context); // Rafraîchit la liste après suppression
+      await fetchRequests(context,Provider.of<UserController>(context, listen: false).currentUser); // Rafraîchit la liste après suppression
     } catch (e) {
       print('error: $e');
       _error = e.toString();

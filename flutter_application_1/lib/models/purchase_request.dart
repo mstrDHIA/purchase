@@ -10,7 +10,7 @@ class PurchaseRequest {
   String? status;
   DateTime? createdAt;
   DateTime? updatedAt;
-  String? approvedBy;
+  int? approvedBy;
   int? requestedBy;
   String? priority;
 

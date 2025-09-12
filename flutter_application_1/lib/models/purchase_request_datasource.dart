@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/controllers/purchase_request_controller.dart';
+import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter_application_1/models/purchase_request.dart';
+import 'package:flutter_application_1/models/user_model.dart';
 import 'package:flutter_application_1/screens/Purchase%20Request/Request_Edit_screen.dart';
 import 'package:flutter_application_1/screens/Purchase%20Request/purchase_request_view_screen.dart';
 import 'package:intl/intl.dart';
@@ -24,7 +26,7 @@ class PurchaseRequestDataSource extends DataTableSource {
     return DataRow(
       cells: [
         DataCell(Text(request.id.toString())),
-        DataCell(Text(request.requestedBy.toString())),
+        DataCell(Text(Provider.of<UserController>(context, listen: false).currentUser.role!.id!=2? request.requestedBy.toString():request.approvedBy.toString())),
         DataCell(Text(
           request.startDate != null
               ? DateFormat('yyyy-MM-dd').format(DateTime.tryParse(request.startDate.toString()) ?? DateTime.now())
@@ -105,7 +107,7 @@ class PurchaseRequestDataSource extends DataTableSource {
                     ),
                   ),
                 );
-                await Provider.of<PurchaseRequestController>(context, listen: false).fetchRequests(context);
+                await Provider.of<PurchaseRequestController>(context, listen: false).fetchRequests(context,Provider.of<UserController>(context, listen: false).currentUser);
               },
               tooltip: 'View',
             ),
@@ -125,7 +127,7 @@ class PurchaseRequestDataSource extends DataTableSource {
                     ),
                   ),
                 );
-                Provider.of<PurchaseRequestController>(context, listen: false).fetchRequests(context);
+                Provider.of<PurchaseRequestController>(context, listen: false).fetchRequests(context,Provider.of<UserController>(context, listen: false).currentUser);
               },
               tooltip: 'Edit',
             ),
