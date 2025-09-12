@@ -434,7 +434,11 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                                         },
                                       ),
                                       DataColumn(
-                                        label: const Text(userController.currentUser.role!.id!=2)?'Created by':'Validated by'),
+                                        label: Text(
+                                          userController.currentUser.role!.id != 2
+                                              ? 'Created by'
+                                              : 'Validated by',
+                                        ),
                                         onSort: (columnIndex, ascending) {
                                           _sort<String>((req) => req.requestedBy?.toString() ?? '', columnIndex, ascending);
                                         },
