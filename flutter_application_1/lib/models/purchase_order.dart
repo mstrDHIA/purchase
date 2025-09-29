@@ -84,22 +84,36 @@ class Products {
   int? quantity;
   String? brand;
   String? supplier;
+  double? price;
+  double? unitPrice;
 
-  Products({this.product, this.quantity, this.brand, this.supplier});
+  Products({this.product, this.quantity, this.brand, this.supplier, this.price, this.unitPrice});
 
   Products.fromJson(Map<String, dynamic> json) {
     product = json['product'];
     quantity = json['quantity'];
     brand = json['brand'];
     supplier = json['supplier'];
+    price = (json['price'] is int)
+        ? (json['price'] as int).toDouble()
+        : (json['price'] is double)
+            ? json['price']
+            : double.tryParse(json['price']?.toString() ?? '');
+    unitPrice = (json['unit_price'] is int)
+        ? (json['unit_price'] as int).toDouble()
+        : (json['unit_price'] is double)
+            ? json['unit_price']
+            : double.tryParse(json['unit_price']?.toString() ?? '');
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['product'] = this.product;
-    data['quantity'] = this.quantity;
-    data['brand'] = this.brand;
-    data['supplier'] = this.supplier;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['product'] = product;
+    data['quantity'] = quantity;
+    data['brand'] = brand;
+    data['supplier'] = supplier;
+    data['price'] = price;
+    data['unit_price'] = unitPrice;
     return data;
   }
 }

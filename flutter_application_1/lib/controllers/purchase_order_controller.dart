@@ -35,9 +35,9 @@ class PurchaseOrderController extends ChangeNotifier {
 		}
 	}
 
-	Future<void> updateOrder(PurchaseOrder order) async {
+	Future<void> updateOrder(Map<String, dynamic> orderJson) async {
 		try {
-			await _network.updatePurchaseOrder(order);
+			await _network.updatePurchaseOrder(orderJson);
 			await fetchOrders();
 		} catch (e) {
 			_error = e.toString();

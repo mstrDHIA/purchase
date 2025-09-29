@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/models/purchase_order.dart';
+// import 'package:flutter_application_1/models/purchase_order.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
@@ -69,11 +69,11 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
       final priorityRaw = initial['priority']?.toString();
       if (priorityRaw != null) {
         if (priorityRaw.toLowerCase() == 'high') {
-          _priority = 'High';
+          _priority = 'high';
         } else if (priorityRaw.toLowerCase() == 'medium') {
-          _priority = 'Medium';
+          _priority = 'medium';
         } else if (priorityRaw.toLowerCase() == 'low') {
-          _priority = 'Low';
+          _priority = 'low';
         } else {
           _priority = null;
         }
@@ -195,9 +195,9 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
                       border: OutlineInputBorder(),
                     ),
                     items: const [
-                      DropdownMenuItem(value: 'High', child: Text('High')),
-                      DropdownMenuItem(value: 'Medium', child: Text('Medium')),
-                      DropdownMenuItem(value: 'Low', child: Text('Low')),
+                      DropdownMenuItem(value: 'high', child: Text('high')),
+                      DropdownMenuItem(value: 'medium', child: Text('medium')),
+                      DropdownMenuItem(value: 'low', child: Text('low')),
                     ],
                     onChanged: (val) => setState(() => _priority = val),
                   ),
@@ -390,14 +390,15 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
         'id': _id,
         'requested_by_user': _requestedByUser ?? 1,
         'approved_by': _approvedBy ?? 2,
-        'start_date': DateFormat('yyyy-MM-dd').format(DateTime.now()),
-        'end_date': DateFormat('yyyy-MM-dd').format(parsedEndDate),
+        // Forcer l'envoi des dates comme String au format 'yyyy-MM-dd'
+        'start_date': DateFormat('yyyy-MM-dd').format(DateTime.now()).toString(),
+        'end_date': DateFormat('yyyy-MM-dd').format(parsedEndDate).toString(),
         'products': productsList,
         'title': 'Purchase Order',
         'description': noteController.text,
-        'status': 'Pending',
-        'created_at': DateFormat('yyyy-MM-dd').format(DateTime.now()),
-        'updated_at': DateFormat('yyyy-MM-dd').format(_updatedAt ?? DateTime.now()),
+        'status': 'pending',
+        'created_at': DateFormat('yyyy-MM-dd').format(DateTime.now()).toString(),
+        'updated_at': DateFormat('yyyy-MM-dd').format(_updatedAt ?? DateTime.now()).toString(),
         'priority': _priority,
       };
 
@@ -405,10 +406,9 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
       print(jsonEncode(jsonBody));
 
       if (widget.initialOrder.isNotEmpty && widget.initialOrder['id'] != null) {
-        // Mode édition : appel update
-        final purchaseOrder = PurchaseOrder.fromJson(jsonBody);
+        // Mode édition : appel update, on envoie le JSON directement
         await Provider.of<PurchaseOrderController>(context, listen: false)
-            .updateOrder(purchaseOrder);
+            .updateOrder(jsonBody);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Purchase order updated!')),
@@ -553,10 +553,5 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
     );
   }
 
-  AppBar _buildAppBar(BuildContext context) {
-    return AppBar(
-      title: const Text('Purchase Order'),
-      backgroundColor: const Color(0xFF8C7AE6),
-    );
-  }
+  // ...existing code...
 }

@@ -41,21 +41,21 @@ class PurchaseOrderNetwork {
 		}
 	}
 
-       Future<void> updatePurchaseOrder(PurchaseOrder order) async {
-			   print('DEBUG CALL updatePurchaseOrder: id=${order.id}, data=${order.toJson()}');
-	       final response = await dio.put(endpoint + '${order.id}/',
-		       data: order.toJson(),
-		       options: Options(headers: {
-			       'Authorization': 'Bearer ${APIS.token}',
-			       'Content-Type': 'application/json',
-			       'ngrok-skip-browser-warning': 'true',
-		       }),
-	       );
-	       print('DEBUG updatePurchaseOrder: statusCode = \\${response.statusCode}, data = \\${response.data}');
-	       if (response.statusCode != 200) {
-		       throw Exception('Failed to update purchase order: status=\\${response.statusCode}, data=\\${response.data}');
-	       }
-       }
+	Future<void> updatePurchaseOrder(Map<String, dynamic> orderJson) async {
+		print('DEBUG CALL updatePurchaseOrder: id=${orderJson['id']}, data=$orderJson');
+		final response = await dio.put(endpoint + '${orderJson['id']}/',
+			data: orderJson,
+			options: Options(headers: {
+				'Authorization': 'Bearer ${APIS.token}',
+				'Content-Type': 'application/json',
+				'ngrok-skip-browser-warning': 'true',
+			}),
+		);
+		print('DEBUG updatePurchaseOrder: statusCode = ${response.statusCode}, data = ${response.data}');
+		if (response.statusCode != 200) {
+			throw Exception('Failed to update purchase order: status=${response.statusCode}, data=${response.data}');
+		}
+	}
 
 	Future<void> deletePurchaseOrder(String id) async {
 		final response = await dio.delete(endpoint + '$id/',

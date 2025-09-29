@@ -65,23 +65,22 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
     super.initState();
     final initial = widget.initialOrder;
     if (initial.isNotEmpty) {
-  _priority = initial['priority']?.toString();
-  // _status = initial['status']?.toString(); // Removed
+      _priority = initial['priority']?.toString();
       _id = initial['id'] is int ? initial['id'] : int.tryParse(initial['id']?.toString() ?? '');
-      // Use int for user IDs, fallback to 1 if not present
       _requestedByUser = initial['requestedByUser'] is int
           ? initial['requestedByUser']
           : int.tryParse(initial['requestedByUser']?.toString() ?? '') ?? 1;
       _approvedBy = initial['approvedBy'] is int
           ? initial['approvedBy']
           : int.tryParse(initial['approvedBy']?.toString() ?? '') ?? 2;
-  _updatedAt = initial['updatedAt'] is DateTime
-      ? initial['updatedAt']
-      : (initial['updatedAt'] != null ? DateTime.tryParse(initial['updatedAt'].toString()) : null);
-  if (_updatedAt == null) {
-    _updatedAt = DateTime.now();
-  }
-      supplierName = initial['supplier'] ?? initial['supplierName'] ?? '';
+      _updatedAt = initial['updatedAt'] is DateTime
+          ? initial['updatedAt']
+          : (initial['updatedAt'] != null ? DateTime.tryParse(initial['updatedAt'].toString()) : null);
+      if (_updatedAt == null) {
+        _updatedAt = DateTime.now();
+      }
+      // Pré-remplir le champ Supplier Name si la valeur existe
+      supplierName = initial['supplierName'] ?? initial['supplier'] ?? '';
       supplierNameController.text = supplierName ?? '';
 
       if (initial['endDate'] != null) {
@@ -121,7 +120,7 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
       }
     } else {
       dueDateController.text = DateFormat('dd-MM-yyyy').format(DateTime.now());
-      supplierNameController.text = '';
+      supplierNameController.text = supplierName ?? '';
       // Find last id from provider
       final contextController = Provider.of<PurchaseOrderController>(context, listen: false);
       int maxId = 0;
@@ -174,9 +173,9 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
                       border: OutlineInputBorder(),
                     ),
                     items: const [
-                      DropdownMenuItem(value: 'High', child: Text('High')),
-                      DropdownMenuItem(value: 'Medium', child: Text('Medium')),
-                      DropdownMenuItem(value: 'Low', child: Text('Low')),
+                      DropdownMenuItem(value: 'high', child: Text('high')),
+                      DropdownMenuItem(value: 'medium', child: Text('medium')),
+                      DropdownMenuItem(value: 'low', child: Text('low')),
                     ],
                     onChanged: (val) => setState(() => _priority = val),
                   ),
@@ -357,10 +356,11 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
     try {
       // Adapter la structure des produits pour le backend
       final List<Map<String, dynamic>> productsList = productLines.map((p) => {
-        // 'product_id': p.productId, // Removed as requested
-        'name': p.brand ?? '',
+        'product': p.product ?? '',
+        'brand': p.brand ?? '',
         'quantity': p.quantity,
-        'price': p.unitPrice,
+        'unit_price': p.unitPrice,
+        'price': (p.unitPrice * p.quantity),
         'supplier': supplierName,
       }).toList();
 
@@ -374,7 +374,7 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
         'products': productsList,
         'title': 'Purchase Order',
         'description': noteController.text,
-        'status': 'Pending', // Always set to Pending
+        'status': 'pending', // Always set to pending
         'created_at': DateFormat('yyyy-MM-dd').format(DateTime.now()),
         'updated_at': DateFormat('yyyy-MM-dd').format(_updatedAt ?? DateTime.now()),
         'priority': _priority,

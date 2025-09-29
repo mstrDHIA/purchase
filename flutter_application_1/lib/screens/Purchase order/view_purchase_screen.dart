@@ -89,7 +89,11 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
               const SizedBox(width: 8),
               _buildField('Brand', prod.brand ?? '-', width: 90),
               const SizedBox(width: 8),
+              _buildField('Unit Price', (prod.unitPrice ?? 0.0).toStringAsFixed(2), width: 90, prefix: '\$'),
+              const SizedBox(width: 8),
               _buildField('Supplier', prod.supplier ?? '-', width: 100),
+              const SizedBox(width: 8),
+              // _buildField('Total Price', prod.price.toStringAsFixed(2), width: 100, prefix: '\$'),
             ],
           ),
         ),
@@ -121,8 +125,8 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                   padding: const EdgeInsets.all(18),
                   child: Row(
                     children: [
-                      _buildField('Supplier', products.isNotEmpty ? (products[0].supplier ?? '-') : '-', width: 180),
-                      const SizedBox(width: 18),
+                      // _buildField('Supplier', products.isNotEmpty ? (products[0].supplier ?? '-') : '-', width: 180),
+                      // const SizedBox(width: 18),
                       _buildField('Submitted', submittedDate, width: 120),
                       const SizedBox(width: 18),
                       _buildField('Due', dueDate, width: 120),
@@ -143,11 +147,16 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
               const SizedBox(height: 8),
               ...productRows,
               const SizedBox(height: 10),
-              Row(
-                children: [
-                  const Spacer(),
-                  _buildField('Total Price', totalOrderPrice.toStringAsFixed(2), width: 140, prefix: '\$'),
-                ],
+              Align(
+                alignment: Alignment.topRight,
+                child: _buildField(
+                  'Total Price',
+                  products.isNotEmpty
+                    ? products.where((p) => p.price != null).fold<double>(0.0, (sum, p) => sum + (p.price as double)).toStringAsFixed(2)
+                    : '0.00',
+                  width: 140,
+                  prefix: '\$',
+                ),
               ),
               const SizedBox(height: 24),
               Text('Note', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
@@ -174,31 +183,45 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                     ElevatedButton(
                       onPressed: () async {
                         try {
-                          final updatedOrder = PurchaseOrder(
-                            id: _order.id,
-                            requestedByUser: _order.requestedByUser,
-                            approvedBy: userController.currentUser.id,
-                            status: 'Approved',
-                            startDate: _order.startDate,
-                            endDate: _order.endDate,
-                            priority: _order.priority,
-                            description: _order.description,
-                            products: _order.products,
-                            title: _order.title ?? '',
-                            createdAt: _order.createdAt,
-                            updatedAt: DateTime.now(),
-                          );
-                          await purchaseOrderController.updateOrder(updatedOrder);
+                          final updatedOrderJson = {
+                            'id': _order.id,
+                            'requested_by_user': _order.requestedByUser,
+                            'approved_by': userController.currentUser.id,
+                            'status': 'Approved',
+                            'start_date': _order.startDate != null ? DateFormat('yyyy-MM-dd').format(_order.startDate!) : null,
+                            'end_date': _order.endDate != null ? DateFormat('yyyy-MM-dd').format(_order.endDate!) : null,
+                            'priority': _order.priority,
+                            'description': _order.description,
+                            'products': _order.products,
+                            'title': _order.title ?? '',
+                            'created_at': _order.createdAt != null ? DateFormat('yyyy-MM-dd').format(_order.createdAt!) : null,
+                            'updated_at': DateFormat('yyyy-MM-dd').format(DateTime.now()),
+                          };
+                          await purchaseOrderController.updateOrder(updatedOrderJson);
                           await purchaseOrderController.fetchOrders();
                           setState(() {
-                            _order = updatedOrder;
+                            // Met à jour l'objet local pour l'affichage
+                            _order = PurchaseOrder(
+                              id: _order.id,
+                              requestedByUser: _order.requestedByUser,
+                              approvedBy: userController.currentUser.id,
+                              status: 'Approved',
+                              startDate: _order.startDate,
+                              endDate: _order.endDate,
+                              priority: _order.priority,
+                              description: _order.description,
+                              products: _order.products,
+                              title: _order.title,
+                              createdAt: _order.createdAt,
+                              updatedAt: DateTime.now(),
+                            );
                           });
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Order approved!'), backgroundColor: Colors.green),
                           );
                         } catch (e) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Error: \$e'), backgroundColor: Colors.red),
+                            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
                           );
                         }
                       },
@@ -215,31 +238,44 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                     ElevatedButton(
                       onPressed: () async {
                         try {
-                          final updatedOrder = PurchaseOrder(
-                            id: _order.id,
-                            requestedByUser: _order.requestedByUser,
-                            approvedBy: userController.currentUser.id,
-                            status: 'Rejected',
-                            startDate: _order.startDate,
-                            endDate: _order.endDate,
-                            priority: _order.priority,
-                            description: _order.description,
-                            products: _order.products,
-                            title: _order.title ?? '',
-                            createdAt: _order.createdAt,
-                            updatedAt: DateTime.now(),
-                          );
-                          await purchaseOrderController.updateOrder(updatedOrder);
+                          final updatedOrderJson = {
+                            'id': _order.id,
+                            'requested_by_user': _order.requestedByUser,
+                            'approved_by': userController.currentUser.id,
+                            'status': 'Rejected',
+                            'start_date': _order.startDate != null ? DateFormat('yyyy-MM-dd').format(_order.startDate!) : null,
+                            'end_date': _order.endDate != null ? DateFormat('yyyy-MM-dd').format(_order.endDate!) : null,
+                            'priority': _order.priority,
+                            'description': _order.description,
+                            'products': _order.products,
+                            'title': _order.title ?? '',
+                            'created_at': _order.createdAt != null ? DateFormat('yyyy-MM-dd').format(_order.createdAt!) : null,
+                            'updated_at': DateFormat('yyyy-MM-dd').format(DateTime.now()),
+                          };
+                          await purchaseOrderController.updateOrder(updatedOrderJson);
                           await purchaseOrderController.fetchOrders();
                           setState(() {
-                            _order = updatedOrder;
+                            _order = PurchaseOrder(
+                              id: _order.id,
+                              requestedByUser: _order.requestedByUser,
+                              approvedBy: userController.currentUser.id,
+                              status: 'Rejected',
+                              startDate: _order.startDate,
+                              endDate: _order.endDate,
+                              priority: _order.priority,
+                              description: _order.description,
+                              products: _order.products,
+                              title: _order.title,
+                              createdAt: _order.createdAt,
+                              updatedAt: DateTime.now(),
+                            );
                           });
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Order rejected!'), backgroundColor: Colors.red),
                           );
                         } catch (e) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Error: \$e'), backgroundColor: Colors.red),
+                            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
                           );
                         }
                       },
