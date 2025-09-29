@@ -16,7 +16,9 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from purchase_orders_api.views import debug_purchase_order
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('debug-purchase-order/', debug_purchase_order, name='debug_purchase_order'),
 ]

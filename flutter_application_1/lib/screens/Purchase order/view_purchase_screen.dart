@@ -1,491 +1,385 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/models/purchase_order.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter_application_1/controllers/user_controller.dart';
+import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
 
+
+/// Helper to wrap PurchaseOrderView with required providers if not already provided higher up.
+/// Use this in your navigation or parent widget if you get ProviderNotFoundException.
+/// Example usage:
+/// Navigator.push(context, MaterialPageRoute(builder: (context) => PurchaseOrderView.withProviders(order: order)));
 class PurchaseOrderView extends StatefulWidget {
-  const PurchaseOrderView({super.key});
+  final PurchaseOrder order;
+  const PurchaseOrderView({super.key, required this.order});
+
+  static Widget withProviders({Key? key, required PurchaseOrder order, UserController? userController}) {
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => PurchaseOrderController()),
+        if (userController != null)
+          ChangeNotifierProvider.value(value: userController)
+        else
+          ChangeNotifierProvider(create: (_) => UserController()),
+      ],
+      child: PurchaseOrderView(key: key, order: order),
+    );
+  }
 
   @override
   State<PurchaseOrderView> createState() => _PurchaseOrderViewState();
 }
 
 class _PurchaseOrderViewState extends State<PurchaseOrderView> {
-  late TextEditingController supplierNameController;
-  late TextEditingController productController;
-  late TextEditingController quantityController;
-  late TextEditingController brandController;
-  late TextEditingController unitPriceController;
-  late TextEditingController totalPriceController;
-  late TextEditingController totalOrderPriceController;
-  late TextEditingController dueDateController;
-  late TextEditingController noteController;
-  late TextEditingController statusController;
-  late TextEditingController priorityController;
-  late TextEditingController requestorNoteController; // Added
-  late TextEditingController submittedDateController; // Ajouté
-
-  List<Map<String, TextEditingController>> products = [];
-
-  bool isApproved = false; // Add this field to your _PurchaseOrderViewState class
+  late PurchaseOrder _order;
 
   @override
   void initState() {
     super.initState();
-    supplierNameController = TextEditingController(text: 'ABC Supplier');
-    productController = TextEditingController(text: 'Mouse');
-    quantityController = TextEditingController(text: '7000');
-    brandController = TextEditingController(text: 'Dell');
-    unitPriceController = TextEditingController(text: '\$12.33');
-    totalPriceController = TextEditingController(text: '\$124.33');
-    totalOrderPriceController = TextEditingController(text: '\$1245.33');
-    dueDateController = TextEditingController(text: '15-05-2025');
-    submittedDateController = TextEditingController(text: '19-06-2025'); // Ajouté
-    noteController = TextEditingController();
-    statusController = TextEditingController(text: 'Pending');
-    priorityController = TextEditingController(text: 'High');
-    requestorNoteController = TextEditingController();
-
-    // Add the first product by default
-    products.add({
-      'product': productController,
-      'quantity': quantityController,
-      'brand': brandController,
-      'unitPrice': unitPriceController,
-      'remise': TextEditingController(text: '0'), // <-- Remise ajoutée
-      'totalPrice': totalPriceController,
-    });
-
-    // Ajout d'un deuxième produit par défaut (exemple)
-    products.add({
-      'product': TextEditingController(text: 'Keyboard'),
-      'quantity': TextEditingController(text: '1500'),
-      'brand': TextEditingController(text: 'Logitech'),
-      'unitPrice': TextEditingController(text: '\$25.00'),
-      'remise': TextEditingController(text: '0'), // <-- Remise ajoutée
-      'totalPrice': TextEditingController(text: '\$37500.00'),
-    });
+    _order = widget.order;
   }
 
-  @override
-  void dispose() {
-    supplierNameController.dispose();
-    for (var map in products) {
-      for (var c in map.values) {
-        c.dispose();
-      }
-    }
-    totalOrderPriceController.dispose();
-    dueDateController.dispose();
-    submittedDateController.dispose(); // Ajouté
-    noteController.dispose();
-    statusController.dispose();
-    priorityController.dispose();
-    requestorNoteController.dispose();
-    super.dispose();
-  }
-
-  // void _editRequest() {
-  //   showDialog(
-  //     context: context,
-  //     builder: (context) {
-  //       final TextEditingController productCtrl = TextEditingController(text: productController.text);
-  //       final TextEditingController quantityCtrl = TextEditingController(text: quantityController.text);
-  //       return AlertDialog(
-  //         title: const Text('Edit Request'),
-  //         content: Column(
-  //           mainAxisSize: MainAxisSize.min,
-  //           children: [
-  //             TextField(controller: productCtrl, decoration: const InputDecoration(labelText: 'Product')),
-  //             TextField(controller: quantityCtrl, decoration: const InputDecoration(labelText: 'Quantity'), keyboardType: TextInputType.number),
-  //           ],
-  //         ),
-  //         actions: [
-  //           TextButton(
-  //             onPressed: () {
-  //               setState(() {
-  //                 productController.text = productCtrl.text;
-  //                 quantityController.text = quantityCtrl.text;
-  //               });
-  //               Navigator.pop(context);
-  //               ScaffoldMessenger.of(context).showSnackBar(
-  //                 const SnackBar(content: Text("Request updated")),
-  //               );
-  //             },
-  //             child: const Text('Save'),
-  //           ),
-  //           TextButton(
-  //             onPressed: () => Navigator.pop(context),
-  //             child: const Text('Cancel'),
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }
-
-  // void _deleteRequest() {
-  //   showDialog(
-  //     context: context,
-  //     builder: (context) => AlertDialog(
-  //       title: const Text("Delete Request"),
-  //       content: const Text("Are you sure you want to delete this request?"),
-  //       actions: [
-  //         TextButton(
-  //           onPressed: () {
-  //             Navigator.pop(context);
-  //             ScaffoldMessenger.of(context).showSnackBar(
-  //               const SnackBar(content: Text("Request deleted")),
-  //             );
-  //             setState(() {
-  //               supplierNameController.text = '';
-  //               productController.text = '';
-  //               quantityController.text = '';
-  //               dueDateController.text = '';
-  //               noteController.text = '';
-  //             });
-  //           },
-  //           child: const Text('Delete', style: TextStyle(color: Colors.red)),
-  //         ),
-  //         TextButton(
-  //           onPressed: () => Navigator.pop(context),
-  //           child: const Text('Cancel'),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
-
-  // void _addProduct() {
-  //   setState(() {
-  //     final productCtrl = TextEditingController();
-  //     final quantityCtrl = TextEditingController();
-  //     final brandCtrl = TextEditingController();
-  //     final unitPriceCtrl = TextEditingController();
-  //     final remiseCtrl = TextEditingController(text: '0'); // <-- Remise ajoutée
-  //     final totalPriceCtrl = TextEditingController();
-  //     // Automatically calculate total price when quantity, price or remise changes
-  //     void update() => _updateProductTotal(productCtrl, quantityCtrl, unitPriceCtrl, remiseCtrl, totalPriceCtrl);
-  //     quantityCtrl.addListener(update);
-  //     unitPriceCtrl.addListener(update);
-  //     remiseCtrl.addListener(update);
-  //     products.add({
-  //       'product': productCtrl,
-  //       'quantity': quantityCtrl,
-  //       'brand': brandCtrl,
-  //       'unitPrice': unitPriceCtrl,
-  //       'remise': remiseCtrl,
-  //       'totalPrice': totalPriceCtrl,
-  //     });
-  //   });
-  // }
-
-  void _updateProductTotal(
-    TextEditingController productCtrl,
-    TextEditingController quantityCtrl,
-    TextEditingController unitPriceCtrl,
-    TextEditingController remiseCtrl,
-    TextEditingController totalPriceCtrl,
-  ) {
-    final q = int.tryParse(quantityCtrl.text) ?? 0;
-    final up = double.tryParse(unitPriceCtrl.text.replaceAll('\$', '').replaceAll(',', '.')) ?? 0.0;
-    final remise = double.tryParse(remiseCtrl.text.replaceAll('%', '').replaceAll(',', '.')) ?? 0.0;
-    final total = q * up * (1 - remise / 100);
-    totalPriceCtrl.text = total == 0 ? '' : '\$${total.toStringAsFixed(2)}';
-    _updateOrderTotal();
-  }
-
-  void _updateOrderTotal() {
-    double sum = 0;
-    for (var map in products) {
-      final t = double.tryParse(map['totalPrice']!.text.replaceAll('\$', '').replaceAll(',', '.')) ?? 0.0;
-      sum += t;
-    }
-    totalOrderPriceController.text = '\$${sum.toStringAsFixed(2)}';
+  /// Utilisez ce helper pour injecter le UserController global si besoin.
+  static Widget withProviders({Key? key, required PurchaseOrder order, UserController? userController}) {
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => PurchaseOrderController()),
+        if (userController != null)
+          ChangeNotifierProvider.value(value: userController)
+        else
+          ChangeNotifierProvider(create: (_) => UserController()),
+      ],
+      child: PurchaseOrderView(key: key, order: order),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final dateFormat = DateFormat('dd-MM-yyyy');
+    final submittedDate = _order.startDate != null ? dateFormat.format(_order.startDate!) : '-';
+    final dueDate = _order.endDate != null ? dateFormat.format(_order.endDate!) : '-';
+    final status = _order.status ?? '-';
+    final priority = _order.priority ?? '-';
+    final note = _order.description ?? '';
+    final products = _order.products ?? [];
+    double totalOrderPrice = 0;
+
+    final userController = Provider.of<UserController>(context, listen: false);
+    final purchaseOrderController = Provider.of<PurchaseOrderController>(context, listen: false);
+    final isApproved = status.toLowerCase() == 'approved';
+    final isRejected = status.toLowerCase() == 'rejected';
+
+    List<Widget> productRows = products.map((prod) {
+      final quantity = prod.quantity ?? 0;
+      final unitPrice = 0.0; // If you have unit price, add it to Products model and parse here
+      final totalPrice = unitPrice * quantity;
+      totalOrderPrice += totalPrice;
+      return Card(
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        elevation: 1,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+          child: Row(
+            children: [
+              _buildField('Product', prod.product ?? '-', width: 120),
+              const SizedBox(width: 8),
+              _buildField('Quantity', quantity.toString(), width: 70),
+              const SizedBox(width: 8),
+              _buildField('Brand', prod.brand ?? '-', width: 90),
+              const SizedBox(width: 8),
+              _buildField('Supplier', prod.supplier ?? '-', width: 100),
+            ],
+          ),
+        ),
+      );
+    }).toList();
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('View Purchase'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
+        title: const Text('Purchase Order Details'),
+        backgroundColor: Colors.deepPurple,
+        foregroundColor: Colors.white,
+        elevation: 1,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Supplier name, Submitted Date, Due date, Priority on the same row
-            Row(
-              children: [
-                _buildField('Supplier name', supplierNameController, width: 220, readOnly: false),
-                const SizedBox(width: 20),
-                _buildFieldWithIcon('Submitted Date', submittedDateController, Icons.calendar_today, width: 180),
-                const SizedBox(width: 20),
-                _buildFieldWithIcon('Due date', dueDateController, Icons.calendar_today_outlined, width: 180),
-                const SizedBox(width: 20),
-                _buildField('Priority', priorityController, width: 120, readOnly: true),
-              ],
-            ),
-            const SizedBox(height: 20),
-            // Show all product lines (including the first)
-            ...products.asMap().entries.map((entry) {
-              final i = entry.key;
-              final map = entry.value;
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Row(
-                  children: [
-                    _buildField('Product', map['product']!, width: 140),
-                    const SizedBox(width: 8),
-                    _buildField('Quantity', map['quantity']!, width: 90, keyboardType: TextInputType.number, onChanged: (_) {
-                      _updateProductTotal(map['product']!, map['quantity']!, map['unitPrice']!, map['remise']!, map['totalPrice']!);
-                    }),
-                    const SizedBox(width: 8),
-                    _buildField('Brand', map['brand']!, width: 110, readOnly: false),
-                    const SizedBox(width: 8),
-                    _buildField(
-                      'Unit Price',
-                      map['unitPrice']!,
-                      width: 100,
-                      prefixText: '\$',
-                      keyboardType: TextInputType.numberWithOptions(decimal: true),
-                      readOnly: false,
-                      onChanged: (_) {
-                        _updateProductTotal(map['product']!, map['quantity']!, map['unitPrice']!, map['remise']!, map['totalPrice']!);
-                      },
-                    ),
-                    const SizedBox(width: 8),
-                    _buildField(
-                      'Discount (%)', // <-- Translated
-                      map['remise']!,
-                      width: 90,
-                      keyboardType: TextInputType.numberWithOptions(decimal: true),
-                      readOnly: false,
-                      onChanged: (_) {
-                        _updateProductTotal(map['product']!, map['quantity']!, map['unitPrice']!, map['remise']!, map['totalPrice']!);
-                      },
-                    ),
-                    const SizedBox(width: 8),
-                    _buildField('Total Price', map['totalPrice']!, width: 110, readOnly: true),
-                    if (products.length > 1)
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () {
-                          setState(() {
-                            products.removeAt(i);
-                            _updateOrderTotal();
-                          });
-                        },
-                      ),
-                  ],
-                ),
-              );
-            }),
-            Row(
-              children: [
-                const Spacer(),
-                _buildField('Total Price', totalOrderPriceController, width: 140, readOnly: true),
-              ],
-            ),
-            const SizedBox(height: 24),
-            // Note field (full width)
-            const Text('Note', style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            TextField(
-              enabled: true,
-              controller: noteController,
-              maxLines: 5,
-              decoration: InputDecoration(
-                hintText: 'Enter note',
-                filled: true,
-                fillColor: const Color(0xFFF1F1F1),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            // Requestor Note field
-            const Text('Requestor Note', style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            TextField(
-              enabled: false,
-              controller: requestorNoteController,
-              maxLines: 5,
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: const Color(0xFFF1F1F1),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-            const SizedBox(height: 32),
-            // Status below the note, to the left of the buttons row
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Status on the left
-                _buildField('Status', statusController, width: 160, readOnly: true),
-                const Spacer(),
-                if (!isApproved) // Show button only if not approved
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        statusController.text = "Approved";
-                        isApproved = true;
-                      });
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Row(
-                            children: const [
-                              Icon(Icons.check_circle, color: Colors.green, size: 28),
-                              SizedBox(width: 16),
-                              Expanded(
-                                child: Text(
-                                  "Request accepted", // <-- Translated
-                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                                ),
-                              ),
-                            ],
-                          ),
-                          backgroundColor: const Color(0xFF3B3BFF),
-                          behavior: SnackBarBehavior.floating,
-                          elevation: 8,
-                          margin: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          duration: const Duration(seconds: 2),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF3B3BFF),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                    child: const Text('Accept'),
+      body: Container(
+        color: const Color(0xFFF8F8FC),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(28),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Card(
+                elevation: 2,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                child: Padding(
+                  padding: const EdgeInsets.all(18),
+                  child: Row(
+                    children: [
+                      _buildField('Supplier', products.isNotEmpty ? (products[0].supplier ?? '-') : '-', width: 180),
+                      const SizedBox(width: 18),
+                      _buildField('Submitted', submittedDate, width: 120),
+                      const SizedBox(width: 18),
+                      _buildField('Due', dueDate, width: 120),
+                      const SizedBox(width: 18),
+                      _buildChipField('Priority', priority, width: 100, color: _priorityColor(priority)),
+                    ],
                   ),
-              ],
-            ),
-            const SizedBox(height: 32),
-          ],
+                ),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                'Products',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.deepPurple[700],
+                ),
+              ),
+              const SizedBox(height: 8),
+              ...productRows,
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  const Spacer(),
+                  _buildField('Total Price', totalOrderPrice.toStringAsFixed(2), width: 140, prefix: '\$'),
+                ],
+              ),
+              const SizedBox(height: 24),
+              Text('Note', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.deepPurple[50],
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  note.isNotEmpty ? note : 'No notes for this order.',
+                  style: const TextStyle(fontSize: 16, color: Colors.black87),
+                ),
+              ),
+              const SizedBox(height: 32),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  _buildChipField('Status', status, width: 140, color: _statusColor(status)),
+                  const Spacer(),
+                  if (!isApproved && !isRejected && (userController.currentUser.role?.id == 1 || userController.currentUser.role?.id == 3)) ...[
+                    ElevatedButton(
+                      onPressed: () async {
+                        try {
+                          final updatedOrder = PurchaseOrder(
+                            id: _order.id,
+                            requestedByUser: _order.requestedByUser,
+                            approvedBy: userController.currentUser.id,
+                            status: 'Approved',
+                            startDate: _order.startDate,
+                            endDate: _order.endDate,
+                            priority: _order.priority,
+                            description: _order.description,
+                            products: _order.products,
+                            title: _order.title ?? '',
+                            createdAt: _order.createdAt,
+                            updatedAt: DateTime.now(),
+                          );
+                          await purchaseOrderController.updateOrder(updatedOrder);
+                          await purchaseOrderController.fetchOrders();
+                          setState(() {
+                            _order = updatedOrder;
+                          });
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Order approved!'), backgroundColor: Colors.green),
+                          );
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Error: \$e'), backgroundColor: Colors.red),
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF635BFF),
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(120, 44),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        elevation: 0,
+                      ),
+                      child: const Text('Accept'),
+                    ),
+                    const SizedBox(width: 24),
+                    ElevatedButton(
+                      onPressed: () async {
+                        try {
+                          final updatedOrder = PurchaseOrder(
+                            id: _order.id,
+                            requestedByUser: _order.requestedByUser,
+                            approvedBy: userController.currentUser.id,
+                            status: 'Rejected',
+                            startDate: _order.startDate,
+                            endDate: _order.endDate,
+                            priority: _order.priority,
+                            description: _order.description,
+                            products: _order.products,
+                            title: _order.title ?? '',
+                            createdAt: _order.createdAt,
+                            updatedAt: DateTime.now(),
+                          );
+                          await purchaseOrderController.updateOrder(updatedOrder);
+                          await purchaseOrderController.fetchOrders();
+                          setState(() {
+                            _order = updatedOrder;
+                          });
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Order rejected!'), backgroundColor: Colors.red),
+                          );
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Error: \$e'), backgroundColor: Colors.red),
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFF5F5F5),
+                        foregroundColor: Colors.black87,
+                        minimumSize: const Size(120, 44),
+                        side: const BorderSide(color: Color(0xFFE0E0E0)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      child: const Text('Refuse'),
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildField(
-    String label,
-    TextEditingController controller, {
-    double width = 180,
-    bool readOnly = true, // Default not editable
-    TextInputType keyboardType = TextInputType.text,
-    String? prefixText,
-    void Function(String)? onChanged,
-  }) {
-    // Ajout du badge coloré pour Status et Priority
-    Color? badgeColor;
-    Color? textColor = Colors.black;
-    if (label == 'Status') {
-      if (controller.text.toLowerCase() == 'pending') {
-        badgeColor = Colors.orange.shade100;
-        textColor = Colors.orange.shade800;
-      } else if (controller.text.toLowerCase() == 'approved') {
-        badgeColor = Colors.green.shade100;
-        textColor = Colors.green.shade800;
-      }
-    }
-    if (label == 'Priority') {
-      if (controller.text.toLowerCase() == 'high') {
-        badgeColor = Colors.red.shade100;
-        textColor = Colors.red.shade800;
-      }
-    }
-
+  Widget _buildField(String label, String value, {double width = 180, String prefix = ''}) {
     return SizedBox(
       width: width,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-          const SizedBox(height: 6),
-          if (label == 'Status' || label == 'Priority')
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: badgeColor ?? const Color(0xFFF1F1F1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                controller.text,
-                style: TextStyle(
-                  color: textColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-            )
-          else
-            TextField(
-              controller: controller,
-              readOnly: readOnly,
-              keyboardType: keyboardType,
-              onChanged: onChanged,
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: const Color(0xFFF1F1F1),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                prefixText: prefixText,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              ),
+          Text(label, style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.grey)),
+          const SizedBox(height: 4),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.deepPurple.shade50),
             ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFieldWithIcon(
-    String label,
-    TextEditingController controller,
-    IconData icon, {
-    double width = 180,
-  }) {
-    return SizedBox(
-      width: width,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-          const SizedBox(height: 6),
-          TextField(
-            controller: controller,
-            readOnly: true, // Always not editable
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: const Color(0xFFF1F1F1),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
-              ),
-              suffixIcon: Icon(icon, color: Colors.black54),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            child: Text(
+              '$prefix$value',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87),
             ),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildChipField(String label, String value, {double width = 120, required Color color}) {
+    // Custom design for "priority" and "status" chips to match your screenshot
+    final v = value.toLowerCase();
+    Color bg;
+    Color fg;
+
+    if (label.toLowerCase() == 'priority') {
+      if (v == 'low') {
+        bg = const Color(0xFF64B5F6); // blue
+        fg = Colors.white;
+      } else if (v == 'medium') {
+        bg = const Color(0xFFFFB74D); // orange
+        fg = Colors.white;
+      } else if (v == 'high') {
+        bg = const Color(0xFFE57373); // red
+        fg = Colors.white;
+      } else {
+        bg = Colors.grey[300]!;
+        fg = Colors.black;
+      }
+    } else if (label.toLowerCase() == 'status') {
+      if (v == 'approved') {
+        bg = const Color(0xFF4CAF50); // green
+        fg = Colors.white;
+      } else if (v == 'pending') {
+        bg = const Color(0xFFFFB74D); // orange
+        fg = Colors.white;
+      } else if (v == 'rejected') {
+        bg = const Color(0xFFEF5350); // red
+        fg = Colors.white;
+      } else {
+        bg = Colors.grey[300]!;
+        fg = Colors.black;
+      }
+    } else {
+      bg = color;
+      fg = color.computeLuminance() > 0.5 ? Colors.black : Colors.white;
+    }
+
+    return SizedBox(
+      width: width,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.grey)),
+          const SizedBox(height: 4),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: bg,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              v,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+                color: fg,
+                letterSpacing: 0.5,
+                fontFamily: 'Roboto',
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _priorityColor(String priority) {
+    switch (priority) {
+      case 'High':
+        return Colors.red[300]!;
+      case 'Medium':
+        return Colors.orange[300]!;
+      case 'Low':
+        return Colors.green[300]!;
+      default:
+        return Colors.grey[400]!;
+    }
+  }
+
+  Color _statusColor(String status) {
+    switch (status) {
+      case 'Pending':
+        return Colors.orange[200]!;
+      case 'Approved':
+        return Colors.green[200]!;
+      case 'Rejected':
+        return Colors.red[200]!;
+      default:
+        return Colors.grey[300]!;
+    }
   }
 }

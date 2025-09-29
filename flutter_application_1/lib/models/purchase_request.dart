@@ -31,25 +31,34 @@ class PurchaseRequest {
 
   PurchaseRequest.fromJson(Map<String, dynamic> json) {
     id = json['id'];
-    startDate = DateTime.parse(json['start_date']);
-    endDate = DateTime.parse(json['end_date']);
-    products = (json['products'] as List<dynamic>?)
-        ?.map((item) {
-          return ProductLine(
-            product: item['product'],
-            brand: item['brand'],
-            quantity: item['quantity'] ?? 1,
-            unitPrice: (item['unit_price'] ?? 0).toDouble(),
-          );
-        })
-        .toList();
+    // Dates: check for null and parse
+    startDate = json['start_date'] != null ? DateTime.tryParse(json['start_date'].toString()) : null;
+    endDate = json['end_date'] != null ? DateTime.tryParse(json['end_date'].toString()) : null;
+    createdAt = json['created_at'] != null ? DateTime.tryParse(json['created_at'].toString()) : null;
+    updatedAt = json['updated_at'] != null ? DateTime.tryParse(json['updated_at'].toString()) : null;
+    // Products
+    products = (json['products'] as List<dynamic>?)?.map((item) {
+      return ProductLine(
+        product: item['product'],
+        brand: item['brand'],
+        quantity: item['quantity'] ?? 1,
+        unitPrice: (item['unit_price'] ?? 0).toDouble(),
+      );
+    }).toList();
     title = json['title'];
     description = json['description'];
     status = json['status'];
-    createdAt = DateTime.parse(json['created_at']);
-    updatedAt = DateTime.parse(json['updated_at']);
-    approvedBy = json['approved_by'];
-    requestedBy = json['requested_by'];
+    // Handle nested user objects for requested_by and approved_by
+    if (json['requested_by'] is Map) {
+      requestedBy = json['requested_by']['id'];
+    } else {
+      requestedBy = json['requested_by'];
+    }
+    if (json['approved_by'] is Map) {
+      approvedBy = json['approved_by']['id'];
+    } else {
+      approvedBy = json['approved_by'];
+    }
     priority = json['priority'];
   }
 

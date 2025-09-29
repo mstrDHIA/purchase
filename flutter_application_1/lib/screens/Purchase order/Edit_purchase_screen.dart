@@ -31,21 +31,21 @@ class ProductLine {
   }
 }
 
-class PurchaseOrderForm extends StatefulWidget {
+class EditPurchaseOrder extends StatefulWidget {
   final Map<String, dynamic> initialOrder;
   final void Function(dynamic newOrder) onSave;
 
-  const PurchaseOrderForm({
+  const EditPurchaseOrder({
     super.key,
     required this.onSave,
     required this.initialOrder,
   });
 
   @override
-  State<PurchaseOrderForm> createState() => _PurchaseOrderFormState();
+  State<EditPurchaseOrder> createState() => _EditPurchaseOrderState();
 }
 
-class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
+class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
   String? _priority;
   // String? _status; // Removed
   int? _id;
@@ -65,7 +65,21 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
     super.initState();
     final initial = widget.initialOrder;
     if (initial.isNotEmpty) {
-  _priority = initial['priority']?.toString();
+      // Correction : forcer la casse pour correspondre aux DropdownMenuItem
+      final priorityRaw = initial['priority']?.toString();
+      if (priorityRaw != null) {
+        if (priorityRaw.toLowerCase() == 'high') {
+          _priority = 'High';
+        } else if (priorityRaw.toLowerCase() == 'medium') {
+          _priority = 'Medium';
+        } else if (priorityRaw.toLowerCase() == 'low') {
+          _priority = 'Low';
+        } else {
+          _priority = null;
+        }
+      } else {
+        _priority = null;
+      }
   // _status = initial['status']?.toString(); // Removed
       _id = initial['id'] is int ? initial['id'] : int.tryParse(initial['id']?.toString() ?? '');
       // Use int for user IDs, fallback to 1 if not present
@@ -158,7 +172,14 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
     return Scaffold(
       backgroundColor: Colors.white,
       drawer: _buildDrawer(context),
-      appBar: _buildAppBar(context),
+      appBar: AppBar(
+        title: const Text('Edit Purchase Order'),
+        backgroundColor: const Color(0xFF8C7AE6),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -357,10 +378,10 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
     try {
       // Adapter la structure des produits pour le backend
       final List<Map<String, dynamic>> productsList = productLines.map((p) => {
-        // 'product_id': p.productId, // Removed as requested
-        'name': p.brand ?? '',
+        'product': p.product ?? '',
+        'brand': p.brand ?? '',
         'quantity': p.quantity,
-        'price': p.unitPrice,
+        'unit_price': p.unitPrice,
         'supplier': supplierName,
       }).toList();
 
@@ -374,22 +395,30 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
         'products': productsList,
         'title': 'Purchase Order',
         'description': noteController.text,
-        'status': 'Pending', // Always set to Pending
+        'status': 'Pending',
         'created_at': DateFormat('yyyy-MM-dd').format(DateTime.now()),
         'updated_at': DateFormat('yyyy-MM-dd').format(_updatedAt ?? DateTime.now()),
         'priority': _priority,
       };
 
       print('PurchaseOrder JSON body sent to backend:');
-      print(jsonEncode(jsonBody)); // <-- Use jsonEncode here
+      print(jsonEncode(jsonBody));
 
-      if (widget.initialOrder.isNotEmpty) {
-        widget.onSave(jsonBody);
-        if (mounted) Navigator.of(context).pop(jsonBody);
-      } else {
-        // Ici il faudrait adapter addOrder pour accepter le jsonBody si besoin
+      if (widget.initialOrder.isNotEmpty && widget.initialOrder['id'] != null) {
+        // Mode édition : appel update
+        final purchaseOrder = PurchaseOrder.fromJson(jsonBody);
         await Provider.of<PurchaseOrderController>(context, listen: false)
-            .addOrder(jsonBody); // <-- à adapter côté controller si besoin
+            .updateOrder(purchaseOrder);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Purchase order updated!')),
+          );
+          Navigator.of(context).pop(jsonBody);
+        }
+      } else {
+        // Mode création
+        await Provider.of<PurchaseOrderController>(context, listen: false)
+            .addOrder(jsonBody);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Purchase order saved!')),

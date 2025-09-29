@@ -1,0 +1,71 @@
+
+import 'dart:convert';
+import 'package:dio/dio.dart';
+import '../models/purchase_order.dart';
+import 'api.dart';
+
+class PurchaseOrderNetwork {
+	final Dio dio = APIS().dio;
+	static String get endpoint => APIS.baseUrl + APIS.purchaseOrderList;
+
+		Future<List<PurchaseOrder>> fetchPurchaseOrders() async {
+			final response = await dio.get(endpoint,
+				options: Options(headers: {
+					'Authorization': 'Bearer ${APIS.token}',
+					'ngrok-skip-browser-warning': 'true',
+				}),
+			);
+			if (response.statusCode == 200) {
+				print('PurchaseOrderNetwork.fetchPurchaseOrders: response.data = \\n${response.data}');
+				final List<dynamic> data = response.data;
+				return data.map((json) => PurchaseOrder.fromJson(json)).toList();
+			} else {
+				throw Exception('Failed to load purchase orders');
+			}
+		}
+
+	Future<void> createPurchaseOrder(dynamic orderOrJson) async {
+		final dynamic dataToSend = orderOrJson is Map<String, dynamic>
+			? orderOrJson
+			: (orderOrJson.toJson != null ? orderOrJson.toJson() : orderOrJson);
+		final response = await dio.post(endpoint,
+			data: dataToSend,
+			options: Options(headers: {
+				'Authorization': 'Bearer ${APIS.token}',
+				'Content-Type': 'application/json',
+				'ngrok-skip-browser-warning': 'true',
+			}),
+		);
+		if (response.statusCode != 201) {
+			throw Exception('Failed to create purchase order');
+		}
+	}
+
+       Future<void> updatePurchaseOrder(PurchaseOrder order) async {
+			   print('DEBUG CALL updatePurchaseOrder: id=${order.id}, data=${order.toJson()}');
+	       final response = await dio.put(endpoint + '${order.id}/',
+		       data: order.toJson(),
+		       options: Options(headers: {
+			       'Authorization': 'Bearer ${APIS.token}',
+			       'Content-Type': 'application/json',
+			       'ngrok-skip-browser-warning': 'true',
+		       }),
+	       );
+	       print('DEBUG updatePurchaseOrder: statusCode = \\${response.statusCode}, data = \\${response.data}');
+	       if (response.statusCode != 200) {
+		       throw Exception('Failed to update purchase order: status=\\${response.statusCode}, data=\\${response.data}');
+	       }
+       }
+
+	Future<void> deletePurchaseOrder(String id) async {
+		final response = await dio.delete(endpoint + '$id/',
+			options: Options(headers: {
+				'Authorization': 'Bearer ${APIS.token}',
+				'ngrok-skip-browser-warning': 'true',
+			}),
+		);
+		if (response.statusCode != 204) {
+			throw Exception('Failed to delete purchase order');
+		}
+	}
+}
