@@ -1,8 +1,13 @@
 import 'package:dio/dio.dart';
 
 class APIS {
+
+ 
+  static const String purchaseOrderList = "purchase_order/purchaseOrders/";
+  
+  
   final dio = Dio();
-  static String token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU3OTQ5NTU2LCJpYXQiOjE3NTczNDQ3NTYsImp0aSI6ImVlN2YwZTdmMmFmMTRmYTdiZjkzNzdiY2VkN2VlMjJmIiwidXNlcl9pZCI6MX0.YawSov6e2Hc-9R9s_2wBZPairbC5CLRSsA1Q_9wh5Mc';
+  static String token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU5MjM2NzM5LCJpYXQiOjE3NTg2MzE5MzksImp0aSI6IjZkYmUwNDE0NDI1MDRkZGRhZDkxMTY5MWRjMGEwZDk4IiwidXNlcl9pZCI6MX0.noyiJrGuh7ifxYD0xPpeMsTXk-CUPrEAcAddN9jB8To';
 
   // APIS() {
   //   dio.interceptors.add(LogInterceptor(
@@ -36,10 +41,16 @@ class APIS {
   static const String deletePurchaseRequest = "purchase_request/purchaseRequests/";
   static const String updatePurchaseRequest = "purchase_request/purchaseRequests/";
 
+  static const String viewPurchaseOrder = "purchase_order/purchaseOrders/";
+  static const String createPurchaseOrder = "purchase_order/purchaseOrders/";
+  static const String updatePurchaseOrder = "purchase_order/purchaseOrders/";
+  static const String deletePurchaseOrder = "purchase_order/purchaseOrders/";
 
    // adapte selon ton endpoint réel
 
-  
+  static const String viewPurchaseOrderById = "purchase_order/purchaseOrders/";
+  static const String updatePurchaseOrderById = "purchase_order/purchaseOrders/";
+  static const String deletePurchaseOrderById = "purchase_order/purchaseOrders/";
 
   // Add more API endpoints as needed
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter_application_1/models/user_model.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_application_1/l10n/app_localizations.dart';
 import 'package:flutter_application_1/controllers/purchase_request_controller.dart';
 import 'package:flutter_application_1/screens/Purchase%20Request/requestor_form_screen.dart';
 import 'package:flutter_application_1/screens/Purchase%20order/pushase_order_screen.dart' as purchase_order;
@@ -125,13 +126,13 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
     
   return Scaffold(
       appBar: AppBar(
-        title: const Text('Purchase Requests'),
+        title: Text(AppLocalizations.of(context)!.purchaseRequests),
         actions: [
           if(userController.currentUser.role!.id==2||userController.currentUser.role!.id==1)
           ElevatedButton.icon(
             onPressed: _openAddRequestForm,
             icon: const Icon(Icons.add, color: Colors.white),
-            label: const Text('Add PR'),
+            label: Text(AppLocalizations.of(context)!.addPR),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.deepPurple,
               foregroundColor: Colors.white,
@@ -166,7 +167,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                             });
                           },
                           decoration: InputDecoration(
-                            hintText: 'Search...',
+                            hintText: AppLocalizations.of(context)!.search,
                             prefixIcon: const Icon(Icons.search),
                             filled: true,
                             fillColor: Color(0xFFF7F3FF),
@@ -410,7 +411,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                                 data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
                                 child: Container(
                                   child: PaginatedDataTable(
-                                    header: const Text('Purchase Requests Table'),
+                                    header: Text(AppLocalizations.of(context)!.purchaseRequestsTable),
                                     rowsPerPage: _rowsPerPageLocal,
                                     availableRowsPerPage: const [5, 10, 20, 50, 100],
                                     onRowsPerPageChanged: (r) {

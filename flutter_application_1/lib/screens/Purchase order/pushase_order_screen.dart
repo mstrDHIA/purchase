@@ -1,184 +1,102 @@
+import 'package:flutter_application_1/screens/Purchase%20order/Edit_purchase_screen.dart';
+import 'package:flutter_application_1/screens/Purchase%20order/view_purchase_screen.dart';
+import 'package:flutter_application_1/models/purchase_order.dart';
+import 'package:provider/provider.dart';
+// import 'package:flutter_application_1/controllers/user_controller.dart';
+import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
+import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/screens/Purchase%20order/purchase_form_screen.dart';
-import 'package:flutter_application_1/screens/Purchase%20order/view_purchase_screen.dart';
+// import 'package:flutter_application_1/screens/Purchase%20order/view_purchase_screen.dart';
 import 'package:intl/intl.dart';
 
-class PurchaseOrderPage extends StatefulWidget {
+class PurchaseOrderPage extends StatelessWidget {
   const PurchaseOrderPage({super.key});
 
-  static final List<Map<String, dynamic>> purchaseOrders = [];
-
-  static void addPurchaseOrder(Map<String, dynamic> order) {
-    purchaseOrders.add(order);
-  }
-
   @override
-  State<PurchaseOrderPage> createState() => PurchaseOrderPageState();
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) => PurchaseOrderController(),
+      child: const _PurchaseOrderPageBody(),
+    );
+  }
 }
 
-class _PurchaseOrderDataSource extends DataTableSource {
-  final List<Map<String, dynamic>> _data;
-  final DateFormat _dateFormat;
-  final Function(Map<String, dynamic>) onView;
-  final Function(Map<String, dynamic>) onEdit;
-  final Function(Map<String, dynamic>) onDelete;
-
-  _PurchaseOrderDataSource(
-    this._data,
-    this._dateFormat, {
-    required this.onView,
-    required this.onEdit,
-    required this.onDelete,
-  });
+class _PurchaseOrderPageBody extends StatefulWidget {
+  const _PurchaseOrderPageBody();
 
   @override
-  DataRow? getRow(int index) {
-    if (index >= _data.length) return null;
-    final item = _data[index];
-    return DataRow(
-      cells: [
-        DataCell(Text(item['id']!)),
-        DataCell(Text(item['actionCreatedBy']!)),
-        DataCell(Text(_dateFormat.format(item['dateSubmitted']))),
-        DataCell(Text(_dateFormat.format(item['dueDate']))),
-        DataCell(_buildPriorityChip(item['priority']!)),
-        DataCell(_buildStatusChip(item['status']!)),
-        DataCell(Row(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.remove_red_eye_outlined),
-              onPressed: () => onView(item),
-              tooltip: 'View',
-            ),
-            IconButton(
-              icon: const Icon(Icons.edit_outlined),
-              onPressed: () => onEdit(item),
-              tooltip: 'Edit',
-            ),
-            IconButton(
-              icon: const Icon(Icons.delete_outline),
-              onPressed: () => onDelete(item),
-              tooltip: 'Delete',
-            ),
-          ],
-        )),
-      ],
-    );
-  }
-
-  Widget _buildPriorityChip(String priority) {
-    Color color;
-    const textColor = Colors.white;
-    switch (priority) {
-      case 'high':
-        color = Colors.red[300]!;
-        break;
-      case 'medium':
-        color = Colors.orange[300]!;
-        break;
-      case 'low':
-        color = Colors.green[300]!;
-        break;
-      default:
-        color = Colors.grey;
-    }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        priority,
-        style: const TextStyle(color: textColor, fontSize: 12),
-      ),
-    );
-  }
-
-  Widget _buildStatusChip(String status) {
-    Color color;
-    Color textColor = Colors.black;
-    switch (status) {
-      case 'Pending':
-        color = Colors.orange[200]!;
-        break;
-      case 'Approved':
-        color = Colors.green[200]!;
-        break;
-      case 'Rejected':
-        color = Colors.red[200]!;
-        break;
-      default:
-        color = Colors.grey[200]!;
-    }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        status,
-        style: TextStyle(color: textColor, fontSize: 12),
-      ),
-    );
-  }
-
-  @override
-  bool get isRowCountApproximate => false;
-
-  @override
-  int get rowCount => _data.length;
-
-  @override
-  int get selectedRowCount => 0;
+  State<_PurchaseOrderPageBody> createState() => _PurchaseOrderPageBodyState();
 }
 
-class PurchaseOrderPageState extends State<PurchaseOrderPage> {
+class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
   final DateFormat _dateFormat = DateFormat('MMM dd, yyyy');
-
-  @override
-  void initState() {
-    super.initState();
-    // Initialiser la liste locale avec les données statiques
-    _purchaseOrders = PurchaseOrderPage.purchaseOrders;
-  }
-
-  List<Map<String, dynamic>> _purchaseOrders = [];
-
   int _rowsPerPage = PaginatedDataTable.defaultRowsPerPage;
   int? _sortColumnIndex;
   bool _sortAscending = true;
-
   String? _priorityFilter;
   String? _statusFilter;
   DateTime? _selectedSubmissionDate;
   DateTime? _selectedDueDate;
 
-  List<Map<String, dynamic>> get _filteredAndSortedOrders {
-    List<Map<String, dynamic>> orders = List.from(_purchaseOrders);
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<PurchaseOrderController>(context, listen: false).fetchOrders();
+    });
+  }
 
-    // Filtres
+  List<Map<String, dynamic>> _filteredAndSortedOrders(List orders) {
+  List<Map<String, dynamic>> mapped = orders
+    .map((order) {
+      DateTime parseDate(dynamic value) {
+        if (value is DateTime) return value;
+        if (value is String) {
+          try {
+            return DateTime.parse(value);
+          } catch (_) {
+            return DateTime.now();
+          }
+        }
+        return DateTime.now();
+      }
+      return {
+        'id': order.id?.toString() ?? '',
+        'actionCreatedBy': order.requestedByUser?.toString() ?? '',
+        'dateSubmitted': parseDate(order.startDate),
+        'dueDate': parseDate(order.endDate),
+        'priority': order.priority ?? '',
+        'status': order.status ?? '',
+        'original': order, // Keep the real PurchaseOrder object
+      };
+    })
+    .toList();
+
+    // Filtres (désactivés)
+    /*
     if (_priorityFilter != null) {
-      orders = orders.where((order) => order['priority'] == _priorityFilter).toList();
+      mapped = mapped.where((order) => order['priority'].toString().toLowerCase() == _priorityFilter!.toLowerCase()).toList();
     }
     if (_statusFilter != null) {
-      orders = orders.where((order) => order['status'] == _statusFilter).toList();
+      mapped = mapped.where((order) => order['status'].toString().toLowerCase() == _statusFilter!.toLowerCase()).toList();
     }
     if (_selectedSubmissionDate != null) {
-      orders = orders.where((order) =>
+      mapped = mapped.where((order) =>
           order['dateSubmitted'].year == _selectedSubmissionDate!.year &&
           order['dateSubmitted'].month == _selectedSubmissionDate!.month &&
           order['dateSubmitted'].day == _selectedSubmissionDate!.day).toList();
     }
     if (_selectedDueDate != null) {
-      orders = orders.where((order) =>
+      mapped = mapped.where((order) =>
           order['dueDate'].year == _selectedDueDate!.year &&
           order['dueDate'].month == _selectedDueDate!.month &&
           order['dueDate'].day == _selectedDueDate!.day).toList();
     }
+    */
 
-    // Tri
+    // Tri (désactivé)
+    /*
     if (_sortColumnIndex != null) {
       String sortKey = '';
       switch (_sortColumnIndex) {
@@ -202,7 +120,7 @@ class PurchaseOrderPageState extends State<PurchaseOrderPage> {
           break;
       }
 
-      orders.sort((a, b) {
+      mapped.sort((a, b) {
         dynamic aValue = a[sortKey];
         dynamic bValue = b[sortKey];
         if (aValue is String && bValue is String) {
@@ -213,8 +131,9 @@ class PurchaseOrderPageState extends State<PurchaseOrderPage> {
         return 0;
       });
     }
+    */
 
-    return orders;
+    return mapped;
   }
 
   void _sort<T>(int columnIndex, bool ascending) {
@@ -242,120 +161,6 @@ class PurchaseOrderPageState extends State<PurchaseOrderPage> {
     }
   }
 
-  void viewPurchaseOrder(Map<String, dynamic> order) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PurchaseOrderView(), // <-- Remplace ici
-      ),
-    );
-  }
-
-  void editPurchaseOrder(Map<String, dynamic> order) async {
-    final updatedOrder = await Navigator.push<Map<String, dynamic>>(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PurchaseOrderForm(
-          initialOrder: order,
-          onSave: (newOrder) {
-            Navigator.pop(context, newOrder);
-          },
-        ),
-      ),
-    );
-
-    if (updatedOrder != null) {
-      setState(() {
-        final index = _purchaseOrders.indexWhere((o) => o['id'] == updatedOrder['id']);
-        if (index != -1) {
-          _purchaseOrders[index] = updatedOrder;
-        }
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Purchase order ${updatedOrder['id']} updated')),
-      );
-    }
-  }
-
-  void deletePurchaseOrder(Map<String, dynamic> order) async {
-    final bool? confirmed = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
-        ),
-        backgroundColor: const Color(0xFFF7F2FA),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18), // <-- padding réduit
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: 320, // <-- largeur max réduite
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Delete User',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold), // <-- taille réduite
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Are you sure you want to delete ${order['actionCreatedBy']}?',
-                  style: const TextStyle(fontSize: 14), // <-- taille réduite
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      child: const Text(
-                        'Cancel',
-                        style: TextStyle(
-                          color: Color(0xFF6F4DBF),
-                          fontWeight: FontWeight.w500,
-                          fontSize: 14, // <-- taille réduite
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    ElevatedButton(
-                      onPressed: () => Navigator.pop(context, true),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10), // <-- padding réduit
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text(
-                        'Delete',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14), // <-- taille réduite
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-
-    if (confirmed == true) {
-      setState(() {
-        _purchaseOrders.removeWhere((o) => o['id'] == order['id']);
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Purchase order ${order['id']} deleted')),
-      );
-    }
-  }
-
   void _clearFilters() {
     setState(() {
       _priorityFilter = null;
@@ -367,101 +172,111 @@ class PurchaseOrderPageState extends State<PurchaseOrderPage> {
 
   @override
   Widget build(BuildContext context) {
-    final dataSource = _PurchaseOrderDataSource(
-      _filteredAndSortedOrders,
-      _dateFormat,
-      onView: viewPurchaseOrder,
-      onEdit: editPurchaseOrder,
-      onDelete: deletePurchaseOrder,
-    );
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Purchase Orders'),
-        actions: [
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => PurchaseOrderForm(
-                    initialOrder: const <String, dynamic>{},
-                    onSave: (newOrder) {
-                      setState(() {
-                        _purchaseOrders.add(newOrder);
-                      });
-                      Navigator.pop(context);
-                    },
+    return Consumer<PurchaseOrderController>(
+      builder: (context, controller, child) {
+        if (controller.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (controller.error != null) {
+          return Center(child: Text('Error: ${controller.error}'));
+        }
+        final dataSource = _PurchaseOrderDataSource(
+          _filteredAndSortedOrders(controller.orders),
+          _dateFormat,
+          onView: viewPurchaseOrder,
+          onEdit: editPurchaseOrder,
+          onDelete: deletePurchaseOrder,
+        );
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Purchase Orders'),
+            actions: [
+              ElevatedButton.icon(
+                onPressed: () {
+                  final controller = Provider.of<PurchaseOrderController>(context, listen: false);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ChangeNotifierProvider.value(
+                        value: controller,
+                        child: PurchaseOrderForm(
+                          initialOrder: const <String, dynamic>{},
+                          onSave: (newOrder) {
+                            Navigator.pop(context);
+                          },
+                        ),
+                      ),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.add, color: Colors.white),
+                label: const Text('Add PO'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.deepPurple,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  elevation: 0,
+                ),
+              ),
+              const SizedBox(width: 16),
+            ],
+          ),
+          body: Column(
+            children: [
+              _buildFiltersRow(),
+              const SizedBox(height: 16),
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.vertical,
+                  child: Theme(
+                    data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                    child: PaginatedDataTable(
+                      header: const Text('Purchase Orders Table'),
+                      rowsPerPage: _rowsPerPage,
+                      onRowsPerPageChanged: (r) {
+                        if (r != null) {
+                          setState(() {
+                            _rowsPerPage = r;
+                          });
+                        }
+                      },
+                      sortColumnIndex: _sortColumnIndex,
+                      sortAscending: _sortAscending,
+                      columnSpacing: 180, 
+                      horizontalMargin: 16, 
+                      columns: [
+                        DataColumn(
+                            label: const Text('ID'),
+                            onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
+                        DataColumn(
+                            label: const Text('Created by'),
+                            onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
+                        DataColumn(
+                            label: const Text('Date submitted'),
+                            onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
+                        DataColumn(
+                            label: const Text('Due date'),
+                            onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
+                        DataColumn(
+                            label: const Text('Priority'),
+                            onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
+                        DataColumn(
+                            label: const Text('Status'),
+                            onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
+                        const DataColumn(label: Text('Actions')),
+                      ],
+                      source: dataSource,
+                    ),
                   ),
                 ),
-              );
-            },
-            icon: const Icon(Icons.add, color: Colors.white),
-            label: const Text('Add PO'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.deepPurple,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
               ),
-              elevation: 0,
-            ),
+            ],
           ),
-          const SizedBox(width: 16),
-        ],
-      ),
-      body: Column(
-        children: [
-          _buildFiltersRow(),
-          const SizedBox(height: 16),
-          Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.vertical,
-              child: Theme(
-                data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-                child: PaginatedDataTable(
-                  header: const Text('Purchase Orders Table'),
-                  rowsPerPage: _rowsPerPage,
-                  onRowsPerPageChanged: (r) {
-                    if (r != null) {
-                      setState(() {
-                        _rowsPerPage = r;
-                      });
-                    }
-                  },
-                  sortColumnIndex: _sortColumnIndex,
-                  sortAscending: _sortAscending,
-                  columnSpacing: 180, 
-                  horizontalMargin: 16, 
-                  columns: [
-                    DataColumn(
-                        label: const Text('ID'),
-                        onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
-                    DataColumn(
-                        label: const Text('Created by'),
-                        onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
-                    DataColumn(
-                        label: const Text('Date submitted'),
-                        onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
-                    DataColumn(
-                        label: const Text('Due date'),
-                        onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
-                    DataColumn(
-                        label: const Text('Priority'),
-                        onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
-                    DataColumn(
-                        label: const Text('Status'),
-                        onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
-                    const DataColumn(label: Text('Actions')),
-                  ],
-                  source: dataSource,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -471,17 +286,17 @@ class PurchaseOrderPageState extends State<PurchaseOrderPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Filter by Priority
-          PopupMenuButton<String>(
+          // ...existing code for filters...
+          PopupMenuButton<String?>(
             onSelected: (value) {
               setState(() {
                 _priorityFilter = value;
               });
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(value: 'High', child: Text('High')),
-              const PopupMenuItem(value: 'Medium', child: Text('Medium')),
-              const PopupMenuItem(value: 'Low', child: Text('Low')),
+              const PopupMenuItem(value: 'high', child: Text('high')),
+              const PopupMenuItem(value: 'medium', child: Text('medium')),
+              const PopupMenuItem(value: 'low', child: Text('low')),
               if (_priorityFilter != null)
                 const PopupMenuItem(value: null, child: Text('Clear Priority')),
             ],
@@ -494,7 +309,7 @@ class PurchaseOrderPageState extends State<PurchaseOrderPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                 elevation: 0,
               ),
-              onPressed: null, // Désactive le onPressed ici
+              onPressed: null,
               child: Row(
                 children: [
                   Text(
@@ -510,8 +325,7 @@ class PurchaseOrderPageState extends State<PurchaseOrderPage> {
             ),
           ),
           const SizedBox(width: 8),
-          // Filter by Status
-          PopupMenuButton<String>(
+          PopupMenuButton<String?>(
             onSelected: (value) {
               setState(() {
                 _statusFilter = value;
@@ -549,7 +363,6 @@ class PurchaseOrderPageState extends State<PurchaseOrderPage> {
             ),
           ),
           const SizedBox(width: 8),
-          // Filter by Submission Date
           OutlinedButton(
             style: OutlinedButton.styleFrom(
               backgroundColor: const Color(0xFFF7F3FF),
@@ -571,7 +384,6 @@ class PurchaseOrderPageState extends State<PurchaseOrderPage> {
             ),
           ),
           const SizedBox(width: 8),
-          // Filter by Due Date
           OutlinedButton(
             style: OutlinedButton.styleFrom(
               backgroundColor: const Color(0xFFF7F3FF),
@@ -593,7 +405,6 @@ class PurchaseOrderPageState extends State<PurchaseOrderPage> {
             ),
           ),
           const SizedBox(width: 8),
-          // Clear Filters
           TextButton(
             onPressed: _clearFilters,
             child: const Text(
@@ -608,6 +419,257 @@ class PurchaseOrderPageState extends State<PurchaseOrderPage> {
       ),
     );
   }
+
+  // TODO: implement viewPurchaseOrder, editPurchaseOrder, deletePurchaseOrder if needed
+  Future<void> viewPurchaseOrder(Map<String, dynamic> order) async {
+    // Utilise l'objet PurchaseOrder réel pour l'affichage
+    final purchaseOrder = order['original'];
+    final userController = Provider.of<UserController>(context, listen: false);
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PurchaseOrderView.withProviders(order: purchaseOrder, userController: userController),
+      ),
+    );
+    // Toujours rafraîchir la liste après retour de la page détail
+    Provider.of<PurchaseOrderController>(context, listen: false).fetchOrders();
+  }
+
+  void editPurchaseOrder(Map<String, dynamic> order) async {
+    // Navigation vers la page d'édition dédiée
+    final controller = Provider.of<PurchaseOrderController>(context, listen: false);
+    // On passe l'objet complet (order['original']) à la page d'édition
+    final purchaseOrder = order['original'];
+    // On convertit l'objet en Map pour initialOrder
+    final initialOrder = purchaseOrder.toJson();
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ChangeNotifierProvider.value(
+          value: controller,
+          child: EditPurchaseOrder(
+            initialOrder: initialOrder,
+            onSave: (newOrder) {
+              Navigator.pop(context, newOrder);
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  void deletePurchaseOrder(Map<String, dynamic> order) async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+        ),
+        backgroundColor: const Color(0xFFF7F2FA),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 320),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Delete Purchase Order',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Are you sure you want to delete ${order['id']}?',
+                  style: const TextStyle(fontSize: 14),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(
+                          color: Color(0xFF6F4DBF),
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: const Text(
+                        'Delete',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    if (confirmed == true) {
+      final controller = Provider.of<PurchaseOrderController>(context, listen: false);
+      try {
+        await controller.deleteOrder(order['id'].toString());
+        await controller.fetchOrders();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Purchase order ${order['id']} deleted')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete purchase order: $e')),
+        );
+      }
+    }
+  }
+}
+
+class _PurchaseOrderDataSource extends DataTableSource {
+  final List<Map<String, dynamic>> _data;
+  final DateFormat _dateFormat;
+  final Function(Map<String, dynamic>) onView;
+  final Function(Map<String, dynamic>) onEdit;
+  final Function(Map<String, dynamic>) onDelete;
+
+  _PurchaseOrderDataSource(
+    this._data,
+    this._dateFormat, {
+    required this.onView,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  @override
+  DataRow? getRow(int index) {
+    if (index >= _data.length) return null;
+    final item = _data[index];
+    String formatDateCell(dynamic value) {
+      if (value == null) return '-';
+      DateTime? dt;
+      if (value is DateTime) {
+        dt = value;
+      } else if (value is String) {
+        try {
+          dt = DateTime.parse(value);
+        } catch (_) {
+          return value;
+        }
+      }
+      return dt != null ? _dateFormat.format(dt) : '-';
+    }
+    return DataRow(
+      cells: [
+        DataCell(Text(item['id'] ?? '-')),
+        DataCell(Text(item['actionCreatedBy'] ?? '-')),
+        DataCell(Text(formatDateCell(item['dateSubmitted']))),
+        DataCell(Text(formatDateCell(item['dueDate']))),
+        DataCell(_buildPriorityChip(item['priority'] ?? '-')),
+        DataCell(_buildStatusChip(item['status'] ?? '-')),
+        DataCell(Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.remove_red_eye_outlined),
+              onPressed: () => onView(item),
+              tooltip: 'View',
+            ),
+            IconButton(
+              icon: const Icon(Icons.edit_outlined),
+              onPressed: () => onEdit(item),
+              tooltip: 'Edit',
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete_outline),
+              onPressed: () => onDelete(item),
+              tooltip: 'Delete',
+            ),
+          ],
+        )),
+      ],
+    );
+  }
+
+  Widget _buildPriorityChip(String priority) {
+    final v = priority.toLowerCase();
+    Color bgColor;
+    if (v == 'low') {
+      bgColor = const Color(0xFF64B5F6); // blue
+    } else if (v == 'medium') {
+      bgColor = const Color(0xFFFFB74D); // orange
+    } else if (v == 'high') {
+      bgColor = const Color(0xFFE57373); // red
+    } else {
+      bgColor = Colors.grey;
+    }
+    return Container(
+      constraints: const BoxConstraints(minWidth: 36),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        v,
+        textAlign: TextAlign.center,
+        style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.2),
+      ),
+    );
+  }
+
+  Widget _buildStatusChip(String status) {
+    final v = status.toLowerCase();
+    Color bgColor;
+    if (v == 'approved') {
+      bgColor = const Color(0xFF4CAF50); // green
+    } else if (v == 'pending') {
+      bgColor = const Color(0xFFFFB74D); // orange
+    } else if (v == 'rejected') {
+      bgColor = const Color(0xFFEF5350); // red
+    } else {
+      bgColor = Colors.grey;
+    }
+    return Container(
+      constraints: const BoxConstraints(minWidth: 0),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        v,
+        textAlign: TextAlign.center,
+        
+        style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.2),
+      ),
+    );
+  }
+
+  @override
+  bool get isRowCountApproximate => false;
+
+  @override
+  int get rowCount => _data.length;
+
+  @override
+  int get selectedRowCount => 0;
 }
 
 // Example for ViewPurchasePage
@@ -618,6 +680,20 @@ class ViewPurchasePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('yyyy-MM-dd');
+    String formatDateCell(dynamic value) {
+      if (value == null) return '-';
+      DateTime? dt;
+      if (value is DateTime) {
+        dt = value;
+      } else if (value is String) {
+        try {
+          dt = DateTime.parse(value);
+        } catch (_) {
+          return value;
+        }
+      }
+      return dt != null ? dateFormat.format(dt) : '-';
+    }
     return Scaffold(
       appBar: AppBar(title: Text('View Purchase Order ${order['id']}')),
       body: Padding(
@@ -628,8 +704,8 @@ class ViewPurchasePage extends StatelessWidget {
             Text('ID: ${order['id']}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
             Text('Created by: ${order['actionCreatedBy']}'),
-            Text('Date submitted: ${dateFormat.format(order['dateSubmitted'])}'),
-            Text('Due date: ${dateFormat.format(order['dueDate'])}'),
+            Text('Date submitted: ${formatDateCell(order['dateSubmitted'])}'),
+            Text('Due date: ${formatDateCell(order['dueDate'])}'),
             Text('Priority: ${order['priority']}'),
             Text('Status: ${order['status']}'),
             const SizedBox(height: 32),
@@ -652,3 +728,4 @@ class ViewPurchasePage extends StatelessWidget {
     );
   }
 }
+      

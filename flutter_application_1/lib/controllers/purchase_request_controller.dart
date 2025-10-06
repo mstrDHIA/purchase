@@ -60,12 +60,13 @@ class PurchaseRequestController extends ChangeNotifier {
     isLoading = true;
     notifyListeners();
     try {
-      // request.toJson()
-      
-      final Response response = await _network.createPurchaseRequest(data);
-      PurchaseRequest request = PurchaseRequest.fromJson(response.data);
-      // print(request.id);
-      requests.add(request);
+      final response = await _network.createPurchaseRequest(data);
+      if (response != null && response.data != null) {
+        PurchaseRequest request = PurchaseRequest.fromJson(response.data);
+        requests.add(request);
+      } else {
+        print('No response or response.data is null');
+      }
     } catch (e) {
       print('error: $e');
       _error = e.toString();

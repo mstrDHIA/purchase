@@ -177,7 +177,12 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
       return;
     }
     setState(() {
-      products.add({'product': product, 'quantity': quantity});
+      products.add({
+        'product': product,
+        'quantity': quantity,
+        'brand': null, // or provide a default/empty string if needed
+        'unit_price': 0.0, // default value
+      });
       productController.clear();
       quantityController.clear();
     });
