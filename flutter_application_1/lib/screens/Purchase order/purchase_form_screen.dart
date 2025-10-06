@@ -6,16 +6,18 @@ import 'package:flutter_application_1/controllers/purchase_order_controller.dart
 import 'dart:convert'; // <-- Import jsonEncode
 
 class ProductLine {
-  // int? productId; // Removed
+
   String? product;
   String? brand;
   int quantity;
+  String? supplier;
   double unitPrice;
 
   ProductLine({
   // this.productId,
     this.product,
     this.brand,
+    this.supplier,
     this.quantity = 1,
     this.unitPrice = 12.33,
   });
