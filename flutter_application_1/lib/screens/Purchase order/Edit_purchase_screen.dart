@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/models/purchase_order.dart';
+// import 'package:flutter_application_1/models/purchase_order.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
@@ -31,21 +31,21 @@ class ProductLine {
   }
 }
 
-class PurchaseOrderForm extends StatefulWidget {
+class EditPurchaseOrder extends StatefulWidget {
   final Map<String, dynamic> initialOrder;
   final void Function(dynamic newOrder) onSave;
 
-  const PurchaseOrderForm({
+  const EditPurchaseOrder({
     super.key,
     required this.onSave,
     required this.initialOrder,
   });
-
+       
   @override
-  State<PurchaseOrderForm> createState() => _PurchaseOrderFormState();
+  State<EditPurchaseOrder> createState() => _EditPurchaseOrderState();
 }
 
-class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
+class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
   String? _priority;
   // String? _status; // Removed
   int? _id;
@@ -65,22 +65,37 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
     super.initState();
     final initial = widget.initialOrder;
     if (initial.isNotEmpty) {
-      _priority = initial['priority']?.toString();
+      // Correction : forcer la casse pour correspondre aux DropdownMenuItem
+      final priorityRaw = initial['priority']?.toString();
+      if (priorityRaw != null) {
+        if (priorityRaw.toLowerCase() == 'high') {
+          _priority = 'high';
+        } else if (priorityRaw.toLowerCase() == 'medium') {
+          _priority = 'medium';
+        } else if (priorityRaw.toLowerCase() == 'low') {
+          _priority = 'low';
+        } else {
+          _priority = null;
+        }
+      } else {
+        _priority = null;
+      }
+  // _status = initial['status']?.toString(); // Removed
       _id = initial['id'] is int ? initial['id'] : int.tryParse(initial['id']?.toString() ?? '');
+      // Use int for user IDs, fallback to 1 if not present
       _requestedByUser = initial['requestedByUser'] is int
           ? initial['requestedByUser']
           : int.tryParse(initial['requestedByUser']?.toString() ?? '') ?? 1;
       _approvedBy = initial['approvedBy'] is int
           ? initial['approvedBy']
           : int.tryParse(initial['approvedBy']?.toString() ?? '') ?? 2;
-      _updatedAt = initial['updatedAt'] is DateTime
-          ? initial['updatedAt']
-          : (initial['updatedAt'] != null ? DateTime.tryParse(initial['updatedAt'].toString()) : null);
-      if (_updatedAt == null) {
-        _updatedAt = DateTime.now();
-      }
-      // Pré-remplir le champ Supplier Name si la valeur existe
-      supplierName = initial['supplierName'] ?? initial['supplier'] ?? '';
+  _updatedAt = initial['updatedAt'] is DateTime
+      ? initial['updatedAt']
+      : (initial['updatedAt'] != null ? DateTime.tryParse(initial['updatedAt'].toString()) : null);
+  if (_updatedAt == null) {
+    _updatedAt = DateTime.now();
+  }
+      supplierName = initial['supplier'] ?? initial['supplierName'] ?? '';
       supplierNameController.text = supplierName ?? '';
 
       if (initial['endDate'] != null) {
@@ -120,7 +135,7 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
       }
     } else {
       dueDateController.text = DateFormat('dd-MM-yyyy').format(DateTime.now());
-      supplierNameController.text = supplierName ?? '';
+      supplierNameController.text = '';
       // Find last id from provider
       final contextController = Provider.of<PurchaseOrderController>(context, listen: false);
       int maxId = 0;
@@ -156,8 +171,15 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      drawer: _buildDrawer(context),
-      appBar: _buildAppBar(context),
+      // drawer: _buildDrawer(context),
+      appBar: AppBar(
+        title: const Text('Edit Purchase Order'),
+        backgroundColor: const Color(0xFF8C7AE6),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -360,7 +382,6 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
         'brand': p.brand ?? '',
         'quantity': p.quantity,
         'unit_price': p.unitPrice,
-        'price': (p.unitPrice * p.quantity),
         'supplier': supplierName,
       }).toList();
 
@@ -369,27 +390,35 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
         'id': _id,
         'requested_by_user': _requestedByUser ?? 1,
         'approved_by': _approvedBy ?? 2,
-        'start_date': DateFormat('yyyy-MM-dd').format(DateTime.now()),
-        'end_date': DateFormat('yyyy-MM-dd').format(parsedEndDate),
+        // Forcer l'envoi des dates comme String au format 'yyyy-MM-dd'
+        'start_date': DateFormat('yyyy-MM-dd').format(DateTime.now()).toString(),
+        'end_date': DateFormat('yyyy-MM-dd').format(parsedEndDate).toString(),
         'products': productsList,
         'title': 'Purchase Order',
         'description': noteController.text,
-        'status': 'pending', // Always set to pending
-        'created_at': DateFormat('yyyy-MM-dd').format(DateTime.now()),
-        'updated_at': DateFormat('yyyy-MM-dd').format(_updatedAt ?? DateTime.now()),
+        'status': 'pending',
+        'created_at': DateFormat('yyyy-MM-dd').format(DateTime.now()).toString(),
+        'updated_at': DateFormat('yyyy-MM-dd').format(_updatedAt ?? DateTime.now()).toString(),
         'priority': _priority,
       };
 
       print('PurchaseOrder JSON body sent to backend:');
-      print(jsonEncode(jsonBody)); // <-- Use jsonEncode here
+      print(jsonEncode(jsonBody));
 
-      if (widget.initialOrder.isNotEmpty) {
-        widget.onSave(jsonBody);
-        if (mounted) Navigator.of(context).pop(jsonBody);
-      } else {
-        // Ici il faudrait adapter addOrder pour accepter le jsonBody si besoin
+      if (widget.initialOrder.isNotEmpty && widget.initialOrder['id'] != null) {
+        // Mode édition : appel update, on envoie le JSON directement
         await Provider.of<PurchaseOrderController>(context, listen: false)
-            .addOrder(jsonBody); // <-- à adapter côté controller si besoin
+            .updateOrder(jsonBody);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Purchase order updated!')),
+          );
+          Navigator.of(context).pop(jsonBody);
+        }
+      } else {
+        // Mode création
+        await Provider.of<PurchaseOrderController>(context, listen: false)
+            .addOrder(jsonBody);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Purchase order saved!')),
@@ -518,16 +547,7 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
     );
   }
 
-  Drawer _buildDrawer(BuildContext context) {
-    return const Drawer(
-      child: Center(child: Text("Menu here")),
-    );
-  }
+  
 
-  AppBar _buildAppBar(BuildContext context) {
-    return AppBar(
-      title: const Text('Purchase Order'),
-      backgroundColor: const Color(0xFF8C7AE6),
-    );
-  }
+  // ...existing code...
 }

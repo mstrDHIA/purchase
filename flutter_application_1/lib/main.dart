@@ -21,7 +21,18 @@ import 'package:flutter_application_1/screens/users/users_List_screen.dart' as u
 
 import 'package:flutter_application_1/utils/router.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import '../l10n/app_localizations.dart';
 import 'widgets/sidebar.dart';
+
+class LocaleProvider extends ChangeNotifier {
+  Locale _locale = const Locale('fr');
+  Locale get locale => _locale;
+  void setLocale(Locale locale) {
+    _locale = locale;
+    notifyListeners();
+  }
+}
 
 void main() {
   runApp(
@@ -31,6 +42,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => UserController()),
         ChangeNotifierProvider(create: (_) => RoleController()),
         ChangeNotifierProvider(create: (context) => PurchaseRequestController(context)),
+        ChangeNotifierProvider(create: (_) => LocaleProvider()),
       ],
       child: const MyApp(),
     ),
@@ -42,14 +54,24 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final localeProvider = Provider.of<LocaleProvider>(context);
     return MaterialApp.router(
-      
       title: 'Purchase Requestor',
       debugShowCheckedModeBanner: false,
       theme: Provider.of<ThemeProvider>(context).currentTheme,
-      // home: const SignInPage(), // <-- Ajoute cette ligne
-      routerConfig: router,   // <-- Commente ou supprime cette ligne
-      
+      localizationsDelegates: [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en'),
+        Locale('fr'),
+        Locale('ar'),
+      ],
+      locale: localeProvider.locale,
+      routerConfig: router,
     );
   }
 }

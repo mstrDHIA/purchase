@@ -15,6 +15,8 @@ import 'package:flutter_application_1/screens/users/permission_screen.dart';
 
 import 'package:flutter_application_1/screens/users/add_user_screen.dart';
 
+import 'package:flutter_application_1/screens/Purchase Request/requestor_form_screen.dart';
+
 import 'package:go_router/go_router.dart';
 
 final GoRouter router = GoRouter(
@@ -27,6 +29,13 @@ final GoRouter router = GoRouter(
     //   path: '/',
     //   builder: (context, state) => HomePage(),
     // ),
+    GoRoute(
+      path: '/purchase_requestor_form',
+      builder: (context, state) => PurchaseRequestorForm(
+        onSave: (order) {},
+        initialOrder: const {},
+      ),
+    ),
     GoRoute(
       path: '/login',
       builder: (context, state) => SignInPage(),

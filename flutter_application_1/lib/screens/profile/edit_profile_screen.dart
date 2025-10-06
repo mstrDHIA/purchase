@@ -55,7 +55,7 @@ import '../auth/login_screen.dart';
 class EditProfileScreen extends StatefulWidget {
   // final Map<String, dynamic> user;
   // final int userId;
-  const EditProfileScreen({super.key, });
+  const EditProfileScreen({super.key, required Map<String, dynamic> user, });
 
   @override
   State<EditProfileScreen> createState() => _EditProfileScreenState();

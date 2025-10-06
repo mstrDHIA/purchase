@@ -1,7 +1,9 @@
+import 'package:flutter_application_1/main.dart';
 import 'package:flutter/material.dart';
+import '../l10n/app_localizations.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
-import 'package:flutter_application_1/models/user_model.dart';
-import 'package:flutter_application_1/screens/auth/login_screen.dart';
+import 'package:flutter_application_1/screens/profile/edit_profile_screen.dart';
+
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_application_1/providers/theme_provider.dart';
@@ -19,7 +21,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _notificationsEnabled = true;
   String _selectedLanguage = "Français";
   
-  get user => null;
+ 
+  Map<String, dynamic> user = {
+    'name': 'Jasser Boubaker',
+    'email': 'jasser.boubaker@gmail.com',
+    'avatar': 'assets/images/Company.jpg',
+  };
 
   @override
   void initState() {
@@ -46,38 +53,43 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final themeName = themeProvider.themeName;
 
+    final loc = AppLocalizations.of(context)!;
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Settings'),
+        title: Text(loc.settingsTitle),
         centerTitle: true,
         elevation: 0,
       ),
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         children: [
-          // ==== PROFILE HEADER ====
-          Card(
-            elevation: 2,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24),
-              child: Column(
-                children: [
-                  const CircleAvatar(
-                    radius: 45,
-                    backgroundImage: AssetImage('assets/avatar.png'),
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    "Jasser Boubaker",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    "jasser.boubaker@email.com",
-                    style: TextStyle(color: Colors.grey[600]),
-                  ),
-                ],
+          
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeInOut,
+            child: Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Column(
+                  children: [
+                    CircleAvatar(
+                      radius: 45,
+                      backgroundImage: AssetImage(user['avatar']),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      "Jasser Boubaker",
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      "jasser.boubaker@email.com",
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -85,7 +97,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 24),
 
           // ==== ACCOUNT SETTINGS ====
-          _buildSectionTitle("Account Settings"),
+          Row(
+            children: [
+              Icon(Icons.person, color: Colors.blue.shade400),
+              const SizedBox(width: 8),
+              _buildSectionTitle(loc.accountSettings),
+            ],
+          ),
           Card(
             elevation: 1,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -93,27 +111,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 ListTile(
                   leading: const Icon(Icons.person),
-                  title: const Text('Edit Profile'),
+                  title: Text(loc.editProfile),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () {
-                    if (user != null && user is Map<String, dynamic>) {
-                      // Navigator.push(
-                      //   context,
-                      //   MaterialPageRoute(
-                      //     builder: (context) => ProfilePageScreen(),
-                      //   ),
-                      // );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("No user data available")),
-                      );
-                    }
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => EditProfileScreen(user: user),
+                      ),
+                    );
                   },
                 ),
-                const Divider(height: 1),
                 ListTile(
                   leading: const Icon(Icons.lock),
-                  title: const Text('Change Password'),
+                  title: Text(loc.changePassword),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () {
                     Navigator.push(
@@ -131,7 +142,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 16),
 
           // ==== APP SETTINGS ====
-          _buildSectionTitle("App Preferences"),
+          Row(
+            children: [
+              Icon(Icons.settings, color: Colors.green.shade400),
+              const SizedBox(width: 8),
+              _buildSectionTitle(loc.appPreferences),
+            ],
+          ),
           Card(
             elevation: 1,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -140,16 +157,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 // ==== NOTIFICATIONS ====
                 SwitchListTile(
                   secondary: const Icon(Icons.notifications),
-                  title: const Text('Notifications'),
-                  subtitle: Text(_notificationsEnabled ? "Enabled" : "Disabled"),
+                  title: Text(loc.notifications),
+                  subtitle: Text(_notificationsEnabled ? loc.notificationsEnabled : loc.notificationsDisabled),
                   value: _notificationsEnabled,
                   onChanged: (val) {
                     setState(() => _notificationsEnabled = val);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(val
-                            ? "Notifications enabled"
-                            : "Notifications disabled"),
+                            ? loc.notificationsEnabled
+                            : loc.notificationsDisabled),
                         duration: const Duration(seconds: 1),
                       ),
                     );
@@ -161,25 +178,53 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 // ==== LANGUAGE ====
                 ListTile(
                   leading: const Icon(Icons.language),
-                  title: const Text('Language'),
-                  trailing: DropdownButton<String>(
-                    value: _selectedLanguage,
-                    items: const [
-                      DropdownMenuItem(value: "Français", child: Text("French")),
-                      DropdownMenuItem(value: "English", child: Text("English")),
-                      DropdownMenuItem(value: "العربية", child: Text("Arabic")),
-                    ],
-                    onChanged: (String? lang) {
-                      if (lang != null) {
-                        _saveLanguagePreference(lang);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text("Language changed to $lang"),
-                            duration: const Duration(seconds: 1),
+                  title: Text(loc.language),
+                  trailing: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: DropdownButton<String>(
+                      key: ValueKey(_selectedLanguage),
+                      value: _selectedLanguage,
+                      items: [
+                        DropdownMenuItem(
+                          value: "Français",
+                          child: Row(
+                            children: [
+                              Icon(Icons.check, color: Colors.blue, size: 18),
+                              SizedBox(width: 6),
+                              Text(loc.language),
+                            ],
                           ),
-                        );
-                      }
-                    },
+                        ),
+                        DropdownMenuItem(
+                          value: "English",
+                          child: Text("English"),
+                        ),
+                        DropdownMenuItem(
+                          value: "العربية",
+                          child: Text("العربية"),
+                        ),
+                      ],
+                      onChanged: (String? lang) {
+                        if (lang != null) {
+                          _saveLanguagePreference(lang);
+                          // Changement dynamique de la langue
+                          final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
+                          if (lang == "English") {
+                            localeProvider.setLocale(const Locale('en'));
+                          } else if (lang == "Français") {
+                            localeProvider.setLocale(const Locale('fr'));
+                          } else if (lang == "العربية") {
+                            localeProvider.setLocale(const Locale('ar'));
+                          }
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(loc.languageChanged(lang)),
+                              duration: const Duration(seconds: 1),
+                            ),
+                          );
+                        }
+                      },
+                    ),
                   ),
                 ),
               ],
@@ -189,33 +234,43 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 16),
 
           // ==== THEME SECTION ====
-          _buildSectionTitle("Appearance"),
+          Row(
+            children: [
+              Icon(Icons.palette, color: Colors.purple.shade400),
+              const SizedBox(width: 8),
+              _buildSectionTitle(loc.appearance),
+            ],
+          ),
           Card(
             elevation: 1,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             child: ListTile(
               leading: const Icon(Icons.palette),
-              title: const Text('Choose Theme'),
+              title: Text(loc.chooseTheme),
               subtitle: Text(themeName),
-              trailing: DropdownButton<String>(
-                value: themeName,
-                items: ThemeProvider.themes.keys.map((name) {
-                  return DropdownMenuItem(
-                    value: name,
-                    child: Text(name),
-                  );
-                }).toList(),
-                onChanged: (String? name) {
-                  if (name != null) {
-                    themeProvider.setTheme(name);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text("Theme changed to $name"),
-                        duration: const Duration(seconds: 1),
-                      ),
+              trailing: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                child: DropdownButton<String>(
+                  key: ValueKey(themeName),
+                  value: themeName,
+                  items: ThemeProvider.themes.keys.map((name) {
+                    return DropdownMenuItem(
+                      value: name,
+                      child: Text(name),
                     );
-                  }
-                },
+                  }).toList(),
+                  onChanged: (String? name) {
+                    if (name != null) {
+                      themeProvider.setTheme(name);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(loc.themeChanged(name)),
+                          duration: const Duration(seconds: 1),
+                        ),
+                      );
+                    }
+                  },
+                ),
               ),
             ),
           ),
@@ -223,7 +278,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 16),
 
           // ==== INFO & LOGOUT ====
-          _buildSectionTitle("About & Security"),
+          Row(
+            children: [
+              Icon(Icons.info, color: Colors.orange.shade400),
+              const SizedBox(width: 8),
+              _buildSectionTitle(loc.aboutSecurity),
+            ],
+          ),
           Card(
             elevation: 1,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -231,7 +292,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 ListTile(
                   leading: const Icon(Icons.info),
-                  title: const Text('About'),
+                  title: Text(loc.about),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () {
                     showAboutDialog(
@@ -245,30 +306,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const Divider(height: 1),
                 ListTile(
                   leading: const Icon(Icons.logout, color: Colors.red),
-                  title: const Text(
-                    'Logout',
-                    style: TextStyle(color: Colors.red),
+                  title: Text(
+                    loc.logout,
+                    style: const TextStyle(color: Colors.red),
                   ),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.red),
                   onTap: () {
                     showDialog(
                       context: context,
                       builder: (context) => AlertDialog(
-                        title: const Text("Confirm"),
-                        content: const Text("Do you really want to logout?"),
+                        title: Text(loc.confirm),
+                        content: Text(loc.doYouReallyWantToLogout),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(context),
-                            child: const Text("Cancel"),
+                            child: Text(loc.cancel),
                           ),
                           TextButton(
                             onPressed: () {
-                              // Navigator.pop(context);
-                              
                               userController.logout(context);
-                              // Execute logout here
                             },
-                            child: const Text("Logout"),
+                            child: Text(loc.logout),
                           ),
                         ],
                       ),
@@ -297,16 +355,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
-}
+// Suppression de l'accolade superflue
 
-class FilterProvider extends ChangeNotifier {
-  String _search = '';
-  String get search => _search;
-
-  void setSearch(String value) {
-    _search = value;
-    notifyListeners();
-  }
-
-  // Add more filter fields as needed (date, status, etc.)
 }

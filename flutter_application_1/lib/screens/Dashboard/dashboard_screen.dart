@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fl_chart/fl_chart.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -11,6 +12,12 @@ class DashboardPage extends StatelessWidget {
     const int pendingRequests = 4;
     const int users = 8;
 
+    // Exemple: récupération du nom et rôle utilisateur (à remplacer par Provider ou autre)
+    final String userName = "John Doe"; // À remplacer par la vraie source
+    final String userRole = "Administrateur";
+    // Ajout d'un menu déroulant pour filtrer la période
+    final List<String> periods = ['Jour', 'Semaine', 'Mois', 'Année'];
+    String selectedPeriod = periods[2];
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7FB),
       appBar: AppBar(
@@ -19,9 +26,25 @@ class DashboardPage extends StatelessWidget {
         foregroundColor: Colors.black87,
         elevation: 0,
         actions: [
+          DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: selectedPeriod,
+              icon: const Icon(Icons.arrow_drop_down),
+              items: periods.map((String value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(value),
+                );
+              }).toList(),
+              onChanged: (value) {
+                // Ici, tu peux gérer le changement de période
+              },
+              style: const TextStyle(color: Colors.black, fontSize: 16),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh Stats',
+            tooltip: 'Rafraîchir les statistiques',
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -40,19 +63,23 @@ class DashboardPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Top Row: Welcome & Search
+            // Header utilisateur
             Row(
               children: [
-                Expanded(
-                  child: Text(
-                    'Welcome back!',
-                    style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey.shade900,
-                    ),
-                  ),
+                CircleAvatar(
+                  radius: 28,
+                  backgroundColor: Colors.blue.shade100,
+                  child: Icon(Icons.person, size: 32, color: Colors.blue.shade700),
                 ),
+                const SizedBox(width: 16),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(userName, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.grey.shade900)),
+                    Text(userRole, style: TextStyle(fontSize: 15, color: Colors.blue.shade700)),
+                  ],
+                ),
+                const Spacer(),
                 SizedBox(
                   width: 300,
                   child: TextField(
@@ -68,7 +95,6 @@ class DashboardPage extends StatelessWidget {
                       ),
                     ),
                     onSubmitted: (value) {
-                      // Example: show a snackbar with the search value
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text('Searching for "$value"...'),
@@ -183,10 +209,10 @@ class DashboardPage extends StatelessWidget {
                 _quickAction(
                   context,
                   icon: Icons.add,
-                  label: 'Add Supplier',
+                  label: 'Add Purchase Request',
                   color: Colors.deepPurple,
-                  route: '/add_supplier',
-                  onTap: () => Navigator.pushNamed(context, '/add_supplier'),
+                  route: '/add_purchase_request',
+                  onTap: () => Navigator.pushNamed(context, '/add_purchase_request'),
                 ),
                 const SizedBox(width: 18),
                 _quickAction(
@@ -359,30 +385,87 @@ class DashboardPage extends StatelessWidget {
   }
 
   Widget _barChartPlaceholder() {
-    // Replace with a real chart widget if needed
-    return Container(
-      height: 60,
-      width: double.infinity,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(12),
+    // Bar chart avec fl_chart
+    return SizedBox(
+      height: 120,
+      child: BarChart(
+        BarChartData(
+          alignment: BarChartAlignment.spaceAround,
+          barTouchData: BarTouchData(enabled: false),
+          titlesData: FlTitlesData(
+            leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (double value, TitleMeta meta) {
+                  final titles = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Text(titles[value.toInt() % titles.length], style: const TextStyle(fontSize: 12)),
+                  );
+                },
+              ),
+            ),
+          ),
+          borderData: FlBorderData(show: false),
+          barGroups: [
+            BarChartGroupData(x: 0, barRods: [BarChartRodData(toY: 8, color: Colors.blue, width: 18)]),
+            BarChartGroupData(x: 1, barRods: [BarChartRodData(toY: 12, color: Colors.green, width: 18)]),
+            BarChartGroupData(x: 2, barRods: [BarChartRodData(toY: 6, color: Colors.orange, width: 18)]),
+            BarChartGroupData(x: 3, barRods: [BarChartRodData(toY: 10, color: Colors.purple, width: 18)]),
+            BarChartGroupData(x: 4, barRods: [BarChartRodData(toY: 14, color: Colors.red, width: 18)]),
+            BarChartGroupData(x: 5, barRods: [BarChartRodData(toY: 9, color: Colors.teal, width: 18)]),
+          ],
+        ),
       ),
-      child: const Text("Bar Chart", style: TextStyle(color: Colors.grey)),
     );
   }
 
   Widget _lineChartPlaceholder() {
-    // Replace with a real chart widget if needed
-    return Container(
-      height: 60,
-      width: double.infinity,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(12),
+    // Line chart avec fl_chart
+    return SizedBox(
+      height: 120,
+      child: LineChart(
+        LineChartData(
+          gridData: FlGridData(show: false),
+          titlesData: FlTitlesData(
+            leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (double value, TitleMeta meta) {
+                  final titles = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Text(titles[value.toInt() % titles.length], style: const TextStyle(fontSize: 12)),
+                  );
+                },
+              ),
+            ),
+          ),
+          borderData: FlBorderData(show: false),
+          lineBarsData: [
+            LineChartBarData(
+              spots: [
+                FlSpot(0, 8),
+                FlSpot(1, 12),
+                FlSpot(2, 6),
+                FlSpot(3, 10),
+                FlSpot(4, 14),
+                FlSpot(5, 9),
+              ],
+              isCurved: true,
+              color: Colors.blue,
+              barWidth: 3,
+              dotData: FlDotData(show: false),
+            ),
+          ],
+        ),
       ),
-      child: const Text("Line Chart", style: TextStyle(color: Colors.grey)),
     );
   }
 
@@ -396,20 +479,29 @@ class DashboardPage extends StatelessWidget {
   }) {
     return Padding(
       padding: const EdgeInsets.only(right: 8.0),
-      child: ElevatedButton.icon(
-        icon: Icon(icon, size: 22),
-        label: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
-          child: Text(label, style: const TextStyle(fontSize: 16)),
-        ),
-        onPressed: onTap,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: color,
-          foregroundColor: Colors.white,
-          minimumSize: const Size(180, 48),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          elevation: 3,
-          shadowColor: color.withOpacity(0.3),
+      child: Tooltip(
+        message: label,
+        child: ElevatedButton.icon(
+          icon: Icon(icon, size: 22),
+          label: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+            child: Text(label, style: const TextStyle(fontSize: 16)),
+          ),
+          onPressed: () {
+            if (label == 'Add Purchase Request') {
+              Navigator.pushNamed(context, '/purchase_requestor_form');
+            } else {
+              onTap();
+            }
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: color,
+            foregroundColor: Colors.white,
+            minimumSize: const Size(180, 48),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            elevation: 3,
+            shadowColor: color.withOpacity(0.3),
+          ),
         ),
       ),
     );
