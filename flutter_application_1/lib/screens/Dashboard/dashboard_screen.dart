@@ -209,10 +209,10 @@ class DashboardPage extends StatelessWidget {
                 _quickAction(
                   context,
                   icon: Icons.add,
-                  label: 'Add Supplier',
+                  label: 'Add Purchase Request',
                   color: Colors.deepPurple,
-                  route: '/add_supplier',
-                  onTap: () => Navigator.pushNamed(context, '/add_supplier'),
+                  route: '/add_purchase_request',
+                  onTap: () => Navigator.pushNamed(context, '/add_purchase_request'),
                 ),
                 const SizedBox(width: 18),
                 _quickAction(
@@ -487,7 +487,13 @@ class DashboardPage extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
             child: Text(label, style: const TextStyle(fontSize: 16)),
           ),
-          onPressed: onTap,
+          onPressed: () {
+            if (label == 'Add Purchase Request') {
+              Navigator.pushNamed(context, '/purchase_requestor_form');
+            } else {
+              onTap();
+            }
+          },
           style: ElevatedButton.styleFrom(
             backgroundColor: color,
             foregroundColor: Colors.white,

@@ -90,6 +90,8 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
               _buildField('Brand', prod.brand ?? '-', width: 90),
               const SizedBox(width: 8),
               _buildField('Unit Price', (prod.unitPrice ?? 0.0).toStringAsFixed(2), width: 90, prefix: '\$'),
+              // _buildField('Unit Price', (prod.unitPrice ?? 0.0).toStringAsFixed(2), width: 90, prefix: '\$'),
+            
               const SizedBox(width: 8),
               _buildField('Supplier', prod.supplier ?? '-', width: 100),
               const SizedBox(width: 8),
@@ -151,9 +153,14 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                 alignment: Alignment.topRight,
                 child: _buildField(
                   'Total Price',
-                  products.isNotEmpty
-                    ? products.where((p) => p.price != null).fold<double>(0.0, (sum, p) => sum + (p.price as double)).toStringAsFixed(2)
-                    : '0.00',
+                  (() {
+                    if (products.isEmpty) return '0.00';
+                    final sum = products.fold<double>(0.0, (total, p) {
+                      final price = (p.price is num) ? (p.price as num).toDouble() : 0.0;
+                      return total + price;
+                    });
+                    return sum.toStringAsFixed(2);
+                  })(),
                   width: 140,
                   prefix: '\$',
                 ),
@@ -187,42 +194,45 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                             'id': _order.id,
                             'requested_by_user': _order.requestedByUser,
                             'approved_by': userController.currentUser.id,
-                            'status': 'Approved',
+                            'status': 'approved',
                             'start_date': _order.startDate != null ? DateFormat('yyyy-MM-dd').format(_order.startDate!) : null,
                             'end_date': _order.endDate != null ? DateFormat('yyyy-MM-dd').format(_order.endDate!) : null,
                             'priority': _order.priority,
                             'description': _order.description,
-                            'products': _order.products,
+                            'products': (_order.products ?? []).map((p) => p.toJson()).toList(),
                             'title': _order.title ?? '',
                             'created_at': _order.createdAt != null ? DateFormat('yyyy-MM-dd').format(_order.createdAt!) : null,
                             'updated_at': DateFormat('yyyy-MM-dd').format(DateTime.now()),
                           };
                           await purchaseOrderController.updateOrder(updatedOrderJson);
                           await purchaseOrderController.fetchOrders();
-                          setState(() {
-                            // Met à jour l'objet local pour l'affichage
-                            _order = PurchaseOrder(
-                              id: _order.id,
-                              requestedByUser: _order.requestedByUser,
-                              approvedBy: userController.currentUser.id,
-                              status: 'Approved',
-                              startDate: _order.startDate,
-                              endDate: _order.endDate,
-                              priority: _order.priority,
-                              description: _order.description,
-                              products: _order.products,
-                              title: _order.title,
-                              createdAt: _order.createdAt,
-                              updatedAt: DateTime.now(),
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Order approved!'), backgroundColor: Colors.green),
                             );
-                          });
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Order approved!'), backgroundColor: Colors.green),
-                          );
+                            setState(() {
+                              _order = PurchaseOrder(
+                                id: _order.id,
+                                requestedByUser: _order.requestedByUser,
+                                approvedBy: userController.currentUser.id,
+                                status: 'Approved',
+                                startDate: _order.startDate,
+                                endDate: _order.endDate,
+                                priority: _order.priority,
+                                description: _order.description,
+                                products: _order.products,
+                                title: _order.title,
+                                createdAt: _order.createdAt,
+                                updatedAt: DateTime.now(),
+                              );
+                            });
+                          }
                         } catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-                          );
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+                            );
+                          }
                         }
                       },
                       style: ElevatedButton.styleFrom(
@@ -242,41 +252,45 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                             'id': _order.id,
                             'requested_by_user': _order.requestedByUser,
                             'approved_by': userController.currentUser.id,
-                            'status': 'Rejected',
+                            'status': 'rejected',
                             'start_date': _order.startDate != null ? DateFormat('yyyy-MM-dd').format(_order.startDate!) : null,
                             'end_date': _order.endDate != null ? DateFormat('yyyy-MM-dd').format(_order.endDate!) : null,
                             'priority': _order.priority,
                             'description': _order.description,
-                            'products': _order.products,
+                            'products': (_order.products ?? []).map((p) => p.toJson()).toList(),
                             'title': _order.title ?? '',
                             'created_at': _order.createdAt != null ? DateFormat('yyyy-MM-dd').format(_order.createdAt!) : null,
                             'updated_at': DateFormat('yyyy-MM-dd').format(DateTime.now()),
                           };
                           await purchaseOrderController.updateOrder(updatedOrderJson);
                           await purchaseOrderController.fetchOrders();
-                          setState(() {
-                            _order = PurchaseOrder(
-                              id: _order.id,
-                              requestedByUser: _order.requestedByUser,
-                              approvedBy: userController.currentUser.id,
-                              status: 'Rejected',
-                              startDate: _order.startDate,
-                              endDate: _order.endDate,
-                              priority: _order.priority,
-                              description: _order.description,
-                              products: _order.products,
-                              title: _order.title,
-                              createdAt: _order.createdAt,
-                              updatedAt: DateTime.now(),
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Order rejected!'), backgroundColor: Colors.red),
                             );
-                          });
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Order rejected!'), backgroundColor: Colors.red),
-                          );
+                            setState(() {
+                              _order = PurchaseOrder(
+                                id: _order.id,
+                                requestedByUser: _order.requestedByUser,
+                                approvedBy: userController.currentUser.id,
+                                status: 'Rejected',
+                                startDate: _order.startDate,
+                                endDate: _order.endDate,
+                                priority: _order.priority,
+                                description: _order.description,
+                                products: _order.products,
+                                title: _order.title,
+                                createdAt: _order.createdAt,
+                                updatedAt: DateTime.now(),
+                              );
+                            });
+                          }
                         } catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-                          );
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+                            );
+                          }
                         }
                       },
                       style: ElevatedButton.styleFrom(

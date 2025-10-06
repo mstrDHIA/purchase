@@ -73,12 +73,13 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
     })
     .toList();
 
-    // Filtres
+    // Filtres (désactivés)
+    /*
     if (_priorityFilter != null) {
-      mapped = mapped.where((order) => order['priority'] == _priorityFilter).toList();
+      mapped = mapped.where((order) => order['priority'].toString().toLowerCase() == _priorityFilter!.toLowerCase()).toList();
     }
     if (_statusFilter != null) {
-      mapped = mapped.where((order) => order['status'] == _statusFilter).toList();
+      mapped = mapped.where((order) => order['status'].toString().toLowerCase() == _statusFilter!.toLowerCase()).toList();
     }
     if (_selectedSubmissionDate != null) {
       mapped = mapped.where((order) =>
@@ -92,8 +93,10 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
           order['dueDate'].month == _selectedDueDate!.month &&
           order['dueDate'].day == _selectedDueDate!.day).toList();
     }
+    */
 
-    // Tri
+    // Tri (désactivé)
+    /*
     if (_sortColumnIndex != null) {
       String sortKey = '';
       switch (_sortColumnIndex) {
@@ -128,6 +131,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
         return 0;
       });
     }
+    */
 
     return mapped;
   }
@@ -283,16 +287,16 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           // ...existing code for filters...
-          PopupMenuButton<String>(
+          PopupMenuButton<String?>(
             onSelected: (value) {
               setState(() {
                 _priorityFilter = value;
               });
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(value: 'High', child: Text('High')),
-              const PopupMenuItem(value: 'Medium', child: Text('Medium')),
-              const PopupMenuItem(value: 'Low', child: Text('Low')),
+              const PopupMenuItem(value: 'high', child: Text('high')),
+              const PopupMenuItem(value: 'medium', child: Text('medium')),
+              const PopupMenuItem(value: 'low', child: Text('low')),
               if (_priorityFilter != null)
                 const PopupMenuItem(value: null, child: Text('Clear Priority')),
             ],
@@ -305,7 +309,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                 elevation: 0,
               ),
-              onPressed: null, // Désactive le onPressed ici
+              onPressed: null,
               child: Row(
                 children: [
                   Text(
@@ -321,7 +325,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
             ),
           ),
           const SizedBox(width: 8),
-          PopupMenuButton<String>(
+          PopupMenuButton<String?>(
             onSelected: (value) {
               setState(() {
                 _statusFilter = value;
@@ -421,16 +425,14 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
     // Utilise l'objet PurchaseOrder réel pour l'affichage
     final purchaseOrder = order['original'];
     final userController = Provider.of<UserController>(context, listen: false);
-    final result = await Navigator.push(
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => PurchaseOrderView.withProviders(order: purchaseOrder, userController: userController),
       ),
     );
-    // Si l'utilisateur a accepté/refusé, on rafraîchit la liste
-    if (result != null) {
-      Provider.of<PurchaseOrderController>(context, listen: false).fetchOrders();
-    }
+    // Toujours rafraîchir la liste après retour de la page détail
+    Provider.of<PurchaseOrderController>(context, listen: false).fetchOrders();
   }
 
   void editPurchaseOrder(Map<String, dynamic> order) async {
@@ -604,55 +606,58 @@ class _PurchaseOrderDataSource extends DataTableSource {
   }
 
   Widget _buildPriorityChip(String priority) {
-    // Use lowercase for comparison
     final v = priority.toLowerCase();
-    Color color;
-    Color textColor = Colors.white;
+    Color bgColor;
     if (v == 'low') {
-      color = const Color(0xFF64B5F6); // blue
+      bgColor = const Color(0xFF64B5F6); // blue
     } else if (v == 'medium') {
-      color = const Color(0xFFFFB74D); // orange
+      bgColor = const Color(0xFFFFB74D); // orange
     } else if (v == 'high') {
-      color = const Color(0xFFE57373); // red
+      bgColor = const Color(0xFFE57373); // red
     } else {
-      color = Colors.grey;
+      bgColor = Colors.grey;
     }
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      constraints: const BoxConstraints(minWidth: 36),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(4),
+        color: bgColor,
+        borderRadius: BorderRadius.circular(6),
       ),
+      alignment: Alignment.center,
       child: Text(
         v,
-        style: TextStyle(color: textColor, fontSize: 12, fontWeight: FontWeight.bold),
+        textAlign: TextAlign.center,
+        style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.2),
       ),
     );
   }
 
   Widget _buildStatusChip(String status) {
     final v = status.toLowerCase();
-    Color color;
-    Color textColor = Colors.white;
+    Color bgColor;
     if (v == 'approved') {
-      color = const Color(0xFF4CAF50); // green
+      bgColor = const Color(0xFF4CAF50); // green
     } else if (v == 'pending') {
-      color = const Color(0xFFFFB74D); // orange
+      bgColor = const Color(0xFFFFB74D); // orange
     } else if (v == 'rejected') {
-      color = const Color(0xFFEF5350); // red
+      bgColor = const Color(0xFFEF5350); // red
     } else {
-      color = Colors.grey[300]!;
-      textColor = Colors.black;
+      bgColor = Colors.grey;
     }
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      constraints: const BoxConstraints(minWidth: 0),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
       decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(4),
+        color: bgColor,
+        borderRadius: BorderRadius.circular(10),
       ),
+      alignment: Alignment.center,
       child: Text(
         v,
-        style: TextStyle(color: textColor, fontSize: 12, fontWeight: FontWeight.bold),
+        textAlign: TextAlign.center,
+        
+        style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.2),
       ),
     );
   }

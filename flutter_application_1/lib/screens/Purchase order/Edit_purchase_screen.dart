@@ -40,7 +40,7 @@ class EditPurchaseOrder extends StatefulWidget {
     required this.onSave,
     required this.initialOrder,
   });
-
+       
   @override
   State<EditPurchaseOrder> createState() => _EditPurchaseOrderState();
 }
@@ -171,7 +171,7 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      drawer: _buildDrawer(context),
+      // drawer: _buildDrawer(context),
       appBar: AppBar(
         title: const Text('Edit Purchase Order'),
         backgroundColor: const Color(0xFF8C7AE6),
@@ -547,11 +547,7 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
     );
   }
 
-  Drawer _buildDrawer(BuildContext context) {
-    return const Drawer(
-      child: Center(child: Text("Menu here")),
-    );
-  }
+  
 
   // ...existing code...
 }
