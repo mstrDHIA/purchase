@@ -9,16 +9,19 @@ class ProductLine {
       'brand': brand,
       'quantity': quantity,
       'unit_price': unitPrice,
+      'supplier': supplier,
     };
   }
   String? product;
   String? brand;
   int quantity;
+  String? supplier;
   double unitPrice;
 
   ProductLine({
     this.product,
     this.brand,
+    this.supplier,
     this.quantity = 1,
     this.unitPrice = 12.33,
   });

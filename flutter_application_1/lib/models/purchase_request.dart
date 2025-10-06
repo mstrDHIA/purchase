@@ -38,6 +38,7 @@ class PurchaseRequest {
           return ProductLine(
             product: item['product'],
             brand: item['brand'],
+            supplier: item['supplier'],
             quantity: item['quantity'] ?? 1,
             unitPrice: (item['unit_price'] ?? 0).toDouble(),
           );
