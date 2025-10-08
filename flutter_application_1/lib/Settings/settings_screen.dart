@@ -19,7 +19,7 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   late UserController userController;
   bool _notificationsEnabled = true;
-  String _selectedLanguage = "Français";
+  String _selectedLanguage = "English";
   
  
   Map<String, dynamic> user = {
@@ -38,7 +38,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _loadLanguagePreference() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _selectedLanguage = prefs.getString("language") ?? "Français";
+      _selectedLanguage = prefs.getString("language") ?? "English";
     });
   }
 

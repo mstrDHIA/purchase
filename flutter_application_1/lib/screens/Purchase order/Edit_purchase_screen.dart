@@ -95,7 +95,17 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
   if (_updatedAt == null) {
     _updatedAt = DateTime.now();
   }
-      supplierName = initial['supplier'] ?? initial['supplierName'] ?? '';
+      // Pré-remplir le champ Supplier Name si la valeur existe, sinon le chercher dans les produits
+      supplierName = initial['supplier'] ?? initial['supplierName'] ?? initial['Supplier'];
+      if ((supplierName == null || (supplierName?.isEmpty ?? true)) && initial['products'] != null && initial['products'] is List) {
+        for (final p in (initial['products'] as List)) {
+          final s = p['supplier']?.toString() ?? p['Supplier']?.toString();
+          if (s != null && s.isNotEmpty) {
+            supplierName = s;
+            break;
+          }
+        }
+      }
       supplierNameController.text = supplierName ?? '';
 
       if (initial['endDate'] != null) {
@@ -210,11 +220,13 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
             const SizedBox(height: 8),
             TextFormField(
               controller: supplierNameController,
+              readOnly: true,
               decoration: const InputDecoration(
                 labelText: 'Supplier name',
                 border: OutlineInputBorder(),
+                fillColor: Color(0xFFF0F0F0),
+                filled: true,
               ),
-              onChanged: (val) => setState(() => supplierName = val),
             ),
             const SizedBox(height: 24),
 
@@ -411,7 +423,7 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
             .updateOrder(jsonBody);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Purchase order updated!')),
+            const SnackBar(backgroundColor: Colors.green, content: Text('Purchase order updated!')),
           );
           Navigator.of(context).pop(jsonBody);
         }
