@@ -31,6 +31,7 @@ class PurchaseRequest {
 
   PurchaseRequest.fromJson(Map<String, dynamic> json) {
     id = json['id'];
+
     // Dates: check for null and parse
     startDate = json['start_date'] != null ? DateTime.tryParse(json['start_date'].toString()) : null;
     endDate = json['end_date'] != null ? DateTime.tryParse(json['end_date'].toString()) : null;

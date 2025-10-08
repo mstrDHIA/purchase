@@ -73,10 +73,11 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
         'dueDate': parseDate(order.endDate),
         'priority': order.priority ?? '',
         'status': order.status ?? '',
-        'original': order, // Keep the real PurchaseOrder object
+        'original': order,
       };
     }).toList();
 
+// <<<<<<< HEAD
     // Search filter: only show orders that match the search text in any main field
     if (_searchText.isNotEmpty) {
       final searchLower = _searchText.toLowerCase();
@@ -206,7 +207,66 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
         ),
       ],
     );
-  }
+// =======
+  // Filtering
+//   if (_priorityFilter != null) {
+//     mapped = mapped.where((order) => order['priority'].toString().toLowerCase() == _priorityFilter!.toLowerCase()).toList();
+// >>>>>>> 3aef541da9fcbe051f5175130df5e72d614fba17
+//   }
+//   if (_statusFilter != null) {
+//     mapped = mapped.where((order) => order['status'].toString().toLowerCase() == _statusFilter!.toLowerCase()).toList();
+//   }
+//   if (_selectedSubmissionDate != null) {
+//     mapped = mapped.where((order) =>
+//         order['dateSubmitted'].year == _selectedSubmissionDate!.year &&
+//         order['dateSubmitted'].month == _selectedSubmissionDate!.month &&
+//         order['dateSubmitted'].day == _selectedSubmissionDate!.day).toList();
+//   }
+//   if (_selectedDueDate != null) {
+//     mapped = mapped.where((order) =>
+//         order['dueDate'].year == _selectedDueDate!.year &&
+//         order['dueDate'].month == _selectedDueDate!.month &&
+//         order['dueDate'].day == _selectedDueDate!.day).toList();
+//   }
+
+//   // Sorting
+//   if (_sortColumnIndex != null) {
+//     String sortKey = '';
+//     switch (_sortColumnIndex) {
+//       case 0:
+//         sortKey = 'id';
+//         break;
+//       case 1:
+//         sortKey = 'actionCreatedBy';
+//         break;
+//       case 2:
+//         sortKey = 'dateSubmitted';
+//         break;
+//       case 3:
+//         sortKey = 'dueDate';
+//         break;
+//       case 4:
+//         sortKey = 'priority';
+//         break;
+//       case 5:
+//         sortKey = 'status';
+//         break;
+//     }
+
+//     mapped.sort((a, b) {
+//       dynamic aValue = a[sortKey];
+//       dynamic bValue = b[sortKey];
+//       if (aValue is String && bValue is String) {
+//         return _sortAscending ? aValue.compareTo(bValue) : bValue.compareTo(aValue);
+//       } else if (aValue is DateTime && bValue is DateTime) {
+//         return _sortAscending ? aValue.compareTo(bValue) : bValue.compareTo(aValue);
+//       }
+//       return 0;
+//     });
+//   }
+
+//   return mapped;
+}
 
   void _sort<T>(int columnIndex, bool ascending) {
     setState(() {
@@ -727,18 +787,21 @@ class _PurchaseOrderDataSource extends DataTableSource {
     } else {
       bgColor = Colors.grey;
     }
-    return Container(
-      constraints: const BoxConstraints(minWidth: 36),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        v,
-        textAlign: TextAlign.center,
-        style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.2),
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Container(
+        constraints: const BoxConstraints(minWidth: 36),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          v,
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.2),
+        ),
       ),
     );
   }
@@ -755,19 +818,22 @@ class _PurchaseOrderDataSource extends DataTableSource {
     } else {
       bgColor = Colors.grey;
     }
-    return Container(
-      constraints: const BoxConstraints(minWidth: 0),
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        v,
-        textAlign: TextAlign.center,
-        
-        style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.2),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Container(
+        constraints: const BoxConstraints(minWidth: 0),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          v,
+          textAlign: TextAlign.center,
+          
+          style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.2),
+        ),
       ),
     );
   }
@@ -841,4 +907,3 @@ class ViewPurchasePage extends StatelessWidget {
     );
   }
 }
-      
