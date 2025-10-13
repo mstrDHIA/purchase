@@ -85,7 +85,7 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  String _selected = 'Home';
+  String _selected = 'Dashboard';
   // late UserController userController  ;
   late UserController userController;
 
@@ -93,8 +93,6 @@ class _MainScreenState extends State<MainScreen> {
 
   Widget _getPage({required int id}) {
     switch (_selected) {
-      case 'Home':
-        return const home.HomePage();
       case 'Dashboard':
         return const dashboard.DashboardPage();
       case 'Profile':
@@ -114,7 +112,7 @@ class _MainScreenState extends State<MainScreen> {
       case 'Settings':
         return const SettingsScreen();
       default:
-        return const Center(child: Text('Home Page'));
+        return const dashboard.DashboardPage() ;
     }
   }
   // @override

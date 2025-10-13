@@ -181,7 +181,7 @@ class UserController extends ChangeNotifier {
       selectedUserId = currentUserId;
       currentUser = User.fromJson(response.data['user']);
       print('current user id: {$currentUserId}');
-      context.go('/main_screen');
+  context.go('/main_screen');
       print(decodedToken);
       print(response.data);
       isLoading = false;

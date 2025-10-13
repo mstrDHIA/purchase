@@ -153,49 +153,115 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
           : Column(
               children: [
                 const SizedBox(height: 16),
-                // --- Filter Bar + Search ---
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      // Search Bar
-                      SizedBox(
-                        width: 240,
-                        child: TextField(
-                          controller: _searchController,
-                          onChanged: (value) {
-                            setState(() {
-                              _searchText = value;
-                            });
-                          },
-                          decoration: InputDecoration(
-                            hintText: AppLocalizations.of(context)!.search,
-                            prefixIcon: const Icon(Icons.search),
-                            filled: true,
-                            fillColor: Color(0xFFF7F3FF),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(22),
-                              borderSide: BorderSide.none,
+                // --- Search Bar + Filtres sur la même ligne ---
+                Padding(
+                  padding: const EdgeInsets.only( top: 20, bottom: 8.0),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Search Bar alignée à gauche
+                        SizedBox(
+                          width: 440,
+                          child: TextField(
+                            controller: _searchController,
+                            onChanged: (value) {
+                              setState(() {
+                                _searchText = value;
+                              });
+                            },
+                            decoration: InputDecoration(
+                              hintText: AppLocalizations.of(context)!.search,
+                              prefixIcon: const Icon(Icons.search),
+                              filled: true,
+                              fillColor: Color(0xFFF7F3FF),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 12),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(22),
+                                borderSide: BorderSide.none,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Filter by Status
-                      PopupMenuButton<String>(
-                        onSelected: (String value) {
-                          setState(() {
-                            _statusFilter = value;
-                          });
-                        },
-                        itemBuilder: (context) => [
-                          ..._statusOptions.map((status) => PopupMenuItem(
-                                value: status,
-                                child: Text(status[0].toUpperCase() + status.substring(1)),
-                              )),
-                        ],
-                        child: OutlinedButton(
+                        const SizedBox(width: 8),
+                        // Les filtres suivent
+                        PopupMenuButton<String>(
+                          onSelected: (String value) {
+                            setState(() {
+                              _statusFilter = value;
+                            });
+                          },
+                          itemBuilder: (context) => [
+                            ..._statusOptions.map((status) => PopupMenuItem(
+                                  value: status,
+                                  child: Text(status[0].toUpperCase() + status.substring(1)),
+                                )),
+                          ],
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              backgroundColor: const Color(0xFFF7F3FF),
+                              foregroundColor: Colors.deepPurple,
+                              side: BorderSide.none,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                              elevation: 0,
+                            ),
+                            onPressed: null,
+                            child: Row(
+                              children: [
+                                Text(
+                                  _statusFilter == null ? 'Filter by Status' : 'Status: ${_statusFilter![0].toUpperCase() + _statusFilter!.substring(1)}',
+                                  style: const TextStyle(
+                                    color: Colors.deepPurple,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const Icon(Icons.arrow_drop_down, color: Colors.deepPurple),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        PopupMenuButton<String>(
+                          onSelected: (String value) {
+                            setState(() {
+                              _priorityFilter = value;
+                            });
+                          },
+                          itemBuilder: (context) => [
+                            ..._priorityOptions.map((priority) => PopupMenuItem(
+                                  value: priority,
+                                  child: Text(priority[0].toUpperCase() + priority.substring(1)),
+                                )),
+                          ],
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              backgroundColor: const Color(0xFFF7F3FF),
+                              foregroundColor: Colors.deepPurple,
+                              side: BorderSide.none,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                              elevation: 0,
+                            ),
+                            onPressed: null,
+                            child: Row(
+                              children: [
+                                Text(
+                                  _priorityFilter == null ? 'Filter by Priority' : 'Priority: ${_priorityFilter![0].toUpperCase() + _priorityFilter!.substring(1)}',
+                                  style: const TextStyle(
+                                    color: Colors.deepPurple,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const Icon(Icons.arrow_drop_down, color: Colors.deepPurple),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        OutlinedButton(
                           style: OutlinedButton.styleFrom(
                             backgroundColor: const Color(0xFFF7F3FF),
                             foregroundColor: Colors.deepPurple,
@@ -204,36 +270,19 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                             elevation: 0,
                           ),
-                          onPressed: null,
-                          child: Row(
-                            children: [
-                              Text(
-                                _statusFilter == null ? 'Filter by Status' : 'Status: ${_statusFilter![0].toUpperCase() + _statusFilter!.substring(1)}',
-                                style: const TextStyle(
-                                  color: Colors.deepPurple,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              const Icon(Icons.arrow_drop_down, color: Colors.deepPurple),
-                            ],
+                          onPressed: () => _selectDate(context, true),
+                          child: Text(
+                            _selectedSubmissionDate == null
+                                ? 'Filter by Submission Date'
+                                : 'Submission: ${_dateFormat.format(_selectedSubmissionDate!)}',
+                            style: const TextStyle(
+                              color: Colors.deepPurple,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Filter by Priority
-                      PopupMenuButton<String>(
-                        onSelected: (String value) {
-                          setState(() {
-                            _priorityFilter = value;
-                          });
-                        },
-                        itemBuilder: (context) => [
-                          ..._priorityOptions.map((priority) => PopupMenuItem(
-                                value: priority,
-                                child: Text(priority[0].toUpperCase() + priority.substring(1)),
-                              )),
-                        ],
-                        child: OutlinedButton(
+                        const SizedBox(width: 8),
+                        OutlinedButton(
                           style: OutlinedButton.styleFrom(
                             backgroundColor: const Color(0xFFF7F3FF),
                             foregroundColor: Colors.deepPurple,
@@ -242,83 +291,33 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                             elevation: 0,
                           ),
-                          onPressed: null,
-                          child: Row(
-                            children: [
-                              Text(
-                                _priorityFilter == null ? 'Filter by Priority' : 'Priority: ${_priorityFilter![0].toUpperCase() + _priorityFilter!.substring(1)}',
-                                style: const TextStyle(
-                                  color: Colors.deepPurple,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              const Icon(Icons.arrow_drop_down, color: Colors.deepPurple),
-                            ],
+                          onPressed: () => _selectDate(context, false),
+                          child: Text(
+                            _selectedDueDate == null
+                                ? 'Filter by Due Date'
+                                : 'Due: ${_dateFormat.format(_selectedDueDate!)}',
+                            style: const TextStyle(
+                              color: Colors.deepPurple,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Filter by Submission Date
-                      OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          backgroundColor: const Color(0xFFF7F3FF),
-                          foregroundColor: Colors.deepPurple,
-                          side: BorderSide.none,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                          elevation: 0,
-                        ),
-                        onPressed: () => _selectDate(context, true),
-                        child: Text(
-                          _selectedSubmissionDate == null
-                              ? 'Filter by Submission Date'
-                              : 'Submission: ${_dateFormat.format(_selectedSubmissionDate!)}',
-                          style: const TextStyle(
-                            
-                            color: Colors.deepPurple,
-                            fontWeight: FontWeight.w500,
+                        const SizedBox(width: 8),
+                        TextButton(
+                          onPressed: _clearFilters,
+                          child: const Text(
+                            'Clear Filters',
+                            style: TextStyle(
+                              color: Colors.deepPurple,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Filter by Due Date
-                      OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          backgroundColor: const Color(0xFFF7F3FF),
-                          foregroundColor: Colors.deepPurple,
-                          side: BorderSide.none,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                          elevation: 0,
-                        ),
-                        onPressed: () => _selectDate(context, false),
-                        child: Text(
-                          _selectedDueDate == null
-                              ? 'Filter by Due Date'
-                              : 'Due: ${_dateFormat.format(_selectedDueDate!)}',
-                          style: const TextStyle(
-                            color: Colors.deepPurple,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Clear Filters
-                      TextButton(
-                        onPressed: _clearFilters,
-                        child: const Text(
-                          'Clear Filters',
-                          style: TextStyle(
-                            color: Colors.deepPurple,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-                const SizedBox(height: 8),
-                // --- End Filter Bar ---
+                // --- End Search Bar + Filtres ---
                 Expanded(
                   child: Consumer<PurchaseRequestController>(
                     builder: (context, purchaseRequestController, child) {
@@ -427,7 +426,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                                     },
                                     sortColumnIndex: _sortColumnIndex,
                                     sortAscending: _sortAscending,
-                                    columnSpacing: 190,
+                                    columnSpacing: 180,
                                     horizontalMargin: 16,
                                     columns: [
                                       DataColumn(

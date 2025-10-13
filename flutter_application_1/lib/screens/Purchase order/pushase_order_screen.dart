@@ -42,6 +42,56 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
   final TextEditingController _searchController = TextEditingController();
   String _searchText = '';
 
+  // int _page = 0; // Removed duplicate declaration.
+
+  Widget _buildCustomPaginationFooter(int totalRows) {
+    final maxPage = (totalRows / _rowsPerPage).ceil();
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        const Text('Lignes par page :'),
+        const SizedBox(width: 8),
+        DropdownButton<int>(
+          value: _rowsPerPage,
+          items: [5, 10, 20, 50].map((int value) {
+            return DropdownMenuItem<int>(
+              value: value,
+              child: Text('$value'),
+            );
+          }).toList(),
+          onChanged: (value) {
+            if (value != null) {
+              setState(() {
+                _rowsPerPage = value;
+                _page = 0; // Reset to first page
+              });
+            }
+          },
+        ),
+        const SizedBox(width: 16),
+        IconButton(
+          icon: const Icon(Icons.chevron_left),
+          onPressed: _page > 0
+              ? () => setState(() {
+                    _page--;
+                  })
+              : null,
+        ),
+        Text(
+          '${_page * _rowsPerPage + 1} - ${((_page + 1) * _rowsPerPage).clamp(1, totalRows)} sur $totalRows',
+        ),
+        IconButton(
+          icon: const Icon(Icons.chevron_right),
+          onPressed: (_page + 1) < maxPage
+              ? () => setState(() {
+                    _page++;
+                  })
+              : null,
+        ),
+      ],
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -137,14 +187,20 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
         return 0;
       });
     }
+    //  
+final start = _page * _rowsPerPage;
+final end = start + _rowsPerPage;
+if (start >= mapped.length) return [];
+return mapped.sublist(start, end > mapped.length ? mapped.length : end);
+
 
     // Pagination logic
-    final start = _page * _rowsPerPage;
-    final end = start + _rowsPerPage;
-    return mapped.sublist(
-      start < mapped.length ? start : mapped.length,
-      end < mapped.length ? end : mapped.length,
-    );
+    // final start = _page * _rowsPerPage;
+    // final end = start + _rowsPerPage;
+    // return mapped.sublist(
+    //   start < mapped.length ? start : mapped.length,
+    //   end < mapped.length ? end : mapped.length,
+    // );
   }
 
   void _goToPage(int page, int totalRows) {
@@ -160,113 +216,87 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
     });
   }
 
-  Widget _buildCustomPagination(int totalRows) {
-    final maxPage = (totalRows / _rowsPerPage).ceil();
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        ElevatedButton(
-          onPressed: _page > 0 ? () => _goToPage(_page - 1, totalRows) : null,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.grey[200],
-            foregroundColor: Colors.deepPurple,
-            elevation: 0,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-            minimumSize: const Size(36, 36),
-          ),
-          child: const Text('Previous'),
-        ),
-        const SizedBox(width: 8),
-        ...List.generate(maxPage, (index) => Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 2),
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: index == _page ? Colors.deepPurple : Colors.grey[200],
-              foregroundColor: index == _page ? Colors.white : Colors.deepPurple,
-              minimumSize: const Size(36, 36),
-              padding: EdgeInsets.zero,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-            ),
-            onPressed: () => _goToPage(index, totalRows),
-            child: Text('${index + 1}'),
-          ),
-        )),
-        const SizedBox(width: 8),
-        ElevatedButton(
-          onPressed: (_page + 1) < maxPage ? () => _goToPage(_page + 1, totalRows) : null,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.grey[200],
-            foregroundColor: Colors.deepPurple,
-            elevation: 0,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-            minimumSize: const Size(36, 36),
-          ),
-          child: const Text('Next'),
-        ),
-      ],
-    );
-// =======
-  // Filtering
-//   if (_priorityFilter != null) {
-//     mapped = mapped.where((order) => order['priority'].toString().toLowerCase() == _priorityFilter!.toLowerCase()).toList();
-// >>>>>>> 3aef541da9fcbe051f5175130df5e72d614fba17
-//   }
-//   if (_statusFilter != null) {
-//     mapped = mapped.where((order) => order['status'].toString().toLowerCase() == _statusFilter!.toLowerCase()).toList();
-//   }
-//   if (_selectedSubmissionDate != null) {
-//     mapped = mapped.where((order) =>
-//         order['dateSubmitted'].year == _selectedSubmissionDate!.year &&
-//         order['dateSubmitted'].month == _selectedSubmissionDate!.month &&
-//         order['dateSubmitted'].day == _selectedSubmissionDate!.day).toList();
-//   }
-//   if (_selectedDueDate != null) {
-//     mapped = mapped.where((order) =>
-//         order['dueDate'].year == _selectedDueDate!.year &&
-//         order['dueDate'].month == _selectedDueDate!.month &&
-//         order['dueDate'].day == _selectedDueDate!.day).toList();
-//   }
+//   Widget _buildCustomPagination(int totalRows) {
+//     final maxPage = (totalRows / _rowsPerPage).ceil();
+//     return Row(
+//       mainAxisAlignment: MainAxisAlignment.center,
+//       children: [
+//         ...List.generate(maxPage, (index) => Padding(
+//           padding: const EdgeInsets.symmetric(horizontal: 2),
+//           child: ElevatedButton(
+//             style: ElevatedButton.styleFrom(
+//               backgroundColor: index == _page ? Colors.deepPurple : Colors.grey[200],
+//               foregroundColor: index == _page ? Colors.white : Colors.deepPurple,
+//               minimumSize: const Size(36, 36),
+//               padding: EdgeInsets.zero,
+//               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+//             ),
+//             onPressed: () => _goToPage(index, totalRows),
+//             child: Text('${index + 1}'),
+//           ),
+//         )),
+//       ],
+//     );
+// // =======
+//   // Filtering
+// //   if (_priorityFilter != null) {
+// //     mapped = mapped.where((order) => order['priority'].toString().toLowerCase() == _priorityFilter!.toLowerCase()).toList();
+// // >>>>>>> 3aef541da9fcbe051f5175130df5e72d614fba17
+// //   }
+// //   if (_statusFilter != null) {
+// //     mapped = mapped.where((order) => order['status'].toString().toLowerCase() == _statusFilter!.toLowerCase()).toList();
+// //   }
+// //   if (_selectedSubmissionDate != null) {
+// //     mapped = mapped.where((order) =>
+// //         order['dateSubmitted'].year == _selectedSubmissionDate!.year &&
+// //         order['dateSubmitted'].month == _selectedSubmissionDate!.month &&
+// //         order['dateSubmitted'].day == _selectedSubmissionDate!.day).toList();
+// //   }
+// //   if (_selectedDueDate != null) {
+// //     mapped = mapped.where((order) =>
+// //         order['dueDate'].year == _selectedDueDate!.year &&
+// //         order['dueDate'].month == _selectedDueDate!.month &&
+// //         order['dueDate'].day == _selectedDueDate!.day).toList();
+// //   }
 
-//   // Sorting
-//   if (_sortColumnIndex != null) {
-//     String sortKey = '';
-//     switch (_sortColumnIndex) {
-//       case 0:
-//         sortKey = 'id';
-//         break;
-//       case 1:
-//         sortKey = 'actionCreatedBy';
-//         break;
-//       case 2:
-//         sortKey = 'dateSubmitted';
-//         break;
-//       case 3:
-//         sortKey = 'dueDate';
-//         break;
-//       case 4:
-//         sortKey = 'priority';
-//         break;
-//       case 5:
-//         sortKey = 'status';
-//         break;
-//     }
+// //   // Sorting
+// //   if (_sortColumnIndex != null) {
+// //     String sortKey = '';
+// //     switch (_sortColumnIndex) {
+// //       case 0:
+// //         sortKey = 'id';
+// //         break;
+// //       case 1:
+// //         sortKey = 'actionCreatedBy';
+// //         break;
+// //       case 2:
+// //         sortKey = 'dateSubmitted';
+// //         break;
+// //       case 3:
+// //         sortKey = 'dueDate';
+// //         break;
+// //       case 4:
+// //         sortKey = 'priority';
+// //         break;
+// //       case 5:
+// //         sortKey = 'status';
+// //         break;
+// //     }
 
-//     mapped.sort((a, b) {
-//       dynamic aValue = a[sortKey];
-//       dynamic bValue = b[sortKey];
-//       if (aValue is String && bValue is String) {
-//         return _sortAscending ? aValue.compareTo(bValue) : bValue.compareTo(aValue);
-//       } else if (aValue is DateTime && bValue is DateTime) {
-//         return _sortAscending ? aValue.compareTo(bValue) : bValue.compareTo(aValue);
-//       }
-//       return 0;
-//     });
-//   }
+// //     mapped.sort((a, b) {
+// //       dynamic aValue = a[sortKey];
+// //       dynamic bValue = b[sortKey];
+// //       if (aValue is String && bValue is String) {
+// //         return _sortAscending ? aValue.compareTo(bValue) : bValue.compareTo(aValue);
+// //       } else if (aValue is DateTime && bValue is DateTime) {
+// //         return _sortAscending ? aValue.compareTo(bValue) : bValue.compareTo(aValue);
+// //       }
+// //       return 0;
+// //     });
+// //   }
 
-//   return mapped;
-}
+// //   return mapped;
+// }
 
   void _sort<T>(int columnIndex, bool ascending) {
     setState(() {
@@ -408,13 +438,11 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                             ],
                             source: dataSource,
                           ),
+                          
                         ),
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: _buildCustomPagination(totalRows),
-                    ),
+                    
                   ],
                 ),
               ),

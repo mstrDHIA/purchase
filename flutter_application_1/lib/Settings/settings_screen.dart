@@ -22,11 +22,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String _selectedLanguage = "English";
   
  
-  Map<String, dynamic> user = {
-    'name': 'Jasser Boubaker',
-    'email': 'jasser.boubaker@gmail.com',
-    'avatar': 'assets/images/Company.jpg',
-  };
+  Map<String, dynamic> user = {};
 
   @override
   void initState() {
@@ -50,10 +46,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final themeName = themeProvider.themeName;
-
-    final loc = AppLocalizations.of(context)!;
+  final themeProvider = Provider.of<ThemeProvider>(context);
+  final themeName = themeProvider.themeName;
+  final loc = AppLocalizations.of(context)!;
+  // Récupérer l'utilisateur connecté depuis le UserController
+  final userData = Provider.of<UserController>(context).currentUser;
+  // Compose display name from firstName/lastName or username
+  String userName = '';
+  if ((userData.firstName != null && userData.firstName!.isNotEmpty) || (userData.lastName != null && userData.lastName!.isNotEmpty)) {
+    userName = '${userData.firstName ?? ''} ${userData.lastName ?? ''}'.trim();
+  } else if (userData.username != null && userData.username!.isNotEmpty) {
+    userName = userData.username!;
+  } else {
+  userName = loc.userName;
+  }
+  final userEmail = userData.email ?? loc.userEmail;
+  // Afficher la vraie photo de profil si disponible, sinon image par défaut
+  String userAvatar = 'assets/images/Company.jpg';
+  if (userData.profile != null) {
+    final profile = userData.profile!;
+    // Utiliser le champ bio comme chemin d'image si c'est une image
+    if (profile.bio != null && profile.bio!.isNotEmpty && (profile.bio!.endsWith('.jpg') || profile.bio!.endsWith('.png'))) {
+      userAvatar = profile.bio!;
+    }
+  }
     return Scaffold(
       appBar: AppBar(
         title: Text(loc.settingsTitle),
@@ -76,16 +92,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   children: [
                     CircleAvatar(
                       radius: 45,
-                      backgroundImage: AssetImage(user['avatar']),
+                      backgroundImage: AssetImage(userAvatar),
                     ),
                     const SizedBox(height: 10),
-                    const Text(
-                      "Jasser Boubaker",
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    Text(
+                      userName,
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      "jasser.boubaker@email.com",
+                      userEmail,
                       style: TextStyle(color: Colors.grey[600]),
                     ),
                   ],
@@ -191,17 +207,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             children: [
                               Icon(Icons.check, color: Colors.blue, size: 18),
                               SizedBox(width: 6),
-                              Text(loc.language),
+                              Text(loc.french),
                             ],
                           ),
                         ),
                         DropdownMenuItem(
                           value: "English",
-                          child: Text("English"),
+                          child: Text(loc.english),
                         ),
                         DropdownMenuItem(
                           value: "العربية",
-                          child: Text("العربية"),
+                          child: Text(loc.arabic),
                         ),
                       ],
                       onChanged: (String? lang) {

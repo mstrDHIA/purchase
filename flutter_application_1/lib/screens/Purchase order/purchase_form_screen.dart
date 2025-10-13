@@ -168,8 +168,8 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      drawer: _buildDrawer(context),
-      appBar: _buildAppBar(context),
+      // drawer: _buildDrawer(context),
+      // appBar: _buildAppBar(context),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -530,16 +530,16 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
     );
   }
 
-  Drawer _buildDrawer(BuildContext context) {
-    return const Drawer(
-      child: Center(child: Text("Menu here")),
-    );
-  }
+  // Drawer _buildDrawer(BuildContext context) {
+  //   return const Drawer(
+  //     child: Center(child: Text("Menu here")),
+  //   );
+  // }
 
-  AppBar _buildAppBar(BuildContext context) {
-    return AppBar(
-      title: const Text('Purchase Order'),
-      backgroundColor: const Color(0xFF8C7AE6),
-    );
-  }
+  // AppBar _buildAppBar(BuildContext context) {
+  //   return AppBar(
+  //     title: const Text('Purchase Order'),
+  //     backgroundColor: const Color(0xFF8C7AE6),
+  //   );
+  // }
 }
