@@ -42,55 +42,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
   final TextEditingController _searchController = TextEditingController();
   String _searchText = '';
 
-  // int _page = 0; // Removed duplicate declaration.
-
-  Widget _buildCustomPaginationFooter(int totalRows) {
-    final maxPage = (totalRows / _rowsPerPage).ceil();
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        const Text('Lignes par page :'),
-        const SizedBox(width: 8),
-        DropdownButton<int>(
-          value: _rowsPerPage,
-          items: [5, 10, 20, 50].map((int value) {
-            return DropdownMenuItem<int>(
-              value: value,
-              child: Text('$value'),
-            );
-          }).toList(),
-          onChanged: (value) {
-            if (value != null) {
-              setState(() {
-                _rowsPerPage = value;
-                _page = 0; // Reset to first page
-              });
-            }
-          },
-        ),
-        const SizedBox(width: 16),
-        IconButton(
-          icon: const Icon(Icons.chevron_left),
-          onPressed: _page > 0
-              ? () => setState(() {
-                    _page--;
-                  })
-              : null,
-        ),
-        Text(
-          '${_page * _rowsPerPage + 1} - ${((_page + 1) * _rowsPerPage).clamp(1, totalRows)} sur $totalRows',
-        ),
-        IconButton(
-          icon: const Icon(Icons.chevron_right),
-          onPressed: (_page + 1) < maxPage
-              ? () => setState(() {
-                    _page++;
-                  })
-              : null,
-        ),
-      ],
-    );
-  }
+  // Removed custom pagination footer. PaginatedDataTable will handle pagination.
 
   @override
   void initState() {
@@ -100,7 +52,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
     });
   }
 
-  int _page = 0;
+  // Removed _page. PaginatedDataTable will handle pagination.
 
   List<Map<String, dynamic>> _filteredAndSortedOrders(List orders) {
     List<Map<String, dynamic>> mapped = orders
@@ -127,7 +79,6 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
       };
     }).toList();
 
-// <<<<<<< HEAD
     // Search filter: only show orders that match the search text in any main field
     if (_searchText.isNotEmpty) {
       final searchLower = _searchText.toLowerCase();
@@ -187,34 +138,10 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
         return 0;
       });
     }
-    //  
-final start = _page * _rowsPerPage;
-final end = start + _rowsPerPage;
-if (start >= mapped.length) return [];
-return mapped.sublist(start, end > mapped.length ? mapped.length : end);
-
-
-    // Pagination logic
-    // final start = _page * _rowsPerPage;
-    // final end = start + _rowsPerPage;
-    // return mapped.sublist(
-    //   start < mapped.length ? start : mapped.length,
-    //   end < mapped.length ? end : mapped.length,
-    // );
+    return mapped;
   }
 
-  void _goToPage(int page, int totalRows) {
-    final maxPage = (totalRows / _rowsPerPage).ceil();
-    setState(() {
-      if (page < 0) {
-        _page = 0;
-      } else if (page >= maxPage) {
-        _page = maxPage - 1;
-      } else {
-        _page = page;
-      }
-    });
-  }
+  // Removed _goToPage. PaginatedDataTable will handle pagination.
 
 //   Widget _buildCustomPagination(int totalRows) {
 //     final maxPage = (totalRows / _rowsPerPage).ceil();
@@ -344,7 +271,7 @@ return mapped.sublist(start, end > mapped.length ? mapped.length : end);
         }
         final allOrders = controller.orders;
         final filteredOrders = _filteredAndSortedOrders(allOrders);
-        final totalRows = allOrders.length;
+  // final totalRows = allOrders.length;
         final dataSource = _PurchaseOrderDataSource(
           filteredOrders,
           _dateFormat,
@@ -457,11 +384,11 @@ return mapped.sublist(start, end > mapped.length ? mapped.length : end);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 0),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Search bar
+          // Search bar at the start of the row, left-aligned
           SizedBox(
-            width: 220,
+            width: 740,
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
@@ -483,8 +410,8 @@ return mapped.sublist(start, end > mapped.length ? mapped.length : end);
               },
             ),
           ),
-          const SizedBox(width: 8),
-          // ...existing code for filters...
+          const SizedBox(width: 100), // Increased space between search bar and filters
+          // Filters follow the search bar
           PopupMenuButton<String?>(
             onSelected: (value) {
               setState(() {

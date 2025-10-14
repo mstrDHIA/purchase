@@ -29,7 +29,15 @@ class Profile {
     country = json['country'];
     state = json['state'];
     city = json['city'];
-    zipCode = json['zip_code'];
+    // Handle zip_code as int or string
+    var zip = json['zip_code'];
+    if (zip is int) {
+      zipCode = zip;
+    } else if (zip is String) {
+      zipCode = int.tryParse(zip);
+    } else {
+      zipCode = null;
+    }
     address = json['address'];
     firstName = json['first_name'];
     lastName = json['last_name'];

@@ -33,9 +33,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _loadLanguagePreference() async {
     final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _selectedLanguage = prefs.getString("language") ?? "English";
-    });
+    final lang = prefs.getString("language");
+    if (lang == null) {
+      await prefs.setString("language", "English");
+      setState(() {
+        _selectedLanguage = "English";
+      });
+    } else {
+      setState(() {
+        _selectedLanguage = lang;
+      });
+    }
   }
 
   Future<void> _saveLanguagePreference(String lang) async {
