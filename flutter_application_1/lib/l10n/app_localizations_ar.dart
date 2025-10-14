@@ -9,6 +9,21 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
+  String get userName => 'جاسر بوبكر';
+
+  @override
+  String get userEmail => 'jasser.boubaker@email.com';
+
+  @override
+  String get french => 'الفرنسية';
+
+  @override
+  String get english => 'الإنجليزية';
+
+  @override
+  String get arabic => 'العربية';
+
+  @override
   String get purchaseRequests => 'طلبات الشراء';
 
   @override

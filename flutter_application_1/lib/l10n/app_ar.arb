@@ -1,4 +1,9 @@
 {
+  "userName": "جاسر بوبكر",
+  "userEmail": "jasser.boubaker@email.com",
+  "french": "الفرنسية",
+  "english": "الإنجليزية",
+  "arabic": "العربية",
   "purchaseRequests": "طلبات الشراء",
   "addPR": "إضافة طلب",
   "search": "بحث...",
@@ -37,5 +42,22 @@
   "periodDay": "يوم",
   "periodWeek": "أسبوع",
   "periodMonth": "شهر",
-  "periodYear": "سنة"
+  "periodYear": "سنة",
+  "purchaseOrders": "طلبات الشراء",
+  "addPO": "إضافة طلب شراء",
+  "purchaseOrdersTable": "جدول طلبات الشراء",
+  "filterByPriority": "تصفية حسب الأولوية",
+  "filterByStatus": "تصفية حسب الحالة",
+  "filterBySubmissionDate": "تصفية حسب تاريخ التقديم",
+  "filterByDueDate": "تصفية حسب تاريخ الاستحقاق",
+  "submission": "تقديم",
+  "due": "الاستحقاق",
+  "clearFilters": "مسح الفلاتر",
+  "deletePurchaseOrder": "حذف طلب الشراء",
+  "deletePurchaseOrderConfirm": "هل أنت متأكد أنك تريد حذف {id}؟",
+  "delete": "حذف",
+  "purchaseOrderDeleted": "تم حذف طلب الشراء {id}",
+  "failedToDeletePurchaseOrder": "فشل حذف طلب الشراء: {error}",
+  "viewPurchaseOrder": "عرض طلب الشراء",
+  "back": "رجوع"
 }

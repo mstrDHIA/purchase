@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter_application_1/models/user_model.dart';
+import 'package:flutter_application_1/screens/Purchase%20Requestor/requestor_order_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_application_1/l10n/app_localizations.dart';
 import 'package:flutter_application_1/controllers/purchase_request_controller.dart';
 import 'package:flutter_application_1/screens/Purchase%20Request/requestor_form_screen.dart';
+import 'package:flutter_application_1/screens/Purchase%20order/pushase_order_screen.dart' show ViewPurchasePage;
 import 'package:flutter_application_1/screens/Purchase%20order/pushase_order_screen.dart' as purchase_order;
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/models/purchase_request_datasource.dart';
@@ -40,9 +42,6 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
   int? _sortColumnIndex;
   bool _sortAscending = true;
   bool _isLoading = false;
-  int _page = 0;
-  int _totalRows = 0;
-  int _rowsPerPageLocal = PaginatedDataTable.defaultRowsPerPage;
 
   // Filter state
   String? _statusFilter;
@@ -151,172 +150,207 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
           : Column(
               children: [
                 const SizedBox(height: 16),
-                // --- Filter Bar + Search ---
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      // Search Bar
-                      SizedBox(
-                        width: 240,
-                        child: TextField(
-                          controller: _searchController,
-                          onChanged: (value) {
-                            setState(() {
-                              _searchText = value;
-                            });
-                          },
-                          decoration: InputDecoration(
-                            hintText: AppLocalizations.of(context)!.search,
-                            prefixIcon: const Icon(Icons.search),
-                            filled: true,
-                            fillColor: Color(0xFFF7F3FF),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(22),
-                              borderSide: BorderSide.none,
+                // --- Search Bar + Filtres sur la même ligne ---
+                Container(
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 0),
+                  color: const Color(0xFFF8F6FF),
+                  // padding: const EdgeInsets.only(top: 20, bottom: 8.0),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Search bar styled like purchase order screen
+                        Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF7F3FF),
+                            borderRadius: BorderRadius.circular(22),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          child: SizedBox(
+                            width: 220,
+                            child: TextField(
+                              controller: _searchController,
+                              onChanged: (value) {
+                                setState(() {
+                                  _searchText = value;
+                                });
+                              },
+                              decoration: InputDecoration(
+                                hintText: AppLocalizations.of(context)!.search,
+                                prefixIcon: const Icon(Icons.search),
+                                filled: true,
+                                fillColor: Colors.transparent,
+                                contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(22),
+                                  borderSide: BorderSide.none,
+                                ),
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Filter by Status
-                      PopupMenuButton<String>(
-                        onSelected: (String value) {
-                          setState(() {
-                            _statusFilter = value;
-                          });
-                        },
-                        itemBuilder: (context) => [
-                          ..._statusOptions.map((status) => PopupMenuItem(
-                                value: status,
-                                child: Text(status[0].toUpperCase() + status.substring(1)),
-                              )),
-                        ],
-                        child: OutlinedButton(
-                          style: OutlinedButton.styleFrom(
-                            backgroundColor: const Color(0xFFF7F3FF),
-                            foregroundColor: Colors.deepPurple,
-                            side: BorderSide.none,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                            elevation: 0,
+                        const SizedBox(width: 12),
+                        // Priority filter
+                        Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF7F3FF),
+                            borderRadius: BorderRadius.circular(22),
                           ),
-                          onPressed: null,
-                          child: Row(
-                            children: [
-                              Text(
-                                _statusFilter == null ? 'Filter by Status' : 'Status: ${_statusFilter![0].toUpperCase() + _statusFilter!.substring(1)}',
-                                style: const TextStyle(
-                                  color: Colors.deepPurple,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              const Icon(Icons.arrow_drop_down, color: Colors.deepPurple),
+                          margin: const EdgeInsets.only(right: 8),
+                          child: PopupMenuButton<String>(
+                            onSelected: (String value) {
+                              setState(() {
+                                _priorityFilter = value;
+                              });
+                            },
+                            itemBuilder: (context) => [
+                              ..._priorityOptions.map((priority) => PopupMenuItem(
+                                    value: priority,
+                                    child: Text(priority[0].toUpperCase() + priority.substring(1)),
+                                  )),
                             ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Filter by Priority
-                      PopupMenuButton<String>(
-                        onSelected: (String value) {
-                          setState(() {
-                            _priorityFilter = value;
-                          });
-                        },
-                        itemBuilder: (context) => [
-                          ..._priorityOptions.map((priority) => PopupMenuItem(
-                                value: priority,
-                                child: Text(priority[0].toUpperCase() + priority.substring(1)),
-                              )),
-                        ],
-                        child: OutlinedButton(
-                          style: OutlinedButton.styleFrom(
-                            backgroundColor: const Color(0xFFF7F3FF),
-                            foregroundColor: Colors.deepPurple,
-                            side: BorderSide.none,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                            elevation: 0,
-                          ),
-                          onPressed: null,
-                          child: Row(
-                            children: [
-                              Text(
-                                _priorityFilter == null ? 'Filter by Priority' : 'Priority: ${_priorityFilter![0].toUpperCase() + _priorityFilter!.substring(1)}',
-                                style: const TextStyle(
-                                  color: Colors.deepPurple,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                            child: OutlinedButton(
+                              style: OutlinedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                foregroundColor: Colors.deepPurple,
+                                side: BorderSide.none,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                                elevation: 0,
                               ),
-                              const Icon(Icons.arrow_drop_down, color: Colors.deepPurple),
+                              onPressed: null,
+                              child: Row(
+                                children: [
+                                  Text(
+                                    _priorityFilter == null ? 'Filter by Priority' : 'Priority: ${_priorityFilter![0].toUpperCase() + _priorityFilter!.substring(1)}',
+                                    style: const TextStyle(
+                                      color: Colors.deepPurple,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const Icon(Icons.arrow_drop_down, color: Colors.deepPurple),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        // Status filter
+                        Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF7F3FF),
+                            borderRadius: BorderRadius.circular(22),
+                          ),
+                          margin: const EdgeInsets.only(right: 8),
+                          child: PopupMenuButton<String>(
+                            onSelected: (String value) {
+                              setState(() {
+                                _statusFilter = value;
+                              });
+                            },
+                            itemBuilder: (context) => [
+                              ..._statusOptions.map((status) => PopupMenuItem(
+                                    value: status,
+                                    child: Text(status[0].toUpperCase() + status.substring(1)),
+                                  )),
                             ],
+                            child: OutlinedButton(
+                              style: OutlinedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                foregroundColor: Colors.deepPurple,
+                                side: BorderSide.none,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                                elevation: 0,
+                              ),
+                              onPressed: null,
+                              child: Row(
+                                children: [
+                                  Text(
+                                    _statusFilter == null ? 'Filter by Status' : 'Status: ${_statusFilter![0].toUpperCase() + _statusFilter!.substring(1)}',
+                                    style: const TextStyle(
+                                      color: Colors.deepPurple,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const Icon(Icons.arrow_drop_down, color: Colors.deepPurple),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Filter by Submission Date
-                      OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          backgroundColor: const Color(0xFFF7F3FF),
-                          foregroundColor: Colors.deepPurple,
-                          side: BorderSide.none,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                          elevation: 0,
-                        ),
-                        onPressed: () => _selectDate(context, true),
-                        child: Text(
-                          _selectedSubmissionDate == null
-                              ? 'Filter by Submission Date'
-                              : 'Submission: ${_dateFormat.format(_selectedSubmissionDate!)}',
-                          style: const TextStyle(
-                            
-                            color: Colors.deepPurple,
-                            fontWeight: FontWeight.w500,
+                        // Submission date filter
+                        Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF7F3FF),
+                            borderRadius: BorderRadius.circular(22),
+                          ),
+                          margin: const EdgeInsets.only(right: 8),
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              foregroundColor: Colors.deepPurple,
+                              side: BorderSide.none,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                              elevation: 0,
+                            ),
+                            onPressed: () => _selectDate(context, true),
+                            child: Text(
+                              _selectedSubmissionDate == null
+                                  ? 'Filter by Submission Date'
+                                  : 'Submission: ${_dateFormat.format(_selectedSubmissionDate!)}',
+                              style: const TextStyle(
+                                color: Colors.deepPurple,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Filter by Due Date
-                      OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          backgroundColor: const Color(0xFFF7F3FF),
-                          foregroundColor: Colors.deepPurple,
-                          side: BorderSide.none,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                          elevation: 0,
-                        ),
-                        onPressed: () => _selectDate(context, false),
-                        child: Text(
-                          _selectedDueDate == null
-                              ? 'Filter by Due Date'
-                              : 'Due: ${_dateFormat.format(_selectedDueDate!)}',
-                          style: const TextStyle(
-                            color: Colors.deepPurple,
-                            fontWeight: FontWeight.w500,
+                        // Due date filter
+                        Container(
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF7F3FF),
+                            borderRadius: BorderRadius.circular(22),
+                          ),
+                          margin: const EdgeInsets.only(right: 8),
+                          child: OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              foregroundColor: Colors.deepPurple,
+                              side: BorderSide.none,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                              elevation: 0,
+                            ),
+                            onPressed: () => _selectDate(context, false),
+                            child: Text(
+                              _selectedDueDate == null
+                                  ? 'Filter by Due Date'
+                                  : 'Due: ${_dateFormat.format(_selectedDueDate!)}',
+                              style: const TextStyle(
+                                color: Colors.deepPurple,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Clear Filters
-                      TextButton(
-                        onPressed: _clearFilters,
-                        child: const Text(
-                          'Clear Filters',
-                          style: TextStyle(
-                            color: Colors.deepPurple,
-                            fontWeight: FontWeight.w500,
+                        // Clear filters button (no background)
+                        TextButton(
+                          onPressed: _clearFilters,
+                          child: const Text(
+                            'Clear Filters',
+                            style: TextStyle(
+                              color: Colors.deepPurple,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-                const SizedBox(height: 8),
-                // --- End Filter Bar ---
+                // --- End Search Bar + Filtres ---
                 Expanded(
                   child: Consumer<PurchaseRequestController>(
                     builder: (context, purchaseRequestController, child) {
@@ -352,19 +386,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                               || (req.endDate?.toString().toLowerCase().contains(searchLower) ?? false);
                         }).toList();
                       }
-                      final filteredDataSource = PurchaseRequestDataSource(filteredRequests, context, 'filtered');
-                      int totalRows = filteredRequests.length;
-                      // Corriger la page si besoin (ex: suppression d'éléments)
-                      if (_page * _rowsPerPageLocal >= totalRows && _page > 0) {
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          setState(() {
-                            _page = ((totalRows - 1) / _rowsPerPageLocal).floor();
-                            if (_page < 0) _page = 0;
-                          });
-                        });
-                      }
-                      final int start = _page * _rowsPerPageLocal;
-                      final int end = (_page + 1) * _rowsPerPageLocal > totalRows ? totalRows : (_page + 1) * _rowsPerPageLocal;
+                      // final filteredDataSource = PurchaseRequestDataSource(filteredRequests, context, 'filtered');
                       // Sort filteredRequests if a sort column is selected
                       if (_sortColumnIndex != null) {
                         var getField;
@@ -399,138 +421,78 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                           return 0;
                         });
                       }
-                      final pageRequests = filteredRequests.sublist(start < totalRows ? start : 0, end < totalRows ? end : totalRows);
-                      final pageDataSource = PurchaseRequestDataSource(pageRequests, context, 'filtered');
-                      print('DataSource: $pageRequests');
-                      return Column(
-                        children: [
-                          Expanded(
-                            child: SingleChildScrollView(
-                              scrollDirection: Axis.vertical,
-                              child: Theme(
-                                data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-                                child: Container(
-                                  child: PaginatedDataTable(
-                                    header: Text(AppLocalizations.of(context)!.purchaseRequestsTable),
-                                    rowsPerPage: _rowsPerPageLocal,
-                                    availableRowsPerPage: const [5, 10, 20, 50, 100],
-                                    onRowsPerPageChanged: (r) {
-                                      if (r != null) {
-                                        setState(() {
-                                          _rowsPerPageLocal = r;
-                                          _rowsPerPage = r;
-                                          _page = 0;
-                                        });
-                                      }
-                                    },
-                                    sortColumnIndex: _sortColumnIndex,
-                                    sortAscending: _sortAscending,
-                                    columnSpacing: 190,
-                                    horizontalMargin: 16,
-                                    columns: [
-                                      DataColumn(
-                                        label: const Text('ID'),
-                                        onSort: (columnIndex, ascending) {
-                                          _sort<num>((req) => req.id ?? 0, columnIndex, ascending);
-                                        },
-                                      ),
-                                      DataColumn(
-                                        label: Text(
-                                          userController.currentUser.role!.id != 2
-                                              ? 'Created by'
-                                              : 'Validated by',
-                                        ),
-                                        onSort: (columnIndex, ascending) {
-                                          _sort<String>((req) => req.requestedBy?.toString() ?? '', columnIndex, ascending);
-                                        },
-                                      ),
-                                      DataColumn(
-                                        label: const Text('Date submitted'),
-                                        onSort: (columnIndex, ascending) {
-                                          _sort<String>((req) => req.startDate?.toString() ?? '', columnIndex, ascending);
-                                        },
-                                      ),
-                                      DataColumn(
-                                        label: const Text('Due date'),
-                                        onSort: (columnIndex, ascending) {
-                                          _sort<String>((req) => req.endDate?.toString() ?? '', columnIndex, ascending);
-                                        },
-                                      ),
-                                      DataColumn(
-                                        label: const Text('Priority'),
-                                        onSort: (columnIndex, ascending) {
-                                          _sort<String>((req) => req.priority?.toString() ?? '', columnIndex, ascending);
-                                        },
-                                      ),
-                                      DataColumn(
-                                        label: const Text('Status'),
-                                        onSort: (columnIndex, ascending) {
-                                          _sort<String>((req) => req.status?.toString() ?? '', columnIndex, ascending);
-                                        },
-                                      ),
-                                      DataColumn(
-                                        label: SizedBox(
-                                          width: 120,
-                                          child: const Center(child: Text('Actions')),
-                                        ),
-                                      ),
-                                    ],
-                                    source: pageDataSource,
-                                    showFirstLastButtons: false,
-                                  ),
+                      final dataSource = PurchaseRequestDataSource(filteredRequests, context, 'filtered');
+                      return SingleChildScrollView(
+                        scrollDirection: Axis.vertical,
+                        child: Theme(
+                          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                          child: PaginatedDataTable(
+                            header: Text(AppLocalizations.of(context)!.purchaseRequestsTable),
+                            rowsPerPage: _rowsPerPage,
+                            availableRowsPerPage: const [5, 10, 20, 50, 100],
+                            onRowsPerPageChanged: (r) {
+                              if (r != null) {
+                                setState(() {
+                                  _rowsPerPage = r;
+                                });
+                              }
+                            },
+                            sortColumnIndex: _sortColumnIndex,
+                            sortAscending: _sortAscending,
+                            columnSpacing: 180,
+                            horizontalMargin: 16,
+                            columns: [
+                              DataColumn(
+                                label: const Text('ID'),
+                                onSort: (columnIndex, ascending) {
+                                  _sort<num>((req) => req.id ?? 0, columnIndex, ascending);
+                                },
+                              ),
+                              DataColumn(
+                                label: Text(
+                                  userController.currentUser.role!.id != 2
+                                      ? 'Created by'
+                                      : 'Validated by',
                                 ),
+                                onSort: (columnIndex, ascending) {
+                                  _sort<String>((req) => req.requestedBy?.toString() ?? '', columnIndex, ascending);
+                                },
                               ),
-                            ),
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              ElevatedButton(
-                                onPressed: _page > 0
-                                    ? () {
-                                        setState(() {
-                                          _page--;
-                                        });
-                                      }
-                                    : null,
-                                child: const Text('Previous'),
+                              DataColumn(
+                                label: const Text('Date submitted'),
+                                onSort: (columnIndex, ascending) {
+                                  _sort<String>((req) => req.startDate?.toString() ?? '', columnIndex, ascending);
+                                },
                               ),
-                              const SizedBox(width: 8),
-                              // Numérotation des pages
-                              ...List.generate(
-                                (totalRows / _rowsPerPageLocal).ceil(),
-                                (index) => Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 2),
-                                  child: ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: index == _page ? Colors.deepPurple : Colors.grey[200],
-                                      foregroundColor: index == _page ? Colors.white : Colors.deepPurple,
-                                      minimumSize: const Size(36, 36),
-                                      padding: EdgeInsets.zero,
-                                    ),
-                                    onPressed: () {
-                                      setState(() {
-                                        _page = index;
-                                      });
-                                    },
-                                    child: Text('${index + 1}'),
-                                  ),
+                              DataColumn(
+                                label: const Text('Due date'),
+                                onSort: (columnIndex, ascending) {
+                                  _sort<String>((req) => req.endDate?.toString() ?? '', columnIndex, ascending);
+                                },
+                              ),
+                              DataColumn(
+                                label: const Text('Priority'),
+                                onSort: (columnIndex, ascending) {
+                                  _sort<String>((req) => req.priority?.toString() ?? '', columnIndex, ascending);
+                                },
+                              ),
+                              DataColumn(
+                                label: const Text('Status'),
+                                onSort: (columnIndex, ascending) {
+                                  _sort<String>((req) => req.status?.toString() ?? '', columnIndex, ascending);
+                                },
+                              ),
+                              DataColumn(
+                                label: SizedBox(
+                                  width: 120,
+                                  child: const Center(child: Text('Actions')),
                                 ),
-                              ),
-                              const SizedBox(width: 8),
-                              ElevatedButton(
-                                onPressed: (_page + 1) * _rowsPerPageLocal < totalRows
-                                    ? () {
-                                        setState(() {
-                                          _page++;
-                                        });
-                                      }
-                                    : null,
-                                child: const Text('Next'),
                               ),
                             ],
+                            source: dataSource,
+                            showFirstLastButtons: false,
                           ),
-                        ],
+                        ),
                       );
                     },
                   ),

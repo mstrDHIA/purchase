@@ -183,190 +183,273 @@ class _RequestEditPageState extends State<RequestEditPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Edit Purchase Request'),
-        backgroundColor: Colors.deepPurple,
-        foregroundColor: Colors.white,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Requestor
-            TextField(
-              controller: requestorController,
-              decoration: const InputDecoration(
-                labelText: 'Requestor',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            // Submitted Date
-            TextField(
-              controller: submittedDateController,
-              decoration: const InputDecoration(
-                labelText: 'Submitted Date',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            // Due Date
-            TextField(
-              controller: dueDateController,
-              decoration: const InputDecoration(
-                labelText: 'Due Date',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 16),
-            // Produits dynamiques
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Produits', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                TextButton.icon(
-                  onPressed: _addProduct,
-                  icon: const Icon(Icons.add),
-                  label: const Text('Ajouter un produit'),
-                ),
-              ],
-            ),
-            ...productControllers.asMap().entries.map((entry) {
-              final idx = entry.key;
-              final prod = entry.value;
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 6),
-                child: Row(
-                  children: [
-                    // Nom du produit
-                    Expanded(
-                      flex: 2,
-                      child: TextField(
-                        controller: prod['name'],
-                        decoration: const InputDecoration(
-                          labelText: 'Nom du produit',
-                          border: OutlineInputBorder(),
-                        ),
+      backgroundColor: const Color(0xFFF8F6FF),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top bar with back button and centered title
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.black87),
+                      onPressed: () => Navigator.of(context).pop(),
+                      tooltip: 'Cancel',
+                    ),
+                  ),
+                  const Center(
+                    child: Text(
+                      'Edit Purchase Request',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    // Quantité
-                    Expanded(
-                      flex: 1,
-                      child: TextField(
-                        controller: prod['quantity'],
-                        decoration: const InputDecoration(
-                          labelText: 'Quantité',
-                          border: OutlineInputBorder(),
-                        ),
-                        keyboardType: TextInputType.number,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.red),
-                      onPressed: () => _removeProduct(idx),
-                    ),
-                  ],
-                ),
-              );
-            }),
-            const SizedBox(height: 16),
-            // Status Dropdown
-            DropdownButtonFormField<String>(
-              value: status,
-              decoration: const InputDecoration(
-                labelText: 'Status',
-                border: OutlineInputBorder(),
+                  ),
+                ],
               ),
-              items: ['Pending', 'Approved', 'Rejected']
-                  .map((stat) => DropdownMenuItem(
-                        value: stat,
-                        child: Text(stat),
-                      ))
-                  .toList(),
-              onChanged: (val) {
-                if (val != null) setState(() => status = val);
-              },
-            ),
-            const SizedBox(height: 16),
-            // Note
-            TextField(
-              controller: noteController,
-              maxLines: 4,
-              decoration: const InputDecoration(
-                labelText: 'Note',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 24),
-            // Save button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _isLoading
-                    ? null
-                    : () async {
-                        setState(() => _isLoading = true);
-                        final products = productControllers
-                            .map((prod) => {
-                                  'product': prod['name']!.text,
-                                  'quantity': int.tryParse(prod['quantity']!.text) ?? 0,
-                                })
-                            .toList();
-                        final updateData = {
-                          'start_date': submittedDateController.text,
-                          'end_date': dueDateController.text,
-                          'requested_by': int.tryParse(requestorController.text) ?? 1,
-                          
-                          'description': noteController.text,
-                          'title': 'Demande d\'achat',
-                          'status': status.toLowerCase(),
-                          'products': products,
-                        };
-                        print('updateData envoyé: ' + updateData.toString());
-                        try {
-                          final controller = Provider.of<PurchaseRequestController>(context, listen: false);
-                          await controller.updateRequest(widget.purchaseRequest.id!, updateData, context);
-                          if (!mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(backgroundColor: Colors.blue, 
-                            content: Text('Purchase request updated successfully!')
-                            
+              const SizedBox(height: 32),
+              // Product & Quantity row
+              Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Product'),
+                        const SizedBox(height: 4),
+                        TextField(
+                          controller: productControllers.isNotEmpty ? productControllers[0]['name'] : null,
+                          readOnly: false,
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Colors.white,
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Colors.black87),
+                              borderRadius: BorderRadius.circular(12),
                             ),
-
-                          );
-                          Navigator.pop(context, updateData);
-                        } on DioException catch (e) {
-                          if (!mounted) return;
-                          String errorMsg = 'Failed to update';
-                          if (e.response != null && e.response?.data != null) {
-                            errorMsg = e.response?.data.toString() ?? errorMsg;
-                            print('Erreur serveur (body): ${e.response?.data}');
-                          }
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(errorMsg)),
-                          );
-                        } catch (e) {
-                          if (!mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Failed to update: ${e.toString()}')),
-                          );
-                        } finally {
-                          if (mounted) setState(() => _isLoading = false);
-                        }
-                      },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.deepPurple,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                child: _isLoading
-                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white))
-                    : const Text('Save Changes'),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Colors.deepPurple),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 24),
+                  Expanded(
+                    flex: 1,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Quantity'),
+                        const SizedBox(height: 4),
+                        TextField(
+                          controller: productControllers.isNotEmpty ? productControllers[0]['quantity'] : null,
+                          keyboardType: TextInputType.number,
+                          readOnly: false,
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Colors.white,
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Colors.black87),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Colors.deepPurple),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
+              const SizedBox(height: 24),
+              // Due Date & Priority row
+              Row(
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Due Date'),
+                        const SizedBox(height: 4),
+                        TextField(
+                          controller: dueDateController,
+                          readOnly: false,
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Colors.white,
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Colors.black87),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Colors.deepPurple),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 24),
+                  Expanded(
+                    flex: 1,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Priority'),
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade100,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            priority.toLowerCase(),
+                            style: const TextStyle(
+                              color: Colors.blue,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              // Note (full width)
+              const Text('Note'),
+              const SizedBox(height: 4),
+              TextField(
+                controller: noteController,
+                maxLines: 4,
+                readOnly: false,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.white,
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: Colors.black87),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: Colors.deepPurple),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+              ),
+              const SizedBox(height: 24),
+              // Status badge
+              const Text('Status'),
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: status.toLowerCase() == 'approved'
+                      ? Colors.green.shade100
+                      : status.toLowerCase() == 'pending'
+                          ? Colors.orange.shade100
+                          : Colors.red.shade100,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  status.toLowerCase(),
+                  style: TextStyle(
+                    color: status.toLowerCase() == 'approved'
+                        ? Colors.green
+                        : status.toLowerCase() == 'pending'
+                            ? Colors.orange
+                            : Colors.red,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
+              // Save button (unchanged)
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _isLoading
+                      ? null
+                      : () async {
+                          setState(() => _isLoading = true);
+                          final products = productControllers
+                              .map((prod) => {
+                                    'product': prod['name']!.text,
+                                    'quantity': int.tryParse(prod['quantity']!.text) ?? 0,
+                                  })
+                              .toList();
+                          final updateData = {
+                            'start_date': submittedDateController.text,
+                            'end_date': dueDateController.text,
+                            'requested_by': int.tryParse(requestorController.text) ?? 1,
+                            'description': noteController.text,
+                            'title': 'Demande d\'achat',
+                            'status': status.toLowerCase(),
+                            'products': products,
+                          };
+                          print('updateData envoyé: ' + updateData.toString());
+                          try {
+                            final controller = Provider.of<PurchaseRequestController>(context, listen: false);
+                            await controller.updateRequest(widget.purchaseRequest.id!, updateData, context);
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(backgroundColor: Colors.blue, 
+                              content: Text('Purchase request updated successfully!')
+                              ),
+                            );
+                            Navigator.pop(context, updateData);
+                          } on DioException catch (e) {
+                            if (!mounted) return;
+                            String errorMsg = 'Failed to update';
+                            if (e.response != null && e.response?.data != null) {
+                              errorMsg = e.response?.data.toString() ?? errorMsg;
+                              print('Erreur serveur (body): ${e.response?.data}');
+                            }
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(errorMsg)),
+                            );
+                          } catch (e) {
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Failed to update: ${e.toString()}')),
+                            );
+                          } finally {
+                            if (mounted) setState(() => _isLoading = false);
+                          }
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.deepPurple,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  child: _isLoading
+                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white))
+                      : const Text('Save Changes'),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

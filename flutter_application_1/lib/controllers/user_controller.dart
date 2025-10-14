@@ -99,8 +99,18 @@ class UserController extends ChangeNotifier {
     notifyListeners();
     try {
       Response response = await userNetwork.uesresList();
+      print('API Response status: \\${response.statusCode}');
+      print('API Response data: \\${response.data}');
       if (response.statusCode == 200) {
-        users = (response.data as List).map((user) => User.fromJson(user)).toList();
+        if (response.data is List) {
+          users = (response.data as List).map((user) => User.fromJson(user)).toList();
+          print('Parsed users count: \\${users.length}');
+          for (var u in users) {
+            print('User: id=\\${u.id}, username=\\${u.username}, email=\\${u.email}, isActive=\\${u.isActive}, role=\\${u.role}');
+          }
+        } else {
+          print('Response data is not a List.');
+        }
         isLoading = false;
         notifyListeners();
       } else {
@@ -111,7 +121,7 @@ class UserController extends ChangeNotifier {
     } on DioError catch (e) {
       isLoading = false;
       notifyListeners();
-      print('Erreur Dio : [${e.message}, type: ${e.type}, data: ${e.response?.data}, error: ${e.error}');
+      print('Erreur Dio : ${e.message}, type: ${e.type}, data: ${e.response?.data}, error: ${e.error}');
       // Optionnel : afficher un message utilisateur
     } catch (e) {
       isLoading = false;
@@ -181,7 +191,7 @@ class UserController extends ChangeNotifier {
       selectedUserId = currentUserId;
       currentUser = User.fromJson(response.data['user']);
       print('current user id: {$currentUserId}');
-      context.go('/main_screen');
+  context.go('/main_screen');
       print(decodedToken);
       print(response.data);
       isLoading = false;

@@ -1,4 +1,9 @@
 {
+  "userName": "Jasser Boubaker",
+  "userEmail": "jasser.boubaker@email.com",
+  "french": "Français",
+  "english": "English",
+  "arabic": "العربية",
   "purchaseRequests": "Purchase Requests",
   "addPR": "Add Request",
   "search": "Search...",

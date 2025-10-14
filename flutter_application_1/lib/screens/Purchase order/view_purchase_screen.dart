@@ -63,128 +63,316 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
     final priority = _order.priority ?? '-';
     final note = _order.description ?? '';
     final products = _order.products ?? [];
-    double totalOrderPrice = 0;
-
     final userController = Provider.of<UserController>(context, listen: false);
     final purchaseOrderController = Provider.of<PurchaseOrderController>(context, listen: false);
     final isApproved = status.toLowerCase() == 'approved';
     final isRejected = status.toLowerCase() == 'rejected';
 
-    List<Widget> productRows = products.map((prod) {
-      final quantity = prod.quantity ?? 0;
-      final unitPrice = 0.0; // If you have unit price, add it to Products model and parse here
-      final totalPrice = unitPrice * quantity;
-      totalOrderPrice += totalPrice;
-      return Card(
-        margin: const EdgeInsets.symmetric(vertical: 6),
-        elevation: 1,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-          child: Row(
-            children: [
-              _buildField('Product', prod.product ?? '-', width: 120),
-              const SizedBox(width: 8),
-              _buildField('Quantity', quantity.toString(), width: 70),
-              const SizedBox(width: 8),
-              _buildField('Brand', prod.brand ?? '-', width: 90),
-              const SizedBox(width: 8),
-              _buildField('Unit Price', (prod.unitPrice ?? 0.0).toStringAsFixed(2), width: 90, prefix: '\$'),
-              // _buildField('Unit Price', (prod.unitPrice ?? 0.0).toStringAsFixed(2), width: 90, prefix: '\$'),
-            
-              const SizedBox(width: 8),
-              _buildField('Supplier', prod.supplier ?? '-', width: 100),
-              const SizedBox(width: 8),
-              // _buildField('Total Price', prod.price.toStringAsFixed(2), width: 100, prefix: '\$'),
-            ],
-          ),
-        ),
-      );
-    }).toList();
-
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text('Purchase Order Details'),
-        backgroundColor: Colors.deepPurple,
-        foregroundColor: Colors.white,
-        elevation: 1,
-      ),
-      body: Container(
-        color: const Color(0xFFF8F8FC),
+      backgroundColor: const Color(0xFFF8F6FF),
+      body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(28),
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Card(
-                elevation: 2,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                child: Padding(
-                  padding: const EdgeInsets.all(18),
-                  child: Row(
-                    children: [
-                      // _buildField('Supplier', products.isNotEmpty ? (products[0].supplier ?? '-') : '-', width: 180),
-                      // const SizedBox(width: 18),
-                      _buildField('Submitted', submittedDate, width: 120),
-                      const SizedBox(width: 18),
-                      _buildField('Due', dueDate, width: 120),
-                      const SizedBox(width: 18),
-                      _buildChipField('Priority', priority, width: 100, color: _priorityColor(priority)),
-                    ],
+              // Top bar with back button and centered title
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.black87),
+                      onPressed: () => Navigator.of(context).pop(),
+                      tooltip: 'Back',
+                    ),
                   ),
-                ),
+                  const Center(
+                    child: Text(
+                      'Purchase Order',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 18),
-              Text(
-                'Products',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.deepPurple[700],
-                ),
+              const SizedBox(height: 32),
+              // Supplier name & Priority row (harmonized)
+              Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Supplier name'),
+                        const SizedBox(height: 4),
+                        TextField(
+                          controller: TextEditingController(text: products.isNotEmpty ? (products[0].supplier ?? '-') : '-'),
+                          readOnly: true,
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Colors.white,
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Colors.black87),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Colors.deepPurple),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 24),
+                  Expanded(
+                    flex: 2,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Priority'),
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: priority.toLowerCase() == 'high'
+                                ? Colors.red.shade100
+                                : priority.toLowerCase() == 'medium'
+                                    ? Colors.orange.shade100
+                                    : priority.toLowerCase() == 'low'
+                                        ? Colors.green.shade100
+                                        : Colors.grey.shade200,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            priority.toLowerCase(),
+                            style: TextStyle(
+                              color: priority.toLowerCase() == 'high'
+                                  ? Colors.red
+                                  : priority.toLowerCase() == 'medium'
+                                      ? Colors.orange
+                                      : priority.toLowerCase() == 'low'
+                                          ? Colors.green
+                                          : Colors.black,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
-              ...productRows,
-              const SizedBox(height: 10),
-              Align(
-                alignment: Alignment.topRight,
-                child: _buildField(
-                  'Total Price',
-                  (() {
-                    if (products.isEmpty) return '0.00';
-                    final sum = products.fold<double>(0.0, (total, p) {
-                      final price = (p.price is num) ? (p.price as num).toDouble() : 0.0;
-                      return total + price;
-                    });
-                    return sum.toStringAsFixed(2);
-                  })(),
-                  width: 140,
-                  prefix: '\$',
+              const SizedBox(height: 24),
+              // Due Date
+              const Text('Due Date'),
+              const SizedBox(height: 4),
+              TextField(
+                controller: TextEditingController(text: dueDate),
+                readOnly: true,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.white,
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: Colors.black87),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: Colors.deepPurple),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  suffixIcon: const Icon(Icons.calendar_today),
                 ),
               ),
               const SizedBox(height: 24),
-              Text('Note', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+              // Products section
+              const Text('Products', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
+              ...products.asMap().entries.map((entry) {
+                final prod = entry.value;
+                final unitPrice = prod.unitPrice ?? 0.0;
+                final quantity = prod.quantity ?? 0;
+                final totalPrice = unitPrice * quantity;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12.0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: TextField(
+                          controller: TextEditingController(text: prod.product ?? '-'),
+                          readOnly: true,
+                          decoration: InputDecoration(
+                            labelText: 'Product',
+                            filled: true,
+                            fillColor: Colors.white,
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Colors.black87),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Colors.deepPurple),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 1,
+                        child: TextField(
+                          controller: TextEditingController(text: (prod.brand ?? '').toString()),
+                          readOnly: true,
+                          decoration: InputDecoration(
+                            labelText: 'Brand',
+                            filled: true,
+                            fillColor: Colors.white,
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Colors.black87),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Colors.deepPurple),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 1,
+                        child: TextField(
+                          controller: TextEditingController(text: quantity.toString()),
+                          readOnly: true,
+                          decoration: InputDecoration(
+                            labelText: 'Quantity',
+                            filled: true,
+                            fillColor: Colors.white,
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Colors.black87),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Colors.deepPurple),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 1,
+                        child: TextField(
+                          controller: TextEditingController(text: unitPrice.toStringAsFixed(2)),
+                          readOnly: true,
+                          decoration: InputDecoration(
+                            labelText: 'Unit Price',
+                            filled: true,
+                            fillColor: Colors.white,
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Colors.black87),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Colors.deepPurple),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 1,
+                        child: TextField(
+                          controller: TextEditingController(text: totalPrice.toStringAsFixed(2)),
+                          readOnly: true,
+                          decoration: InputDecoration(
+                            labelText: 'Total Price',
+                            filled: true,
+                            fillColor: Colors.white,
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Colors.black87),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Colors.deepPurple),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+              const SizedBox(height: 24),
+              // Note
+              const Text('Note'),
+              const SizedBox(height: 4),
+              TextField(
+                controller: TextEditingController(text: note),
+                readOnly: true,
+                maxLines: 4,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.white,
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: Colors.black87),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: Colors.deepPurple),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+              ),
+              const SizedBox(height: 24),
+              // Status badge
+              const Text('Status'),
+              const SizedBox(height: 4),
               Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(14),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.deepPurple[50],
-                  borderRadius: BorderRadius.circular(12),
+                  color: status.toLowerCase() == 'approved'
+                      ? Colors.green.shade100
+                      : status.toLowerCase() == 'pending'
+                          ? Colors.orange.shade100
+                          : Colors.red.shade100,
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  note.isNotEmpty ? note : 'No notes for this order.',
-                  style: const TextStyle(fontSize: 16, color: Colors.black87),
+                  status.toLowerCase(),
+                  style: TextStyle(
+                    color: status.toLowerCase() == 'approved'
+                        ? Colors.green
+                        : status.toLowerCase() == 'pending'
+                            ? Colors.orange
+                            : Colors.red,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                  ),
                 ),
               ),
               const SizedBox(height: 32),
+              // Accept/Refuse buttons (unchanged)
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  _buildChipField('Status', status, width: 140, color: _statusColor(status)),
                   const Spacer(),
                   if (!isApproved && !isRejected && (userController.currentUser.role?.id == 1 || userController.currentUser.role?.id == 3)) ...[
                     ElevatedButton(

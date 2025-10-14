@@ -97,6 +97,36 @@ abstract class AppLocalizations {
     Locale('fr')
   ];
 
+  /// No description provided for @userName.
+  ///
+  /// In en, this message translates to:
+  /// **'Jasser Boubaker'**
+  String get userName;
+
+  /// No description provided for @userEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'jasser.boubaker@email.com'**
+  String get userEmail;
+
+  /// No description provided for @french.
+  ///
+  /// In en, this message translates to:
+  /// **'Français'**
+  String get french;
+
+  /// No description provided for @english.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get english;
+
+  /// No description provided for @arabic.
+  ///
+  /// In en, this message translates to:
+  /// **'العربية'**
+  String get arabic;
+
   /// No description provided for @purchaseRequests.
   ///
   /// In en, this message translates to:
