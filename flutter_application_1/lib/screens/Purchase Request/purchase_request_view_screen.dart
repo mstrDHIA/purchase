@@ -356,19 +356,22 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                   ),
                   const SizedBox(height: 30),
 
-                  // Ligne 1 : Product | Quantity
+                  // Afficher tous les produits et quantités
                   if ((widget.purchaseRequest.products ?? []).isNotEmpty)
-                    Row(
-                      children: [
-                        Expanded(
-                          child: buildReadOnlyField('Product', widget.purchaseRequest.products![0].product.toString()),
-                        ),
-                        const SizedBox(width: 20),
-                        Expanded(
-                          child: buildReadOnlyField('Quantity', widget.purchaseRequest.products![0].quantity.toString()),
-                        ),
-                      ],
-                    ),
+                    ...widget.purchaseRequest.products!.map((prod) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: buildReadOnlyField('Product', prod.product.toString()),
+                          ),
+                          const SizedBox(width: 20),
+                          Expanded(
+                            child: buildReadOnlyField('Quantity', prod.quantity.toString()),
+                          ),
+                        ],
+                      ),
+                    )),
                   const SizedBox(height: 20),
 
                   // Ligne 2 : Due date | Priority

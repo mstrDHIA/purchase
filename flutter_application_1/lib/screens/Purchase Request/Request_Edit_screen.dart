@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/controllers/purchase_request_controller.dart';
 import 'package:flutter_application_1/models/purchase_request.dart';
+import 'package:flutter_application_1/screens/Purchase order/purchase_form_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:dio/dio.dart';
 
@@ -25,8 +26,8 @@ class _RequestEditPageState extends State<RequestEditPage> {
 
   final DateFormat _dateFormat = DateFormat('yyyy-MM-dd');
 
-  // Liste dynamique de produits (chacun avec ses contrôleurs)
-  late List<Map<String, TextEditingController>> productControllers;
+  // Liste dynamique de produits (ProductLine)
+  late List<ProductLine> productLines;
 
   // Normalize status to match dropdown items
   String _normalizeStatus(dynamic value) {
@@ -51,36 +52,16 @@ class _RequestEditPageState extends State<RequestEditPage> {
     priority = pr.priority?.toString() ?? 'High';
     status = _normalizeStatus(pr.status);
 
-    // Initialisation des contrôleurs pour chaque produit
-    final products = pr.products ?? [];
-    productControllers = products
-        .map<Map<String, TextEditingController>>((prod) {
-          String name = '';
-          String quantity = '';
-          try {
-            if (prod is Map) {
-              name = prod['name'] ?? prod['productName'] ?? prod['designation'] ?? prod['product']?.toString() ?? prod.toString();
-              quantity = prod['quantity']?.toString() ?? '';
-            } else {
-              // For ProductLine or other objects
-              if (prod.product != null && prod.product is Map) {
-                name = prod.product['name'] ?? prod.product['productName'] ?? prod.product['designation'] ?? prod.product.toString();
-              } else if (prod.product != null && prod.product is String) {
-                name = prod.product;
-              } else {
-                name = prod.name ?? prod.productName ?? prod.designation ?? prod.product?.name ?? prod.product?.productName ?? prod.product?.designation ?? prod.product?.toString() ?? prod.toString();
-              }
-              quantity = prod.quantity?.toString() ?? '';
-            }
-          } catch (e) {
-            name = prod.toString();
-          }
-          return {
-            'name': TextEditingController(text: name),
-            'quantity': TextEditingController(text: quantity),
-          };
-        })
-        .toList();
+    // Initialisation de la liste des produits comme ProductLine
+    productLines = (pr.products ?? []).map<ProductLine>((prod) {
+      return ProductLine(
+        product: prod.product,
+        brand: prod.brand,
+        quantity: prod.quantity,
+        supplier: prod.supplier,
+        unitPrice: prod.unitPrice,
+      );
+    }).toList();
   }
 
   @override
@@ -89,10 +70,7 @@ class _RequestEditPageState extends State<RequestEditPage> {
     submittedDateController.dispose();
     dueDateController.dispose();
     noteController.dispose();
-    for (var prod in productControllers) {
-      prod['name']?.dispose();
-      prod['quantity']?.dispose();
-    }
+    // Rien à disposer pour productLines
     super.dispose();
   }
 
@@ -107,34 +85,15 @@ class _RequestEditPageState extends State<RequestEditPage> {
     priority = pr.priority?.toString() ?? 'High';
     status = _normalizeStatus(pr.status);
     final products = pr.products ?? [];
-    productControllers = products
-        .map<Map<String, TextEditingController>>((prod) {
-          String name = '';
-          String quantity = '';
-          try {
-            if (prod is Map) {
-              name = prod['name'] ?? prod['productName'] ?? prod['designation'] ?? prod['product']?.toString() ?? prod.toString();
-              quantity = prod['quantity']?.toString() ?? '';
-            } else {
-              // For ProductLine or other objects
-              if (prod.product != null && prod.product is Map) {
-                name = prod.product['name'] ?? prod.product['productName'] ?? prod.product['designation'] ?? prod.product.toString();
-              } else if (prod.product != null && prod.product is String) {
-                name = prod.product;
-              } else {
-                name = prod.name ?? prod.productName ?? prod.designation ?? prod.product?.name ?? prod.product?.productName ?? prod.product?.designation ?? prod.product?.toString() ?? prod.toString();
-              }
-              quantity = prod.quantity?.toString() ?? '';
-            }
-          } catch (e) {
-            name = prod.toString();
-          }
-          return {
-            'name': TextEditingController(text: name),
-            'quantity': TextEditingController(text: quantity),
-          };
-        })
-        .toList();
+    productLines = products.map<ProductLine>((prod) {
+      return ProductLine(
+        product: prod.product,
+        brand: prod.brand,
+        quantity: prod.quantity,
+        supplier: prod.supplier,
+        unitPrice: prod.unitPrice,
+      );
+    }).toList();
   }
 
   Color? _priorityColor(String value) {
@@ -165,18 +124,13 @@ class _RequestEditPageState extends State<RequestEditPage> {
 
   void _addProduct() {
     setState(() {
-      productControllers.add({
-        'name': TextEditingController(),
-        'quantity': TextEditingController(),
-      });
+      productLines.add(ProductLine(product: '', quantity: 1));
     });
   }
 
   void _removeProduct(int index) {
     setState(() {
-      productControllers[index]['name']?.dispose();
-      productControllers[index]['quantity']?.dispose();
-      productControllers.removeAt(index);
+      productLines.removeAt(index);
     });
   }
 
@@ -215,66 +169,88 @@ class _RequestEditPageState extends State<RequestEditPage> {
                 ],
               ),
               const SizedBox(height: 32),
-              // Product & Quantity row
-              Row(
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Product'),
-                        const SizedBox(height: 4),
-                        TextField(
-                          controller: productControllers.isNotEmpty ? productControllers[0]['name'] : null,
-                          readOnly: false,
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: Colors.white,
-                            enabledBorder: OutlineInputBorder(
-                              borderSide: const BorderSide(color: Colors.black87),
-                              borderRadius: BorderRadius.circular(12),
+              // Product & Quantity rows dynamiques (refonte)
+              ...productLines.asMap().entries.map((entry) {
+                int idx = entry.key;
+                ProductLine prod = entry.value;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Product ${productLines.length > 1 ? idx + 1 : ''}'),
+                            const SizedBox(height: 4),
+                            TextFormField(
+                              initialValue: prod.product,
+                              onChanged: (val) => setState(() => prod.product = val),
+                              decoration: InputDecoration(
+                                filled: true,
+                                fillColor: Colors.white,
+                                enabledBorder: OutlineInputBorder(
+                                  borderSide: const BorderSide(color: Colors.black87),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: const BorderSide(color: Colors.deepPurple),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              ),
                             ),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: const BorderSide(color: Colors.deepPurple),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 24),
-                  Expanded(
-                    flex: 1,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Quantity'),
-                        const SizedBox(height: 4),
-                        TextField(
-                          controller: productControllers.isNotEmpty ? productControllers[0]['quantity'] : null,
-                          keyboardType: TextInputType.number,
-                          readOnly: false,
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: Colors.white,
-                            enabledBorder: OutlineInputBorder(
-                              borderSide: const BorderSide(color: Colors.black87),
-                              borderRadius: BorderRadius.circular(12),
+                      ),
+                      const SizedBox(width: 24),
+                      Expanded(
+                        flex: 1,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Quantity'),
+                            const SizedBox(height: 4),
+                            TextFormField(
+                              initialValue: prod.quantity.toString(),
+                              keyboardType: TextInputType.number,
+                              onChanged: (val) => setState(() => prod.quantity = int.tryParse(val) ?? 1),
+                              decoration: InputDecoration(
+                                filled: true,
+                                fillColor: Colors.white,
+                                enabledBorder: OutlineInputBorder(
+                                  borderSide: const BorderSide(color: Colors.black87),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: const BorderSide(color: Colors.deepPurple),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              ),
                             ),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: const BorderSide(color: Colors.deepPurple),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                      if (productLines.length > 1)
+                        IconButton(
+                          icon: const Icon(Icons.remove_circle, color: Colors.red),
+                          onPressed: () => _removeProduct(idx),
+                          tooltip: 'Remove product',
+                        ),
+                    ],
                   ),
-                ],
+                );
+              }),
+              // Bouton pour ajouter un produit
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add Product'),
+                  onPressed: _addProduct,
+                ),
               ),
               const SizedBox(height: 24),
               // Due Date & Priority row
@@ -393,12 +369,12 @@ class _RequestEditPageState extends State<RequestEditPage> {
                       ? null
                       : () async {
                           setState(() => _isLoading = true);
-                          final products = productControllers
-                              .map((prod) => {
-                                    'product': prod['name']!.text,
-                                    'quantity': int.tryParse(prod['quantity']!.text) ?? 0,
-                                  })
-                              .toList();
+              final products = productLines
+                .map((prod) => {
+                  'product': prod.product,
+                  'quantity': prod.quantity,
+                  })
+                .toList();
                           final updateData = {
                             'start_date': submittedDateController.text,
                             'end_date': dueDateController.text,
