@@ -180,177 +180,239 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      // drawer: _buildDrawer(context),
-      appBar: AppBar(
-        title: const Text('Edit Purchase Order'),
-        backgroundColor: const Color(0xFF8C7AE6),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    value: _priority,
-                    decoration: const InputDecoration(
-                      labelText: 'Priority',
-                      border: OutlineInputBorder(),
+      backgroundColor: const Color(0xFFF8F6FF),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top bar with back button and centered title
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.black87),
+                      onPressed: () => Navigator.of(context).pop(),
+                      tooltip: 'Cancel',
                     ),
-                    items: const [
-                      DropdownMenuItem(value: 'high', child: Text('high')),
-                      DropdownMenuItem(value: 'medium', child: Text('medium')),
-                      DropdownMenuItem(value: 'low', child: Text('low')),
-                    ],
-                    onChanged: (val) => setState(() => _priority = val),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            const Text('Supplier Information',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            TextFormField(
-              controller: supplierNameController,
-              readOnly: true,
-              decoration: const InputDecoration(
-                labelText: 'Supplier name',
-                border: OutlineInputBorder(),
-                fillColor: Color(0xFFF0F0F0),
-                filled: true,
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            const Text('Products',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            ...productLines.asMap().entries.map((entry) {
-              int index = entry.key;
-              ProductLine product = entry.value;
-              return _buildProductLine(product, index);
-            }).toList(),
-
-            Align(
-              alignment: Alignment.centerRight,
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.add),
-                label: const Text('Add Product'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF8C7AE6),
-                  foregroundColor: Colors.white,
-                ),
-                onPressed: () =>
-                    setState(() => productLines.add(ProductLine())),
-              ),
-            ),
-
-            const SizedBox(height: 32),
-
-            const Text('Details',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
-
-            TextFormField(
-              controller: dueDateController,
-              readOnly: true,
-              decoration: const InputDecoration(
-                labelText: 'Due date',
-                border: OutlineInputBorder(),
-                suffixIcon: Icon(Icons.calendar_today),
-              ),
-              onTap: () async {
-                DateTime? pickedDate = await showDatePicker(
-                  context: context,
-                  initialDate: DateTime.now(),
-                  firstDate: DateTime(2000),
-                  lastDate: DateTime(2100),
-                );
-                if (pickedDate != null) {
-                  setState(() {
-                    dueDateController.text =
-                        DateFormat('dd-MM-yyyy').format(pickedDate);
-                  });
-                }
-              },
-            ),
-
-            const SizedBox(height: 24),
-
-            TextField(
-              controller: noteController,
-              maxLines: 4,
-              decoration: const InputDecoration(
-                labelText: 'Note',
-                filled: true,
-                fillColor: Color(0xFFF0F0F0),
-                border: OutlineInputBorder(),
-              ),
-            ),
-
-            const SizedBox(height: 32),
-
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.indigo.shade50,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                'Total: \$${totalPrice.toStringAsFixed(2)}',
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.indigo,
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 32),
-
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _isSaving ? null : _saveOrder,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF8C7AE6),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                  const Center(
+                    child: Text(
+                      'Edit Purchase Order',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
                     ),
-                    child: _isSaving
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 32),
+              // Supplier name & Priority row (swapped)
+              Row(
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Supplier name'),
+                        const SizedBox(height: 4),
+                        TextFormField(
+                          controller: supplierNameController,
+                          readOnly: true,
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Colors.white,
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Colors.black87),
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                          )
-                        : const Text('Save',
-                            style: TextStyle(color: Colors.white)),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Colors.deepPurple),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          ),
+                        ),
+                      ],
                     ),
-                    child: const Text('Cancel'),
+                  ),
+                  const SizedBox(width: 24),
+                  Expanded(
+                    flex: 2,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Priority'),
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: _priority == 'high'
+                                ? Colors.red.shade100
+                                : _priority == 'medium'
+                                    ? Colors.orange.shade100
+                                    : _priority == 'low'
+                                        ? Colors.green.shade100
+                                        : Colors.grey.shade200,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            (_priority ?? '').toLowerCase(),
+                            style: TextStyle(
+                              color: _priority == 'high'
+                                  ? Colors.red
+                                  : _priority == 'medium'
+                                      ? Colors.orange
+                                      : _priority == 'low'
+                                          ? Colors.green
+                                          : Colors.black,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              // Products section (unchanged, but styled)
+              const Text('Products', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              ...productLines.asMap().entries.map((entry) {
+                int index = entry.key;
+                ProductLine product = entry.value;
+                return _buildProductLine(product, index);
+              }).toList(),
+              Align(
+                alignment: Alignment.centerRight,
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add Product'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.deepPurple,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () => setState(() => productLines.add(ProductLine())),
+                ),
+              ),
+              const SizedBox(height: 32),
+              // Due Date
+              const Text('Due Date'),
+              const SizedBox(height: 4),
+              TextFormField(
+                controller: dueDateController,
+                readOnly: true,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.white,
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: Colors.black87),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: Colors.deepPurple),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  suffixIcon: const Icon(Icons.calendar_today),
+                ),
+                onTap: () async {
+                  DateTime? pickedDate = await showDatePicker(
+                    context: context,
+                    initialDate: DateTime.now(),
+                    firstDate: DateTime(2000),
+                    lastDate: DateTime(2100),
+                  );
+                  if (pickedDate != null) {
+                    setState(() {
+                      dueDateController.text = DateFormat('dd-MM-yyyy').format(pickedDate);
+                    });
+                  }
+                },
+              ),
+              const SizedBox(height: 24),
+              // Note
+              const Text('Note'),
+              const SizedBox(height: 4),
+              TextField(
+                controller: noteController,
+                maxLines: 4,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.white,
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: Colors.black87),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: Colors.deepPurple),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+              ),
+              const SizedBox(height: 32),
+              // Total
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.indigo.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'Total: \$${totalPrice.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.indigo,
                   ),
                 ),
-              ],
-            ),
-          ],
+              ),
+              const SizedBox(height: 32),
+              // Save/Cancel buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _isSaving ? null : _saveOrder,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.deepPurple,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      child: _isSaving
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text('Save', style: TextStyle(color: Colors.white)),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                      child: const Text('Cancel'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
