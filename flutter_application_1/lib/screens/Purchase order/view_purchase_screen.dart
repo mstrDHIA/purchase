@@ -374,7 +374,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const Spacer(),
-                  if (!isApproved && !isRejected && (userController.currentUser.role?.id == 1 || userController.currentUser.role?.id == 3)) ...[
+                  if (!isApproved && !isRejected && (userController.currentUser.role?.id == 1 || userController.currentUser.role?.id == 6)) ...[
                     ElevatedButton(
                       onPressed: () async {
                         try {

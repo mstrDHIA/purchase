@@ -155,7 +155,7 @@ class _AppSidebarState extends State<AppSidebar> {
       {'label': 'Settings', 'icon': Icons.settings},
     ]);
     }
-    else if(userController.currentUser.role_id==4){
+    else if((userController.currentUser.role_id==4)||(userController.currentUser.role_id==6)){
       items.addAll([
       // {'label': 'Home', 'icon': Icons.home},
       // {'label': 'Dashboard', 'icon': Icons.dashboard},
