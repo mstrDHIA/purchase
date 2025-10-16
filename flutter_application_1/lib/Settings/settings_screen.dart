@@ -1,8 +1,5 @@
-import 'package:flutter_application_1/main.dart';
 import 'package:flutter/material.dart';
-import '../l10n/app_localizations.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
-import 'package:flutter_application_1/screens/profile/edit_profile_screen.dart';
 
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -21,6 +18,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _notificationsEnabled = true;
   String _selectedLanguage = "English";
   
+
  
   Map<String, dynamic> user = {};
 
@@ -54,6 +52,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+
   final themeProvider = Provider.of<ThemeProvider>(context);
   final themeName = themeProvider.themeName;
   final loc = AppLocalizations.of(context)!;
@@ -80,7 +79,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
     return Scaffold(
       appBar: AppBar(
-        title: Text(loc.settingsTitle),
+        title: const Text('Settings'),
         centerTitle: true,
         elevation: 0,
       ),
@@ -121,13 +120,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 24),
 
           // ==== ACCOUNT SETTINGS ====
-          Row(
-            children: [
-              Icon(Icons.person, color: Colors.blue.shade400),
-              const SizedBox(width: 8),
-              _buildSectionTitle(loc.accountSettings),
-            ],
-          ),
+          _buildSectionTitle("Account Settings"),
           Card(
             elevation: 1,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -135,20 +128,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 ListTile(
                   leading: const Icon(Icons.person),
-                  title: Text(loc.editProfile),
+                  title: const Text('Edit Profile'),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => EditProfileScreen(user: user),
-                      ),
-                    );
+                    if (user != null && user is Map<String, dynamic>) {
+                      // Navigator.push(
+                      //   context,
+                      //   MaterialPageRoute(
+                      //     builder: (context) => ProfilePageScreen(),
+                      //   ),
+                      // );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("No user data available")),
+                      );
+                    }
                   },
                 ),
+                const Divider(height: 1),
                 ListTile(
                   leading: const Icon(Icons.lock),
-                  title: Text(loc.changePassword),
+                  title: const Text('Change Password'),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () {
                     Navigator.push(
@@ -166,13 +166,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 16),
 
           // ==== APP SETTINGS ====
-          Row(
-            children: [
-              Icon(Icons.settings, color: Colors.green.shade400),
-              const SizedBox(width: 8),
-              _buildSectionTitle(loc.appPreferences),
-            ],
-          ),
+          _buildSectionTitle("App Preferences"),
           Card(
             elevation: 1,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -181,16 +175,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 // ==== NOTIFICATIONS ====
                 SwitchListTile(
                   secondary: const Icon(Icons.notifications),
-                  title: Text(loc.notifications),
-                  subtitle: Text(_notificationsEnabled ? loc.notificationsEnabled : loc.notificationsDisabled),
+                  title: const Text('Notifications'),
+                  subtitle: Text(_notificationsEnabled ? "Enabled" : "Disabled"),
                   value: _notificationsEnabled,
                   onChanged: (val) {
                     setState(() => _notificationsEnabled = val);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(val
-                            ? loc.notificationsEnabled
-                            : loc.notificationsDisabled),
+                            ? "Notifications enabled"
+                            : "Notifications disabled"),
                         duration: const Duration(seconds: 1),
                       ),
                     );
@@ -258,43 +252,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 16),
 
           // ==== THEME SECTION ====
-          Row(
-            children: [
-              Icon(Icons.palette, color: Colors.purple.shade400),
-              const SizedBox(width: 8),
-              _buildSectionTitle(loc.appearance),
-            ],
-          ),
+          _buildSectionTitle("Appearance"),
           Card(
             elevation: 1,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             child: ListTile(
               leading: const Icon(Icons.palette),
-              title: Text(loc.chooseTheme),
+              title: const Text('Choose Theme'),
               subtitle: Text(themeName),
-              trailing: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 300),
-                child: DropdownButton<String>(
-                  key: ValueKey(themeName),
-                  value: themeName,
-                  items: ThemeProvider.themes.keys.map((name) {
-                    return DropdownMenuItem(
-                      value: name,
-                      child: Text(name),
+              trailing: DropdownButton<String>(
+                value: themeName,
+                items: ThemeProvider.themes.keys.map((name) {
+                  return DropdownMenuItem(
+                    value: name,
+                    child: Text(name),
+                  );
+                }).toList(),
+                onChanged: (String? name) {
+                  if (name != null) {
+                    themeProvider.setTheme(name);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text("Theme changed to $name"),
+                        duration: const Duration(seconds: 1),
+                      ),
                     );
-                  }).toList(),
-                  onChanged: (String? name) {
-                    if (name != null) {
-                      themeProvider.setTheme(name);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(loc.themeChanged(name)),
-                          duration: const Duration(seconds: 1),
-                        ),
-                      );
-                    }
-                  },
-                ),
+                  }
+                },
               ),
             ),
           ),
@@ -302,13 +286,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 16),
 
           // ==== INFO & LOGOUT ====
-          Row(
-            children: [
-              Icon(Icons.info, color: Colors.orange.shade400),
-              const SizedBox(width: 8),
-              _buildSectionTitle(loc.aboutSecurity),
-            ],
-          ),
+          _buildSectionTitle("About & Security"),
           Card(
             elevation: 1,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -316,7 +294,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 ListTile(
                   leading: const Icon(Icons.info),
-                  title: Text(loc.about),
+                  title: const Text('About'),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () {
                     showAboutDialog(
@@ -330,27 +308,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const Divider(height: 1),
                 ListTile(
                   leading: const Icon(Icons.logout, color: Colors.red),
-                  title: Text(
-                    loc.logout,
-                    style: const TextStyle(color: Colors.red),
+                  title: const Text(
+                    'Logout',
+                    style: TextStyle(color: Colors.red),
                   ),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.red),
                   onTap: () {
                     showDialog(
                       context: context,
                       builder: (context) => AlertDialog(
-                        title: Text(loc.confirm),
-                        content: Text(loc.doYouReallyWantToLogout),
+                        title: const Text("Confirm"),
+                        content: const Text("Do you really want to logout?"),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(context),
-                            child: Text(loc.cancel),
+                            child: const Text("Cancel"),
                           ),
                           TextButton(
                             onPressed: () {
+                              // Navigator.pop(context);
+                              
                               userController.logout(context);
+                              // Execute logout here
                             },
-                            child: Text(loc.logout),
+                            child: const Text("Logout"),
                           ),
                         ],
                       ),
@@ -379,6 +360,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
-// Suppression de l'accolade superflue
+}
 
+class FilterProvider extends ChangeNotifier {
+  String _search = '';
+  String get search => _search;
+
+  void setSearch(String value) {
+    _search = value;
+    notifyListeners();
+  }
+
+  // Add more filter fields as needed (date, status, etc.)
 }

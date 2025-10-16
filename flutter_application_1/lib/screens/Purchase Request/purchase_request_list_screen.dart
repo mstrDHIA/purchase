@@ -127,7 +127,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
       appBar: AppBar(
         title: Text(AppLocalizations.of(context)!.purchaseRequests),
         actions: [
-          if(userController.currentUser.role!.id==2||userController.currentUser.role!.id==1)
+          if(userController.currentUser.role!.id==6||userController.currentUser.role!.id==4)
           ElevatedButton.icon(
             onPressed: _openAddRequestForm,
             icon: const Icon(Icons.add, color: Colors.white),

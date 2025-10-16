@@ -30,6 +30,7 @@ class _PurchaseOrderPageBody extends StatefulWidget {
 }
 
 class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
+  late UserController userController;
   final DateFormat _dateFormat = DateFormat('MMM dd, yyyy');
   int _rowsPerPage = PaginatedDataTable.defaultRowsPerPage;
   int? _sortColumnIndex;
@@ -47,6 +48,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
   @override
   void initState() {
     super.initState();
+    userController = Provider.of<UserController>(context, listen: false);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<PurchaseOrderController>(context, listen: false).fetchOrders();
     });
@@ -283,6 +285,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
           appBar: AppBar(
             title: const Text('Purchase Orders'),
             actions: [
+              if(userController.currentUser.role!.id==6||userController.currentUser.role!.id==4)
               ElevatedButton.icon(
                 onPressed: () {
                   final controller = Provider.of<PurchaseOrderController>(context, listen: false);
