@@ -11,10 +11,12 @@ class PurchaseOrder {
   DateTime? createdAt;
   DateTime? updatedAt;
   String? priority;
+  int? purchaseRequestId;
 
   PurchaseOrder(
       {this.id,
       this.requestedByUser,
+      this.purchaseRequestId,
       this.approvedBy,
       this.startDate,
       this.endDate,
@@ -32,6 +34,7 @@ class PurchaseOrder {
     approvedBy = json['approved_by'];
     startDate = _parseDate(json['start_date']);
     endDate = _parseDate(json['end_date']);
+    purchaseRequestId = json['purchase_request_id'];
     if (json['products'] != null) {
       products = <Products>[];
       json['products'].forEach((v) {
@@ -75,6 +78,7 @@ class PurchaseOrder {
     data['created_at'] = createdAt?.toIso8601String();
     data['updated_at'] = updatedAt?.toIso8601String();
     data['priority'] = priority;
+    purchaseRequestId != null ? data['purchase_request_id'] = purchaseRequestId : null;
     return data;
   }
 }

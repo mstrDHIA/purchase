@@ -26,10 +26,14 @@ class PurchaseOrderController extends ChangeNotifier {
 	}
 
 	Future<void> addOrder(dynamic orderOrJson) async {
+    print('enter to addOrder in controller');
 		try {
+      print('orderOrJson=$orderOrJson');
 			await _network.createPurchaseOrder(orderOrJson);
 			await fetchOrders();
+      print('done addOrder in controller');
 		} catch (e) {
+      print('error in addOrder in controller: $e');
 			_error = e.toString();
 			notifyListeners();
 		}
