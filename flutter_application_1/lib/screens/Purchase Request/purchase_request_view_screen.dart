@@ -1,8 +1,12 @@
+import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
+import 'package:flutter_application_1/models/purchase_order.dart';
 import 'package:flutter_application_1/network/purchase_request_network.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/models/purchase_request.dart';
+import 'package:flutter_application_1/screens/Purchase%20order/pushase_order_screen.dart';
+import 'package:intl/intl.dart';
 import '../../l10n/app_localizations.dart';
 import 'package:flutter_application_1/screens/Purchase%20order/purchase_form_screen.dart';
 import 'package:provider/provider.dart';
@@ -146,11 +150,13 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
   bool _showActionButtons = true;
   String? _status;
   late UserController userController;
+  PurchaseOrderController? purchaseOrderController;
   @override
   void initState() {
   super.initState();
   _status = widget.purchaseRequest.status?.toString() ?? '';
   userController= Provider.of<UserController>(context, listen: false);
+  purchaseOrderController = Provider.of<PurchaseOrderController>(context, listen: false);
   }
 
   void _editRequest() {
@@ -435,23 +441,75 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                     'status': 'approved',
                                     'approved_by': userController.currentUser.id,
                                   };
-                                  await PurchaseRequestNetwork().updatePurchaseRequest(id, payload, method: 'PATCH');
-                                setState(() {
-                                  _showActionButtons = false;
-                                });
-                                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                                    if (mounted) {
-                                      Navigator.pop(context, true);
-                                    }
+                                  Map<String,dynamic> responseData = await PurchaseRequestNetwork().updatePurchaseRequest(id, payload, method: 'PATCH');
+                                  setState(() {
+                                    _showActionButtons = false;
                                   });
+
+                                  // Show dialog to ask if a purchase order should be created
+                                  final shouldCreate = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: const Text('Create Purchase Order?'),
+                                      content: const Text('Do you want to create a new purchase order from this purchase request?'),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.of(context).pop(false),
+                                          child: const Text('No'),
+                                        ),
+                                        ElevatedButton(
+                                          onPressed: () => Navigator.of(context).pop(true),
+                                          child: const Text('Yes'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                  if (shouldCreate == true) {
+                                    widget.purchaseRequest.approvedBy=responseData['approved_by'];
+                                    // Prepare purchase order data from purchase request
+                                    Map<String,dynamic> purchaseOrderData = {
+                                      'title': widget.purchaseRequest.title,
+                                      'description': widget.purchaseRequest.description,
+                                      'requested_by_user': widget.purchaseRequest.approvedBy,
+                                      // 'approved_by': _approvedBy ?? 2,
+                                      'status': 'pending', // Always set to pending      
+                                      'created_at': DateFormat('yyyy-MM-dd').format(DateTime.now()),
+                                      'updated_at': DateFormat('yyyy-MM-dd').format(DateTime.now()),
+                                      'purchase_request_id': widget.purchaseRequest.id,
+                                      'products': widget.purchaseRequest.products?.map((p) => p.toJson()).toList(),
+                                      'priority': widget.purchaseRequest.priority,
+                                      'start_date': DateFormat('yyyy-MM-dd').format(widget.purchaseRequest.startDate!),
+                                      'end_date': DateFormat('yyyy-MM-dd').format(widget.purchaseRequest.endDate!),
+                                      // Add other fields as needed
+                                    };
+                                    // PurchaseOrder purchaseOrder = PurchaseOrder.fromJson(purchaseOrderData);
+                                    // purchaseOrderData=purchaseOrder.toJson();
+      //                               {
+      // }
+                                    // Create the purchase order using your controller or network
+                                    // final purchaseOrderController = Provider.of<PurchaseOrderController>(context, listen: false);
+                                    await purchaseOrderController!.addOrder(purchaseOrderData);
+
+                                    // Navigate to the purchase order page
+                                    if (mounted) {
+                                      SnackBar snackBar=SnackBar(content: Text('Purchase Order created successfully!'),backgroundColor: Colors.green,);
+                                      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                                      // Navigator.of(context).pushReplacement(
+                                      //   MaterialPageRoute(builder: (_) => PurchaseOrderPage()),
+                                      // );
+                                    }
+                                  } else {
+                                    // Just close the dialog and maybe pop the view
+                                    if (mounted) Navigator.pop(context, true);
+                                  }
                                 } catch (e) {
                                   String errorMsg = e.toString();
                                   if (e is DioError && e.response != null) {
                                     errorMsg = 'Erreur serveur: ' + e.response.toString();
                                   }
-                                ScaffoldMessenger.of(context).showSnackBar(
+                                  ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(backgroundColor: const Color.fromARGB(255, 245, 3, 3), content: Text(errorMsg)),
-                                );
+                                  );
                                 }
                               },
                               style: ElevatedButton.styleFrom(

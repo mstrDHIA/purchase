@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/Settings/settings_screen.dart';
+import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
 import 'package:flutter_application_1/controllers/purchase_request_controller.dart';
 
 import 'package:flutter_application_1/controllers/user_controller.dart';
@@ -42,6 +43,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => UserController()),
         ChangeNotifierProvider(create: (_) => RoleController()),
         ChangeNotifierProvider(create: (context) => PurchaseRequestController(context)),
+        ChangeNotifierProvider(create: (context) => PurchaseOrderController()),
         ChangeNotifierProvider(create: (_) => LocaleProvider()),
       ],
       child: const MyApp(),
