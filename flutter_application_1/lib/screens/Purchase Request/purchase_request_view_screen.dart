@@ -3,6 +3,7 @@ import 'package:flutter_application_1/network/purchase_request_network.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/models/purchase_request.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:flutter_application_1/screens/Purchase%20order/purchase_form_screen.dart';
 import 'package:provider/provider.dart';
 
@@ -304,7 +305,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
 
   @override
   Widget build(BuildContext context) {
-    String formatDate(dynamic date) {
+  String formatDate(dynamic date) {
       if (date == null) return '';
       if (date is String) {
         final parsed = DateTime.tryParse(date);
@@ -322,6 +323,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
   final isApproved = (_status ?? '').toLowerCase() == 'approved';
   final isRejected = (_status ?? '').toLowerCase() == 'rejected';
     return Scaffold(
+      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       body: Row(
         children: [
           Expanded(
@@ -331,68 +333,62 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Title with back button
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  Stack(
+                    alignment: Alignment.center,
                     children: [
-                      Row(
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.arrow_back, color: Colors.blue),
-                            tooltip: 'Back',
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
-                          ),
-                          const SizedBox(width: 10),
-                          const Text(
-                            'Purchase Request',
-                            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-                          ),
-                        ],
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: IconButton(
+                          icon: const Icon(Icons.arrow_back, color: Color.fromARGB(255, 0, 0, 0)),
+                          tooltip: AppLocalizations.of(context)?.cancel ?? 'Back',
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                        ),
+                      ),
+                      Center(
+                        child: Text(
+                          AppLocalizations.of(context)?.purchaseRequests ?? 'Purchase Request',
+                          style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 30),
-                  Wrap(
-                    spacing: 20,
-                    runSpacing: 20,
-                    children: [
-                      // First row: Requestor, Submitted Date, Due date
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          buildReadOnlyField('Requestor', widget.purchaseRequest.requestedBy.toString()),
-                          const SizedBox(width: 20),
-                          buildReadOnlyField('Submission Date', formatDate(widget.purchaseRequest.startDate)),
-                          const SizedBox(width: 20),
-                          buildReadOnlyField('Due Date', formatDate(widget.purchaseRequest.endDate)),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
 
-                      // Then products and quantities
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                  // Afficher tous les produits et quantités
+                  if ((widget.purchaseRequest.products ?? []).isNotEmpty)
+                    ...widget.purchaseRequest.products!.map((prod) => Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Row(
                         children: [
-                          for (ProductLine product in widget.purchaseRequest.products ?? [])
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              buildReadOnlyField('Product', product.product.toString()),
-                              const SizedBox(width: 12),
-                              buildReadOnlyField('Quantity', product.quantity.toString()),
-                            ],
+                          Expanded(
+                            child: buildReadOnlyField('Product', prod.product.toString()),
                           ),
-                          Padding(
-                            padding: const EdgeInsets.only(top: 12.0),
-                            child: buildReadOnlyField('Priority', widget.purchaseRequest.priority.toString()),
+                          const SizedBox(width: 20),
+                          Expanded(
+                            child: buildReadOnlyField('Quantity', prod.quantity.toString()),
                           ),
                         ],
                       ),
+                    )),
+                  const SizedBox(height: 20),
+
+                  // Ligne 2 : Due date | Priority
+                  Row(
+                    children: [
+                      Expanded(
+                        child: buildReadOnlyField('Due Date', formatDate(widget.purchaseRequest.endDate)),
+                      ),
+                      const SizedBox(width: 20),
+                      Expanded(
+                        child: buildReadOnlyField('Priority', widget.purchaseRequest.priority.toString()),
+                      ),
                     ],
                   ),
-                  const SizedBox(height: 30),
-                  // Note on a single line
+                  const SizedBox(height: 20),
+
+                  // Note
                   const Text('Note', style: TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   TextField(
@@ -401,20 +397,27 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                     controller: TextEditingController(text: widget.purchaseRequest.description.toString()),
                     decoration: InputDecoration(
                       filled: true,
-                      fillColor: const Color(0xFFF1F1F1),
+                      fillColor: Colors.white,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
+                        borderSide: BorderSide(color: Colors.black, width: 1),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.black, width: 1),
+                      ),
+                      disabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.black, width: 1),
                       ),
                     ),
                   ),
                   const SizedBox(height: 30),
 
-                  // Ligne : Status à gauche, boutons à droite (comme la capture)
+                  // Ligne : Status à gauche, boutons à droite (inchangé)
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // Status à gauche
                       SizedBox(
                         width: 280,
                         child: buildReadOnlyField('Status', _status ?? ''),
@@ -438,7 +441,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                 });
                                   WidgetsBinding.instance.addPostFrameCallback((_) {
                                     if (mounted) {
-                                      Navigator.pop(context, true); // Indique à la liste de se rafraîchir
+                                      Navigator.pop(context, true);
                                     }
                                   });
                                 } catch (e) {
@@ -460,7 +463,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                 ),
                                 elevation: 0,
                               ),
-                              child: const Text('Accept'),
+                              child: Text(AppLocalizations.of(context)?.confirm ?? 'Accept'),
                             ),
                             const SizedBox(width: 24),
                             ElevatedButton(
@@ -487,7 +490,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                   });
                                   WidgetsBinding.instance.addPostFrameCallback((_) {
                                     if (mounted) {
-                                      Navigator.pop(context, true); // Indique à la liste de se rafraîchir
+                                      Navigator.pop(context, true);
                                     }
                                   });
                                 } catch (e) {
@@ -503,7 +506,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                   const SnackBar(backgroundColor: Color.fromARGB(255, 9, 37, 250), content: Text('rejected!')),
                                 );
                               },
-                              child: const Text('Refuse'),
+                              child: Text(AppLocalizations.of(context)?.cancel ?? 'Refuse'),
                             ),
                           ],
                         ),
@@ -532,25 +535,20 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
       } else if (value.toLowerCase() == 'approved') {
         badgeColor = Colors.green.shade100;
         textColor = Colors.green.shade800;
-      }
-
-      else if (value.toLowerCase() == 'rejected') {
+      } else if (value.toLowerCase() == 'rejected') {
         badgeColor = Colors.red.shade100;
         textColor = Colors.red.shade800;
       }
     }
-
     // Ajout du badge coloré pour Priority
     if (label == 'Priority') {
       if (value.toLowerCase() == 'high') {
         badgeColor = Colors.red.shade100;
         textColor = Colors.red.shade800;
-      }
-      else if(value.toLowerCase() == 'medium'){
+      } else if (value.toLowerCase() == 'medium') {
         badgeColor = Colors.orange.shade100;
         textColor = Colors.orange.shade800;
-      }
-      else if(value.toLowerCase() == 'low'){
+      } else if (value.toLowerCase() == 'low') {
         badgeColor = Colors.blue.shade100;
         textColor = Colors.blue.shade800;
       }
@@ -583,13 +581,23 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
             TextField(
               readOnly: true,
               controller: TextEditingController(text: value),
+              style: const TextStyle(fontSize: 15, color: Colors.black),
               decoration: InputDecoration(
                 filled: true,
-                fillColor: const Color(0xFFF1F1F1),
+                fillColor: Colors.white,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
+                  borderSide: const BorderSide(color: Colors.black, width: 1),
                 ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.black, width: 1),
+                ),
+                disabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.black, width: 1),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
               ),
             ),
         ],

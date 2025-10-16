@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter_application_1/controllers/user_controller.dart';
 
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
@@ -12,9 +14,17 @@ class DashboardPage extends StatelessWidget {
     const int pendingRequests = 4;
     const int users = 8;
 
-    // Exemple: récupération du nom et rôle utilisateur (à remplacer par Provider ou autre)
-    final String userName = "John Doe"; // À remplacer par la vraie source
-    final String userRole = "Administrateur";
+    // Récupération du nom et rôle utilisateur connecté
+    final user = Provider.of<UserController>(context).currentUser;
+    String userName = '';
+    if ((user.firstName != null && user.firstName!.isNotEmpty) || (user.lastName != null && user.lastName!.isNotEmpty)) {
+      userName = '${user.firstName ?? ''} ${user.lastName ?? ''}'.trim();
+    } else if (user.username != null && user.username!.isNotEmpty) {
+      userName = user.username!;
+    } else {
+      userName = 'Utilisateur';
+    }
+    String userRole = user.isSuperuser == true ? 'Administrateur' : (user.role?.name ?? 'Utilisateur');
     // Ajout d'un menu déroulant pour filtrer la période
     final List<String> periods = ['Jour', 'Semaine', 'Mois', 'Année'];
     String selectedPeriod = periods[2];

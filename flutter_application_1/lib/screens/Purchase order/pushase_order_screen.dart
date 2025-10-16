@@ -39,6 +39,11 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
   String? _statusFilter;
   DateTime? _selectedSubmissionDate;
   DateTime? _selectedDueDate;
+  // Search bar controller and value
+  final TextEditingController _searchController = TextEditingController();
+  String _searchText = '';
+
+  // Removed custom pagination footer. PaginatedDataTable will handle pagination.
 
   @override
   void initState() {
@@ -49,9 +54,11 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
     });
   }
 
+  // Removed _page. PaginatedDataTable will handle pagination.
+
   List<Map<String, dynamic>> _filteredAndSortedOrders(List orders) {
-  List<Map<String, dynamic>> mapped = orders
-    .map((order) {
+    List<Map<String, dynamic>> mapped = orders
+        .map((order) {
       DateTime parseDate(dynamic value) {
         if (value is DateTime) return value;
         if (value is String) {
@@ -72,67 +79,153 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
         'status': order.status ?? '',
         'original': order,
       };
-    })
-    .toList();
+    }).toList();
 
-  // Filtering
-  if (_priorityFilter != null) {
-    mapped = mapped.where((order) => order['priority'].toString().toLowerCase() == _priorityFilter!.toLowerCase()).toList();
-  }
-  if (_statusFilter != null) {
-    mapped = mapped.where((order) => order['status'].toString().toLowerCase() == _statusFilter!.toLowerCase()).toList();
-  }
-  if (_selectedSubmissionDate != null) {
-    mapped = mapped.where((order) =>
-        order['dateSubmitted'].year == _selectedSubmissionDate!.year &&
-        order['dateSubmitted'].month == _selectedSubmissionDate!.month &&
-        order['dateSubmitted'].day == _selectedSubmissionDate!.day).toList();
-  }
-  if (_selectedDueDate != null) {
-    mapped = mapped.where((order) =>
-        order['dueDate'].year == _selectedDueDate!.year &&
-        order['dueDate'].month == _selectedDueDate!.month &&
-        order['dueDate'].day == _selectedDueDate!.day).toList();
-  }
-
-  // Sorting
-  if (_sortColumnIndex != null) {
-    String sortKey = '';
-    switch (_sortColumnIndex) {
-      case 0:
-        sortKey = 'id';
-        break;
-      case 1:
-        sortKey = 'actionCreatedBy';
-        break;
-      case 2:
-        sortKey = 'dateSubmitted';
-        break;
-      case 3:
-        sortKey = 'dueDate';
-        break;
-      case 4:
-        sortKey = 'priority';
-        break;
-      case 5:
-        sortKey = 'status';
-        break;
+    // Search filter: only show orders that match the search text in any main field
+    if (_searchText.isNotEmpty) {
+      final searchLower = _searchText.toLowerCase();
+      mapped = mapped.where((order) =>
+        order['id'].toLowerCase().contains(searchLower) ||
+        order['actionCreatedBy'].toLowerCase().contains(searchLower) ||
+        order['priority'].toLowerCase().contains(searchLower) ||
+        order['status'].toLowerCase().contains(searchLower)
+      ).toList();
     }
 
-    mapped.sort((a, b) {
-      dynamic aValue = a[sortKey];
-      dynamic bValue = b[sortKey];
-      if (aValue is String && bValue is String) {
-        return _sortAscending ? aValue.compareTo(bValue) : bValue.compareTo(aValue);
-      } else if (aValue is DateTime && bValue is DateTime) {
-        return _sortAscending ? aValue.compareTo(bValue) : bValue.compareTo(aValue);
+    // Apply filters
+    if (_priorityFilter != null) {
+      mapped = mapped.where((order) => order['priority'].toLowerCase() == _priorityFilter!.toLowerCase()).toList();
+    }
+    if (_statusFilter != null) {
+      mapped = mapped.where((order) => order['status'].toLowerCase() == _statusFilter!.toLowerCase()).toList();
+    }
+    if (_selectedSubmissionDate != null) {
+      mapped = mapped.where((order) {
+        final date = order['dateSubmitted'];
+        return date is DateTime && date.year == _selectedSubmissionDate!.year && date.month == _selectedSubmissionDate!.month && date.day == _selectedSubmissionDate!.day;
+      }).toList();
+    }
+    if (_selectedDueDate != null) {
+      mapped = mapped.where((order) {
+        final date = order['dueDate'];
+        return date is DateTime && date.year == _selectedDueDate!.year && date.month == _selectedDueDate!.month && date.day == _selectedDueDate!.day;
+      }).toList();
+    }
+
+    // Sorting logic
+    if (_sortColumnIndex != null) {
+      String sortKey = 'id';
+      if (_sortColumnIndex == 0) {
+        sortKey = 'id';
+      } else if (_sortColumnIndex == 1) {
+        sortKey = 'actionCreatedBy';
+      } else if (_sortColumnIndex == 2) {
+        sortKey = 'dateSubmitted';
+      } else if (_sortColumnIndex == 3) {
+        sortKey = 'dueDate';
+      } else if (_sortColumnIndex == 4) {
+        sortKey = 'priority';
+      } else if (_sortColumnIndex == 5) {
+        sortKey = 'status';
       }
-      return 0;
-    });
+
+      mapped.sort((a, b) {
+        dynamic aValue = a[sortKey];
+        dynamic bValue = b[sortKey];
+        if (aValue is String && bValue is String) {
+          return _sortAscending ? aValue.compareTo(bValue) : bValue.compareTo(aValue);
+        } else if (aValue is DateTime && bValue is DateTime) {
+          return _sortAscending ? aValue.compareTo(bValue) : bValue.compareTo(aValue);
+        }
+        return 0;
+      });
+    }
+    return mapped;
   }
 
-  return mapped;
-}
+  // Removed _goToPage. PaginatedDataTable will handle pagination.
+
+//   Widget _buildCustomPagination(int totalRows) {
+//     final maxPage = (totalRows / _rowsPerPage).ceil();
+//     return Row(
+//       mainAxisAlignment: MainAxisAlignment.center,
+//       children: [
+//         ...List.generate(maxPage, (index) => Padding(
+//           padding: const EdgeInsets.symmetric(horizontal: 2),
+//           child: ElevatedButton(
+//             style: ElevatedButton.styleFrom(
+//               backgroundColor: index == _page ? Colors.deepPurple : Colors.grey[200],
+//               foregroundColor: index == _page ? Colors.white : Colors.deepPurple,
+//               minimumSize: const Size(36, 36),
+//               padding: EdgeInsets.zero,
+//               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+//             ),
+//             onPressed: () => _goToPage(index, totalRows),
+//             child: Text('${index + 1}'),
+//           ),
+//         )),
+//       ],
+//     );
+// // =======
+//   // Filtering
+// //   if (_priorityFilter != null) {
+// //     mapped = mapped.where((order) => order['priority'].toString().toLowerCase() == _priorityFilter!.toLowerCase()).toList();
+// // >>>>>>> 3aef541da9fcbe051f5175130df5e72d614fba17
+// //   }
+// //   if (_statusFilter != null) {
+// //     mapped = mapped.where((order) => order['status'].toString().toLowerCase() == _statusFilter!.toLowerCase()).toList();
+// //   }
+// //   if (_selectedSubmissionDate != null) {
+// //     mapped = mapped.where((order) =>
+// //         order['dateSubmitted'].year == _selectedSubmissionDate!.year &&
+// //         order['dateSubmitted'].month == _selectedSubmissionDate!.month &&
+// //         order['dateSubmitted'].day == _selectedSubmissionDate!.day).toList();
+// //   }
+// //   if (_selectedDueDate != null) {
+// //     mapped = mapped.where((order) =>
+// //         order['dueDate'].year == _selectedDueDate!.year &&
+// //         order['dueDate'].month == _selectedDueDate!.month &&
+// //         order['dueDate'].day == _selectedDueDate!.day).toList();
+// //   }
+
+// //   // Sorting
+// //   if (_sortColumnIndex != null) {
+// //     String sortKey = '';
+// //     switch (_sortColumnIndex) {
+// //       case 0:
+// //         sortKey = 'id';
+// //         break;
+// //       case 1:
+// //         sortKey = 'actionCreatedBy';
+// //         break;
+// //       case 2:
+// //         sortKey = 'dateSubmitted';
+// //         break;
+// //       case 3:
+// //         sortKey = 'dueDate';
+// //         break;
+// //       case 4:
+// //         sortKey = 'priority';
+// //         break;
+// //       case 5:
+// //         sortKey = 'status';
+// //         break;
+// //     }
+
+// //     mapped.sort((a, b) {
+// //       dynamic aValue = a[sortKey];
+// //       dynamic bValue = b[sortKey];
+// //       if (aValue is String && bValue is String) {
+// //         return _sortAscending ? aValue.compareTo(bValue) : bValue.compareTo(aValue);
+// //       } else if (aValue is DateTime && bValue is DateTime) {
+// //         return _sortAscending ? aValue.compareTo(bValue) : bValue.compareTo(aValue);
+// //       }
+// //       return 0;
+// //     });
+// //   }
+
+// //   return mapped;
+// }
 
   void _sort<T>(int columnIndex, bool ascending) {
     setState(() {
@@ -178,8 +271,11 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
         if (controller.error != null) {
           return Center(child: Text('Error: ${controller.error}'));
         }
+        final allOrders = controller.orders;
+        final filteredOrders = _filteredAndSortedOrders(allOrders);
+  // final totalRows = allOrders.length;
         final dataSource = _PurchaseOrderDataSource(
-          _filteredAndSortedOrders(controller.orders),
+          filteredOrders,
           _dateFormat,
           onView: viewPurchaseOrder,
           onEdit: editPurchaseOrder,
@@ -228,48 +324,56 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
               _buildFiltersRow(),
               const SizedBox(height: 16),
               Expanded(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.vertical,
-                  child: Theme(
-                    data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-                    child: PaginatedDataTable(
-                      header: const Text('Purchase Orders Table'),
-                      rowsPerPage: _rowsPerPage,
-                      onRowsPerPageChanged: (r) {
-                        if (r != null) {
-                          setState(() {
-                            _rowsPerPage = r;
-                          });
-                        }
-                      },
-                      sortColumnIndex: _sortColumnIndex,
-                      sortAscending: _sortAscending,
-                      columnSpacing: 180, 
-                      horizontalMargin: 16, 
-                      columns: [
-                        DataColumn(
-                            label: const Text('ID'),
-                            onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
-                        DataColumn(
-                            label: const Text('Created by'),
-                            onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
-                        DataColumn(
-                            label: const Text('Date submitted'),
-                            onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
-                        DataColumn(
-                            label: const Text('Due date'),
-                            onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
-                        DataColumn(
-                            label: const Text('Priority'),
-                            onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
-                        DataColumn(
-                            label: const Text('Status'),
-                            onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
-                        const DataColumn(label: Text('Actions')),
-                      ],
-                      source: dataSource,
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.vertical,
+                        child: Theme(
+                          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                          child: PaginatedDataTable(
+                            header: const Text('Purchase Orders Table'),
+                            rowsPerPage: _rowsPerPage,
+                            onRowsPerPageChanged: (r) {
+                              if (r != null) {
+                                setState(() {
+                                  _rowsPerPage = r;
+                                });
+                              }
+                            },
+                            sortColumnIndex: _sortColumnIndex,
+                            sortAscending: _sortAscending,
+                            columnSpacing: 180,
+                            horizontalMargin: 16,
+                            columns: [
+                              DataColumn(
+                                  label: const Text('ID'),
+                                  onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
+                              DataColumn(
+                                  label: const Text('Created by'),
+                                  onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
+                              DataColumn(
+                                  label: const Text('Date submitted'),
+                                  onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
+                              DataColumn(
+                                  label: const Text('Due date'),
+                                  onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
+                              DataColumn(
+                                  label: const Text('Priority'),
+                                  onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
+                              DataColumn(
+                                  label: const Text('Status'),
+                                  onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
+                              const DataColumn(label: Text('Actions')),
+                            ],
+                            source: dataSource,
+                          ),
+                          
+                        ),
+                      ),
                     ),
-                  ),
+                    
+                  ],
                 ),
               ),
             ],
@@ -283,9 +387,34 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 0),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ...existing code for filters...
+          // Search bar at the start of the row, left-aligned
+          SizedBox(
+            width: 740,
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search...',
+                prefixIcon: const Icon(Icons.search),
+                filled: true,
+                fillColor: const Color(0xFFF7F3FF),
+                contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(24),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+              style: const TextStyle(color: Colors.deepPurple, fontSize: 16),
+              onChanged: (value) {
+                setState(() {
+                  _searchText = value;
+                });
+              },
+            ),
+          ),
+          const SizedBox(width: 100), // Increased space between search bar and filters
+          // Filters follow the search bar
           PopupMenuButton<String?>(
             onSelected: (value) {
               setState(() {
@@ -294,7 +423,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
             },
             itemBuilder: (context) => [
               const PopupMenuItem(value: 'high', child: Text('high')),
-              const PopupMenuItem(value: 'medium', child: Text('medium')),
+              const PopupMenuItem(value: 'medium', child: Text('medium' ,)),
               const PopupMenuItem(value: 'low', child: Text('low')),
               if (_priorityFilter != null)
                 const PopupMenuItem(value: null, child: Text('Clear Priority')),
@@ -729,6 +858,9 @@ class ViewPurchasePage extends StatelessWidget {
             ),
           ],
         ),
+         
+                                      
+                                    
       ),
     );
   }

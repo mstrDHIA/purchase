@@ -4,7 +4,7 @@ class PurchaseRequest {
   int? id;
   DateTime? startDate;
   DateTime? endDate;
-  List<dynamic>? products;
+  List<ProductLine>? products;
   String? title;
   String? description;
   String? status;
@@ -31,21 +31,29 @@ class PurchaseRequest {
 
   PurchaseRequest.fromJson(Map<String, dynamic> json) {
     id = json['id'];
-
     // Dates: check for null and parse
     startDate = json['start_date'] != null ? DateTime.tryParse(json['start_date'].toString()) : null;
     endDate = json['end_date'] != null ? DateTime.tryParse(json['end_date'].toString()) : null;
     createdAt = json['created_at'] != null ? DateTime.tryParse(json['created_at'].toString()) : null;
     updatedAt = json['updated_at'] != null ? DateTime.tryParse(json['updated_at'].toString()) : null;
     // Products
-    products = (json['products'] as List<dynamic>?)?.map((item) {
-      return ProductLine(
-        product: item['product'],
-        brand: item['brand'],
-        quantity: item['quantity'] ?? 1,
-        unitPrice: (item['unit_price'] ?? 0).toDouble(),
-      );
-    }).toList();
+    if (json['products'] is List) {
+      products = (json['products'] as List).map((item) {
+        if (item is ProductLine) return item;
+        return ProductLine(
+          product: item['product'],
+          brand: item['brand'],
+          quantity: item['quantity'] is int ? item['quantity'] : int.tryParse(item['quantity']?.toString() ?? '') ?? 1,
+          unitPrice: item['unit_price'] is double
+              ? item['unit_price']
+              : (item['unit_price'] is int)
+                  ? (item['unit_price'] as int).toDouble()
+                  : double.tryParse(item['unit_price']?.toString() ?? '') ?? 0.0,
+        );
+      }).toList();
+    } else {
+      products = [];
+    }
     title = json['title'];
     description = json['description'];
     status = json['status'];

@@ -9,6 +9,21 @@ class AppLocalizationsFr extends AppLocalizations {
   AppLocalizationsFr([String locale = 'fr']) : super(locale);
 
   @override
+  String get userName => 'Jasser Boubaker';
+
+  @override
+  String get userEmail => 'jasser.boubaker@email.com';
+
+  @override
+  String get french => 'Français';
+
+  @override
+  String get english => 'Anglais';
+
+  @override
+  String get arabic => 'Arabe';
+
+  @override
   String get purchaseRequests => 'Demandes d\'achat';
 
   @override
@@ -128,6 +143,4 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get periodYear => 'Année';
-   @override
-  String get filterByStatus => 'Filtrer par statut';
 }

@@ -132,7 +132,7 @@ class PurchaseRequestDataSource extends DataTableSource {
               tooltip: 'Edit',
             ),
              IconButton(
-                icon: const Icon(Icons.delete, color: Color.fromARGB(255, 11, 11, 11)),
+                icon: const Icon(Icons.delete_outline, color: Color.fromARGB(255, 11, 11, 11)),
                 tooltip: 'Delete',
                 onPressed: () async {
                   final bool? confirmed = await showDialog<bool>(

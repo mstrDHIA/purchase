@@ -1,3 +1,4 @@
+import 'package:flutter_application_1/screens/Dashboard/dashboard_screen.dart';
 import 'package:flutter_application_1/main.dart';
 import 'package:flutter_application_1/screens/Product/product_screen.dart';
 import 'package:flutter_application_1/screens/Purchase%20order/pushase_order_screen.dart';
@@ -25,6 +26,14 @@ final GoRouter router = GoRouter(
   //     ? null
   //     : '/main_screen',
   routes: [
+    GoRoute(
+      path: '/dashboard',
+      builder: (context, state) => const DashboardPage(),
+    ),
+    GoRoute(
+      path: '/dashboard',
+      builder: (context, state) => DashboardPage(),
+    ),
     // GoRoute(
     //   path: '/',
     //   builder: (context, state) => HomePage(),
@@ -89,10 +98,10 @@ final GoRouter router = GoRouter(
       path: '/product',
       builder: (context, state) => ProductPage(),
     ),
-    GoRoute(
-      path: '/home_screen',
-      builder: (context, state) => HomeScreen(),
-    ),
+    // GoRoute(
+    //   path: '/home_screen',
+    //   // builder: (context, state) => HomeScreen(),
+    // ),
     GoRoute(
       path: '/add_user',
       builder: (context, state) => AddUserPage(),

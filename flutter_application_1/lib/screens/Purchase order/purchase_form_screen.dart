@@ -81,9 +81,19 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
       if (_updatedAt == null) {
         _updatedAt = DateTime.now();
       }
-      // Pré-remplir le champ Supplier Name si la valeur existe
-      supplierName = initial['supplierName'] ?? initial['supplier'] ?? '';
+      // Pré-remplir le champ Supplier Name si la valeur existe, sinon le chercher dans les produits
+      supplierName = initial['supplierName'] ?? initial['supplier'] ?? initial['Supplier'];
+      if ((supplierName == null || (supplierName?.isEmpty ?? true)) && initial['products'] != null && initial['products'] is List) {
+        for (final p in (initial['products'] as List)) {
+          final s = p['supplier']?.toString() ?? p['Supplier']?.toString();
+          if (s != null && s.isNotEmpty) {
+            supplierName = s;
+            break;
+          }
+        }
+      }
       supplierNameController.text = supplierName ?? '';
+      
 
       if (initial['endDate'] != null) {
         try {
@@ -158,8 +168,8 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      drawer: _buildDrawer(context),
-      appBar: _buildAppBar(context),
+      // drawer: _buildDrawer(context),
+      // appBar: _buildAppBar(context),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -520,16 +530,16 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
     );
   }
 
-  Drawer _buildDrawer(BuildContext context) {
-    return const Drawer(
-      child: Center(child: Text("Menu here")),
-    );
-  }
+  // Drawer _buildDrawer(BuildContext context) {
+  //   return const Drawer(
+  //     child: Center(child: Text("Menu here")),
+  //   );
+  // }
 
-  AppBar _buildAppBar(BuildContext context) {
-    return AppBar(
-      title: const Text('Purchase Order'),
-      backgroundColor: const Color(0xFF8C7AE6),
-    );
-  }
+  // AppBar _buildAppBar(BuildContext context) {
+  //   return AppBar(
+  //     title: const Text('Purchase Order'),
+  //     backgroundColor: const Color(0xFF8C7AE6),
+  //   );
+  // }
 }

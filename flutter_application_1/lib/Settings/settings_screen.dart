@@ -16,9 +16,11 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   late UserController userController;
   bool _notificationsEnabled = true;
-  String _selectedLanguage = "Français";
+  String _selectedLanguage = "English";
   
-  get user => null;
+
+ 
+  Map<String, dynamic> user = {};
 
   @override
   void initState() {
@@ -29,9 +31,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _loadLanguagePreference() async {
     final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _selectedLanguage = prefs.getString("language") ?? "Français";
-    });
+    final lang = prefs.getString("language");
+    if (lang == null) {
+      await prefs.setString("language", "English");
+      setState(() {
+        _selectedLanguage = "English";
+      });
+    } else {
+      setState(() {
+        _selectedLanguage = lang;
+      });
+    }
   }
 
   Future<void> _saveLanguagePreference(String lang) async {
@@ -42,9 +52,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final themeName = themeProvider.themeName;
 
+  final themeProvider = Provider.of<ThemeProvider>(context);
+  final themeName = themeProvider.themeName;
+  final loc = AppLocalizations.of(context)!;
+  // Récupérer l'utilisateur connecté depuis le UserController
+  final userData = Provider.of<UserController>(context).currentUser;
+  // Compose display name from firstName/lastName or username
+  String userName = '';
+  if ((userData.firstName != null && userData.firstName!.isNotEmpty) || (userData.lastName != null && userData.lastName!.isNotEmpty)) {
+    userName = '${userData.firstName ?? ''} ${userData.lastName ?? ''}'.trim();
+  } else if (userData.username != null && userData.username!.isNotEmpty) {
+    userName = userData.username!;
+  } else {
+  userName = loc.userName;
+  }
+  final userEmail = userData.email ?? loc.userEmail;
+  // Afficher la vraie photo de profil si disponible, sinon image par défaut
+  String userAvatar = 'assets/images/Company.jpg';
+  if (userData.profile != null) {
+    final profile = userData.profile!;
+    // Utiliser le champ bio comme chemin d'image si c'est une image
+    if (profile.bio != null && profile.bio!.isNotEmpty && (profile.bio!.endsWith('.jpg') || profile.bio!.endsWith('.png'))) {
+      userAvatar = profile.bio!;
+    }
+  }
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),
@@ -54,29 +86,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         children: [
-          // ==== PROFILE HEADER ====
-          Card(
-            elevation: 2,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24),
-              child: Column(
-                children: [
-                  const CircleAvatar(
-                    radius: 45,
-                    backgroundImage: AssetImage('assets/avatar.png'),
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    "Jasser Boubaker",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    "jasser.boubaker@email.com",
-                    style: TextStyle(color: Colors.grey[600]),
-                  ),
-                ],
+          
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeInOut,
+            child: Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Column(
+                  children: [
+                    CircleAvatar(
+                      radius: 45,
+                      backgroundImage: AssetImage(userAvatar),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      userName,
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      userEmail,
+                      style: TextStyle(color: Colors.grey[600]),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -160,25 +196,53 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 // ==== LANGUAGE ====
                 ListTile(
                   leading: const Icon(Icons.language),
-                  title: const Text('Language'),
-                  trailing: DropdownButton<String>(
-                    value: _selectedLanguage,
-                    items: const [
-                      DropdownMenuItem(value: "Français", child: Text("French")),
-                      DropdownMenuItem(value: "English", child: Text("English")),
-                      DropdownMenuItem(value: "العربية", child: Text("Arabic")),
-                    ],
-                    onChanged: (String? lang) {
-                      if (lang != null) {
-                        _saveLanguagePreference(lang);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text("Language changed to $lang"),
-                            duration: const Duration(seconds: 1),
+                  title: Text(loc.language),
+                  trailing: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: DropdownButton<String>(
+                      key: ValueKey(_selectedLanguage),
+                      value: _selectedLanguage,
+                      items: [
+                        DropdownMenuItem(
+                          value: "Français",
+                          child: Row(
+                            children: [
+                              Icon(Icons.check, color: Colors.blue, size: 18),
+                              SizedBox(width: 6),
+                              Text(loc.french),
+                            ],
                           ),
-                        );
-                      }
-                    },
+                        ),
+                        DropdownMenuItem(
+                          value: "English",
+                          child: Text(loc.english),
+                        ),
+                        DropdownMenuItem(
+                          value: "العربية",
+                          child: Text(loc.arabic),
+                        ),
+                      ],
+                      onChanged: (String? lang) {
+                        if (lang != null) {
+                          _saveLanguagePreference(lang);
+                          // Changement dynamique de la langue
+                          final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
+                          if (lang == "English") {
+                            localeProvider.setLocale(const Locale('en'));
+                          } else if (lang == "Français") {
+                            localeProvider.setLocale(const Locale('fr'));
+                          } else if (lang == "العربية") {
+                            localeProvider.setLocale(const Locale('ar'));
+                          }
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(loc.languageChanged(lang)),
+                              duration: const Duration(seconds: 1),
+                            ),
+                          );
+                        }
+                      },
+                    ),
                   ),
                 ),
               ],

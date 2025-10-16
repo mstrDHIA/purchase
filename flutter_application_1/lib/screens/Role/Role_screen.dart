@@ -244,13 +244,17 @@ class _RolePageState extends State<RolePage> {
                                                   shape: RoundedRectangleBorder(
                                                     borderRadius: BorderRadius.circular(18),
                                                   ),
-                                                  child: EditRolePage(
-                                                    id: roleData.id ?? 0,
-                                                    initialName: (roleData.name ?? '').toString(),
-                                                    initialDescription: (roleData.description ?? '').toString(),
-                                                    // initialPermissions: (roleData['permissions'] is List<String>)
-                                                    //     ? roleData['permissions'] as List<String>
-                                                    //     : <String>[],
+                                                  child: SizedBox(
+                                                    width: MediaQuery.of(context).size.width * 0.32,
+                                                    height: MediaQuery.of(context).size.height * 0.48,
+                                                    child: EditRolePage(
+                                                      id: roleData.id ?? 0,
+                                                      initialName: (roleData.name ?? '').toString(),
+                                                      initialDescription: (roleData.description ?? '').toString(),
+                                                      // initialPermissions: (roleData['permissions'] is List<String>)
+                                                      //     ? roleData['permissions'] as List<String>
+                                                      //     : <String>[]
+                                                    ),
                                                   ),
                                                 ),
                                               );
