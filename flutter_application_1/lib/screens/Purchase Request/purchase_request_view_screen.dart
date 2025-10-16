@@ -466,13 +466,11 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                   );
                                   if (shouldCreate == true) {
                                     widget.purchaseRequest.approvedBy=responseData['approved_by'];
-                                    // Prepare purchase order data from purchase request
                                     Map<String,dynamic> purchaseOrderData = {
                                       'title': widget.purchaseRequest.title,
                                       'description': widget.purchaseRequest.description,
                                       'requested_by_user': widget.purchaseRequest.approvedBy,
-                                      // 'approved_by': _approvedBy ?? 2,
-                                      'status': 'pending', // Always set to pending      
+                                      'status': 'pending',
                                       'created_at': DateFormat('yyyy-MM-dd').format(DateTime.now()),
                                       'updated_at': DateFormat('yyyy-MM-dd').format(DateTime.now()),
                                       'purchase_request_id': widget.purchaseRequest.id,
@@ -480,17 +478,14 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                       'priority': widget.purchaseRequest.priority,
                                       'start_date': DateFormat('yyyy-MM-dd').format(widget.purchaseRequest.startDate!),
                                       'end_date': DateFormat('yyyy-MM-dd').format(widget.purchaseRequest.endDate!),
-                                      // Add other fields as needed
                                     };
                                     // PurchaseOrder purchaseOrder = PurchaseOrder.fromJson(purchaseOrderData);
                                     // purchaseOrderData=purchaseOrder.toJson();
-      //                               {
-      // }
+                                    // {
                                     // Create the purchase order using your controller or network
                                     // final purchaseOrderController = Provider.of<PurchaseOrderController>(context, listen: false);
                                     await purchaseOrderController!.addOrder(purchaseOrderData);
 
-                                    // Navigate to the purchase order page
                                     if (mounted) {
                                       SnackBar snackBar=SnackBar(content: Text('Purchase Order created successfully!'),backgroundColor: Colors.green,);
                                       ScaffoldMessenger.of(context).showSnackBar(snackBar);
