@@ -82,12 +82,137 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
       // TODO: Apply filter logic to data source if needed
     }
   }
+
+  Widget _buildFiltersRow() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Large search bar on the left
+          Expanded(
+            child: SizedBox(
+              height: 48,
+              child: TextField(
+                controller: _searchController,
+                onChanged: (value) => setState(() => _searchText = value),
+                decoration: InputDecoration(
+                  hintText: AppLocalizations.of(context)!.search,
+                  prefixIcon: const Icon(Icons.search),
+                  filled: true,
+                  fillColor: const Color(0xFFF7F3FF),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(22),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 24),
+          // Filters on the right
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              PopupMenuButton<String?>(
+                onSelected: (value) { setState(() { _priorityFilter = value; }); },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(value: null, child: Text('All')),
+                  ..._priorityOptions.map((p) => PopupMenuItem(value: p, child: Text(p[0].toUpperCase() + p.substring(1)))),
+                ],
+                child: OutlinedButton(
+                  onPressed: null,
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: const Color(0xFFF7F3FF),
+                    foregroundColor: Colors.deepPurple,
+                    side: BorderSide.none,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _priorityFilter == null ? 'Filter by Priority' : 'Priority: ${_priorityFilter![0].toUpperCase() + _priorityFilter!.substring(1)}',
+                        style: const TextStyle(color: Colors.deepPurple, fontWeight: FontWeight.w500),
+                      ),
+                      const SizedBox(width: 6),
+                      const Icon(Icons.arrow_drop_down, color: Colors.deepPurple),
+                    ],
+                  ),
+                ),
+              ),
+              PopupMenuButton<String?>(
+                onSelected: (value) { setState(() { _statusFilter = value; }); },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(value: null, child: Text('All')),
+                  ..._statusOptions.map((s) => PopupMenuItem(value: s, child: Text(s[0].toUpperCase() + s.substring(1)))),
+                ],
+                child: OutlinedButton(
+                  onPressed: null,
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: const Color(0xFFF7F3FF),
+                    foregroundColor: Colors.deepPurple,
+                    side: BorderSide.none,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _statusFilter == null ? 'Filter by Status' : 'Status: ${_statusFilter![0].toUpperCase() + _statusFilter!.substring(1)}',
+                        style: const TextStyle(color: Colors.deepPurple, fontWeight: FontWeight.w500),
+                      ),
+                      const SizedBox(width: 6),
+                      const Icon(Icons.arrow_drop_down, color: Colors.deepPurple),
+                    ],
+                  ),
+                ),
+              ),
+              OutlinedButton(
+                onPressed: () => _selectDate(context, true),
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: const Color(0xFFF7F3FF),
+                  foregroundColor: Colors.deepPurple,
+                  side: BorderSide.none,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                ),
+                child: Text(_selectedSubmissionDate == null ? 'Filter by Submission Date' : 'Submission: ${_dateFormat.format(_selectedSubmissionDate!)}'),
+              ),
+              OutlinedButton(
+                onPressed: () => _selectDate(context, false),
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: const Color(0xFFF7F3FF),
+                  foregroundColor: Colors.deepPurple,
+                  side: BorderSide.none,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                ),
+                child: Text(_selectedDueDate == null ? 'Filter by Due Date' : 'Due: ${_dateFormat.format(_selectedDueDate!)}'),
+              ),
+              TextButton(
+                onPressed: _clearFilters,
+                child: const Text('Clear Filters', style: TextStyle(color: Colors.deepPurple, fontWeight: FontWeight.w500)),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
   late UserController userController;
   @override
   void initState() {
     userController= Provider.of<UserController>(context, listen: false);
+    // ensure users are loaded so we can display names instead of ids
+    userController.getUsers();
     purchaseRequestController = Provider.of<PurchaseRequestController>(context, listen: false);
-    purchaseRequestController.fetchRequests(context,userController.currentUser);
+    // initial paginated fetch
+    purchaseRequestController.fetchRequests(context, userController.currentUser, page: 1, pageSizeParam: _rowsPerPageLocal);
     super.initState();
   }
 
@@ -152,175 +277,14 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
               children: [
                 const SizedBox(height: 16),
                 // --- Filter Bar + Search ---
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      // Search Bar
-                      SizedBox(
-                        width: 240,
-                        child: TextField(
-                          controller: _searchController,
-                          onChanged: (value) {
-                            setState(() {
-                              _searchText = value;
-                            });
-                          },
-                          decoration: InputDecoration(
-                            hintText: AppLocalizations.of(context)!.search,
-                            prefixIcon: const Icon(Icons.search),
-                            filled: true,
-                            fillColor: Color(0xFFF7F3FF),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(22),
-                              borderSide: BorderSide.none,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Filter by Status
-                      PopupMenuButton<String>(
-                        onSelected: (String value) {
-                          setState(() {
-                            _statusFilter = value;
-                          });
-                        },
-                        itemBuilder: (context) => [
-                          ..._statusOptions.map((status) => PopupMenuItem(
-                                value: status,
-                                child: Text(status[0].toUpperCase() + status.substring(1)),
-                              )),
-                        ],
-                        child: OutlinedButton(
-                          style: OutlinedButton.styleFrom(
-                            backgroundColor: const Color(0xFFF7F3FF),
-                            foregroundColor: Colors.deepPurple,
-                            side: BorderSide.none,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                            elevation: 0,
-                          ),
-                          onPressed: null,
-                          child: Row(
-                            children: [
-                              Text(
-                                _statusFilter == null ? 'Filter by Status' : 'Status: ${_statusFilter![0].toUpperCase() + _statusFilter!.substring(1)}',
-                                style: const TextStyle(
-                                  color: Colors.deepPurple,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              const Icon(Icons.arrow_drop_down, color: Colors.deepPurple),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Filter by Priority
-                      PopupMenuButton<String>(
-                        onSelected: (String value) {
-                          setState(() {
-                            _priorityFilter = value;
-                          });
-                        },
-                        itemBuilder: (context) => [
-                          ..._priorityOptions.map((priority) => PopupMenuItem(
-                                value: priority,
-                                child: Text(priority[0].toUpperCase() + priority.substring(1)),
-                              )),
-                        ],
-                        child: OutlinedButton(
-                          style: OutlinedButton.styleFrom(
-                            backgroundColor: const Color(0xFFF7F3FF),
-                            foregroundColor: Colors.deepPurple,
-                            side: BorderSide.none,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                            elevation: 0,
-                          ),
-                          onPressed: null,
-                          child: Row(
-                            children: [
-                              Text(
-                                _priorityFilter == null ? 'Filter by Priority' : 'Priority: ${_priorityFilter![0].toUpperCase() + _priorityFilter!.substring(1)}',
-                                style: const TextStyle(
-                                  color: Colors.deepPurple,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              const Icon(Icons.arrow_drop_down, color: Colors.deepPurple),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Filter by Submission Date
-                      OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          backgroundColor: const Color(0xFFF7F3FF),
-                          foregroundColor: Colors.deepPurple,
-                          side: BorderSide.none,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                          elevation: 0,
-                        ),
-                        onPressed: () => _selectDate(context, true),
-                        child: Text(
-                          _selectedSubmissionDate == null
-                              ? 'Filter by Submission Date'
-                              : 'Submission: ${_dateFormat.format(_selectedSubmissionDate!)}',
-                          style: const TextStyle(
-                            
-                            color: Colors.deepPurple,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Filter by Due Date
-                      OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          backgroundColor: const Color(0xFFF7F3FF),
-                          foregroundColor: Colors.deepPurple,
-                          side: BorderSide.none,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                          elevation: 0,
-                        ),
-                        onPressed: () => _selectDate(context, false),
-                        child: Text(
-                          _selectedDueDate == null
-                              ? 'Filter by Due Date'
-                              : 'Due: ${_dateFormat.format(_selectedDueDate!)}',
-                          style: const TextStyle(
-                            color: Colors.deepPurple,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      // Clear Filters
-                      TextButton(
-                        onPressed: _clearFilters,
-                        child: const Text(
-                          'Clear Filters',
-                          style: TextStyle(
-                            color: Colors.deepPurple,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                // Use the consolidated filters row builder (search on left, filters on right)
+                _buildFiltersRow(),
                 const SizedBox(height: 8),
                 // --- End Filter Bar ---
                 Expanded(
                   child: Consumer<PurchaseRequestController>(
                     builder: (context, purchaseRequestController, child) {
-                      final allRequests = purchaseRequestController.dataSource.requests;
+                      final allRequests = purchaseRequestController.requests;
                       var filteredRequests = allRequests;
                       if (_statusFilter != null) {
                         filteredRequests = filteredRequests.where((req) => req.status == _statusFilter).toList();
@@ -353,18 +317,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                         }).toList();
                       }
                       final filteredDataSource = PurchaseRequestDataSource(filteredRequests, context, 'filtered');
-                      int totalRows = filteredRequests.length;
-                      // Corriger la page si besoin (ex: suppression d'éléments)
-                      if (_page * _rowsPerPageLocal >= totalRows && _page > 0) {
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          setState(() {
-                            _page = ((totalRows - 1) / _rowsPerPageLocal).floor();
-                            if (_page < 0) _page = 0;
-                          });
-                        });
-                      }
-                      final int start = _page * _rowsPerPageLocal;
-                      final int end = (_page + 1) * _rowsPerPageLocal > totalRows ? totalRows : (_page + 1) * _rowsPerPageLocal;
+                      // pagination data available in controller if needed
                       // Sort filteredRequests if a sort column is selected
                       if (_sortColumnIndex != null) {
                         var getField;
@@ -399,9 +352,8 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                           return 0;
                         });
                       }
-                      final pageRequests = filteredRequests.sublist(start < totalRows ? start : 0, end < totalRows ? end : totalRows);
-                      final pageDataSource = PurchaseRequestDataSource(pageRequests, context, 'filtered');
-                      print('DataSource: $pageRequests');
+                      final pageDataSource = filteredDataSource;
+                      // data source prepared for current page
                       return Column(
                         children: [
                           Expanded(
@@ -419,7 +371,8 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                                         setState(() {
                                           _rowsPerPageLocal = r;
                                           _rowsPerPage = r;
-                                          _page = 0;
+                                          // refetch with new page size and reset to first page
+                                          purchaseRequestController.fetchRequests(context, userController.currentUser, page: 1, pageSizeParam: _rowsPerPageLocal);
                                         });
                                       }
                                     },
@@ -470,7 +423,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                                       ),
                                       DataColumn(
                                         label: SizedBox(
-                                          width: 120,
+                                          width: 100,
                                           child: const Center(child: Text('Actions')),
                                         ),
                                       ),
@@ -482,54 +435,8 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                               ),
                             ),
                           ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              ElevatedButton(
-                                onPressed: _page > 0
-                                    ? () {
-                                        setState(() {
-                                          _page--;
-                                        });
-                                      }
-                                    : null,
-                                child: const Text('Previous'),
-                              ),
-                              const SizedBox(width: 8),
-                              // Numérotation des pages
-                              ...List.generate(
-                                (totalRows / _rowsPerPageLocal).ceil(),
-                                (index) => Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 2),
-                                  child: ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: index == _page ? Colors.deepPurple : Colors.grey[200],
-                                      foregroundColor: index == _page ? Colors.white : Colors.deepPurple,
-                                      minimumSize: const Size(36, 36),
-                                      padding: EdgeInsets.zero,
-                                    ),
-                                    onPressed: () {
-                                      setState(() {
-                                        _page = index;
-                                      });
-                                    },
-                                    child: Text('${index + 1}'),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              ElevatedButton(
-                                onPressed: (_page + 1) * _rowsPerPageLocal < totalRows
-                                    ? () {
-                                        setState(() {
-                                          _page++;
-                                        });
-                                      }
-                                    : null,
-                                child: const Text('Next'),
-                              ),
-                            ],
-                          ),
+                          // Pagination controls removed (per request)
+                          const SizedBox(height: 8),
                         ],
                       );
                     },
