@@ -13,6 +13,12 @@ class PurchaseRequestController extends ChangeNotifier {
   bool isLoading = false;
   String? _error;
   late PurchaseRequestDataSource dataSource;
+  // Pagination state
+  int currentPage = 1;
+  int pageSize = 10;
+  int totalCount = 0;
+  bool hasNext = false;
+  bool hasPrevious = false;
 
   PurchaseRequestController(BuildContext context) {
     dataSource = PurchaseRequestDataSource([], context, 'defaultArgument');
@@ -21,21 +27,39 @@ class PurchaseRequestController extends ChangeNotifier {
   // List<PurchaseRequest> get requests => _requests;
   String? get error => _error;
 
-  fetchRequests(BuildContext context,User user) async {
+  fetchRequests(BuildContext context, User user, {int page = 1, int pageSizeParam = 10}) async {
     isLoading = true;
     _error = null;
     notifyListeners();
     try {
-      final Response response = await _network.fetchPurchaseRequests(user);
+      currentPage = page;
+      pageSize = pageSizeParam;
+      final Response response = await _network.fetchPurchaseRequests(user, page: page, pageSize: pageSize);
       if (response.statusCode != 200) {
         throw Exception('Failed to load purchase requests');
       }
       print('Raw API Response: ${response.data}'); // Log raw API response
 
-    requests.clear();
-    requests = response.data
-      .map<PurchaseRequest>((json) => PurchaseRequest.fromJson(json))
-      .toList();
+      // Handle DRF paginated response e.g. {count: N, next: url, previous: url, results: [...]}
+      var data = response.data;
+      List<dynamic> items;
+      if (data is Map && data.containsKey('results')) {
+        items = data['results'] as List<dynamic>;
+        totalCount = data['count'] ?? items.length;
+        hasNext = data['next'] != null;
+        hasPrevious = data['previous'] != null;
+      } else if (data is List) {
+        // fallback: unpaginated list
+        items = data as List<dynamic>;
+        totalCount = items.length;
+        hasNext = false;
+        hasPrevious = false;
+      } else {
+        throw Exception('Unexpected response format for purchase requests');
+      }
+
+      requests.clear();
+      requests = items.map<PurchaseRequest>((json) => PurchaseRequest.fromJson(json)).toList();
     // Sort requests by id ascending
       requests.sort((a, b) {
         if (a.id == null && b.id == null) return 0;

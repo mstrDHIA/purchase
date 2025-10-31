@@ -12,6 +12,8 @@ class PurchaseRequest {
   DateTime? updatedAt;
   int? approvedBy;
   int? requestedBy;
+  String? approvedByName;
+  String? requestedByName;
   String? priority;
 
   PurchaseRequest(
@@ -60,11 +62,14 @@ class PurchaseRequest {
     // Handle nested user objects for requested_by and approved_by
     if (json['requested_by'] is Map) {
       requestedBy = json['requested_by']['id'];
+      // try to capture a display name if backend provides it
+      requestedByName = (json['requested_by']['first_name'] ?? json['requested_by']['username'] ?? json['requested_by']['name'])?.toString();
     } else {
       requestedBy = json['requested_by'];
     }
     if (json['approved_by'] is Map) {
       approvedBy = json['approved_by']['id'];
+      approvedByName = (json['approved_by']['first_name'] ?? json['approved_by']['username'] ?? json['approved_by']['name'])?.toString();
     } else {
       approvedBy = json['approved_by'];
     }
@@ -89,6 +94,8 @@ class PurchaseRequest {
   data['updated_at'] = updatedAt?.toIso8601String();
   data['approved_by'] = approvedBy;
   data['requested_by'] = requestedBy;
+  data['approved_by_name'] = approvedByName;
+  data['requested_by_name'] = requestedByName;
   data['priority'] = priority;
   return data;
   }

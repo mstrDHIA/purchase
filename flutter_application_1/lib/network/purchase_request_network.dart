@@ -7,22 +7,23 @@ class PurchaseRequestNetwork {
   APIS api = APIS();
 
   // Fetch all purchase requests
-  Future<Response> fetchPurchaseRequests(User user) async {
-    Map<String,int> queryParameters = {};
-    if(user.role!.id==2){
-      queryParameters['requested_by']=user.id!;
+  Future<Response> fetchPurchaseRequests(User user, {int page = 1, int pageSize = 10}) async {
+    Map<String, dynamic> queryParameters = {};
+    // Add pagination params (Django REST Framework style: page & page_size)
+    queryParameters['page'] = page;
+    queryParameters['page_size'] = pageSize;
+    if (user.role!.id == 2) {
+      queryParameters['requested_by'] = user.id!;
     }
     Response response = await api.dio.get(
       '${APIS.baseUrl}/purchase_request/purchaseRequests/',
       queryParameters: queryParameters,
       options: Options(
-
         headers: {
           'Authorization': 'Bearer ${APIS.token}',
           'ngrok-skip-browser-warning': 'true',
         },
       ),
-
     );
     if (response.statusCode == 200) {
       return response;

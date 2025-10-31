@@ -1,6 +1,9 @@
 import 'package:flutter_application_1/screens/Purchase%20order/Edit_purchase_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
+import 'package:flutter_application_1/controllers/user_controller.dart';
+import 'package:flutter_application_1/models/user_model.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/screens/Purchase%20order/purchase_form_screen.dart';
 // import 'package:flutter_application_1/screens/Purchase%20order/view_purchase_screen.dart';
@@ -38,6 +41,9 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
   @override
   void initState() {
     super.initState();
+    userController = Provider.of<UserController>(context, listen: false);
+    // Ensure users are loaded so we can display names instead of ids
+    userController.getUsers();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<PurchaseOrderController>(context, listen: false).fetchOrders();
     });
@@ -46,29 +52,76 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
   List<Map<String, dynamic>> _filteredAndSortedOrders(List orders) {
   List<Map<String, dynamic>> mapped = orders
     .map((order) {
-          DateTime parseDate(dynamic value) {
-            if (value is DateTime) return value;
-            if (value is String) {
-              try {
-                return DateTime.parse(value);
-              } catch (_) {
-                return DateTime.now();
-              }
-            }
+      DateTime parseDate(dynamic value) {
+        if (value is DateTime) return value;
+        if (value is String) {
+          try {
+            return DateTime.parse(value);
+          } catch (_) {
             return DateTime.now();
           }
-          return {
-            'id': order.id?.toString() ?? '',
-            'actionCreatedBy': order.requestedByUser?.toString() ?? '',
-            'dateSubmitted': parseDate(order.startDate),
-            'dueDate': parseDate(order.endDate),
-            'priority': order.priority ?? '',
-            'status': order.status ?? '',
-          };
-        })
-        .toList();
+        }
+        return DateTime.now();
+      }
+      // Resolve requestedByUser which may be either an id (int) or a nested user Map
+      String actionCreatedBy = '';
+      final userField = order.requestedByUser;
+      if (userField != null) {
+        // If API returned a nested user object
+        if (userField is Map) {
+          // Try common keys
+          final fname = (userField['first_name'] ?? userField['firstName'] ?? '')?.toString();
+          final lname = (userField['last_name'] ?? userField['lastName'] ?? '')?.toString();
+          final uname = (userField['username'] ?? userField['user'] ?? '')?.toString();
+          if (fname != null && fname.isNotEmpty) {
+            actionCreatedBy = '${fname}${lname != null && lname.isNotEmpty ? ' $lname' : ''}'.trim();
+          } else if (uname != null && uname.isNotEmpty) {
+            actionCreatedBy = uname;
+          } else if (userField['id'] != null) {
+            actionCreatedBy = userField['id'].toString();
+          }
+        } else {
+          // Treat as id (int or string). Try to find in loaded users.
+          final userId = int.tryParse(userField.toString()) ?? (userField is int ? userField : null);
+          if (userId != null) {
+            final found = userController.users.firstWhere((u) => u.id == userId, orElse: () => User(id: userId, username: userId.toString()));
+            if (found.firstName != null && (found.firstName ?? '').isNotEmpty) {
+              actionCreatedBy = '${found.firstName} ${found.lastName ?? ''}'.trim();
+            } else if (found.username != null && (found.username ?? '').isNotEmpty) {
+              actionCreatedBy = found.username!;
+            } else {
+              actionCreatedBy = userId.toString();
+            }
+          } else {
+            // fallback to string representation
+            actionCreatedBy = userField.toString();
+          }
+        }
+      }
 
-    // Filtres
+      return {
+        'id': order.id?.toString() ?? '',
+        'actionCreatedBy': actionCreatedBy,
+        'dateSubmitted': parseDate(order.startDate),
+        'dueDate': parseDate(order.endDate),
+        'priority': order.priority ?? '',
+        'status': order.status ?? '',
+        'original': order,
+      };
+    }).toList();
+
+    // Search filter: only show orders that match the search text in any main field
+    if (_searchText.isNotEmpty) {
+      final searchLower = _searchText.toLowerCase();
+      mapped = mapped.where((order) =>
+        order['id'].toLowerCase().contains(searchLower) ||
+        order['actionCreatedBy'].toLowerCase().contains(searchLower) ||
+        order['priority'].toLowerCase().contains(searchLower) ||
+        order['status'].toLowerCase().contains(searchLower)
+      ).toList();
+    }
+
+    // Apply filters
     if (_priorityFilter != null) {
       mapped = mapped.where((order) => order['priority'].toString().toLowerCase() == _priorityFilter!.toLowerCase()).toList();
     }
