@@ -11,12 +11,12 @@ class EditSupplierPage extends StatefulWidget {
   final String? status;
 
   const EditSupplierPage({
-    Key? key,
+    super.key,
     this.email,
     this.name,
     this.category,
     this.status,
-  }) : super(key: key);
+  });
 
   @override
   State<EditSupplierPage> createState() => _EditSupplierPageState();
@@ -99,7 +99,7 @@ class _EditSupplierPageState extends State<EditSupplierPage> {
                                 Expanded(
                                   child: DropdownButtonFormField<String>(
                                     decoration: _inputDecoration('Does deliver'),
-                                    value: doesDeliver,
+                                    initialValue: doesDeliver,
                                     items: const [
                                       DropdownMenuItem(value: 'Yes', child: Text('Yes')),
                                       DropdownMenuItem(value: 'No', child: Text('No')),

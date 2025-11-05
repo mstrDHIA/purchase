@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
-import 'package:flutter_application_1/models/user_model.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_application_1/l10n/app_localizations.dart';
 import 'package:flutter_application_1/controllers/purchase_request_controller.dart';
@@ -39,9 +38,9 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
   int _rowsPerPage = PaginatedDataTable.defaultRowsPerPage;
   int? _sortColumnIndex;
   bool _sortAscending = true;
-  bool _isLoading = false;
-  int _page = 0;
-  int _totalRows = 0;
+  final bool _isLoading = false;
+  final int _page = 0;
+  final int _totalRows = 0;
   int _rowsPerPageLocal = PaginatedDataTable.defaultRowsPerPage;
 
   // Filter state
@@ -320,7 +319,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                       // pagination data available in controller if needed
                       // Sort filteredRequests if a sort column is selected
                       if (_sortColumnIndex != null) {
-                        var getField;
+                        Function(dynamic req) getField;
                         switch (_sortColumnIndex) {
                           case 0:
                             getField = (req) => req.id ?? 0;

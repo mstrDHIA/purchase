@@ -7,7 +7,6 @@ import 'package:flutter_application_1/screens/Purchase%20Request/Request_Edit_sc
 import 'package:flutter_application_1/screens/Purchase%20Request/purchase_request_view_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_application_1/network/purchase_request_network.dart';
 
 class PurchaseRequestDataSource extends DataTableSource {
   final List<PurchaseRequest> requests;
@@ -42,7 +41,7 @@ class PurchaseRequestDataSource extends DataTableSource {
             final String fname = (userField['first_name'] ?? userField['firstName'] ?? '')?.toString() ?? '';
             final String lname = (userField['last_name'] ?? userField['lastName'] ?? '')?.toString() ?? '';
             final String uname = (userField['username'] ?? userField['user'] ?? '')?.toString() ?? '';
-            if (fname.isNotEmpty) return Text('${fname}${lname.isNotEmpty ? ' $lname' : ''}'.trim());
+            if (fname.isNotEmpty) return Text('$fname${lname.isNotEmpty ? ' $lname' : ''}'.trim());
             if (uname.isNotEmpty) return Text(uname);
             if (userField['id'] != null) return Text(userField['id'].toString());
             return const Text('');
@@ -232,7 +231,7 @@ class PurchaseRequestDataSource extends DataTableSource {
   @override
   int get selectedRowCount => 0;
 
-  get selectedRow => null;
+  Null get selectedRow => null;
   
-  get order => null;
+  Null get order => null;
 }

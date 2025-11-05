@@ -86,7 +86,7 @@ class PurchaseRequest {
   data['start_date'] = startDate?.toIso8601String();
   data['end_date'] = endDate?.toIso8601String();
   // Convert ProductLine objects to Map
-  data['products'] = products?.map((item) => item is ProductLine ? item.toJson() : item).toList();
+  data['products'] = products?.map((item) => item.toJson()).toList();
   data['title'] = title;
   data['description'] = description;
   data['status'] = status;

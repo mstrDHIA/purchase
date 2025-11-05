@@ -1,9 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
-import 'package:flutter_application_1/main.dart';
-import 'package:flutter_application_1/models/profile.dart';
-import 'package:flutter_application_1/network/profile_network.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
@@ -17,7 +14,7 @@ import 'package:provider/provider.dart';
 class AddUserPage extends StatefulWidget {
   final String? email;
   final int? userId;
-  const AddUserPage({Key? key, this.email, this.userId}) : super(key: key);
+  const AddUserPage({super.key, this.email, this.userId});
 
   @override
   _AddUserPageState createState() => _AddUserPageState();
@@ -34,7 +31,7 @@ class _AddUserPageState extends State<AddUserPage> {
   final _confirmPasswordController = TextEditingController();
   
   // final _passwordController = TextEditingController();
-  String _selectedCountry = 'Tunisia';
+  final String _selectedCountry = 'Tunisia';
   // String? _selectedRole = 'Member';
 
   final List<String> _countries = [

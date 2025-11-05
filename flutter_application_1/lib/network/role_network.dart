@@ -24,7 +24,7 @@ class RoleNetwork {
   }
   final Dio _dio = Dio();
 
- fetchRoles() async {
+ Future<Response> fetchRoles() async {
     try {
       final response = await _dio.get(
         '${APIS.baseUrl}role/roles/',

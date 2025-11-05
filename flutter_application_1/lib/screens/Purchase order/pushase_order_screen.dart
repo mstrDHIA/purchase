@@ -1,6 +1,5 @@
 import 'package:flutter_application_1/screens/Purchase%20order/Edit_purchase_screen.dart';
 import 'package:flutter_application_1/screens/Purchase%20order/view_purchase_screen.dart';
-import 'package:flutter_application_1/models/purchase_order.dart';
 import 'package:provider/provider.dart';
 // import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
@@ -84,7 +83,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
           final lname = (userField['last_name'] ?? userField['lastName'] ?? '')?.toString();
           final uname = (userField['username'] ?? userField['user'] ?? '')?.toString();
           if (fname != null && fname.isNotEmpty) {
-            actionCreatedBy = '${fname}${lname != null && lname.isNotEmpty ? ' $lname' : ''}'.trim();
+            actionCreatedBy = '$fname${lname != null && lname.isNotEmpty ? ' $lname' : ''}'.trim();
           } else if (uname != null && uname.isNotEmpty) {
             actionCreatedBy = uname;
           } else if (userField['id'] != null) {

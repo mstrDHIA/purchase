@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/models/purchase_order.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
@@ -78,9 +77,7 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
       _updatedAt = initial['updatedAt'] is DateTime
           ? initial['updatedAt']
           : (initial['updatedAt'] != null ? DateTime.tryParse(initial['updatedAt'].toString()) : null);
-      if (_updatedAt == null) {
-        _updatedAt = DateTime.now();
-      }
+      _updatedAt ??= DateTime.now();
       // Pré-remplir le champ Supplier Name si la valeur existe, sinon le chercher dans les produits
       supplierName = initial['supplierName'] ?? initial['supplier'] ?? initial['Supplier'];
       if ((supplierName == null || (supplierName?.isEmpty ?? true)) && initial['products'] != null && initial['products'] is List) {
@@ -179,7 +176,7 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
               children: [
                 Expanded(
                   child: DropdownButtonFormField<String>(
-                    value: _priority,
+                    initialValue: _priority,
                     decoration: const InputDecoration(
                       labelText: 'Priority',
                       border: OutlineInputBorder(),
@@ -215,7 +212,7 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
               int index = entry.key;
               ProductLine product = entry.value;
               return _buildProductLine(product, index);
-            }).toList(),
+            }),
 
             Align(
               alignment: Alignment.centerRight,

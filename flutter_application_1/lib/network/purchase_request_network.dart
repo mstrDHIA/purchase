@@ -33,8 +33,8 @@ class PurchaseRequestNetwork {
   }
 
   // Create a new purchase request
-  createPurchaseRequest(Map<String, dynamic> data) async {
-    try {
+  Future<Response> createPurchaseRequest(Map<String, dynamic> data) async {
+    // try {
       print(data);
       Response response = await api.dio.post(
         '${APIS.baseUrl}/purchase_request/purchaseRequests/',
@@ -54,9 +54,9 @@ class PurchaseRequestNetwork {
         print('Body: ${response.data}');
         throw Exception('Failed to create purchase request');
       }
-    } catch (e) {
-      print('error network: $e');
-    }
+    // } catch (e) {
+    //   print('error network: $e');
+    // }
   }
 
   // Update a purchase request

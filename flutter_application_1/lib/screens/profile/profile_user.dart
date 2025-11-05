@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // Import for Clipboard
 import 'package:flutter_application_1/controllers/user_controller.dart';
-import 'package:flutter_application_1/screens/profile/edit_profile_screen.dart';
 import 'package:flutter_application_1/screens/users/modify_user_screen.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import '../auth/login_screen.dart'; 
 
 class ProfilePageScreen extends StatefulWidget {
 

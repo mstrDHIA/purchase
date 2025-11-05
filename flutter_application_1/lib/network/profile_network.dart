@@ -84,5 +84,5 @@ class ProfileNetwork {
     }
   }
 
-  createProfile(Profile profile) {}
+  void createProfile(Profile profile) {}
 }
