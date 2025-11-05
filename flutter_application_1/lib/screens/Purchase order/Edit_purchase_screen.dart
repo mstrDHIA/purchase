@@ -224,7 +224,7 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
                         const SizedBox(height: 4),
                         TextFormField(
                           controller: supplierNameController,
-                          readOnly: true,
+                          readOnly: false,
                           decoration: InputDecoration(
                             filled: true,
                             fillColor: Colors.white,
