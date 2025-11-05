@@ -22,6 +22,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   String selected = 'Home';
   bool showSidebar = false; // Ajouté
+  
 
   @override
   Widget build(BuildContext context) {
