@@ -96,16 +96,7 @@ class _AppSidebarState extends State<AppSidebar> {
   bool isCollapsed = false;
 
   final items = [
-    // {'label': 'Home', 'icon': Icons.home},
-    // {'label': 'Dashboard', 'icon': Icons.dashboard},
-    // {'label': 'Profile', 'icon': Icons.account_circle},
-    // {'label': 'Users', 'icon': Icons.people},
-    // {'label': 'Password', 'icon': Icons.lock},
-    // {'label': 'PurchaseRequest', 'icon': Icons.note_add},
-    // {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
-    // {'label': 'Roles and access', 'icon': Icons.security},
-    // {'label': 'Support centre', 'icon': Icons.help},
-    // {'label': 'Settings', 'icon': Icons.settings},
+    // ...existing code...
   ];
 
 // 1 admin
@@ -114,88 +105,53 @@ class _AppSidebarState extends State<AppSidebar> {
 // 4 supervisor
 // 5 visitor
   initSideBarItems() {
-    print("role id: ${userController.currentUser.role_id}");
-    print(userController.currentUser.role!.id);
+    // ...existing code...
     if(userController.currentUser.role_id==1){
       items.addAll([
-      // {'label': 'Home', 'icon': Icons.home},
-      {'label': 'Dashboard', 'icon': Icons.dashboard},
-      // {'label': 'Profile', 'icon': Icons.account_circle},
-      {'label': 'Users', 'icon': Icons.people},
-      {'label': 'Password', 'icon': Icons.lock},
-      {'label': 'PurchaseRequest', 'icon': Icons.note_add},
-      {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
-      {'label': 'Roles and access', 'icon': Icons.security},
-      {'label': 'Support centre', 'icon': Icons.help},
-      {'label': 'Settings', 'icon': Icons.settings},
-    ]);
+        {'label': 'Dashboard', 'icon': Icons.dashboard},
+        {'label': 'Users', 'icon': Icons.people},
+        {'label': 'Password', 'icon': Icons.lock},
+        {'label': 'PurchaseRequest', 'icon': Icons.note_add},
+        {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
+        {'label': 'Roles and access', 'icon': Icons.security},
+        {'label': 'Support centre', 'icon': Icons.help},
+        {'label': 'Settings', 'icon': Icons.settings},
+      ]);
     }
     else if(userController.currentUser.role_id==2){
       items.addAll([
-      // {'label': 'Home', 'icon': Icons.home},
-      // {'label': 'Dashboard', 'icon': Icons.dashboard},
-      {'label': 'Profile', 'icon': Icons.account_circle},
-      // {'label': 'Users', 'icon': Icons.people},
-      {'label': 'Password', 'icon': Icons.lock},
-      {'label': 'PurchaseRequest', 'icon': Icons.note_add},
-      // {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
-      {'label': 'Support centre', 'icon': Icons.help},
-      {'label': 'Settings', 'icon': Icons.settings},
-    ]);
-    }
-    else if(userController.currentUser.role_id==3){
-      items.addAll([
-      // {'label': 'Home', 'icon': Icons.home},
-      // {'label': 'Dashboard', 'icon': Icons.dashboard},
-      {'label': 'Profile', 'icon': Icons.account_circle},
-      // {'label': 'Users', 'icon': Icons.people},
-      {'label': 'Password', 'icon': Icons.lock},
-      {'label': 'PurchaseRequest', 'icon': Icons.note_add},
-      // {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
-      {'label': 'Support centre', 'icon': Icons.help},
-      {'label': 'Settings', 'icon': Icons.settings},
-    ]);
+        {'label': 'Profile', 'icon': Icons.account_circle},
+        {'label': 'Password', 'icon': Icons.lock},
+        {'label': 'PurchaseRequest', 'icon': Icons.note_add},
+        {'label': 'Support centre', 'icon': Icons.help},
+        {'label': 'Settings', 'icon': Icons.settings},
+      ]);
     }
     else if((userController.currentUser.role_id==4)||(userController.currentUser.role_id==6)){
       items.addAll([
-      // {'label': 'Home', 'icon': Icons.home},
-      // {'label': 'Dashboard', 'icon': Icons.dashboard},
-      {'label': 'Profile', 'icon': Icons.account_circle},
-      // {'label': 'Users', 'icon': Icons.people},
-      {'label': 'Password', 'icon': Icons.lock},
-      // {'label': 'PurchaseRequest', 'icon': Icons.note_add},
-      {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
-      {'label': 'Support centre', 'icon': Icons.help},
-      {'label': 'Settings', 'icon': Icons.settings},
-    ]);
+        {'label': 'Profile', 'icon': Icons.account_circle},
+        {'label': 'Password', 'icon': Icons.lock},
+        {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
+        {'label': 'Support centre', 'icon': Icons.help},
+        {'label': 'Settings', 'icon': Icons.settings},
+      ]);
     }
     else if(userController.currentUser.role_id==5){
-       items.addAll([
-      // {'label': 'Home', 'icon': Icons.home},
-      // {'label': 'Dashboard', 'icon': Icons.dashboard},
-      {'label': 'Profile', 'icon': Icons.account_circle},
-      // {'label': 'Users', 'icon': Icons.people},
-      {'label': 'Password', 'icon': Icons.lock},
-      // {'label': 'PurchaseRequest', 'icon': Icons.note_add},
-      // {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
-      {'label': 'Support centre', 'icon': Icons.help},
-      {'label': 'Settings', 'icon': Icons.settings},
-    ]);
+      items.addAll([
+        {'label': 'Profile', 'icon': Icons.account_circle},
+        {'label': 'Password', 'icon': Icons.lock},
+        {'label': 'Support centre', 'icon': Icons.help},
+        {'label': 'Settings', 'icon': Icons.settings},
+      ]);
     }
     else{
-       items.addAll([
-      // {'label': 'Home', 'icon': Icons.home},
-      // {'label': 'Dashboard', 'icon': Icons.dashboard},
-      {'label': 'Profile', 'icon': Icons.account_circle},
-      // {'label': 'Users', 'icon': Icons.people},
-      {'label': 'Password', 'icon': Icons.lock},
-      // {'label': 'PurchaseRequest', 'icon': Icons.note_add},
-      // {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
-      {'label': 'Support centre', 'icon': Icons.help},
-      {'label': 'Settings', 'icon': Icons.settings},
-    ]);
+      items.addAll([
+        {'label': 'Profile', 'icon': Icons.account_circle},
+        {'label': 'Password', 'icon': Icons.lock},
+        {'label': 'Support centre', 'icon': Icons.help},
+        {'label': 'Settings', 'icon': Icons.settings},
+      ]);
     }
-    
   }
 
   @override
@@ -228,15 +184,47 @@ class _AppSidebarState extends State<AppSidebar> {
             ),
           ),
           if (!isCollapsed)
-            const Padding(
-              padding: EdgeInsets.only(bottom: 12),
-              child: Text(
-                "My App",
-                style: TextStyle(
-                  color: Colors.deepPurple,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 18,
-                ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Column(
+                children: [
+                  const Text(
+                    "My App",
+                    style: TextStyle(
+                      color: Colors.deepPurple,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Consumer<UserController>(
+                    builder: (context, userController, _) {
+                      final user = userController.currentUser;
+                      final username = user.username ?? "";
+                      final roleName = user.role?.name ?? "";
+                      return Column(
+                        children: [
+                          Text(
+                            username,
+                            style: const TextStyle(
+                              color: Colors.black87,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          if (roleName.isNotEmpty)
+                            Text(
+                              roleName,
+                              style: const TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                              ),
+                            ),
+                        ],
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
           const Divider(),

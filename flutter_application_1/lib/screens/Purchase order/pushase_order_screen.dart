@@ -7,7 +7,7 @@ import 'package:flutter_application_1/controllers/purchase_order_controller.dart
 import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter_application_1/models/user_model.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/screens/Purchase%20order/purchase_form_screen.dart';
+// import 'package:flutter_application_1/screens/Purchase%20order/purchase_form_screen.dart';
 // import 'package:flutter_application_1/screens/Purchase%20order/view_purchase_screen.dart';
 import 'package:intl/intl.dart';
 
@@ -323,40 +323,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
         return Scaffold(
           appBar: AppBar(
             title: const Text('Purchase Orders'),
-            actions: [
-              if(userController.currentUser.role!.id==6||userController.currentUser.role!.id==4)
-              ElevatedButton.icon(
-                onPressed: () {
-                  final controller = Provider.of<PurchaseOrderController>(context, listen: false);
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ChangeNotifierProvider.value(
-                        value: controller,
-                        child: PurchaseOrderForm(
-                          initialOrder: const <String, dynamic>{},
-                          onSave: (newOrder) {
-                            Navigator.pop(context);
-                          },
-                        ),
-                      ),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.add, color: Colors.white),
-                label: const Text('Add PO'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.deepPurple,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  elevation: 0,
-                ),
-              ),
-              const SizedBox(width: 16),
-            ],
+            // actions: [ ], // Removed Add PO button
           ),
           body: Column(
             children: [
