@@ -113,7 +113,7 @@ class _AppSidebarState extends State<AppSidebar> {
 // 3 manager
 // 4 supervisor
 // 5 visitor
-  initSideBarItems() {
+  void initSideBarItems() {
     print("role id: ${userController.currentUser.role_id}");
     print(userController.currentUser.role!.id);
     if(userController.currentUser.role_id==1){

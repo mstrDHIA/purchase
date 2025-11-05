@@ -66,7 +66,7 @@ class User {
     );
   }
 
-  get name => null;
+  Null get name => null;
 
   // get bio => null;
 

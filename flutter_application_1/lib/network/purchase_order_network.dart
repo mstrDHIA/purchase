@@ -1,5 +1,4 @@
 
-import 'dart:convert';
 import 'package:dio/dio.dart';
 import '../models/purchase_order.dart';
 import 'api.dart';
@@ -43,7 +42,7 @@ class PurchaseOrderNetwork {
 
 	Future<void> updatePurchaseOrder(Map<String, dynamic> orderJson) async {
 		print('DEBUG CALL updatePurchaseOrder: id=${orderJson['id']}, data=$orderJson');
-		final response = await dio.put(endpoint + '${orderJson['id']}/',
+		final response = await dio.put('$endpoint${orderJson['id']}/',
 			data: orderJson,
 			options: Options(headers: {
 				'Authorization': 'Bearer ${APIS.token}',
@@ -58,7 +57,7 @@ class PurchaseOrderNetwork {
 	}
 
 	Future<void> deletePurchaseOrder(String id) async {
-		final response = await dio.delete(endpoint + '$id/',
+		final response = await dio.delete('$endpoint$id/',
 			options: Options(headers: {
 				'Authorization': 'Bearer ${APIS.token}',
 				'ngrok-skip-browser-warning': 'true',

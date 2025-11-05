@@ -3,7 +3,7 @@ import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:provider/provider.dart';
 
 class PasswordScreen extends StatefulWidget {
-  const PasswordScreen({Key? key}) : super(key: key);
+  const PasswordScreen({super.key});
 
   @override
   State<PasswordScreen> createState() => _PasswordScreenState();

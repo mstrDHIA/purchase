@@ -36,7 +36,7 @@ class UserNetwork {
       }
   }
    
-   updateUser(data,id) async {
+   Future<String> updateUser(data,id) async {
     try {
       // final payload = data.toJson();
       print('updateAllUsers payload:');
@@ -80,7 +80,7 @@ class UserNetwork {
   APIS api = APIS();
 
 // login
-   login(String email, String password) async {
+   Future<Response?>? login(String email, String password) async {
   final response = await api.dio.post(
 
     '${APIS.baseUrl}${APIS.login}',
@@ -123,7 +123,7 @@ class UserNetwork {
     return response;
   }
   // user list
-    uesresList() async {
+    Future<Response> uesresList() async {
   
       final response = await api.dio.get(
         '${APIS.baseUrl}${APIS.userListDetailed}',
@@ -139,7 +139,7 @@ class UserNetwork {
     return response;
     }
 
-  callUser(String email) {}
+  void callUser(String email) {}
 
   // add user
   Future<dynamic> addUser(User user) async {
@@ -263,7 +263,7 @@ class UserNetwork {
 }
 
 
-getDetailedUser(int userId) async {
+Future<Response?>? getDetailedUser(int userId) async {
     try {
       final response = await api.dio.get(
         '${APIS.baseUrl}${APIS.viewProfileByUserId}$userId/',
@@ -286,9 +286,9 @@ getDetailedUser(int userId) async {
     }
   }
 
-   updateAllUsers( Map<String,dynamic> data, int id) async {
+   Future<Response> updateAllUsers( Map<String,dynamic> data, int id) async {
     print(0);
-  try {
+  // try {
     print(1);
     print('user data $data');
     print(2);
@@ -305,11 +305,13 @@ getDetailedUser(int userId) async {
     if (response.statusCode == 200 || response.statusCode == 201) {
       return response;
     } else {
+      return response;
       // return 'Failed to update all users: ${response.statusMessage}';
     }
-  } catch (e) {
-    print('Error updating all users: $e');
-  }
+  // } 
+  // catch (e) {
+  //   print('Error updating all users: $e');
+  // }
 }
   Future<Response> getUserById(int id) async {
   return await api.dio.get('${APIS.baseUrl}user/$id/');

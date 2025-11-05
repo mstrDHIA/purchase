@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/models/role.dart';
 import 'package:flutter_application_1/models/user_model.dart';
 import 'package:flutter_application_1/network/user_network.dart';
-import 'package:flutter_application_1/screens/auth/login_screen.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:go_router/go_router.dart';
 
@@ -118,7 +117,7 @@ class UserController extends ChangeNotifier {
         notifyListeners();
         throw Exception('Failed to load users');
       }
-    } on DioError catch (e) {
+    } on DioException catch (e) {
       isLoading = false;
       notifyListeners();
       print('Erreur Dio : ${e.message}, type: ${e.type}, data: ${e.response?.data}, error: ${e.error}');
@@ -164,7 +163,7 @@ class UserController extends ChangeNotifier {
   }
 
 
-  logout(BuildContext context){
+  void logout(BuildContext context){
     isLoading = true;
     notifyListeners();
     // userNetwork.logout();
@@ -178,12 +177,12 @@ class UserController extends ChangeNotifier {
     notifyListeners();
   }
 
-  login(String email, String password,BuildContext context) async {
+  Future<void> login(String email, String password,BuildContext context) async {
   try {
     isLoading = true;
     notifyListeners();
-    Response response = await userNetwork.login(email, password);
-    print('Login response: ${response.data}');
+    Response? response = await userNetwork.login(email, password);
+    print('Login response: ${response!.data}');
     if (response.statusCode == 200) {
       Map<String, dynamic> decodedToken = JwtDecoder.decode(response.data['access']);
       print('Decoded token: $decodedToken');
@@ -246,7 +245,7 @@ class UserController extends ChangeNotifier {
 
 
   }
-   register(String email, String password,BuildContext context) async {
+   Future<void> register(String email, String password,BuildContext context) async {
     try{
       isLoading = true;
     notifyListeners();
@@ -285,7 +284,7 @@ class UserController extends ChangeNotifier {
     }  
     }
 
-    addUser(String email, String password,BuildContext context) async {
+    Future<void> addUser(String email, String password,BuildContext context) async {
     try{
       isLoading = true;
     notifyListeners();
@@ -334,9 +333,9 @@ class UserController extends ChangeNotifier {
     isLoading = true;
     notifyListeners();
     // print('getting response for user id: $userId');
-    Response response = await userNetwork.getDetailedUser(userId);
+    Response? response = await userNetwork.getDetailedUser(userId);
     // print('got response: ${response.data}');
-    if (response.statusCode == 200) {
+    if (response!.statusCode == 200) {
       // print('response 200');
       print('aaa');
       print(response.data);
@@ -353,7 +352,7 @@ class UserController extends ChangeNotifier {
     }
   }
 
-  toggleUserStatus({required int id, required bool isActive,context}) async {
+  Future<void> toggleUserStatus({required int id, required bool isActive,context}) async {
     isLoading = true;
     notifyListeners();
     Map<String, dynamic> data = {
@@ -389,7 +388,7 @@ class UserController extends ChangeNotifier {
 
   }
 
-   updateAllUser(firstName, lastName, email, username, country, state, city, address, location, zipCode,Role role,BuildContext context) async {
+   Future<String?> updateAllUser(firstName, lastName, email, username, country, state, city, address, location, zipCode,Role role,BuildContext context) async {
     // print('aaaaa');
   
     isLoading = true;
@@ -439,11 +438,9 @@ data['profile'] = profileData;
 }
 // print(role.id);
 // print(selectedUser.role?.id);
-if(role!=null){
-  print('changing role');
-  if(role.id!=selectedUser.role!.id){
-  data['role_id'] = role.id;
-}
+print('changing role');
+if(role.id!=selectedUser.role!.id){
+data['role_id'] = role.id;
 }
 
 
@@ -470,7 +467,7 @@ if(role!=null){
     }
   }
 
-  notify(){
+  void notify(){
     notifyListeners();
   }
 }

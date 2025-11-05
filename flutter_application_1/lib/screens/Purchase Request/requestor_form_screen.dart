@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/controllers/purchase_request_controller.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
-import 'package:flutter_application_1/network/purchase_request_network.dart'; // <-- Add this import
+// <-- Add this import
 import 'package:intl/intl.dart';
 
-import 'dart:convert';
 import 'package:provider/provider.dart';
 
 class PurchaseRequestorForm extends StatefulWidget {
@@ -29,7 +28,7 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
   List<Map<String, dynamic>> products = [];
   late UserController userController;
   
-  get order => null;
+  Null get order => null;
 
 
   @override
@@ -323,7 +322,7 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: DropdownButtonFormField<String>(
-                      value: selectedPriority,
+                      initialValue: selectedPriority,
                       decoration: const InputDecoration(
                         labelText: 'Priority',
                         border: OutlineInputBorder(),

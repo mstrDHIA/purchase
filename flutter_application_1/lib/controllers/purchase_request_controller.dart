@@ -27,7 +27,7 @@ class PurchaseRequestController extends ChangeNotifier {
   // List<PurchaseRequest> get requests => _requests;
   String? get error => _error;
 
-  fetchRequests(BuildContext context, User user, {int page = 1, int pageSizeParam = 10}) async {
+  Future<void> fetchRequests(BuildContext context, User user, {int page = 1, int pageSizeParam = 10}) async {
     isLoading = true;
     _error = null;
     notifyListeners();
@@ -50,7 +50,7 @@ class PurchaseRequestController extends ChangeNotifier {
         hasPrevious = data['previous'] != null;
       } else if (data is List) {
         // fallback: unpaginated list
-        items = data as List<dynamic>;
+        items = data;
         totalCount = items.length;
         hasNext = false;
         hasPrevious = false;
@@ -85,7 +85,7 @@ class PurchaseRequestController extends ChangeNotifier {
     notifyListeners();
     try {
       final response = await _network.createPurchaseRequest(data);
-      if (response != null && response.data != null) {
+      if (response.data != null) {
         PurchaseRequest request = PurchaseRequest.fromJson(response.data);
         requests.add(request);
       } else {
@@ -132,9 +132,9 @@ class PurchaseRequestController extends ChangeNotifier {
     notifyListeners();
   }
 
-  static updatePurchase(Map<String, Object?> updatedRequest) {}
+  static void updatePurchase(Map<String, Object?> updatedRequest) {}
 
-  static updatePurchaseRequest(Map<String, Object?> updatePurchaseRequest) {}
+  static void updatePurchaseRequest(Map<String, Object?> updatePurchaseRequest) {}
 
   @override
   String toString() {

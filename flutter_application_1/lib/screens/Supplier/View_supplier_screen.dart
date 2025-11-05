@@ -7,12 +7,12 @@ class ViewSupplierPage extends StatelessWidget {
   final String status;
 
   const ViewSupplierPage({
-    Key? key,
+    super.key,
     this.email = "deanna.curtis@example.com",
     this.name = "Jenny Wilson",
     this.category = "Food",
     this.status = "Active",
-  }) : super(key: key);
+  });
 
   Color _statusColor(String status) {
     switch (status.toLowerCase()) {

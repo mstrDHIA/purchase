@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 
 class AddTicketPage extends StatefulWidget {
-  const AddTicketPage({Key? key}) : super(key: key);
+  const AddTicketPage({super.key});
 
   @override
   State<AddTicketPage> createState() => _AddTicketPageState();
@@ -178,7 +178,7 @@ class _AddTicketPageState extends State<AddTicketPage> {
                               const Text('Category'),
                               const SizedBox(height: 6),
                               DropdownButtonFormField<String>(
-                                value: _selectedCategory,
+                                initialValue: _selectedCategory,
                                 items: _categories
                                     .map((cat) => DropdownMenuItem(
                                           value: cat,
@@ -206,7 +206,7 @@ class _AddTicketPageState extends State<AddTicketPage> {
                               const Text('Periority'),
                               const SizedBox(height: 6),
                               DropdownButtonFormField<String>(
-                                value: _selectedPeriority,
+                                initialValue: _selectedPeriority,
                                 items: _periorities
                                     .map((p) => DropdownMenuItem(
                                           value: p,
@@ -239,7 +239,7 @@ class _AddTicketPageState extends State<AddTicketPage> {
                               const Text('Keywords'),
                               const SizedBox(height: 6),
                               DropdownButtonFormField<String>(
-                                value: _selectedKeyword,
+                                initialValue: _selectedKeyword,
                                 items: _keywords
                                     .map((k) => DropdownMenuItem(
                                           value: k,

@@ -133,19 +133,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   title: const Text('Edit Profile'),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () {
-                    if (user != null && user is Map<String, dynamic>) {
-                      // Navigator.push(
-                      //   context,
-                      //   MaterialPageRoute(
-                      //     builder: (context) => ProfilePageScreen(),
-                      //   ),
-                      // );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text("No user data available")),
-                      );
-                    }
-                  },
+                    // Navigator.push(
+                    //   context,
+                    //   MaterialPageRoute(
+                    //     builder: (context) => ProfilePageScreen(),
+                    //   ),
+                    // );
+                                    },
                 ),
                 const Divider(height: 1),
                 ListTile(
