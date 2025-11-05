@@ -1,5 +1,4 @@
 
-import 'dart:convert';
 import 'package:dio/dio.dart';
 import '../models/purchase_order.dart';
 import 'api.dart';
@@ -16,7 +15,6 @@ class PurchaseOrderNetwork {
 				}),
 			);
 			if (response.statusCode == 200) {
-				print('PurchaseOrderNetwork.fetchPurchaseOrders: response.data = \\n${response.data}');
 				final List<dynamic> data = response.data;
 				return data.map((json) => PurchaseOrder.fromJson(json)).toList();
 			} else {
@@ -42,8 +40,7 @@ class PurchaseOrderNetwork {
 	}
 
 	Future<void> updatePurchaseOrder(Map<String, dynamic> orderJson) async {
-		print('DEBUG CALL updatePurchaseOrder: id=${orderJson['id']}, data=$orderJson');
-		final response = await dio.put(endpoint + '${orderJson['id']}/',
+		final response = await dio.put('$endpoint${orderJson['id']}/',
 			data: orderJson,
 			options: Options(headers: {
 				'Authorization': 'Bearer ${APIS.token}',
@@ -51,14 +48,13 @@ class PurchaseOrderNetwork {
 				'ngrok-skip-browser-warning': 'true',
 			}),
 		);
-		print('DEBUG updatePurchaseOrder: statusCode = ${response.statusCode}, data = ${response.data}');
 		if (response.statusCode != 200) {
 			throw Exception('Failed to update purchase order: status=${response.statusCode}, data=${response.data}');
 		}
 	}
 
 	Future<void> deletePurchaseOrder(String id) async {
-		final response = await dio.delete(endpoint + '$id/',
+		final response = await dio.delete('$endpoint$id/',
 			options: Options(headers: {
 				'Authorization': 'Bearer ${APIS.token}',
 				'ngrok-skip-browser-warning': 'true',

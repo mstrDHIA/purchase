@@ -99,7 +99,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Future<void> didChangeDependencies() async {
     super.didChangeDependencies();
-    print('id: ${userController.selectedUserId}');
 
   }
   @override

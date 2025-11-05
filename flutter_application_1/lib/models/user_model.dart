@@ -48,8 +48,6 @@ class User {
     final profileId = json['profile_id'] ?? (profile?.id);
     final roleId = json['role_id'];
     final isActive = json['is_active'] ?? true; // Default to true if not provided
-    // Debug print
-    // print('User.fromJson: firstName=$firstName, lastName=$lastName, profileId=$profileId, roleId=$roleId');
     return User(
       id: json['id'] ?? 0,
       username: json['username'] ?? '',
@@ -66,7 +64,7 @@ class User {
     );
   }
 
-  get name => null;
+  Null get name => null;
 
   // get bio => null;
 

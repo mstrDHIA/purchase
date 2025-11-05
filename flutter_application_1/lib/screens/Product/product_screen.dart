@@ -142,7 +142,7 @@ class _ProductPageState extends State<ProductPage> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   DropdownButtonFormField<String>(
-                                    value: tempCategory,
+                                    initialValue: tempCategory,
                                     decoration: const InputDecoration(labelText: 'Category'),
                                     items: [
                                       const DropdownMenuItem(value: null, child: Text('All')),
@@ -155,7 +155,7 @@ class _ProductPageState extends State<ProductPage> {
                                   ),
                                   const SizedBox(height: 16),
                                   DropdownButtonFormField<String>(
-                                    value: tempSupplier,
+                                    initialValue: tempSupplier,
                                     decoration: const InputDecoration(labelText: 'Supplier'),
                                     items: [
                                       const DropdownMenuItem(value: null, child: Text('All')),

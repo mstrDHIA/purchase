@@ -27,7 +27,7 @@ class ThemeProvider extends ChangeNotifier {
   ThemeData get currentTheme => _currentTheme;
   String get themeName => _themeName;
 
-  get isDarkMode => null;
+  Null get isDarkMode => null;
 
   void setTheme(String name) {
     if (themes.containsKey(name)) {

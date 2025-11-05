@@ -306,7 +306,7 @@ class _BrandManagementPageState extends State<BrandManagementPage> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: selectedCategory,
+                initialValue: selectedCategory,
                 items: _categories
                     .where((cat) => cat != 'All')
                     .map((category) {
@@ -408,7 +408,7 @@ class _BrandManagementPageState extends State<BrandManagementPage> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: selectedCategory,
+                initialValue: selectedCategory,
                 items: _categories
                     .where((cat) => cat != 'All')
                     .map((category) {

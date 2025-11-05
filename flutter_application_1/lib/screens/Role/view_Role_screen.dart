@@ -7,7 +7,7 @@ class ViewRolePage extends StatelessWidget {
   final int teammates;
 
   const ViewRolePage({
-    Key? key,
+    super.key,
     String? roleName,
     String? description,
     List<String>? permissions,
@@ -15,8 +15,7 @@ class ViewRolePage extends StatelessWidget {
   })  : roleName = roleName ?? '',
         description = description ?? '',
         permissions = permissions ?? const [],
-        teammates = teammates ?? 0,
-        super(key: key);
+        teammates = teammates ?? 0;
 
   @override
   Widget build(BuildContext context) {

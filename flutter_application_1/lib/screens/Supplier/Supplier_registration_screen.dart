@@ -10,7 +10,7 @@ class Supplier {
 }
 
 class SupplierRegistrationPage extends StatefulWidget {
-  const SupplierRegistrationPage({Key? key}) : super(key: key);
+  const SupplierRegistrationPage({super.key});
 
   @override
   State<SupplierRegistrationPage> createState() => _SupplierRegistrationPageState();

@@ -92,9 +92,7 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
   _updatedAt = initial['updatedAt'] is DateTime
       ? initial['updatedAt']
       : (initial['updatedAt'] != null ? DateTime.tryParse(initial['updatedAt'].toString()) : null);
-  if (_updatedAt == null) {
-    _updatedAt = DateTime.now();
-  }
+  _updatedAt ??= DateTime.now();
       // Pré-remplir le champ Supplier Name si la valeur existe, sinon le chercher dans les produits
       supplierName = initial['supplier'] ?? initial['supplierName'] ?? initial['Supplier'];
       if ((supplierName == null || (supplierName?.isEmpty ?? true)) && initial['products'] != null && initial['products'] is List) {
@@ -290,7 +288,7 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
                 int index = entry.key;
                 ProductLine product = entry.value;
                 return _buildProductLine(product, index);
-              }).toList(),
+              }),
               Align(
                 alignment: Alignment.centerRight,
                 child: ElevatedButton.icon(
@@ -476,8 +474,7 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
         'priority': _priority,
       };
 
-      print('PurchaseOrder JSON body sent to backend:');
-      print(jsonEncode(jsonBody));
+
 
       if (widget.initialOrder.isNotEmpty && widget.initialOrder['id'] != null) {
         // Mode édition : appel update, on envoie le JSON directement

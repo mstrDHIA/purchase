@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'dart:io';
 
 class AddSupplierPage extends StatefulWidget {
-  const AddSupplierPage({Key? key}) : super(key: key);
+  const AddSupplierPage({super.key});
 
   @override
   State<AddSupplierPage> createState() => _AddSupplierPageState();
@@ -69,7 +69,7 @@ class _AddSupplierPageState extends State<AddSupplierPage> {
                                 Expanded(
                                   child: DropdownButtonFormField<String>(
                                     decoration: _inputDecoration('Does deliver'),
-                                    value: doesDeliver,
+                                    initialValue: doesDeliver,
                                     items: const [
                                       DropdownMenuItem(value: 'Yes', child: Text('Yes')),
                                       DropdownMenuItem(value: 'No', child: Text('No')),

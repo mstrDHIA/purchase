@@ -5,12 +5,11 @@ import 'package:flutter_application_1/network/user_network.dart';
 import 'package:flutter_application_1/screens/profile/profile_user.dart';
 import 'package:flutter_application_1/screens/users/modify_user_screen.dart';
 
-import 'package:flutter_application_1/screens/users/add_user_screen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 class UserListPage extends StatefulWidget {
-  const UserListPage({Key? key}) : super(key: key);
+  const UserListPage({super.key});
 
   @override
   State<UserListPage> createState() => _UserListPageState();

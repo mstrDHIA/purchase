@@ -24,10 +24,9 @@ class PurchaseRequestController extends ChangeNotifier {
     dataSource = PurchaseRequestDataSource([], context, 'defaultArgument');
   }
 
-  // List<PurchaseRequest> get requests => _requests;
   String? get error => _error;
 
-  fetchRequests(BuildContext context, User user, {int page = 1, int pageSizeParam = 10}) async {
+  Future<void> fetchRequests(BuildContext context, User user, {int page = 1, int pageSizeParam = 10}) async {
     isLoading = true;
     _error = null;
     notifyListeners();
@@ -38,7 +37,6 @@ class PurchaseRequestController extends ChangeNotifier {
       if (response.statusCode != 200) {
         throw Exception('Failed to load purchase requests');
       }
-      print('Raw API Response: ${response.data}'); // Log raw API response
 
       // Handle DRF paginated response e.g. {count: N, next: url, previous: url, results: [...]}
       var data = response.data;
@@ -50,7 +48,7 @@ class PurchaseRequestController extends ChangeNotifier {
         hasPrevious = data['previous'] != null;
       } else if (data is List) {
         // fallback: unpaginated list
-        items = data as List<dynamic>;
+        items = data;
         totalCount = items.length;
         hasNext = false;
         hasPrevious = false;
@@ -67,10 +65,8 @@ class PurchaseRequestController extends ChangeNotifier {
         if (b.id == null) return -1;
         return a.id!.compareTo(b.id!);
       });
-    print('Mapped & Sorted Requests: $requests'); // Log mapped requests
 
     dataSource = PurchaseRequestDataSource(requests, context, 'someArgument');
-    print('DataSource updated with requests: ${requests.length} items'); // Log dataSource update
     } catch (e) {
       _error = e.toString();
       isLoading = false;
@@ -85,7 +81,7 @@ class PurchaseRequestController extends ChangeNotifier {
     notifyListeners();
     try {
       final response = await _network.createPurchaseRequest(data);
-      if (response != null && response.data != null) {
+      if (response.data != null) {
         PurchaseRequest request = PurchaseRequest.fromJson(response.data);
         requests.add(request);
       } else {
@@ -132,13 +128,12 @@ class PurchaseRequestController extends ChangeNotifier {
     notifyListeners();
   }
 
-  static updatePurchase(Map<String, Object?> updatedRequest) {}
+  static void updatePurchase(Map<String, Object?> updatedRequest) {}
 
-  static updatePurchaseRequest(Map<String, Object?> updatePurchaseRequest) {}
+  static void updatePurchaseRequest(Map<String, Object?> updatePurchaseRequest) {}
 
   @override
   String toString() {
-    // Customize this to print useful info about your controller
     return 'PurchaseRequestController(requests: $requests, isLoading: $isLoading, error: $_error)';
   }
 }

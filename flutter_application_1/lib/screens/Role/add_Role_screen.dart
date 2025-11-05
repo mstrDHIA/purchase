@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/network/role_network.dart';
 
 class AddRolePage extends StatefulWidget {
-  const AddRolePage({Key? key}) : super(key: key);
+  const AddRolePage({super.key});
 
   @override
   State<AddRolePage> createState() => _AddRolePageState();

@@ -198,7 +198,7 @@ class _RolePageState extends State<RolePage> {
                                             tooltip: 'View',
                                             onTap: () async {
                                               final roleId = role.id;
-                                              if (roleId == null || roleId is! int) {
+                                              if (roleId == null) {
                                                 ScaffoldMessenger.of(context).showSnackBar(
                                                   const SnackBar(content: Text('ID du rôle invalide'), backgroundColor: Colors.red),
                                                 );

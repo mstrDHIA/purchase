@@ -36,11 +36,8 @@ class UserNetwork {
       }
   }
    
-   updateUser(data,id) async {
+   Future<String> updateUser(data,id) async {
     try {
-      // final payload = data.toJson();
-      print('updateAllUsers payload:');
-      // print(payload);
       final response = await api.dio.put(
         '${APIS.baseUrl}${APIS.updateAllUsers}$id/',
         data: data,
@@ -60,27 +57,14 @@ class UserNetwork {
     } catch (e) {
       return 'Error updating user: $e';
     }
-      // print('API response for user details: ${response.data}');
-      // if (response.statusCode == 200) {
-      //   final data = response.data;
-      //   if (data is Map<String, dynamic>) {
-      //     final user = User.fromJson(data);
-      //     print('User.fromJson output: firstName=${user.firstName}, lastName=${user.lastName}, email=${user.email}, username=${user.username}, role=${user.role?.name}');
-      //     return user;
-      //   }
-      // }
-      // return null;
+      
     } 
-  //   catch (e) {
-  //     print('Erreur lors de la récupération des détails utilisateur: $e');
-  //     return null;
-  //   }
-  // }
+
   
   APIS api = APIS();
 
 // login
-   login(String email, String password) async {
+   Future<Response?>? login(String email, String password) async {
   final response = await api.dio.post(
 
     '${APIS.baseUrl}${APIS.login}',
@@ -94,17 +78,13 @@ class UserNetwork {
           },
         ),
   );
-  // print(response.data);
-  // print(response.statusCode);
 
   if (response.statusCode == 200) {
     APIS.token = response.data['access'];
     final data = response.data;
     final accessToken = data['access'];
     if (accessToken != null) {
-      // Map<String, dynamic> decodedToken = JwtDecoder.decode(accessToken);
-      return response; // Retourne les données de l'utilisateur
-      // return decodedToken['user_id'];
+      return response; 
     }
   }
   return null;
@@ -123,7 +103,7 @@ class UserNetwork {
     return response;
   }
   // user list
-    uesresList() async {
+    Future<Response> uesresList() async {
   
       final response = await api.dio.get(
         '${APIS.baseUrl}${APIS.userListDetailed}',
@@ -139,7 +119,7 @@ class UserNetwork {
     return response;
     }
 
-  callUser(String email) {}
+  void callUser(String email) {}
 
   // add user
   Future<dynamic> addUser(User user) async {
@@ -263,7 +243,7 @@ class UserNetwork {
 }
 
 
-getDetailedUser(int userId) async {
+Future<Response?>? getDetailedUser(int userId) async {
     try {
       final response = await api.dio.get(
         '${APIS.baseUrl}${APIS.viewProfileByUserId}$userId/',
@@ -275,7 +255,6 @@ getDetailedUser(int userId) async {
         ),
       );
       if (response.statusCode == 200) {
-        print( 'User details fetched successfully: ${response.data}');
         return response;
       } else {
         throw Exception('Failed to load user details');
@@ -286,12 +265,8 @@ getDetailedUser(int userId) async {
     }
   }
 
-   updateAllUsers( Map<String,dynamic> data, int id) async {
-    print(0);
-  try {
-    print(1);
-    print('user data $data');
-    print(2);
+   Future<Response> updateAllUsers( Map<String,dynamic> data, int id) async {
+  // try {
     final response = await api.dio.put(
       '${APIS.baseUrl}${APIS.updateAllUsers}$id/',
       data: data,
@@ -305,11 +280,13 @@ getDetailedUser(int userId) async {
     if (response.statusCode == 200 || response.statusCode == 201) {
       return response;
     } else {
+      return response;
       // return 'Failed to update all users: ${response.statusMessage}';
     }
-  } catch (e) {
-    print('Error updating all users: $e');
-  }
+  // } 
+  // catch (e) {
+  //   print('Error updating all users: $e');
+  // }
 }
   Future<Response> getUserById(int id) async {
   return await api.dio.get('${APIS.baseUrl}user/$id/');

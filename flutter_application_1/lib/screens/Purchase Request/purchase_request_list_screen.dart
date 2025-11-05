@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
-import 'package:flutter_application_1/models/user_model.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_application_1/l10n/app_localizations.dart';
 import 'package:flutter_application_1/controllers/purchase_request_controller.dart';
@@ -39,9 +38,9 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
   int _rowsPerPage = PaginatedDataTable.defaultRowsPerPage;
   int? _sortColumnIndex;
   bool _sortAscending = true;
-  bool _isLoading = false;
-  int _page = 0;
-  int _totalRows = 0;
+  final bool _isLoading = false;
+  final int _page = 0;
+  final int _totalRows = 0;
   int _rowsPerPageLocal = PaginatedDataTable.defaultRowsPerPage;
 
   // Filter state
@@ -241,7 +240,6 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
         ),
       ),
     );
-    print(newRequest);
     purchaseRequestController.fetchRequests(context,userController.currentUser);
 
   }
@@ -320,7 +318,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                       // pagination data available in controller if needed
                       // Sort filteredRequests if a sort column is selected
                       if (_sortColumnIndex != null) {
-                        var getField;
+                        Function(dynamic req) getField;
                         switch (_sortColumnIndex) {
                           case 0:
                             getField = (req) => req.id ?? 0;
@@ -362,7 +360,9 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                               child: Theme(
                                 data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
                                 child: Container(
+                                  width: MediaQuery.of(context).size.width,
                                   child: PaginatedDataTable(
+                                    
                                     header: Text(AppLocalizations.of(context)!.purchaseRequestsTable),
                                     rowsPerPage: _rowsPerPageLocal,
                                     availableRowsPerPage: const [5, 10, 20, 50, 100],
@@ -378,7 +378,8 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                                     },
                                     sortColumnIndex: _sortColumnIndex,
                                     sortAscending: _sortAscending,
-                                    columnSpacing: 190,
+                                    // columnSpacing: 190,
+                                    columnSpacing: MediaQuery.of(context).size.width * 0.05,
                                     horizontalMargin: 16,
                                     columns: [
                                       DataColumn(

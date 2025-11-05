@@ -111,8 +111,8 @@ class _ModifyUserPageState extends State<ModifyUserPage> {
                   color: Colors.white,
                 ));
               }
-              else
-              return Padding(
+              else {
+                return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8.0),
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
@@ -181,6 +181,7 @@ class _ModifyUserPageState extends State<ModifyUserPage> {
                   label: const Text('Save'),
                 ),
               );
+              }
             }
           ),
         ],
@@ -314,7 +315,7 @@ class _ModifyUserPageState extends State<ModifyUserPage> {
                     }
 
                     return DropdownButtonFormField<Role>(
-                      value: selectedRole,
+                      initialValue: selectedRole,
                       items: roleController.roles.map((role) {
                         return DropdownMenuItem<Role>(
                           value: role,

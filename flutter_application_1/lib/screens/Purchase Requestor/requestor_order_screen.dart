@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
-import 'package:flutter_application_1/models/user_model.dart';
 // import 'package:flutter_application_1/screens/Purchase%20Requestor/Request_Edit_screen.dart';
-import 'package:flutter_application_1/screens/Purchase%20Requestor/requestor_form_screen.dart';
 // import 'package:flutter_application_1/screens/Purchase%20Requestor/request_view_screen.dart';
-import 'package:flutter_application_1/screens/Purchase%20order/pushase_order_screen.dart' as purchase_order;
 // Make sure the above import points to the file where addPurchaseOrder is defined as a top-level function.
 import 'package:intl/intl.dart';
 import 'package:flutter_application_1/network/purchase_request_network.dart';
@@ -707,5 +704,4 @@ class ViewPurchasePage extends StatelessWidget {
 /// This is a stub implementation. Replace with your actual logic.
 void addPurchaseOrder(Map<String, dynamic> order) {
   // TODO: Implement the logic to add the purchase order.
-  print('Purchase request $order');
 }

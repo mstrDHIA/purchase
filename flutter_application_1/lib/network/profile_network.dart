@@ -6,7 +6,6 @@ class ProfileNetwork {
   // View profile (get user profile by userId)
   Future<Profile?> viewProfile(int userId) async {
     try {
-      print('Fetching profile with profileId: $userId');
       final response = await api.dio.get(
         '${APIS.baseUrl}${APIS.viewProfile}$userId/',
         options: Options(
@@ -84,5 +83,5 @@ class ProfileNetwork {
     }
   }
 
-  createProfile(Profile profile) {}
+  void createProfile(Profile profile) {}
 }

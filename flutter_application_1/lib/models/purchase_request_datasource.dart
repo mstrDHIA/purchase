@@ -7,7 +7,6 @@ import 'package:flutter_application_1/screens/Purchase%20Request/Request_Edit_sc
 import 'package:flutter_application_1/screens/Purchase%20Request/purchase_request_view_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_application_1/network/purchase_request_network.dart';
 
 class PurchaseRequestDataSource extends DataTableSource {
   final List<PurchaseRequest> requests;
@@ -15,14 +14,12 @@ class PurchaseRequestDataSource extends DataTableSource {
   final String someArgument;
 
   PurchaseRequestDataSource(this.requests, this.context, this.someArgument) {
-    print('Initializing PurchaseRequestDataSource with ${requests.length} requests'); // Log initialization
   }
 
   @override
   DataRow? getRow(int index) {
     if (index >= requests.length) return null;
     final request = requests[index];
-    print('Creating DataRow for request ID: ${request.id}'); // Log DataRow creation
     return DataRow(
       cells: [
         DataCell(Text(request.id.toString())),
@@ -42,7 +39,7 @@ class PurchaseRequestDataSource extends DataTableSource {
             final String fname = (userField['first_name'] ?? userField['firstName'] ?? '')?.toString() ?? '';
             final String lname = (userField['last_name'] ?? userField['lastName'] ?? '')?.toString() ?? '';
             final String uname = (userField['username'] ?? userField['user'] ?? '')?.toString() ?? '';
-            if (fname.isNotEmpty) return Text('${fname}${lname.isNotEmpty ? ' $lname' : ''}'.trim());
+            if (fname.isNotEmpty) return Text('$fname${lname.isNotEmpty ? ' $lname' : ''}'.trim());
             if (uname.isNotEmpty) return Text(uname);
             if (userField['id'] != null) return Text(userField['id'].toString());
             return const Text('');
@@ -90,6 +87,7 @@ class PurchaseRequestDataSource extends DataTableSource {
           padding: const EdgeInsets.symmetric(
             vertical: 8.0),
           child: Container(
+            width: 80,
             decoration: BoxDecoration(
               color: request.priority == 'high' ? Colors.red[300] : request.priority == 'medium' ? Colors.orange[300] : Colors.blue[300],
               borderRadius: BorderRadius.circular(4),
@@ -111,6 +109,7 @@ class PurchaseRequestDataSource extends DataTableSource {
           padding: const EdgeInsets.symmetric(
             vertical: 8.0),
           child: Container(
+            width: 80,
             decoration: BoxDecoration(
               color: request.status == 'approved' ? Colors.green : request.status == 'rejected' ? Colors.red:Colors.orange,
               borderRadius: BorderRadius.circular(4),
@@ -232,7 +231,7 @@ class PurchaseRequestDataSource extends DataTableSource {
   @override
   int get selectedRowCount => 0;
 
-  get selectedRow => null;
+  Null get selectedRow => null;
   
-  get order => null;
+  Null get order => null;
 }

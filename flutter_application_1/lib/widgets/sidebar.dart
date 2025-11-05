@@ -104,53 +104,85 @@ class _AppSidebarState extends State<AppSidebar> {
 // 3 manager
 // 4 supervisor
 // 5 visitor
-  initSideBarItems() {
-    // ...existing code...
+  void initSideBarItems() {
     if(userController.currentUser.role_id==1){
       items.addAll([
-        {'label': 'Dashboard', 'icon': Icons.dashboard},
-        {'label': 'Users', 'icon': Icons.people},
-        {'label': 'Password', 'icon': Icons.lock},
-        {'label': 'PurchaseRequest', 'icon': Icons.note_add},
-        {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
-        {'label': 'Roles and access', 'icon': Icons.security},
-        {'label': 'Support centre', 'icon': Icons.help},
-        {'label': 'Settings', 'icon': Icons.settings},
-      ]);
+      // {'label': 'Home', 'icon': Icons.home},
+      // {'label': 'Dashboard', 'icon': Icons.dashboard},
+      // {'label': 'Profile', 'icon': Icons.account_circle},
+      {'label': 'Users', 'icon': Icons.people},
+      {'label': 'Password', 'icon': Icons.lock},
+      {'label': 'PurchaseRequest', 'icon': Icons.note_add},
+      {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
+      {'label': 'Roles and access', 'icon': Icons.security},
+      // {'label': 'Support centre', 'icon': Icons.help},
+      {'label': 'Settings', 'icon': Icons.settings},
+    ]);
     }
     else if(userController.currentUser.role_id==2){
       items.addAll([
-        {'label': 'Profile', 'icon': Icons.account_circle},
-        {'label': 'Password', 'icon': Icons.lock},
-        {'label': 'PurchaseRequest', 'icon': Icons.note_add},
-        {'label': 'Support centre', 'icon': Icons.help},
-        {'label': 'Settings', 'icon': Icons.settings},
-      ]);
+      // {'label': 'Home', 'icon': Icons.home},
+      // {'label': 'Dashboard', 'icon': Icons.dashboard},
+      {'label': 'Profile', 'icon': Icons.account_circle},
+      // {'label': 'Users', 'icon': Icons.people},
+      {'label': 'Password', 'icon': Icons.lock},
+      {'label': 'PurchaseRequest', 'icon': Icons.note_add},
+      // {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
+      // {'label': 'Support centre', 'icon': Icons.help},
+      {'label': 'Settings', 'icon': Icons.settings},
+    ]);
+    }
+    else if(userController.currentUser.role_id==3){
+      items.addAll([
+      // {'label': 'Home', 'icon': Icons.home},
+      // {'label': 'Dashboard', 'icon': Icons.dashboard},
+      {'label': 'Profile', 'icon': Icons.account_circle},
+      // {'label': 'Users', 'icon': Icons.people},
+      {'label': 'Password', 'icon': Icons.lock},
+      {'label': 'PurchaseRequest', 'icon': Icons.note_add},
+      // {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
+      // {'label': 'Support centre', 'icon': Icons.help},
+      {'label': 'Settings', 'icon': Icons.settings},
+    ]);
     }
     else if((userController.currentUser.role_id==4)||(userController.currentUser.role_id==6)){
       items.addAll([
-        {'label': 'Profile', 'icon': Icons.account_circle},
-        {'label': 'Password', 'icon': Icons.lock},
-        {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
-        {'label': 'Support centre', 'icon': Icons.help},
-        {'label': 'Settings', 'icon': Icons.settings},
-      ]);
+      // {'label': 'Home', 'icon': Icons.home},
+      // {'label': 'Dashboard', 'icon': Icons.dashboard},
+      {'label': 'Profile', 'icon': Icons.account_circle},
+      // {'label': 'Users', 'icon': Icons.people},
+      {'label': 'Password', 'icon': Icons.lock},
+      // {'label': 'PurchaseRequest', 'icon': Icons.note_add},
+      {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
+      // {'label': 'Support centre', 'icon': Icons.help},
+      {'label': 'Settings', 'icon': Icons.settings},
+    ]);
     }
     else if(userController.currentUser.role_id==5){
-      items.addAll([
-        {'label': 'Profile', 'icon': Icons.account_circle},
-        {'label': 'Password', 'icon': Icons.lock},
-        {'label': 'Support centre', 'icon': Icons.help},
-        {'label': 'Settings', 'icon': Icons.settings},
-      ]);
+       items.addAll([
+      // {'label': 'Home', 'icon': Icons.home},
+      // {'label': 'Dashboard', 'icon': Icons.dashboard},
+      {'label': 'Profile', 'icon': Icons.account_circle},
+      // {'label': 'Users', 'icon': Icons.people},
+      {'label': 'Password', 'icon': Icons.lock},
+      // {'label': 'PurchaseRequest', 'icon': Icons.note_add},
+      // {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
+      // {'label': 'Support centre', 'icon': Icons.help},
+      {'label': 'Settings', 'icon': Icons.settings},
+    ]);
     }
     else{
-      items.addAll([
-        {'label': 'Profile', 'icon': Icons.account_circle},
-        {'label': 'Password', 'icon': Icons.lock},
-        {'label': 'Support centre', 'icon': Icons.help},
-        {'label': 'Settings', 'icon': Icons.settings},
-      ]);
+       items.addAll([
+      // {'label': 'Home', 'icon': Icons.home},
+      // {'label': 'Dashboard', 'icon': Icons.dashboard},
+      {'label': 'Profile', 'icon': Icons.account_circle},
+      // {'label': 'Users', 'icon': Icons.people},
+      {'label': 'Password', 'icon': Icons.lock},
+      // {'label': 'PurchaseRequest', 'icon': Icons.note_add},
+      // {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
+      // {'label': 'Support centre', 'icon': Icons.help},
+      {'label': 'Settings', 'icon': Icons.settings},
+    ]);
     }
   }
 

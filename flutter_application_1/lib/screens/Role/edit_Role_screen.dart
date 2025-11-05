@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/network/role_network.dart';
 
 class EditRolePage extends StatefulWidget {
   final String initialName;
@@ -8,12 +7,12 @@ class EditRolePage extends StatefulWidget {
   // final List<String> initialPermissions;
 
   const EditRolePage({
-    Key? key,
+    super.key,
     required this.initialName,
     required this.initialDescription,
     // required this.initialPermissions,
      required this.id,
-  }) : super(key: key);
+  });
 
   @override
   State<EditRolePage> createState() => _EditRolePageState();

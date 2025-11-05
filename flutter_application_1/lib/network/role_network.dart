@@ -24,7 +24,7 @@ class RoleNetwork {
   }
   final Dio _dio = Dio();
 
- fetchRoles() async {
+ Future<Response> fetchRoles() async {
     try {
       final response = await _dio.get(
         '${APIS.baseUrl}role/roles/',
@@ -56,7 +56,6 @@ class RoleNetwork {
           'Authorization': 'Bearer ${APIS.token}',
           'ngrok-skip-browser-warning': 'true'}),
       );
-      print('Status: \\${response.statusCode}, Data: \\${response.data}');
       return response.statusCode == 201 || response.statusCode == 200;
     } catch (e) {
       print('Erreur addRole: \\$e');

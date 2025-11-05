@@ -1,14 +1,11 @@
 import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
-import 'package:flutter_application_1/models/purchase_order.dart';
 import 'package:flutter_application_1/network/purchase_request_network.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/models/purchase_request.dart';
-import 'package:flutter_application_1/screens/Purchase%20order/pushase_order_screen.dart';
 import 'package:intl/intl.dart';
 import '../../l10n/app_localizations.dart';
-import 'package:flutter_application_1/screens/Purchase%20order/purchase_form_screen.dart';
 import 'package:provider/provider.dart';
 
 class PurchaseRequestView extends StatefulWidget {
@@ -499,8 +496,8 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                   }
                                 } catch (e) {
                                   String errorMsg = e.toString();
-                                  if (e is DioError && e.response != null) {
-                                    errorMsg = 'Erreur serveur: ' + e.response.toString();
+                                  if (e is DioException && e.response != null) {
+                                    errorMsg = 'Erreur serveur: ${e.response}';
                                   }
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(backgroundColor: const Color.fromARGB(255, 245, 3, 3), content: Text(errorMsg)),
@@ -548,8 +545,8 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                   });
                                 } catch (e) {
                                   String errorMsg = e.toString();
-                                  if (e is DioError && e.response != null) {
-                                    errorMsg = 'Erreur serveur: ' + e.response.toString();
+                                  if (e is DioException && e.response != null) {
+                                    errorMsg = 'Erreur serveur: ${e.response}';
                                   }
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(backgroundColor: const Color.fromARGB(255, 245, 3, 3), content: Text(errorMsg)),

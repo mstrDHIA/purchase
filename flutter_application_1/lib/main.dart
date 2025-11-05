@@ -8,7 +8,6 @@ import 'package:flutter_application_1/controllers/role_controller.dart';
 
 import 'package:flutter_application_1/providers/theme_provider.dart';
 import 'package:flutter_application_1/screens/Dashboard/dashboard_screen.dart' as dashboard;
-import 'package:flutter_application_1/screens/Home.dart' as home;
 import 'package:flutter_application_1/screens/Purchase%20Request/purchase_request_list_screen.dart' as requestor_order;
 import 'package:flutter_application_1/screens/Purchase%20order/pushase_order_screen.dart';
 import 'package:flutter_application_1/screens/Support%20Center/Home_Center_screen.dart';
@@ -95,8 +94,8 @@ class _MainScreenState extends State<MainScreen> {
 
   Widget _getPage({required int id}) {
     switch (_selected) {
-      case 'Dashboard':
-        return const dashboard.DashboardPage();
+      // case 'Dashboard':
+      //   return const dashboard.DashboardPage();
       case 'Profile':
         return ProfilePageScreen(userId: id);
       case 'Users':
@@ -109,12 +108,13 @@ class _MainScreenState extends State<MainScreen> {
         return const PurchaseOrderPage();
       case 'Roles and access':
         return const RolePage();
-      case 'Support centre':
-        return const SupportCenterPage();
+      // case 'Support centre':
+      //   return const SupportCenterPage();
       case 'Settings':
         return const SettingsScreen();
       default:
-        return const dashboard.DashboardPage() ;
+
+        return  ProfilePageScreen(userId:id) ;
     }
   }
   // @override

@@ -1,6 +1,5 @@
 import 'package:flutter_application_1/screens/Purchase%20order/Edit_purchase_screen.dart';
 import 'package:flutter_application_1/screens/Purchase%20order/view_purchase_screen.dart';
-import 'package:flutter_application_1/models/purchase_order.dart';
 import 'package:provider/provider.dart';
 // import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
@@ -84,7 +83,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
           final lname = (userField['last_name'] ?? userField['lastName'] ?? '')?.toString();
           final uname = (userField['username'] ?? userField['user'] ?? '')?.toString();
           if (fname != null && fname.isNotEmpty) {
-            actionCreatedBy = '${fname}${lname != null && lname.isNotEmpty ? ' $lname' : ''}'.trim();
+            actionCreatedBy = '$fname${lname != null && lname.isNotEmpty ? ' $lname' : ''}'.trim();
           } else if (uname != null && uname.isNotEmpty) {
             actionCreatedBy = uname;
           } else if (userField['id'] != null) {
@@ -325,7 +324,54 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
             title: const Text('Purchase Orders'),
             // actions: [ ], // Removed Add PO button
           ),
-          body: Column(
+          body: 
+          (MediaQuery.of(context).size.width<600)?
+                          ListView.builder(itemBuilder:  (context,index){
+                            final order = filteredOrders[index];
+                            return Card(
+                              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                side: BorderSide(color: Colors.grey.shade300),
+                              ),
+                              child: ListTile(
+                                contentPadding: const EdgeInsets.all(16),
+                                title: Text('PO #${order['id']}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                subtitle: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const SizedBox(height: 8),
+                                    Text('Created by: ${order['actionCreatedBy']}'),
+                                    Text('Date submitted: ${_dateFormat.format(order['dateSubmitted'])}'),
+                                    Text('Due date: ${_dateFormat.format(order['dueDate'])}'),
+                                    Text('Priority: ${order['priority']}'),
+                                    Text('Status: ${order['status']}'),
+                                  ],
+                                ),
+                                isThreeLine: true,
+                                trailing: PopupMenuButton<String>(
+                                  onSelected: (value) {
+                                    // if (value == 'view') {
+                                    //   viewPurchaseOrder(context, order['original']);
+                                    // } else if (value == 'edit') {
+                                    //   editPurchaseOrder(context, order['original']);
+                                    // } else if (value == 'delete') {
+                                    //   deletePurchaseOrder(context, order['original']);
+                                    // }
+                                  },
+                                  itemBuilder: (context) => [
+                                    const PopupMenuItem(value: 'view', child: Text('View')),
+                                    const PopupMenuItem(value: 'edit', child: Text('Edit')),
+                                    const PopupMenuItem(value: 'delete', child: Text('Delete')),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }
+                          
+                          ,itemCount: filteredOrders.length,)
+                          :
+          Column(
             children: [
               _buildFiltersRow(),
               const SizedBox(height: 16),
@@ -337,7 +383,8 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                         scrollDirection: Axis.vertical,
                         child: Theme(
                           data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-                          child: PaginatedDataTable(
+                          child: 
+                          PaginatedDataTable(
                             header: const Text('Purchase Orders Table'),
                             rowsPerPage: _rowsPerPage,
                             onRowsPerPageChanged: (r) {
@@ -349,7 +396,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                             },
                             sortColumnIndex: _sortColumnIndex,
                             sortAscending: _sortAscending,
-                            columnSpacing: 180,
+                            columnSpacing: MediaQuery.of(context).size.width * 0.08,
                             horizontalMargin: 16,
                             columns: [
                               DataColumn(
@@ -754,6 +801,7 @@ class _PurchaseOrderDataSource extends DataTableSource {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Container(
+        width: 80,
         constraints: const BoxConstraints(minWidth: 36),
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
         decoration: BoxDecoration(
@@ -785,6 +833,7 @@ class _PurchaseOrderDataSource extends DataTableSource {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Container(
+        width: 80,
         constraints: const BoxConstraints(minWidth: 0),
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
         decoration: BoxDecoration(
