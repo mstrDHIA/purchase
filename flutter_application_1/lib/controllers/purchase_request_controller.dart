@@ -24,7 +24,6 @@ class PurchaseRequestController extends ChangeNotifier {
     dataSource = PurchaseRequestDataSource([], context, 'defaultArgument');
   }
 
-  // List<PurchaseRequest> get requests => _requests;
   String? get error => _error;
 
   Future<void> fetchRequests(BuildContext context, User user, {int page = 1, int pageSizeParam = 10}) async {
@@ -38,7 +37,6 @@ class PurchaseRequestController extends ChangeNotifier {
       if (response.statusCode != 200) {
         throw Exception('Failed to load purchase requests');
       }
-      print('Raw API Response: ${response.data}'); // Log raw API response
 
       // Handle DRF paginated response e.g. {count: N, next: url, previous: url, results: [...]}
       var data = response.data;
@@ -67,10 +65,8 @@ class PurchaseRequestController extends ChangeNotifier {
         if (b.id == null) return -1;
         return a.id!.compareTo(b.id!);
       });
-    print('Mapped & Sorted Requests: $requests'); // Log mapped requests
 
     dataSource = PurchaseRequestDataSource(requests, context, 'someArgument');
-    print('DataSource updated with requests: ${requests.length} items'); // Log dataSource update
     } catch (e) {
       _error = e.toString();
       isLoading = false;
@@ -138,7 +134,6 @@ class PurchaseRequestController extends ChangeNotifier {
 
   @override
   String toString() {
-    // Customize this to print useful info about your controller
     return 'PurchaseRequestController(requests: $requests, isLoading: $isLoading, error: $_error)';
   }
 }

@@ -384,7 +384,6 @@ class _RequestEditPageState extends State<RequestEditPage> {
                             'status': status.toLowerCase(),
                             'products': products,
                           };
-                          print('updateData envoyé: $updateData');
                           try {
                             final controller = Provider.of<PurchaseRequestController>(context, listen: false);
                             await controller.updateRequest(widget.purchaseRequest.id!, updateData, context);

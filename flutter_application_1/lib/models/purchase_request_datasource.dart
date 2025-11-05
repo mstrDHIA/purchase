@@ -14,14 +14,12 @@ class PurchaseRequestDataSource extends DataTableSource {
   final String someArgument;
 
   PurchaseRequestDataSource(this.requests, this.context, this.someArgument) {
-    print('Initializing PurchaseRequestDataSource with ${requests.length} requests'); // Log initialization
   }
 
   @override
   DataRow? getRow(int index) {
     if (index >= requests.length) return null;
     final request = requests[index];
-    print('Creating DataRow for request ID: ${request.id}'); // Log DataRow creation
     return DataRow(
       cells: [
         DataCell(Text(request.id.toString())),
@@ -89,6 +87,7 @@ class PurchaseRequestDataSource extends DataTableSource {
           padding: const EdgeInsets.symmetric(
             vertical: 8.0),
           child: Container(
+            width: 80,
             decoration: BoxDecoration(
               color: request.priority == 'high' ? Colors.red[300] : request.priority == 'medium' ? Colors.orange[300] : Colors.blue[300],
               borderRadius: BorderRadius.circular(4),
@@ -110,6 +109,7 @@ class PurchaseRequestDataSource extends DataTableSource {
           padding: const EdgeInsets.symmetric(
             vertical: 8.0),
           child: Container(
+            width: 80,
             decoration: BoxDecoration(
               color: request.status == 'approved' ? Colors.green : request.status == 'rejected' ? Colors.red:Colors.orange,
               borderRadius: BorderRadius.circular(4),

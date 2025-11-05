@@ -56,7 +56,6 @@ class RoleNetwork {
           'Authorization': 'Bearer ${APIS.token}',
           'ngrok-skip-browser-warning': 'true'}),
       );
-      print('Status: \\${response.statusCode}, Data: \\${response.data}');
       return response.statusCode == 201 || response.statusCode == 200;
     } catch (e) {
       print('Erreur addRole: \\$e');

@@ -474,8 +474,7 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
         'priority': _priority,
       };
 
-      print('PurchaseOrder JSON body sent to backend:');
-      print(jsonEncode(jsonBody));
+
 
       if (widget.initialOrder.isNotEmpty && widget.initialOrder['id'] != null) {
         // Mode édition : appel update, on envoie le JSON directement

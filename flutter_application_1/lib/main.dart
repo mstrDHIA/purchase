@@ -94,8 +94,8 @@ class _MainScreenState extends State<MainScreen> {
 
   Widget _getPage({required int id}) {
     switch (_selected) {
-      case 'Dashboard':
-        return const dashboard.DashboardPage();
+      // case 'Dashboard':
+      //   return const dashboard.DashboardPage();
       case 'Profile':
         return ProfilePageScreen(userId: id);
       case 'Users':
@@ -108,12 +108,13 @@ class _MainScreenState extends State<MainScreen> {
         return const PurchaseOrderPage();
       case 'Roles and access':
         return const RolePage();
-      case 'Support centre':
-        return const SupportCenterPage();
+      // case 'Support centre':
+      //   return const SupportCenterPage();
       case 'Settings':
         return const SettingsScreen();
       default:
-        return const dashboard.DashboardPage() ;
+
+        return  ProfilePageScreen(userId:id) ;
     }
   }
   // @override

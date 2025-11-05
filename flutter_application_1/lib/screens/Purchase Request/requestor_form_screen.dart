@@ -81,7 +81,6 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
   }
 
   Future<void> _save({bool addAnother = false}) async {
-    // print('Current user id: ${userController.currentUser.id}'); 
     if (userController.currentUser.id == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Erreur: utilisateur non connecté ou id manquant')),
@@ -136,12 +135,8 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
 
 
     try {
-      // print('order: $order');
       await Provider.of<PurchaseRequestController>(context, listen: false).addRequest(order);
-      // Save to API
-      // final api = PurchaseRequestNetwork();
 
-      // print(jsonEncode(order));
 
       if (addAnother) {
         productController.clear();

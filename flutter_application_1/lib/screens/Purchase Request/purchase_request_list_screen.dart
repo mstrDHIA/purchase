@@ -240,7 +240,6 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
         ),
       ),
     );
-    print(newRequest);
     purchaseRequestController.fetchRequests(context,userController.currentUser);
 
   }
@@ -361,7 +360,9 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                               child: Theme(
                                 data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
                                 child: Container(
+                                  width: MediaQuery.of(context).size.width,
                                   child: PaginatedDataTable(
+                                    
                                     header: Text(AppLocalizations.of(context)!.purchaseRequestsTable),
                                     rowsPerPage: _rowsPerPageLocal,
                                     availableRowsPerPage: const [5, 10, 20, 50, 100],
@@ -377,7 +378,8 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                                     },
                                     sortColumnIndex: _sortColumnIndex,
                                     sortAscending: _sortAscending,
-                                    columnSpacing: 190,
+                                    // columnSpacing: 190,
+                                    columnSpacing: MediaQuery.of(context).size.width * 0.05,
                                     horizontalMargin: 16,
                                     columns: [
                                       DataColumn(

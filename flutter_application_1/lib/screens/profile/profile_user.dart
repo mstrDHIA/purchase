@@ -37,7 +37,6 @@ class _ProfilePageScreenState extends State<ProfilePageScreen> {
   @override
   Future<void> didChangeDependencies() async {
     super.didChangeDependencies();
-    print('id: ${userController.selectedUserId}');
 
      await userController.getDetailedUser(widget.userId);
 
