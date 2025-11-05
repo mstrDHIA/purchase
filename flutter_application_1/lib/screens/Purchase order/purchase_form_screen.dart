@@ -388,17 +388,14 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
         'updated_at': DateFormat('yyyy-MM-dd').format(_updatedAt ?? DateTime.now()),
         'priority': _priority,
       };
-      // PurchaseOrder purchaseOrder = PurchaseOrder.fromJson(jsonBody);
 
 
-      print('PurchaseOrder JSON body sent to backend:');
-      print(jsonEncode(jsonBody)); // <-- Use jsonEncode here
+
 
       if (widget.initialOrder.isNotEmpty) {
         widget.onSave(jsonBody);
         if (mounted) Navigator.of(context).pop(jsonBody);
       } else {
-        // Ici il faudrait adapter addOrder pour accepter le jsonBody si besoin
         await Provider.of<PurchaseOrderController>(context, listen: false)
             .addOrder(jsonBody); // <-- à adapter côté controller si besoin
         if (mounted) {

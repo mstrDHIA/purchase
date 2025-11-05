@@ -74,10 +74,8 @@ class _SignUpPageState extends State<SignUpPage> {
     if (_passwordError == null &&
         _confirmPasswordError == null &&
         _agreeToTerms) {
-      print('Form is valid. Proceed with Sign Up.');
       // You can add your signup logic here
     } else if (!_agreeToTerms) {
-      print('Please agree to the terms and services.');
     }
   }
 

@@ -704,5 +704,4 @@ class ViewPurchasePage extends StatelessWidget {
 /// This is a stub implementation. Replace with your actual logic.
 void addPurchaseOrder(Map<String, dynamic> order) {
   // TODO: Implement the logic to add the purchase order.
-  print('Purchase request $order');
 }

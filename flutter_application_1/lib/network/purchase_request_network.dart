@@ -35,7 +35,6 @@ class PurchaseRequestNetwork {
   // Create a new purchase request
   Future<Response> createPurchaseRequest(Map<String, dynamic> data) async {
     // try {
-      print(data);
       Response response = await api.dio.post(
         '${APIS.baseUrl}/purchase_request/purchaseRequests/',
         data: data,
@@ -50,8 +49,7 @@ class PurchaseRequestNetwork {
       if (response.statusCode == 201) {
         return response;
       } else {
-        print('Status: ${response.statusCode}');
-        print('Body: ${response.data}');
+     
         throw Exception('Failed to create purchase request');
       }
     // } catch (e) {
@@ -76,14 +74,12 @@ class PurchaseRequestNetwork {
         data: jsonEncode(data),
         options: options,
       );
-      print('PATCH update response: status=[32m${response.statusCode}[0m, data=${response.data}');
     } else {
       response = await api.dio.put(
         url,
         data: jsonEncode(data),
         options: options,
       );
-      print('PUT update response: status=[32m${response.statusCode}[0m, data=${response.data}');
     }
     if (response.statusCode == 200) {
       return response.data;

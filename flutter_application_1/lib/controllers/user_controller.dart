@@ -19,7 +19,7 @@ class UserController extends ChangeNotifier {
   User currentUser = User();
   int? currentUserId;
   int? selectedUserId;
-  // Change password via UserNetwork
+
   Future<String> changePassword({
     required String currentPassword,
     required String newPassword,
@@ -98,17 +98,12 @@ class UserController extends ChangeNotifier {
     notifyListeners();
     try {
       Response response = await userNetwork.uesresList();
-      print('API Response status: \\${response.statusCode}');
-      print('API Response data: \\${response.data}');
       if (response.statusCode == 200) {
         if (response.data is List) {
           users = (response.data as List).map((user) => User.fromJson(user)).toList();
-          print('Parsed users count: \\${users.length}');
           for (var u in users) {
-            print('User: id=\\${u.id}, username=\\${u.username}, email=\\${u.email}, isActive=\\${u.isActive}, role=\\${u.role}');
           }
         } else {
-          print('Response data is not a List.');
         }
         isLoading = false;
         notifyListeners();
@@ -121,7 +116,6 @@ class UserController extends ChangeNotifier {
       isLoading = false;
       notifyListeners();
       print('Erreur Dio : ${e.message}, type: ${e.type}, data: ${e.response?.data}, error: ${e.error}');
-      // Optionnel : afficher un message utilisateur
     } catch (e) {
       isLoading = false;
       notifyListeners();
@@ -166,14 +160,12 @@ class UserController extends ChangeNotifier {
   void logout(BuildContext context){
     isLoading = true;
     notifyListeners();
-    // userNetwork.logout();
     currentUser = User();
     currentUserId = null;
     selectedUserId = null;
     selectedUser = User();
     isLoading = false;
     context.go('/login');
-    // Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context)=>SignInPage()), (route) => false);
     notifyListeners();
   }
 
@@ -182,20 +174,14 @@ class UserController extends ChangeNotifier {
     isLoading = true;
     notifyListeners();
     Response? response = await userNetwork.login(email, password);
-    print('Login response: ${response!.data}');
-    if (response.statusCode == 200) {
+    if (response!.statusCode == 200) {
       Map<String, dynamic> decodedToken = JwtDecoder.decode(response.data['access']);
-      print('Decoded token: $decodedToken');
       currentUserId = decodedToken['user_id'];
       selectedUserId = currentUserId;
       currentUser = User.fromJson(response.data['user']);
-      print('current user id: {$currentUserId}');
   context.go('/main_screen');
-      print(decodedToken);
-      print(response.data);
       isLoading = false;
       notifyListeners();
-      // Handle successful login
     } else if (response.statusCode == 401) {
       isLoading = false;
       notifyListeners();
@@ -204,7 +190,6 @@ class UserController extends ChangeNotifier {
         content: Text('Invalid email or password. Please try again.'),
       );
       ScaffoldMessenger.of(context).showSnackBar(snackBar);
-      // Handle login error
     }
     else {
       isLoading = false;
@@ -217,17 +202,7 @@ class UserController extends ChangeNotifier {
       }
       isLoading = false;
       notifyListeners();
-    //  else {
-    //   print('Login failed: ${response.statusCode}');
-    //   isLoading = false;
-    //   notifyListeners();
-    //   ScaffoldMessenger.of(context).showSnackBar(
-    //     const SnackBar(
-    //       backgroundColor: Colors.red,
-    //       content: Text('An error occurred during login. Please try again.'),
-    //     ),
-    //   );
-    // }
+
   } catch (e) {
     print('Login error: $e');
     isLoading = false;
@@ -249,17 +224,12 @@ class UserController extends ChangeNotifier {
     try{
       isLoading = true;
     notifyListeners();
-    print(email);
-    print(password);
     Response response = await userNetwork.register(username: email, password: password);
     if (response.statusCode == 201) {
       login(email, password, context);
-      // isLoading = false;
-      // notifyListeners();
-      // Handle successful login
+
     } 
    
-    // }
     else {
       isLoading = false;
       notifyListeners();
@@ -269,7 +239,6 @@ class UserController extends ChangeNotifier {
       );
       ScaffoldMessenger.of(context).showSnackBar(snackBar);
       }
-      // Handle unexpected error
     } catch (e) {
       isLoading = false;
       notifyListeners();
@@ -280,7 +249,6 @@ class UserController extends ChangeNotifier {
         content: Text('An error occurred during register'),
       );
       ScaffoldMessenger.of(context).showSnackBar(snackBar);
-      // Handle unexpected error
     }  
     }
 
@@ -292,13 +260,10 @@ class UserController extends ChangeNotifier {
     if (response.statusCode == 201) {
       displaySnackBar = true;
       notifyListeners();
-      // login(email, password, context);
-      // isLoading = false;
+
       
       context.pop();
-      // notifyListeners();
-      
-      // Handle successful login
+ 
     } 
    
     // }
@@ -311,7 +276,6 @@ class UserController extends ChangeNotifier {
       );
       ScaffoldMessenger.of(context).showSnackBar(snackBar);
       }
-      // Handle unexpected error
     } catch (e) {
       print(e);
       isLoading = false;
@@ -322,7 +286,6 @@ class UserController extends ChangeNotifier {
         content: Text('An error occurred during adding user'),
       );
       ScaffoldMessenger.of(context).showSnackBar(snackBar);
-      // Handle unexpected error
     }  
     }
 
@@ -332,15 +295,9 @@ class UserController extends ChangeNotifier {
   Future<User> getDetailedUser(int userId) async {
     isLoading = true;
     notifyListeners();
-    // print('getting response for user id: $userId');
     Response? response = await userNetwork.getDetailedUser(userId);
-    // print('got response: ${response.data}');
     if (response!.statusCode == 200) {
-      // print('response 200');
-      print('aaa');
-      print(response.data);
       User user = User.fromJson(response.data[0]); // <-- Utilise directement response.data
-      print('bbb');
       isLoading = false;
       selectedUser = user;
       notifyListeners();
@@ -378,24 +335,17 @@ class UserController extends ChangeNotifier {
       }
       
       notifyListeners();
-      // if (displaySnackBar) {
-      //   ScaffoldMessenger.of(context).showSnackBar(
-      //     SnackBar(content: Text('User status updated successfully')),
-      //   );
-      // }
+
    
 
 
   }
 
    Future<String?> updateAllUser(firstName, lastName, email, username, country, state, city, address, location, zipCode,Role role,BuildContext context) async {
-    // print('aaaaa');
   
     isLoading = true;
-    // print('bbb ');
     notifyListeners();
     try {
-      // print('ccc');
       final Map<String, dynamic> data ={
       
 };
@@ -436,29 +386,15 @@ if(zipCode!=selectedUser.profile?.zipCode){
 }
 data['profile'] = profileData;
 }
-// print(role.id);
-// print(selectedUser.role?.id);
-print('changing role');
+
 if(role.id!=selectedUser.role!.id){
 data['role_id'] = role.id;
 }
-
-
-// print('ddd');
-      // Map<String, dynamic> data = user.toJson();
-      print('starting update');
       Response result = await userNetwork.updateAllUsers(data, selectedUserId!);
-      print('ending update');
       displaySnackBar = true;
       notifyListeners();
-      // print('eee');
-      // print(result);
-      // print(result.data);
-      // await getUsers(); // Refresh user list after update
-      // isLoading = false;
-      // notifyListeners();
+
       context.pop();
-      // return result;
     } catch (e) {
       print('problem $e');
       isLoading = false;
@@ -473,9 +409,4 @@ data['role_id'] = role.id;
 }
 
 
-  // void register(String text, String text2, BuildContext context) {}
 
-  // getDetailedUser(int userId) {}
-
-  // updateAllUser(String text, String text2, String text3, String text4, String text5, String text6, String text7, String text8, String text9, int? tryParse, BuildContext context) {}
-// }
