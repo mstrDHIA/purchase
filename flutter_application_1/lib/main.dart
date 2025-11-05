@@ -135,8 +135,22 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: (MediaQuery.of(context).size.width < 600)?AppBar(
+        // title: Text(_selected),
+      ):null,
+      drawer: (MediaQuery.of(context).size.width < 600)?
+          AppSidebar(
+            selected: _selected,
+            onItemSelected: (item) {
+              setState(() {
+                _selected = item;
+              });
+              Navigator.pop(context); // Close the drawer after selection
+            },
+          ):null,
       body: Row(
         children: [
+          if(MediaQuery.of(context).size.width >= 600)
           AppSidebar(
             selected: _selected,
             onItemSelected: (item) {
