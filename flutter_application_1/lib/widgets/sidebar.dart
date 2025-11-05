@@ -193,6 +193,25 @@ class _AppSidebarState extends State<AppSidebar> {
     // TODO: implement initState
     super.initState();
   }
+
+  // added: confirmation + logout helper
+  Future<void> _confirmLogout() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Confirm"),
+        content: const Text("Do you really want to logout?"),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Cancel")),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text("Logout")),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      userController.logout(context);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnimatedContainer(
@@ -266,59 +285,85 @@ class _AppSidebarState extends State<AppSidebar> {
                 ? Column(
                     mainAxisSize: MainAxisSize.max,
                     crossAxisAlignment: CrossAxisAlignment.center,
-                    children: items.map((item) {
-                      final label = item['label'] as String;
-                      final icon = item['icon'] as IconData;
-                      final selected = label == widget.selected;
-                      return Tooltip(
-                        message: label,
-                        child: IconButton(
-                          icon: Icon(
-                            icon,
-                            color: selected ? Colors.deepPurple : Colors.grey[700],
+                    children: [
+                      // existing item icons
+                      ...items.map((item) {
+                        final label = item['label'] as String;
+                        final icon = item['icon'] as IconData;
+                        final selected = label == widget.selected;
+                        return Tooltip(
+                          message: label,
+                          child: IconButton(
+                            icon: Icon(
+                              icon,
+                              color: selected ? Colors.deepPurple : Colors.grey[700],
+                            ),
+                            onPressed: () => widget.onItemSelected(label),
+                            iconSize: 28,
+                            padding: const EdgeInsets.symmetric(vertical: 18),
                           ),
-                          onPressed: () => widget.onItemSelected(label),
+                        );
+                      }).toList(),
+                      // logout icon for collapsed state
+                      Tooltip(
+                        message: 'Logout',
+                        child: IconButton(
+                          icon: const Icon(Icons.logout, color: Colors.red),
+                          onPressed: _confirmLogout,
                           iconSize: 28,
                           padding: const EdgeInsets.symmetric(vertical: 18),
                         ),
-                      );
-                    }).toList(),
+                      ),
+                    ],
                   )
                 : ListView(
-                    children: items.map((item) {
-                      final label = item['label'] as String;
-                      final icon = item['icon'] as IconData;
-                      final selected = label == widget.selected;
+                    children: [
+                      // existing list items
+                      ...items.map((item) {
+                        final label = item['label'] as String;
+                        final icon = item['icon'] as IconData;
+                        final selected = label == widget.selected;
 
-                      return Tooltip(
-                        message: isCollapsed ? label : '',
-                        child: ListTile(
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: isCollapsed ? 8 : 16,
-                            vertical: 4,
-                          ),
-                          leading: Icon(
-                            icon,
-                            color: selected ? Colors.deepPurple : Colors.grey[700],
-                          ),
-                          title: isCollapsed
-                              ? null
-                              : Text(
-                                  label,
-                                  style: TextStyle(
-                                    color: selected ? Colors.deepPurple : Colors.black87,
-                                    fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                        return Tooltip(
+                          message: isCollapsed ? label : '',
+                          child: ListTile(
+                            contentPadding: EdgeInsets.symmetric(
+                              horizontal: isCollapsed ? 8 : 16,
+                              vertical: 4,
+                            ),
+                            leading: Icon(
+                              icon,
+                              color: selected ? Colors.deepPurple : Colors.grey[700],
+                            ),
+                            title: isCollapsed
+                                ? null
+                                : Text(
+                                    label,
+                                    style: TextStyle(
+                                      color: selected ? Colors.deepPurple : Colors.black87,
+                                      fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                                    ),
                                   ),
-                                ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            tileColor: selected ? Colors.deepPurple.withOpacity(0.1) : null,
+                            hoverColor: Colors.deepPurple.withOpacity(0.08),
+                            onTap: () => widget.onItemSelected(label),
                           ),
-                          tileColor: selected ? Colors.deepPurple.withOpacity(0.1) : null,
-                          hoverColor: Colors.deepPurple.withOpacity(0.08),
-                          onTap: () => widget.onItemSelected(label),
+                        );
+                      }).toList(),
+                      const Divider(),
+                      // Logout tile in expanded sidebar
+                      ListTile(
+                        leading: const Icon(Icons.logout, color: Colors.red),
+                        title: const Text(
+                          'Logout',
+                          style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600),
                         ),
-                      );
-                    }).toList(),
+                        onTap: _confirmLogout,
+                      ),
+                    ],
                   ),
           ),
           const Padding(
