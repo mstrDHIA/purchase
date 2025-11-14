@@ -21,129 +21,7 @@ class PurchaseRequestView extends StatefulWidget {
 }
 
 class _PurchaseRequestViewState extends State<PurchaseRequestView> {
-  // Future<void> _showRefuseDialog() async {
-  //   final reasonController = TextEditingController();
-  //   final commentController = TextEditingController();
-  //   bool submitting = false;
-  //   String? errorText;
-  //   await showDialog(
-  //     context: context,
-  //     barrierDismissible: false,
-  //     builder: (context) {
-  //       return StatefulBuilder(
-  //         builder: (context, setState) {
-  //           return AlertDialog(
-  //             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-  //             titlePadding: const EdgeInsets.only(top: 24, left: 24, right: 24, bottom: 0),
-  //             contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-  //             title: Row(
-  //               children: const [
-  //                 Icon(Icons.error, color: Colors.red, size: 28),
-  //                 SizedBox(width: 10),
-  //                 Text('Purchase Request', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22)),
-  //               ],
-  //             ),
-  //             content: SizedBox(
-  //               width: 350,
-  //               child: Column(
-  //                 mainAxisSize: MainAxisSize.min,
-  //                 crossAxisAlignment: CrossAxisAlignment.start,
-  //                 children: [
-  //                   const SizedBox(height: 8),
-  //                   const Text('Please provide a reason for refusing this request:', style: TextStyle(fontSize: 15)),
-  //                   const SizedBox(height: 16),
-  //                   const Text('Reason (required)', style: TextStyle(fontWeight: FontWeight.w600)),
-  //                   const SizedBox(height: 6),
-  //                   TextField(
-  //                     controller: reasonController,
-  //                     minLines: 2,
-  //                     maxLines: 3,
-  //                     decoration: InputDecoration(
-  //                       hintText: 'Example: The requested item exceeds the approved budget for this quarter.',
-  //                       filled: true,
-  //                       fillColor: const Color(0xFFF1F1F1),
-  //                       border: OutlineInputBorder(
-  //                         borderRadius: BorderRadius.circular(10),
-  //                         borderSide: BorderSide.none,
-  //                       ),
-  //                       errorText: errorText,
-  //                     ),
-  //                   ),
-  //                   const SizedBox(height: 18),
-  //                   const Text('Additional Comments (optional)', style: TextStyle(fontWeight: FontWeight.w600)),
-  //                   const SizedBox(height: 6),
-  //                   TextField(
-  //                     controller: commentController,
-  //                     minLines: 2,
-  //                     maxLines: 3,
-  //                     decoration: InputDecoration(
-  //                       hintText: 'Provide any further details or context, if necessary.',
-  //                       filled: true,
-  //                       fillColor: const Color(0xFFF1F1F1),
-  //                       border: OutlineInputBorder(
-  //                         borderRadius: BorderRadius.circular(10),
-  //                         borderSide: BorderSide.none,
-  //                       ),
-  //                     ),
-  //                   ),
-  //                 ],
-  //               ),
-  //             ),
-  //             actionsPadding: const EdgeInsets.only(left: 24, right: 24, bottom: 18, top: 8),
-  //             actions: [
-  //               ElevatedButton(
-  //                 onPressed: submitting
-  //                     ? null
-  //                     : () async {
-  //                         setState(() { errorText = null; });
-  //                         if (reasonController.text.trim().isEmpty) {
-  //                           setState(() { errorText = 'Reason is required'; });
-  //                           return;
-  //                         }
-  //                         setState(() { submitting = true; });
-  //                         await _deletePurchaseFromServer();
-  //                         if (mounted) Navigator.of(context).pop();
-  //                       },
-  //                 style: ElevatedButton.styleFrom(
-  //                   backgroundColor: const Color(0xFF635BFF),
-  //                   foregroundColor: Colors.white,
-  //                   minimumSize: const Size(120, 44),
-  //                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-  //                   elevation: 0,
-  //                 ),
-  //                 child: submitting
-  //                     ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-  //                     : const Text('Submit'),
-  //               ),
-  //               TextButton(
-  //                 onPressed: submitting ? null : () => Navigator.of(context).pop(),
-  //                 child: const Text('Cancel'),
-  //               ),
-  //             ],
-  //           );
-  //         },
-  //       );
-  //     },
-  //   );
-  // }
 
-  Future<void> _deletePurchaseFromServer() async {
-    try {
-      final id = widget.purchaseRequest.id;
-      if (id == null) throw Exception('ID manquant');
-      await PurchaseRequestNetwork().deletePurchaseRequest(id);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(backgroundColor: Color.fromARGB(255, 245, 3, 3), content: Text('Purchase deleted!')),
-        );
-        Navigator.of(context).pop();
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(backgroundColor: const Color.fromARGB(255, 245, 3, 3), content: Text('Error: $e')),
-      );
-    }
-  }
   bool _showActionButtons = true;
   String? _status;
   late UserController userController;
@@ -155,156 +33,6 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
   userController= Provider.of<UserController>(context, listen: false);
   purchaseOrderController = Provider.of<PurchaseOrderController>(context, listen: false);
   }
-
-  void _editRequest() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Edit Request'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(decoration: const InputDecoration(labelText: 'Product')),
-              TextField(decoration: const InputDecoration(labelText: 'Quantity'), keyboardType: TextInputType.number),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  void _deleteRequest() {
-    showDialog(
-      context: context,
-      barrierColor: Colors.black.withOpacity(0.2),
-      builder: (context) => Dialog(
-        backgroundColor: const Color(0xFFF7F9FF),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(
-            maxWidth: 340,
-            minWidth: 260,
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 28),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  "Delete Purchase",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  "Are you sure you want to delete ${widget.purchaseRequest.id ?? 'this purchase'}?",
-                  style: const TextStyle(fontSize: 16),
-                ),
-                const SizedBox(height: 28),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      child: const Text(
-                        'Cancel',
-                        style: TextStyle(color: Colors.deepPurple, fontSize: 16),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context, true);
-                        // Ajoute ici la logique de suppression si besoin
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Purchase deleted")),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFEF5350),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 10),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: const Text('Delete', style: TextStyle(fontSize: 16)),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-//   void _showDeleteDialog(String userName) {
-//   showDialog(
-//     context: context,
-//     barrierColor: Colors.black.withOpacity(0.2),
-//     builder: (context) => Dialog(
-//       backgroundColor: const Color(0xF7F3F7FF),
-//       shape: RoundedRectangleBpurchaseRequest(bpurchaseRequestRadius: BpurchaseRequestRadius.circular(24)),
-//       child: ConstrainedBox(
-//         constraints: const BoxConstraints(
-//           maxWidth: 340,
-//           minWidth: 260,
-//         ),
-//         child: Padding(
-//           padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 28),
-//           child: Column(
-//             mainAxisSize: MainAxisSize.min,
-//             crossAxisAlignment: CrossAxisAlignment.start,
-//             children: [
-//               const Text(
-//                 "Delete User",
-//                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
-//               ),
-//               const SizedBox(height: 16),
-//               Text(
-//                 "Are you sure you want to delete $userName?",
-//                 style: const TextStyle(fontSize: 16),
-//               ),
-//               const SizedBox(height: 28),
-//               Row(
-//                 mainAxisAlignment: MainAxisAlignment.end,
-//                 children: [
-//                   TextButton(
-//                     onPressed: () => Navigator.pop(context, false),
-//                     child: const Text(
-//                       'Cancel',
-//                       style: TextStyle(color: Colors.deepPurple, fontSize: 16),
-//                     ),
-//                   ),
-//                   const SizedBox(width: 12),
-//                   ElevatedButton(
-//                     onPressed: () => Navigator.pop(context, true),
-//                     style: ElevatedButton.styleFrom(
-//                       backgroundColor: Colors.red,
-//                       foregroundColor: Colors.white,
-//                       padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 10),
-//                       shape: RoundedRectangleBpurchaseRequest(
-//                         bpurchaseRequestRadius: BpurchaseRequestRadius.circular(24),
-//                       ),
-//                       elevation: 0,
-//                     ),
-//                     child: const Text('Delete', style: TextStyle(fontSize: 16)),
-//                   ),
-//                 ],
-//               ),
-//             ],
-//           ),
-//         ),
-//       ),
-//     ),
-//   );
-// }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -358,7 +86,6 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                     ],
                   ),
                   const SizedBox(height: 30),
-
                   // Afficher tous les produits et quantités
                   if ((widget.purchaseRequest.products ?? []).isNotEmpty)
                     ...widget.purchaseRequest.products!.map((prod) => Padding(
@@ -376,7 +103,6 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                       ),
                     )),
                   const SizedBox(height: 20),
-
                   // Ligne 2 : Due date | Priority
                   Row(
                     children: [
@@ -390,7 +116,6 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                     ],
                   ),
                   const SizedBox(height: 20),
-
                   // Note
                   const Text('Note', style: TextStyle(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
@@ -416,7 +141,6 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                     ),
                   ),
                   const SizedBox(height: 30),
-
                   // Ligne : Status à gauche, boutons à droite (inchangé)
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -442,7 +166,6 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                   setState(() {
                                     _showActionButtons = false;
                                   });
-
                                   // Show dialog to ask if a purchase order should be created
                                   final shouldCreate = await showDialog<bool>(
                                     context: context,
@@ -479,19 +202,11 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                       'start_date': DateFormat('yyyy-MM-dd').format(widget.purchaseRequest.startDate!),
                                       'end_date': DateFormat('yyyy-MM-dd').format(widget.purchaseRequest.endDate!),
                                     };
-                                    // PurchaseOrder purchaseOrder = PurchaseOrder.fromJson(purchaseOrderData);
-                                    // purchaseOrderData=purchaseOrder.toJson();
-                                    // {
-                                    // Create the purchase order using your controller or network
-                                    // final purchaseOrderController = Provider.of<PurchaseOrderController>(context, listen: false);
                                     await purchaseOrderController!.addOrder(purchaseOrderData);
 
                                     if (mounted) {
                                       SnackBar snackBar=SnackBar(content: Text('Purchase Order created successfully!'),backgroundColor: Colors.green,);
                                       ScaffoldMessenger.of(context).showSnackBar(snackBar);
-                                      // Navigator.of(context).pushReplacement(
-                                      //   MaterialPageRoute(builder: (_) => PurchaseOrderPage()),
-                                      // );
                                     }
                                   } else {
                                     // Just close the dialog and maybe pop the view
@@ -579,7 +294,6 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
   Widget buildReadOnlyField(String label, String value) {
     Color? badgeColor;
     Color? textColor = Colors.black;
-
     // Ajout du badge coloré pour Status
     if (label == 'Status') {
       if (value.toLowerCase() == 'pending') {
@@ -657,8 +371,6 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
       ),
     );
   }
-
-  
 }
 
 class AppSidebar extends StatelessWidget {

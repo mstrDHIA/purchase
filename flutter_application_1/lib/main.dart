@@ -7,7 +7,6 @@ import 'package:flutter_application_1/controllers/supplier_controller.dart';
 
 import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter_application_1/controllers/role_controller.dart';
-
 import 'package:flutter_application_1/providers/theme_provider.dart';
 import 'package:flutter_application_1/screens/Dashboard/dashboard_screen.dart' as dashboard;
 import 'package:flutter_application_1/screens/Product/family_screen.dart';
@@ -16,14 +15,10 @@ import 'package:flutter_application_1/screens/Purchase%20Request/purchase_reques
 import 'package:flutter_application_1/screens/Purchase%20order/pushase_order_screen.dart';
 import 'package:flutter_application_1/screens/Supplier/Supplier_registration_screen.dart';
 import 'package:flutter_application_1/screens/Support%20Center/Home_Center_screen.dart';
-
 import 'package:flutter_application_1/screens/profile/profile_user.dart';
 import 'package:flutter_application_1/screens/users/password_screen.dart';
 import 'package:flutter_application_1/screens/Role/Role_screen.dart';
 import 'package:flutter_application_1/screens/users/users_List_screen.dart' as users_list;
-// import 'package:flutter_application_1/screens/auth/login.dart';
-
-
 import 'package:flutter_application_1/utils/router.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -85,7 +80,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
 
@@ -95,10 +89,7 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   String _selected = 'Dashboard';
-  // late UserController userController  ;
   late UserController userController;
-
-  
 
   Widget _getPage({required int id}) {
     switch (_selected) {
@@ -129,15 +120,11 @@ class _MainScreenState extends State<MainScreen> {
         return  ProfilePageScreen(userId:id) ;
     }
   }
-  // @override
-  // void initState() {
-  //   userController = Provider.of<UserController>(context, listen: false);
-  //   super.initState();
-  // }
+
   @override
   void initState() {
     userController = Provider.of<UserController>(context, listen: false);
-    
+
     //temporary fix to ensure user is logged in
     if(userController.currentUserId == null) {
       userController.login('admin', 'admin',context);

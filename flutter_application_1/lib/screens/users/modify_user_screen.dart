@@ -3,11 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/controllers/role_controller.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter_application_1/models/role.dart';
-// import 'package:flutter_application_1/models/profile.dart';
-// import 'package:flutter_application_1/models/role.dart';
 import 'package:flutter_application_1/models/user_model.dart';
-// import 'package:flutter_application_1/network/user_network.dart';
-// import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 class ModifyUserPage extends StatefulWidget {
@@ -32,11 +28,10 @@ class _ModifyUserPageState extends State<ModifyUserPage> {
   late TextEditingController _locationController;
   late TextEditingController _zipCodeController;
   String? _error;
-  // String? _role;
-
   late Future<User?> _userFuture;
   File? _profileImageFile;
   Role? selectedRole;
+
   @override
   void initState() {
     super.initState();
@@ -75,12 +70,10 @@ class _ModifyUserPageState extends State<ModifyUserPage> {
     try {
       final userController = Provider.of<UserController>(context, listen: false);
       final user = await userController.getDetailedUser(widget.user.id!);
-      // if (user != null) {
         _firstNameController.text = user.firstName ?? user.profile?.firstName ?? '';
         _lastNameController.text = user.lastName ?? user.profile?.lastName ?? '';
         _emailController.text = user.email ?? '';
         _usernameController.text = user.username ?? '';
-        // _role = user.role?.name ?? 'Member';
         _countryController.text = user.profile?.country ?? '';
         _stateController.text = user.profile?.state ?? '';
         _cityController.text = user.profile?.city ?? '';
@@ -88,7 +81,6 @@ class _ModifyUserPageState extends State<ModifyUserPage> {
         _locationController.text = user.profile?.location ?? '';
         _zipCodeController.text = user.profile?.zipCode?.toString() ?? '';
         return user;
-      // }
     } catch (e) {
       _error = 'Erreur lors de la récupération: $e';
     }
@@ -121,39 +113,7 @@ class _ModifyUserPageState extends State<ModifyUserPage> {
                     elevation: 0,
                   ),
                   onPressed: () async {
-                     
-              
-                    // Prépare la requête pour updateAllUsers
-                    // final updateRequest = User(
-                      
-                    //   username: _usernameController.text,
-                    //   email: _emailController.text,
-                    //   // firstName: _firstNameController.text,
-                    //   // lastName: _lastNameController.text,
-                    //   // isSuperuser: widget.user.isSuperuser,
-                      
-                    //   profile: Profile(
-                    //     // id: widget.user.profile?.id,
-                    //     // bio: widget.user.profile?.bio,
-                    //     location: _locationController.text,
-                    //     country: _countryController.text,
-                    //     state: _stateController.text,
-                    //     city: _cityController.text,
-                    //     zipCode: int.tryParse(_zipCodeController.text),
-                    //     address: _addressController.text,
-                    //     firstName: _firstNameController.text,
-                    //     lastName: _lastNameController.text,
-                    //     // userId: widget.user.id ?? 0,
-                    //   ),
-                    //   // role: _role != null ? Role(name: _role!, description: '') : widget.user.role,
-                    // );
-              
-              
-              
-                    // Appel API updateAllUsers
-                    // final result = await UserNetwork().updateAllUsers(updateRequest, widget.user.id!);
-                    await userController.updateAllUser(
-              
+                    await userController.updateAllUser( 
                        _firstNameController.text,
                        _lastNameController.text,
                        _emailController.text,
@@ -166,16 +126,7 @@ class _ModifyUserPageState extends State<ModifyUserPage> {
                        int.tryParse(_zipCodeController.text),
                        selectedRole!,
                        context
-                       
-                
-                
-              
                     );
-                    
-                    // Affiche le résultat
-                    // ScaffoldMessenger.of(context).showSnackBar(
-                    //   SnackBar(content: Text(result)),
-                    // );
                   },
                   icon: const Icon(Icons.save, size: 18),
                   label: const Text('Save'),
@@ -299,14 +250,12 @@ class _ModifyUserPageState extends State<ModifyUserPage> {
                     border: OutlineInputBorder(),
                   ),
                 ),
-
                 const Divider(height: 32),
                 const Text('Role', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF6F4DBF))),
                 const SizedBox(height: 16),
                 Consumer<RoleController>(
                   builder: (context, roleController, child) {
                     // Find the matching role instance from the list
-                    
                     if (widget.user.role != null) {
                       selectedRole = roleController.roles.firstWhere(
                         (role) => role.id == widget.user.role!.id,
@@ -343,56 +292,4 @@ class _ModifyUserPageState extends State<ModifyUserPage> {
       ),
     );
   }
-
-  // Function to handle profile photo change
-  // Widget _buildProfilePhotoField(BuildContext context) {
-  //   return Column(
-  //     crossAxisAlignment: CrossAxisAlignment.start,
-  //     children: [
-  //       Text(
-  //         'Profile photo',
-  //         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-  //               fontWeight: FontWeight.w600,
-  //               color: Colors.black,
-  //             ),
-  //       ),
-  //       const SizedBox(height: 8),
-  //       Row(
-  //         children: [
-  //           CircleAvatar(
-  //             radius: 32,
-  //             backgroundColor: Colors.grey[300],
-  //             backgroundImage: _profileImageFile != null
-  //                 ? FileImage(_profileImageFile!)
-  //                 : null,
-  //             child: _profileImageFile == null
-  //                 ? const Icon(Icons.person, size: 32, color: Colors.white)
-  //                 : null,
-  //           ),
-  //           const SizedBox(width: 16),
-  //           ElevatedButton(
-  //             onPressed: _pickImage,
-  //             style: ElevatedButton.styleFrom(
-  //               backgroundColor: Colors.grey[200],
-  //               foregroundColor: Colors.black,
-  //               elevation: 0,
-  //             ),
-  //             child: const Text('Click to replace'),
-  //           ),
-  //         ],
-  //       ),
-  //     ],
-  //   );
-  // }
-
-  // Add this method to pick an image from gallery
-  // Future<void> _pickImage() async {
-  //   final picker = ImagePicker();
-  //   final pickedFile = await picker.pickImage(source: ImageSource.gallery);
-  //   if (pickedFile != null) {
-  //     setState(() {
-  //       _profileImageFile = File(pickedFile.path);
-  //     });
-  //   }
-  // }
 }

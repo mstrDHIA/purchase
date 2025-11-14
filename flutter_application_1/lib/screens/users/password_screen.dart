@@ -13,7 +13,6 @@ class _PasswordScreenState extends State<PasswordScreen> {
   final TextEditingController _currentPasswordController = TextEditingController();
   final TextEditingController _newPasswordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
-
   bool _showCurrentPassword = false;
   bool _showNewPassword = false;
   bool _showConfirmPassword = false;
@@ -121,7 +120,6 @@ class _PasswordScreenState extends State<PasswordScreen> {
                             content: Text(result)),
                         );
                         if (result.contains('success')) {
-                          // Navigator.pop(context);
                         }
                       },
                       style: ElevatedButton.styleFrom(

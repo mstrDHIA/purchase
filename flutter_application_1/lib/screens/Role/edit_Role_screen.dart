@@ -4,13 +4,11 @@ class EditRolePage extends StatefulWidget {
   final String initialName;
   final int id;
   final String initialDescription;
-  // final List<String> initialPermissions;
 
   const EditRolePage({
     super.key,
     required this.initialName,
     required this.initialDescription,
-    // required this.initialPermissions,
      required this.id,
   });
 
@@ -24,27 +22,12 @@ class _EditRolePageState extends State<EditRolePage> {
   late TextEditingController _roleDescriptionController;
   final FocusNode _nameFocus = FocusNode();
   final FocusNode _descFocus = FocusNode();
-  // bool _isLoading = false;
-
-  // final List<String> _allPermissions = [
-  //   'View Dashboard',
-  //   'Manage Users',
-  //   'Edit Roles',
-  //   'View Orders',
-  //   'Create Orders',
-  //   'Delete Orders',
-  //   'Access Reports',
-  //   'Manage Billing',
-  // ];
-  // late Set<String> _selectedPermissions;
 
   @override
   void initState() {
     super.initState();
     _roleNameController = TextEditingController(text: widget.initialName);
     _roleDescriptionController = TextEditingController(text: widget.initialDescription);
-    // _selectedPermissions = widget.initialPermissions.toSet();
-    // Focus sur le champ nom au démarrage
     WidgetsBinding.instance.addPostFrameCallback((_) {
       FocusScope.of(context).requestFocus(_nameFocus);
     });
@@ -60,40 +43,12 @@ class _EditRolePageState extends State<EditRolePage> {
   }
 
   Future<void> _submit() async {
-    if (_formKey.currentState!.validate()) {
-      // setState(() => _isLoading = true);
-      // final success = await RoleNetwork().updateRole(
-      //   widget.id,
-      //   widget.initialName, // oldRole (nom d'origine)
-      //   _roleNameController.text.trim(), // newRole (nouveau nom)
-      //   _roleDescriptionController.text.trim(),
-      //   _selectedPermissions.toList(),
-      // );
-      // setState(() => _isLoading = false);
-      // if (success) {
-      //   ScaffoldMessenger.of(context).showSnackBar(
-      //     const SnackBar(content: Text('Role updated successfully!')),
-      //   );
-      //   Navigator.pop(context, {
-      //     'id': widget.id,
-      //     'name': _roleNameController.text.trim(),
-      //     'description': _roleDescriptionController.text.trim(),
-      //     'permissions': _selectedPermissions.toList(),
-      //   });
-      // } else {
-      //   ScaffoldMessenger.of(context).showSnackBar(
-      //     const SnackBar(content: Text('Failed to update role!'), backgroundColor: Colors.red),
-      //   );
-      // }
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: AlertDialog(
-
-        // insetPadding: const EdgeInsets.symmetric(horizontal: 32, vertical: 32),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         content: SizedBox(
           width: MediaQuery.of(context).size.width * 0.3,
@@ -169,26 +124,6 @@ class _EditRolePageState extends State<EditRolePage> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                // const Text(
-                //   "Permissions",
-                //   style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
-                // ),
-                // const SizedBox(height: 8),
-                // ..._allPermissions.map((perm) => CheckboxListTile(
-                //       value: _selectedPermissions.contains(perm),
-                //       title: Text(perm),
-                //       controlAffinity: ListTileControlAffinity.leading,
-                //       onChanged: (checked) {
-                //         setState(() {
-                //           if (checked == true) {
-                //             _selectedPermissions.add(perm);
-                //           } else {
-                //             _selectedPermissions.remove(perm);
-                //           }
-                //         });
-                //       },
-                //     )),
-                const SizedBox(height: 28),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
@@ -218,7 +153,6 @@ class _EditRolePageState extends State<EditRolePage> {
           ),
         ),
       ),
-    );
-           
+    );      
   }
 }
