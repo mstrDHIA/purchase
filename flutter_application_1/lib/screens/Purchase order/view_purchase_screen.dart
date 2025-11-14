@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
+import 'package:flutter_application_1/screens/Purchase order/refuse_purchase_screen.dart';
 
 
 /// Helper to wrap PurchaseOrderView with required providers if not already provided higher up.
@@ -435,49 +436,55 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                     const SizedBox(width: 24),
                     ElevatedButton(
                       onPressed: () async {
-                        try {
-                          final updatedOrderJson = {
-                            'id': _order.id,
-                            'requested_by_user': _order.requestedByUser,
-                            'approved_by': userController.currentUser.id,
-                            'status': 'rejected',
-                            'start_date': _order.startDate != null ? DateFormat('yyyy-MM-dd').format(_order.startDate!) : null,
-                            'end_date': _order.endDate != null ? DateFormat('yyyy-MM-dd').format(_order.endDate!) : null,
-                            'priority': _order.priority,
-                            'description': _order.description,
-                            'products': (_order.products ?? []).map((p) => p.toJson()).toList(),
-                            'title': _order.title ?? '',
-                            'created_at': _order.createdAt != null ? DateFormat('yyyy-MM-dd').format(_order.createdAt!) : null,
-                            'updated_at': DateFormat('yyyy-MM-dd').format(DateTime.now()),
-                          };
-                          await purchaseOrderController.updateOrder(updatedOrderJson);
-                          await purchaseOrderController.fetchOrders();
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Order rejected!'), backgroundColor: Colors.red),
-                            );
-                            setState(() {
-                              _order = PurchaseOrder(
-                                id: _order.id,
-                                requestedByUser: _order.requestedByUser,
-                                approvedBy: userController.currentUser.id,
-                                status: 'Rejected',
-                                startDate: _order.startDate,
-                                endDate: _order.endDate,
-                                priority: _order.priority,
-                                description: _order.description,
-                                products: _order.products,
-                                title: _order.title,
-                                createdAt: _order.createdAt,
-                                updatedAt: DateTime.now(),
+                        final result = await showDialog(
+                          context: context,
+                          builder: (context) => const RefusePurchaseDialog(),
+                        );
+                        if (result != null && result is Map && result['reason'] != null) {
+                          try {
+                            final updatedOrderJson = {
+                              'id': _order.id,
+                              'requested_by_user': _order.requestedByUser,
+                              'approved_by': userController.currentUser.id,
+                              'status': 'rejected',
+                              'start_date': _order.startDate != null ? DateFormat('yyyy-MM-dd').format(_order.startDate!) : null,
+                              'end_date': _order.endDate != null ? DateFormat('yyyy-MM-dd').format(_order.endDate!) : null,
+                              'priority': _order.priority,
+                              'description': result['reason'],
+                              'products': (_order.products ?? []).map((p) => p.toJson()).toList(),
+                              'title': _order.title ?? '',
+                              'created_at': _order.createdAt != null ? DateFormat('yyyy-MM-dd').format(_order.createdAt!) : null,
+                              'updated_at': DateFormat('yyyy-MM-dd').format(DateTime.now()),
+                            };
+                            await purchaseOrderController.updateOrder(updatedOrderJson);
+                            await purchaseOrderController.fetchOrders();
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Order rejected!'), backgroundColor: Colors.red),
                               );
-                            });
-                          }
-                        } catch (e) {
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
-                            );
+                              setState(() {
+                                _order = PurchaseOrder(
+                                  id: _order.id,
+                                  requestedByUser: _order.requestedByUser,
+                                  approvedBy: userController.currentUser.id,
+                                  status: 'Rejected',
+                                  startDate: _order.startDate,
+                                  endDate: _order.endDate,
+                                  priority: _order.priority,
+                                  description: result['reason'],
+                                  products: _order.products,
+                                  title: _order.title,
+                                  createdAt: _order.createdAt,
+                                  updatedAt: DateTime.now(),
+                                );
+                              });
+                            }
+                          } catch (e) {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+                              );
+                            }
                           }
                         }
                       },

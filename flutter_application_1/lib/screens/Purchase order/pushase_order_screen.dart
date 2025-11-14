@@ -37,6 +37,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
   bool _sortAscending = true;
   String? _priorityFilter;
   String? _statusFilter;
+  bool _showArchived = false;
   DateTime? _selectedSubmissionDate;
   DateTime? _selectedDueDate;
   // Search bar controller and value
@@ -128,6 +129,15 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
         order['priority'].toLowerCase().contains(searchLower) ||
         order['status'].toLowerCase().contains(searchLower)
       ).toList();
+    }
+
+    // Filter archived orders
+    if (_showArchived) {
+      // Show ONLY archived orders
+      mapped = mapped.where((order) => (order['original'].isArchived ?? false)).toList();
+    } else {
+      // Show ONLY non-archived orders
+      mapped = mapped.where((order) => !(order['original'].isArchived ?? false)).toList();
     }
 
     // Apply filters
@@ -294,6 +304,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
     setState(() {
       _priorityFilter = null;
       _statusFilter = null;
+      _showArchived = false;
       _selectedSubmissionDate = null;
       _selectedDueDate = null;
     });
@@ -318,6 +329,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
           onView: viewPurchaseOrder,
           onEdit: editPurchaseOrder,
           onDelete: deletePurchaseOrder,
+          onArchive: archivePurchaseOrder,
         );
         return Scaffold(
           appBar: AppBar(
@@ -438,13 +450,15 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
 
   Widget _buildFiltersRow() {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 12,
+        alignment: WrapAlignment.start,
         children: [
-          // Search bar at the start of the row, left-aligned
+          // Search bar
           SizedBox(
-            width: 740,
+            width: 500,
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
@@ -466,8 +480,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
               },
             ),
           ),
-          const SizedBox(width: 100), // Increased space between search bar and filters
-          // Filters follow the search bar
+          // Filter by Priority
           PopupMenuButton<String?>(
             onSelected: (value) {
               setState(() {
@@ -476,7 +489,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
             },
             itemBuilder: (context) => [
               const PopupMenuItem(value: 'high', child: Text('high')),
-              const PopupMenuItem(value: 'medium', child: Text('medium' ,)),
+              const PopupMenuItem(value: 'medium', child: Text('medium')),
               const PopupMenuItem(value: 'low', child: Text('low')),
               if (_priorityFilter != null)
                 const PopupMenuItem(value: null, child: Text('Clear Priority')),
@@ -492,9 +505,10 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
               ),
               onPressed: null,
               child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    _priorityFilter == null ? 'Filter by Priority' : 'Priority: $_priorityFilter',
+                    _priorityFilter == null ? 'Priority' : 'Priority: $_priorityFilter',
                     style: const TextStyle(
                       color: Colors.deepPurple,
                       fontWeight: FontWeight.w500,
@@ -505,7 +519,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          // Filter by Status
           PopupMenuButton<String?>(
             onSelected: (value) {
               setState(() {
@@ -530,9 +544,10 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
               ),
               onPressed: null,
               child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    _statusFilter == null ? 'Filter by Status' : 'Status: $_statusFilter',
+                    _statusFilter == null ? 'Status' : 'Status: $_statusFilter',
                     style: const TextStyle(
                       color: Colors.deepPurple,
                       fontWeight: FontWeight.w500,
@@ -543,7 +558,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          // Filter by Submission Date
           OutlinedButton(
             style: OutlinedButton.styleFrom(
               backgroundColor: const Color(0xFFF7F3FF),
@@ -556,15 +571,15 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
             onPressed: () => _selectDate(context, true),
             child: Text(
               _selectedSubmissionDate == null
-                  ? 'Filter by Submission Date'
-                  : 'Submission: ${_dateFormat.format(_selectedSubmissionDate!)}',
+                  ? 'Submission Date'
+                  : '${_dateFormat.format(_selectedSubmissionDate!)}',
               style: const TextStyle(
                 color: Colors.deepPurple,
                 fontWeight: FontWeight.w500,
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          // Filter by Due Date
           OutlinedButton(
             style: OutlinedButton.styleFrom(
               backgroundColor: const Color(0xFFF7F3FF),
@@ -577,15 +592,38 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
             onPressed: () => _selectDate(context, false),
             child: Text(
               _selectedDueDate == null
-                  ? 'Filter by Due Date'
-                  : 'Due: ${_dateFormat.format(_selectedDueDate!)}',
+                  ? 'Due Date'
+                  : '${_dateFormat.format(_selectedDueDate!)}',
               style: const TextStyle(
                 color: Colors.deepPurple,
                 fontWeight: FontWeight.w500,
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          // Show/Hide Archived
+          OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              backgroundColor: _showArchived ? const Color(0xFF6F4DBF) : const Color(0xFFF7F3FF),
+              foregroundColor: _showArchived ? Colors.white : Colors.deepPurple,
+              side: BorderSide.none,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+              elevation: 0,
+            ),
+            onPressed: () {
+              setState(() {
+                _showArchived = !_showArchived;
+              });
+            },
+            icon: const Icon(Icons.archive),
+            label: Text(
+              _showArchived ? 'Hide Archived' : 'Show Archived',
+              style: const TextStyle(
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          // Clear Filters
           TextButton(
             onPressed: _clearFilters,
             child: const Text(
@@ -720,6 +758,88 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
       }
     }
   }
+
+  void archivePurchaseOrder(Map<String, dynamic> order) async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+        ),
+        backgroundColor: const Color(0xFFF7F2FA),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 320),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Archive Purchase Order',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Are you sure you want to archive purchase order ${order['id']}?',
+                  style: const TextStyle(fontSize: 14),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(
+                          color: Color(0xFF6F4DBF),
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: const Text(
+                        'Archive',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    if (confirmed == true) {
+      final controller = Provider.of<PurchaseOrderController>(context, listen: false);
+      try {
+        await controller.archivePurchaseOrder(order['id']);
+        await controller.fetchOrders();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Purchase order ${order['id']} archived')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to archive purchase order: $e')),
+        );
+      }
+    }
+  }
 }
 
 class _PurchaseOrderDataSource extends DataTableSource {
@@ -728,6 +848,7 @@ class _PurchaseOrderDataSource extends DataTableSource {
   final Function(Map<String, dynamic>) onView;
   final Function(Map<String, dynamic>) onEdit;
   final Function(Map<String, dynamic>) onDelete;
+  final Function(Map<String, dynamic>) onArchive;
 
   _PurchaseOrderDataSource(
     this._data,
@@ -735,6 +856,7 @@ class _PurchaseOrderDataSource extends DataTableSource {
     required this.onView,
     required this.onEdit,
     required this.onDelete,
+    required this.onArchive,
   });
 
   @override
@@ -774,6 +896,11 @@ class _PurchaseOrderDataSource extends DataTableSource {
               icon: const Icon(Icons.edit_outlined),
               onPressed: () => onEdit(item),
               tooltip: 'Edit',
+            ),
+            IconButton(
+              icon: const Icon(Icons.archive_outlined),
+              onPressed: () => onArchive(item),
+              tooltip: 'Archive',
             ),
             IconButton(
               icon: const Icon(Icons.delete_outline),

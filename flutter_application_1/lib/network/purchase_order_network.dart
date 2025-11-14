@@ -64,4 +64,18 @@ class PurchaseOrderNetwork {
 			throw Exception('Failed to delete purchase order');
 		}
 	}
+
+	Future<void> archivePurchaseOrder(int id) async {
+		final response = await dio.patch('$endpoint$id/',
+			data: {'is_archived': true},
+			options: Options(headers: {
+				'Authorization': 'Bearer ${APIS.token}',
+				'Content-Type': 'application/json',
+				'ngrok-skip-browser-warning': 'true',
+			}),
+		);
+		if (response.statusCode != 200) {
+			throw Exception('Failed to archive purchase order: status=${response.statusCode}');
+		}
+	}
 }
