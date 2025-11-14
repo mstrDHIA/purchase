@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_application_1/screens/Product/family_screen.dart';
 
 
 class MyApp extends StatelessWidget {
@@ -37,19 +38,31 @@ class _MyHomePageState extends State<MyHomePage> {
               onItemSelected: (label) {
                 setState(() {
                   selected = label;
-                  showSidebar = false; // Ferme le sidebar après sélection
+                  // Keep the sidebar open when selecting Product so the user sees the Families page alongside the sidebar
+                  if (label != 'Product') {
+                    showSidebar = false; // Ferme le sidebar après sélection for other pages
+                  }
                 });
               },
             ),
           Expanded(
             child: Stack(
               children: [
-                Center(
-                  child: Text(
-                    '📄 Page: $selected',
-                    style: const TextStyle(fontSize: 24),
-                  ),
-                ),
+                // Render main content according to the selected item. For 'Product', show FamiliesPage within the layout so the sidebar stays visible.
+                Builder(builder: (context) {
+                  if (selected == 'Product') {
+                    return const Padding(
+                      padding: EdgeInsets.only(left: 0),
+                      child: SizedBox.expand(child: FamiliesPage()),
+                    );
+                  }
+                  return Center(
+                    child: Text(
+                      '📄 Page: $selected',
+                      style: const TextStyle(fontSize: 24),
+                    ),
+                  );
+                }),
                 // Bouton flottant pour ouvrir le sidebar
                 Positioned(
                   top: 24,
@@ -117,6 +130,7 @@ class _AppSidebarState extends State<AppSidebar> {
       {'label': 'Roles and access', 'icon': Icons.security},
       // {'label': 'Support centre', 'icon': Icons.help},
       {'label': 'Settings', 'icon': Icons.settings},
+      {'label': 'Product', 'icon': Icons.production_quantity_limits},
     ]);
     }
     else if(userController.currentUser.role_id==2){
