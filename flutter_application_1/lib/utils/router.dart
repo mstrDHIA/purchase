@@ -1,5 +1,6 @@
 import 'package:flutter_application_1/screens/Dashboard/dashboard_screen.dart';
 import 'package:flutter_application_1/main.dart';
+import 'package:flutter_application_1/screens/Product/family_screen.dart';
 import 'package:flutter_application_1/screens/Product/product_screen.dart';
 import 'package:flutter_application_1/screens/Purchase%20order/pushase_order_screen.dart';
 import 'package:flutter_application_1/screens/Supplier/Add_supplier_screen.dart';
@@ -73,10 +74,14 @@ final GoRouter router = GoRouter(
       path: '/add_supplier',
       builder: (context, state) => AddSupplierPage(),
     ),
-    GoRoute(
-      path: '/product',
-      builder: (context, state) => ProductPage(),
-    ),
+    // GoRoute(
+    //   path: '/product',
+    //   builder: (context, state) => FamiliesPage(),
+    // ),
+    // GoRoute(
+    //   path: '/home_screen',
+    //   // builder: (context, state) => HomeScreen(),
+    // ),
     GoRoute(
       path: '/add_user',
       builder: (context, state) => AddUserPage(),

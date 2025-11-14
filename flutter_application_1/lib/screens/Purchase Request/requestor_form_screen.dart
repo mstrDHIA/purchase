@@ -15,6 +15,15 @@ class PurchaseRequestorForm extends StatefulWidget {
 
 class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
   final TextEditingController productController = TextEditingController();
+  String? selectedFamily;
+  String? selectedSubFamily;
+  // Example families and subfamilies
+  final Map<String, List<String>> productFamilies = {
+    'IT': ['Souris', 'Clavier', 'Écran', 'Ordinateur'],
+    'Mobilier': ['Chaise', 'Table', 'Armoire'],
+    'Papeterie': ['Stylo', 'Carnet', 'Feuille'],
+    'Autre': ['Autre'],
+  };
   final TextEditingController quantityController = TextEditingController();
   final TextEditingController noteController = TextEditingController();
   final TextEditingController dueDateController = TextEditingController();
@@ -153,23 +162,29 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
   }
 
   void _addProduct() {
+    final family = selectedFamily;
+    final subFamily = selectedSubFamily;
     final product = productController.text.trim();
     final quantity = int.tryParse(quantityController.text.trim()) ?? 0;
-    if (product.isEmpty || quantity <= 0) {
+    if ((family == null || family.isEmpty) || (subFamily == null || subFamily.isEmpty) || quantity <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid product and quantity')),
+        const SnackBar(content: Text('Veuillez choisir une famille, une sous-famille et une quantité valide')),
       );
       return;
     }
     setState(() {
       products.add({
-        'product': product,
+        'family': family,
+        'subFamily': subFamily,
+        'product': product.isNotEmpty ? product : subFamily,
         'quantity': quantity,
-        'brand': null, // or provide a default/empty string if needed
-        'unit_price': 0.0, // default value
+        'brand': null,
+        'unit_price': 0.0,
       });
       productController.clear();
       quantityController.clear();
+      selectedFamily = null;
+      selectedSubFamily = null;
     });
   }
   
@@ -202,14 +217,57 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Product & Quantity row
+              // Famille, Sous-famille, Produit & Quantité row
               Row(
                 children: [
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      value: selectedFamily,
+                      decoration: const InputDecoration(
+                        labelText: 'Famille',
+                        border: OutlineInputBorder(),
+                        filled: true,
+                        fillColor: Colors.white,
+                      ),
+                      items: productFamilies.keys
+                          .map((fam) => DropdownMenuItem(value: fam, child: Text(fam)))
+                          .toList(),
+                      onChanged: (val) {
+                        setState(() {
+                          selectedFamily = val;
+                          selectedSubFamily = null;
+                        });
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      value: selectedSubFamily,
+                      decoration: const InputDecoration(
+                        labelText: 'Sous-famille',
+                        border: OutlineInputBorder(),
+                        filled: true,
+                        fillColor: Colors.white,
+                      ),
+                      items: selectedFamily == null
+                          ? []
+                          : productFamilies[selectedFamily]!
+                              .map((sub) => DropdownMenuItem(value: sub, child: Text(sub)))
+                              .toList(),
+                      onChanged: (val) {
+                        setState(() {
+                          selectedSubFamily = val;
+                        });
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: TextField(
                       controller: productController,
                       decoration: const InputDecoration(
-                        labelText: 'Product',
+                        labelText: 'Produit (optionnel)',
                         border: OutlineInputBorder(),
                         filled: true,
                         fillColor: Colors.white,
@@ -222,7 +280,7 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
                       controller: quantityController,
                       keyboardType: TextInputType.number,
                       decoration: const InputDecoration(
-                        labelText: 'Quantity',
+                        labelText: 'Quantité',
                         border: OutlineInputBorder(),
                         filled: true,
                         fillColor: Colors.white,
@@ -232,7 +290,7 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
                   const SizedBox(width: 8),
                   IconButton(
                     icon: const Icon(Icons.add_circle, color: Colors.green, size: 28),
-                    onPressed: _addProduct, // Add product functionality
+                    onPressed: _addProduct,
                   ),
                 ],
               ),

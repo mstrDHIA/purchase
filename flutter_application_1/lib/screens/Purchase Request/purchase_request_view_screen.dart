@@ -193,7 +193,10 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                       'status': 'pending',
                                       'created_at': DateFormat('yyyy-MM-dd').format(DateTime.now()),
                                       'updated_at': DateFormat('yyyy-MM-dd').format(DateTime.now()),
+                                      // Include both the backend-friendly id field and the explicit
+                                      // 'purchase_request' field expected by some endpoints.
                                       'purchase_request_id': widget.purchaseRequest.id,
+                                      'purchase_request': widget.purchaseRequest.id,
                                       'products': widget.purchaseRequest.products?.map((p) => p.toJson()).toList(),
                                       'priority': widget.purchaseRequest.priority,
                                       'start_date': DateFormat('yyyy-MM-dd').format(widget.purchaseRequest.startDate!),

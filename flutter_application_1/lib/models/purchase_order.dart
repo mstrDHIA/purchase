@@ -12,6 +12,8 @@ class PurchaseOrder {
   DateTime? updatedAt;
   String? priority;
   int? purchaseRequestId;
+  String? refuseReason;
+  bool? isArchived;
 
   PurchaseOrder(
       {this.id,
@@ -26,7 +28,9 @@ class PurchaseOrder {
       this.status,
       this.createdAt,
       this.updatedAt,
-      this.priority});
+      this.priority,
+      this.refuseReason,
+      this.isArchived});
 
   PurchaseOrder.fromJson(Map<String, dynamic> json) {
     id = json['id'];
@@ -47,6 +51,8 @@ class PurchaseOrder {
     createdAt = _parseDate(json['created_at']);
     updatedAt = _parseDate(json['updated_at']);
     priority = json['priority'];
+    refuseReason = json['refuse_reason'];
+    isArchived = json['is_archived'] ?? false;
   }
 
   static DateTime? _parseDate(dynamic value) {
@@ -78,6 +84,8 @@ class PurchaseOrder {
     data['created_at'] = createdAt?.toIso8601String();
     data['updated_at'] = updatedAt?.toIso8601String();
     data['priority'] = priority;
+    data['refuse_reason'] = refuseReason;
+    data['is_archived'] = isArchived ?? false;
     purchaseRequestId != null ? data['purchase_request_id'] = purchaseRequestId : null;
     return data;
   }

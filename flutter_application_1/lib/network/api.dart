@@ -2,12 +2,18 @@ import 'package:dio/dio.dart';
 
 class APIS {
 
+  // Product endpoints
+  static const String productList = "product/products/";
+  static const String addProduct = "product/products/";
+  static const String updateProduct = "product/products/";
+  static const String deleteProduct = "product/products/";
+
  
   static const String purchaseOrderList = "purchase_order/purchaseOrders/";
   
   
   final dio = Dio();
-  static String token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU5MjM2NzM5LCJpYXQiOjE3NTg2MzE5MzksImp0aSI6IjZkYmUwNDE0NDI1MDRkZGRhZDkxMTY5MWRjMGEwZDk4IiwidXNlcl9pZCI6MX0.noyiJrGuh7ifxYD0xPpeMsTXk-CUPrEAcAddN9jB8To';
+  static String token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzNjM0MjgzLCJpYXQiOjE3NjMwMjk0ODMsImp0aSI6IjVhNjYyZTAwYThmZTRjZTBiZDdjMWM1NmExMDc4MmRkIiwidXNlcl9pZCI6MX0.5OE58vMoA6sA0HLKQc5lt-6FFw49VAKn3_5H3LWKC6U';
 
   // APIS() {
   //   dio.interceptors.add(LogInterceptor(
@@ -20,6 +26,8 @@ class APIS {
   // }
 
   static const String baseUrl = "http://72.60.90.60:8000/";
+    // static const String httpbaseUrl = "72.60.90.60:8000/";
+
 
   static const String login = "/user/login/";
 
@@ -51,6 +59,21 @@ class APIS {
   static const String viewPurchaseOrderById = "purchase_order/purchaseOrders/";
   static const String updatePurchaseOrderById = "purchase_order/purchaseOrders/";
   static const String deletePurchaseOrderById = "purchase_order/purchaseOrders/";
+  static const String fetchCategories = "category/category/";
+  static const String createCategories = "category/category/";
+  static const String editCategory = "category/category/";
+  static const String deleteCategory = "category/category/";
+  static const String createSubfamily = "category/category/?parent_category="; 
+
+   static const String fetchSuppliers = "supplier/supplier/";
+  static const String createSupplier = "supplier/supplier/";
+  static const String editSupplier = "supplier/supplier/";
+  static const String deleteSupplier = "supplier/supplier/";
+
+  
+  // Added endpoint for subfamily creation
+
+
 
   // Add more API endpoints as needed
 }

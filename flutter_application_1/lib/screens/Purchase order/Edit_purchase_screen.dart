@@ -50,6 +50,11 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
   final TextEditingController noteController = TextEditingController();
   final TextEditingController dueDateController = TextEditingController();
   final TextEditingController supplierNameController = TextEditingController();
+  String? selectedSupplier;
+  final List<String> suppliers = [
+    'HP', 'Dell', 'Lenovo', 'Logitech', 'Fournisseur A', 'Fournisseur B', 'Autre'
+  ];
+
   bool _isSaving = false;
   String? supplierName;
 
@@ -197,7 +202,7 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
                 ],
               ),
               const SizedBox(height: 32),
-              // Supplier name & Priority row (swapped)
+              // Supplier dropdown always visible
               Row(
                 children: [
                   Expanded(
@@ -205,11 +210,10 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Supplier name'),
+                        const Text('Supplier'),
                         const SizedBox(height: 4),
-                        TextFormField(
-                          controller: supplierNameController,
-                          readOnly: false,
+                        DropdownButtonFormField<String>(
+                          value: selectedSupplier ?? (suppliers.contains(supplierNameController.text) ? supplierNameController.text : null),
                           decoration: InputDecoration(
                             filled: true,
                             fillColor: Colors.white,
@@ -223,7 +227,39 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
                             ),
                             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           ),
+                          items: suppliers.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+                          onChanged: (val) {
+                            setState(() {
+                              selectedSupplier = val;
+                              if (val != 'Autre') {
+                                supplierNameController.text = val ?? '';
+                              } else {
+                                supplierNameController.text = '';
+                              }
+                            });
+                          },
                         ),
+                        if (selectedSupplier == 'Autre') ...[
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            controller: supplierNameController,
+                            readOnly: false,
+                            decoration: InputDecoration(
+                              labelText: 'Nom du fournisseur',
+                              filled: true,
+                              fillColor: Colors.white,
+                              enabledBorder: OutlineInputBorder(
+                                borderSide: const BorderSide(color: Colors.black87),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: const BorderSide(color: Colors.deepPurple),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -598,4 +634,8 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
       ),
     );
   }
+
+  
+
+  
 }
