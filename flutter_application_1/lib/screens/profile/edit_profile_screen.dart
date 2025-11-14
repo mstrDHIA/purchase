@@ -1,60 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // Import for Clipboard
 import 'package:flutter_application_1/controllers/user_controller.dart';
-// Add this import at the top if not present
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-// Assuming '../auth/login.dart' points to your login page
 import '../auth/login_screen.dart'; 
 
-
-
-// import 'package:flutter_application_1/screens/auth/login.dart';
-
-
-// class Profileuserpage extends StatelessWidget {
-//   final Profile profile;
-//   const Profileuserpage({Key? key, required this.profile}) : super(key: key);
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: const Text('User Profile'),
-//       ),
-//       body: Padding(
-//         padding: const EdgeInsets.all(24.0),
-//         child: Column(
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: [
-//             Text('First Name: ${profile.firstName ?? "-"}', style: const TextStyle(fontSize: 20)),
-//             const SizedBox(height: 12),
-//             Text('Last Name: ${profile.lastName ?? "-"}', style: const TextStyle(fontSize: 18)),
-//             const SizedBox(height: 12),
-//             Text('Bio: ${profile.bio ?? "-"}', style: const TextStyle(fontSize: 18)),
-//             const SizedBox(height: 12),
-//             Text('Location: ${profile.location ?? "-"}', style: const TextStyle(fontSize: 18)),
-//             const SizedBox(height: 12),
-//             Text('Country: ${profile.country ?? "-"}', style: const TextStyle(fontSize: 18)),
-//             const SizedBox(height: 12),
-//             Text('State: ${profile.state ?? "-"}', style: const TextStyle(fontSize: 18)),
-//             const SizedBox(height: 12),
-//             Text('City: ${profile.city ?? "-"}', style: const TextStyle(fontSize: 18)),
-//             const SizedBox(height: 12),
-//             Text('Zip Code: ${profile.zipCode?.toString() ?? "-"}', style: const TextStyle(fontSize: 18)),
-//             const SizedBox(height: 12),
-//             Text('Address: ${profile.address ?? "-"}', style: const TextStyle(fontSize: 18)),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
-
 class EditProfileScreen extends StatefulWidget {
-  // final Map<String, dynamic> user;
-  // final int userId;
   const EditProfileScreen({super.key, required Map<String, dynamic> user, });
 
   @override
@@ -62,39 +14,20 @@ class EditProfileScreen extends StatefulWidget {
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
-  // final bool _isProfileLoading = false;
-  // Add FocusNodes for better keyboard navigation and focus management
   final FocusNode _nameFocusNode = FocusNode();
   final FocusNode _lastNameFocusNode = FocusNode();
   final FocusNode _emailFocusNode = FocusNode();
   final FocusNode _usernameSuffixFocusNode = FocusNode();
-
   late TextEditingController _nameController;
-  // late TextEditingController _lastNameController;
-  // late TextEditingController _emailController;
-  // // late TextEditingController _usernamePrefixController;
-  // late TextEditingController _usernameController;
-  // late TextEditingController _roleController;
-
-  // Add available roles
-  // final List<String> _roles = ['Member', 'Admin', 'Editor', 'Viewer'];
-
   File? _profileImageFile;
-
-  
-
   bool isEditing = false; // Add this variable
   late UserController userController;
 
   @override
   void initState() {
     userController=Provider.of<UserController>(context, listen: false);
-
     super.initState();
-
   }
-
-
 
   @override
   Future<void> didChangeDependencies() async {
@@ -104,12 +37,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   void dispose() {
     _nameController.dispose();
-
     _nameFocusNode.dispose();
     _lastNameFocusNode.dispose();
     _emailFocusNode.dispose();
     _usernameSuffixFocusNode.dispose();
-
     super.dispose();
   }
 
@@ -123,13 +54,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         });
       }
     } catch (e) {
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error picking image: $e')),
       );
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -148,7 +77,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
                 Row(
                   children: [
                     GestureDetector(
@@ -168,15 +96,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-
                               Text(userController.selectedUser.username ?? 'Username not set',),
-
                       ],
                     ),
                     const Spacer(),
                     ElevatedButton(
                       onPressed: () async {
-
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.deepPurple[50],
@@ -191,11 +116,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       child: const Text('Copy link'),
                     ),
                     const SizedBox(width: 12),
-                    
                     OutlinedButton.icon(
                       onPressed: () async {
                         if (isEditing) {
-
                           setState(() {
                             isEditing = false;
                           });
@@ -219,14 +142,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ],
                 ),
                 const SizedBox(height: 32),
-
                 FieldWidget(txt: userController.selectedUser.username??"Username is not set",field: 'Username'),
                 const SizedBox(height: 24),
                 FieldWidget(txt: userController.selectedUser.email??"Email is not set",field: 'Email'),
                 const SizedBox(height: 24),
                 Divider(),
                 const SizedBox(height: 24),
-
                 Text("Profile",
                 style: TextStyle(
                   fontSize: 20,
@@ -253,7 +174,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 FieldWidget(txt: userController.selectedUser.profile!.location??"Location is not set",field: 'Location'),
                 const SizedBox(height: 24),
                 FieldWidget(txt: userController.selectedUser.profile!.zipCode.toString(),field: 'Zip Code'),
-                
                   ],
                 ),
                 if(userController.selectedUser.profile == null)
@@ -341,7 +261,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 class FieldWidget extends StatelessWidget {
   final String txt;
   final String field;
-  // final double width;
    const FieldWidget({
     super.key, required this.txt, required this.field,
   });

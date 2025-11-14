@@ -29,7 +29,6 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
   ];
   String? _priorityFilter;
   late PurchaseRequestController purchaseRequestController;
-  // final List<Map<String, dynamic>> _PurchaseRequests = [];
   final List<String> _statusOptions = [
     'pending',
     'approved',
@@ -42,8 +41,6 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
   final int _page = 0;
   final int _totalRows = 0;
   int _rowsPerPageLocal = PaginatedDataTable.defaultRowsPerPage;
-
-  // Filter state
   String? _statusFilter;
   DateTime? _selectedSubmissionDate;
   DateTime? _selectedDueDate;
@@ -60,7 +57,6 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
       _searchText = '';
       _searchController.clear();
     });
-    // TODO: Apply filter logic to data source if needed
   }
 
   Future<void> _selectDate(BuildContext context, bool isSubmission) async {
@@ -228,7 +224,6 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
     });
   }
 
-
   Future<void> _openAddRequestForm() async {
     final newRequest = await Navigator.push<Map<String, dynamic>>(
       context,
@@ -241,7 +236,6 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
       ),
     );
     purchaseRequestController.fetchRequests(context,userController.currentUser);
-
   }
 
   @override

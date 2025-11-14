@@ -43,11 +43,6 @@ class _UserListPageState extends State<UserListPage> {
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                 ),
-                // IconButton(
-                //   icon: const Icon(Icons.refresh, color: Colors.deepPurple, size: 28),
-                //   tooltip: 'Rafraîchir',
-                //   // onPressed: _loadUsers,
-                // ),
                 ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.deepPurple,
@@ -58,8 +53,6 @@ class _UserListPageState extends State<UserListPage> {
                   ),
                   onPressed: () {
                     context.push('/add_user').then((value) {
-                      // Rafraîchir la liste des utilisateurs après l'ajout
-                      // userController.notify();
                       if(userController.displaySnackBar) {
                         userController.displaySnackBar = false; // Reset the flag
                         SnackBar snackBar = SnackBar(
@@ -67,23 +60,12 @@ class _UserListPageState extends State<UserListPage> {
         content: Text('User added successfully.'),
       );
                       userController.getUsers();
-
                         ScaffoldMessenger.of(context).showSnackBar(
                           snackBar
                         );
                         userController.displaySnackBar = false; // Reset the flag
                       }
-                      
                     });
-                    // Navigator.push(
-                    //   context,
-                    //   MaterialPageRoute(builder: (_) => AddUserPage()),
-                    // )
-                    // .then((value) {
-                    //   // Rafraîchir la liste des utilisateurs après l'ajout
-                    //   userController.notify();
-                    //   // userController.getUsers();
-                    // });
                   },
                   icon: const Icon(Icons.add, color: Colors.white),
                   label: const Text("Add New User"),
@@ -189,25 +171,6 @@ class _UserListPageState extends State<UserListPage> {
                                                 userController.selectedUserId = user.id!;
                                                 userController.selectedUser = user;
                                                 await userController.toggleUserStatus(id:user.id!,isActive:  !user.isActive!,context:  context);
-                                                // await userController.getUsers();
-                                                // Navigator.push(
-                                                //   context,
-                                                //   MaterialPageRoute(
-                                                //     builder: (context) => ModifyUserPage(user: user),
-                                                //   ),
-                                                // ).then((value) {
-                                                //   if(userController.displaySnackBar) {
-                                                //     userController.displaySnackBar = false; // Reset the flag
-                                                    
-                                                //     SnackBar snackBar = SnackBar(
-                                                //       backgroundColor: Colors.green,
-                                                //       content: Text('User updated successfully.'),
-                                                //     );
-                                                    
-                                                //     ScaffoldMessenger.of(context).showSnackBar(snackBar);
-                                                //     userController.getUsers();
-                                                //   }
-                                                // });
                                               },
                                               child: Container(
                                                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -246,17 +209,13 @@ class _UserListPageState extends State<UserListPage> {
                                               ).then((value) {
                                                 if(userController.displaySnackBar) {
                                                   userController.displaySnackBar = false; // Reset the flag
-                                                  
                                                 SnackBar snackBar = SnackBar(
                                                   backgroundColor: Colors.green,
                                                   content: Text('User updated successfully.'),
                                                 );
-                                                  
                                                   ScaffoldMessenger.of(context).showSnackBar(snackBar);
                                                   userController.getUsers();
                                                 }
-                                                // Rafraîchir la liste des utilisateurs après la modification
-                                                
                                               });
                                             },
                                             tooltip: 'Edit',
@@ -272,7 +231,6 @@ class _UserListPageState extends State<UserListPage> {
                                               );
                                               final userDetails = await UserNetwork().viewUser(user.id!);
                                               Navigator.of(context, rootNavigator: true).pop(); // Ferme le loader
-
                                               if (userDetails != null) {
                                                 userController.selectedUserId=user.id!;
                                                 Navigator.push(
@@ -280,21 +238,6 @@ class _UserListPageState extends State<UserListPage> {
                                                   MaterialPageRoute(
                                                     builder: (_) => ProfilePageScreen(
                                                       userId: userController.selectedUserId!,
-                                                     
-                                                    //   user: {
-                                                    //   "id": user.id,
-                                                    //   "first_name": userDetails.firstName,
-                                                    //   "last_name": userDetails.lastName,
-                                                    //   "bio": userDetails.bio ?? "",
-                                                    //   "location": userDetails.location ?? "",
-                                                    //   "country": userDetails.country ?? "",
-                                                    //   "state": userDetails.state ?? "",
-                                                    //   "city": userDetails.city ?? "",
-                                                    //   "zip_code": userDetails.zipCode?.toString() ?? "",
-                                                    //   "address": userDetails.address ?? "",
-                                                    //   "email": userDetails.email,
-                                                    //   "username": userDetails.username,
-                                                    // }
                                                     )
                                                     ,
                                                   ),

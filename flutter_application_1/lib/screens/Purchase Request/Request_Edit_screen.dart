@@ -70,7 +70,6 @@ class _RequestEditPageState extends State<RequestEditPage> {
     submittedDateController.dispose();
     dueDateController.dispose();
     noteController.dispose();
-    // Rien à disposer pour productLines
     super.dispose();
   }
 

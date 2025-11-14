@@ -19,7 +19,6 @@ class _PermissionPageState extends State<PermissionPage> {
     'LiveChat Agent',
     'Member',
   ];
-
   final List<String> privileges = [
     'Access data',
     'Edit content',
@@ -28,7 +27,6 @@ class _PermissionPageState extends State<PermissionPage> {
     'Live chat access',
     'Billing / Invoicing',
   ];
-
   List<List<bool>> permissions = [
     [true,  true,  true,  true,  true,  true ],
     [true,  true,  true,  true,  true,  false],
@@ -36,7 +34,6 @@ class _PermissionPageState extends State<PermissionPage> {
     [true,  false, false, false, true,  false],
     [false, false, false, false, false, false],
   ];
-
   bool editMode = false;
 
   @override

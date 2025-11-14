@@ -1,19 +1,15 @@
 import 'package:flutter/material.dart';
-// import 'package:flutter_application_1/models/purchase_order.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
-import 'dart:convert'; // <-- Import jsonEncode
 
 class ProductLine {
-  // int? productId; // Removed
   String? product;
   String? brand;
   int quantity;
   double unitPrice;
 
   ProductLine({
-  // this.productId,
     this.product,
     this.brand,
     this.quantity = 1,
@@ -22,7 +18,6 @@ class ProductLine {
 
   Map<String, dynamic> toJson() {
     return {
-      // 'product_id': productId, // Removed
       'product': product,
       'brand': brand,
       'quantity': quantity,
@@ -47,7 +42,6 @@ class EditPurchaseOrder extends StatefulWidget {
 
 class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
   String? _priority;
-  // String? _status; // Removed
   int? _id;
   int? _requestedByUser; // Now int
   int? _approvedBy;      // Now int
@@ -56,7 +50,6 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
   final TextEditingController noteController = TextEditingController();
   final TextEditingController dueDateController = TextEditingController();
   final TextEditingController supplierNameController = TextEditingController();
-
   bool _isSaving = false;
   String? supplierName;
 
@@ -80,7 +73,6 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
       } else {
         _priority = null;
       }
-  // _status = initial['status']?.toString(); // Removed
       _id = initial['id'] is int ? initial['id'] : int.tryParse(initial['id']?.toString() ?? '');
       // Use int for user IDs, fallback to 1 if not present
       _requestedByUser = initial['requestedByUser'] is int
@@ -105,7 +97,6 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
         }
       }
       supplierNameController.text = supplierName ?? '';
-
       if (initial['endDate'] != null) {
         try {
           DateTime endDate;
@@ -121,13 +112,10 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
       } else {
         dueDateController.text = DateFormat('dd-MM-yyyy').format(DateTime.now());
       }
-
       noteController.text = initial['description'] ?? '';
-
       if (initial['products'] != null && initial['products'] is List) {
         productLines = (initial['products'] as List).map((p) {
           return ProductLine(
-            // productId: p['product_id'] is int ? p['product_id'] : int.tryParse(p['product_id']?.toString() ?? ''), // Removed
             product: p['product']?.toString(),
             brand: p['brand']?.toString(),
             quantity: (p['quantity'] is int)
@@ -155,7 +143,6 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
       }
   _id = maxId + 1;
   _priority = null;
-  // _status = null; // Removed
   _requestedByUser = 1; // Default user ID
   _approvedBy = 2;      // Default approver ID
   _updatedAt = DateTime.now();
@@ -427,7 +414,6 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
       );
       return;
     }
-
     // Correction du parsing de la date de fin
     DateTime? parsedEndDate;
     try {
@@ -445,7 +431,6 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
       );
       return;
     }
-
     setState(() => _isSaving = true);
     try {
       // Adapter la structure des produits pour le backend
@@ -456,7 +441,6 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
         'unit_price': p.unitPrice,
         'supplier': supplierName,
       }).toList();
-
       // Construction du body attendu par le backend
       final jsonBody = {
         'id': _id,
@@ -473,9 +457,6 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
         'updated_at': DateFormat('yyyy-MM-dd').format(_updatedAt ?? DateTime.now()).toString(),
         'priority': _priority,
       };
-
-
-
       if (widget.initialOrder.isNotEmpty && widget.initialOrder['id'] != null) {
         // Mode édition : appel update, on envoie le JSON directement
         await Provider.of<PurchaseOrderController>(context, listen: false)
@@ -617,8 +598,4 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
       ),
     );
   }
-
-  
-
-  // ...existing code...
 }

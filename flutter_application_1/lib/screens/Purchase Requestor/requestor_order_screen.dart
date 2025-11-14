@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
-// import 'package:flutter_application_1/screens/Purchase%20Requestor/Request_Edit_screen.dart';
-// import 'package:flutter_application_1/screens/Purchase%20Requestor/request_view_screen.dart';
-// Make sure the above import points to the file where addPurchaseOrder is defined as a top-level function.
 import 'package:intl/intl.dart';
 import 'package:flutter_application_1/network/purchase_request_network.dart';
 import 'package:provider/provider.dart';
@@ -49,30 +46,12 @@ class _PurchaseRequestDataSource extends DataTableSource {
             IconButton(
               icon: const Icon(Icons.remove_red_eye_outlined),
               onPressed: () {
-                // Navigator.push(
-                //   _context,
-                //   MaterialPageRoute(
-                //     builder: (context) => PurchaseRequestView(
-                //       order: item, // Passe la ligne sélectionnée ici
-                //       onSave: (_) {},
-                //     ),
-                //   ),
-                // );
               },
               tooltip: 'View',
             ),
             IconButton(
               icon: const Icon(Icons.edit_outlined),
               onPressed: () {
-                // Navigator.push(
-                //   _context,
-                //   MaterialPageRoute(
-                //     builder: (context) => RequestEditPage(
-                //       request: item,
-                //       onSave: (_) {},
-                //     ),
-                //   ),
-                // );
               },
               tooltip: 'Edit',
             ),
@@ -296,32 +275,6 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
     );
   }
 
-  // void editPurchaseRequest(Map<String, dynamic> order) async {
-  //   final updatedOrder = await Navigator.push<Map<String, dynamic>>(
-  //     context,
-  //     MaterialPageRoute(
-  //       builder: (context) => PurchaseRequestView(
-  //         order: order,
-  //         onSave: (newOrder) {
-  //           Navigator.pop(context, newOrder);
-  //         },
-  //       ),
-  //     ),
-  //   );
-
-  //   if (updatedOrder != null) {
-  //     setState(() {
-  //       final index = _PurchaseRequests.indexWhere((o) => o['id'] == updatedOrder['id']);
-  //       if (index != -1) {
-  //         _PurchaseRequests[index] = updatedOrder;
-  //       }
-  //     });
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       SnackBar(content: Text('Purchase order ${updatedOrder['id']} updated')),
-  //     );
-  //   }
-  // }
-
   void deletePurchaseRequest(Map<String, dynamic> order) async {
     final bool? confirmed = await showDialog<bool>(
       context: context,
@@ -401,48 +354,6 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
       _selectedDueDate = null;
     });
   }
-
-  // void _openAddRequestForm() async {
-  //   final newOrder = await Navigator.push(
-  //     context,
-  //     MaterialPageRoute(
-  //       builder: (context) => PurchaseRequestorForm(
-  //         onSave: (_) {},
-  //         initialOrder: const {
-  //           'priority': 'High', // Définit "High" comme valeur par défaut
-  //         },
-  //       ),
-  //     ),
-  //   );
-  //   if (newOrder != null) {
-  //     setState(() {
-  //       final id = 'PR${_PurchaseRequests.length + 1}';
-  //       final order = {
-  //         'id': id,
-  //         'actionCreatedBy': newOrder['actionCreatedBy'] ?? 'Moi',
-  //         'dateSubmitted': newOrder['dateSubmitted'] is String
-  //             ? DateTime.parse(newOrder['dateSubmitted'])
-  //             : (newOrder['dateSubmitted'] ?? DateTime.now()),
-  //         'dueDate': newOrder['dueDate'] is String
-  //             ? DateTime.parse(newOrder['dueDate'])
-  //             : (newOrder['dueDate'] ?? DateTime.now().add(const Duration(days: 7))),
-  //         'priority': newOrder['priority'] ?? 'High',
-  //         'status': 'Pending',
-  //         'requested_by': newOrder['requested_by'], // Use the value from the form, which should be the correct user ID
-  //         ...newOrder,
-  //       };
-  //       _PurchaseRequests.add(order.cast<String, dynamic>());
-  //       purchase_order.PurchaseOrderPage.addPurchaseOrder(order.cast<String, dynamic>());
-  //     });
-  //   }
-  // }
-
-  // void _addNewRequest(Map<String, dynamic> request) {
-  //   setState(() {
-  //     _PurchaseRequests.add(request); // Ajout local
-  //     purchase_order.PurchaseOrderPage.addPurchaseOrder(request); // Ajout à la table des orders
-  //   });
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -649,7 +560,6 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
     );
   }
 }
-
 // Example for ViewPurchasePage
 class ViewPurchasePage extends StatelessWidget {
   final Map<String, dynamic> order;
@@ -698,10 +608,4 @@ class ViewPurchasePage extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Add a purchase order to your storage or list.
-/// This is a stub implementation. Replace with your actual logic.
-void addPurchaseOrder(Map<String, dynamic> order) {
-  // TODO: Implement the logic to add the purchase order.
 }

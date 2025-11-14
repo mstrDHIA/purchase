@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/controllers/purchase_request_controller.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
-// <-- Add this import
 import 'package:intl/intl.dart';
-
 import 'package:provider/provider.dart';
 
 class PurchaseRequestorForm extends StatefulWidget {
@@ -22,14 +20,11 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
   final TextEditingController dueDateController = TextEditingController();
   final TextEditingController titleController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
-
   String? selectedPriority;
   DateTime? selectedDueDate;
   List<Map<String, dynamic>> products = [];
   late UserController userController;
-  
   Null get order => null;
-
 
   @override
   void initState() {
@@ -122,7 +117,6 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
       return;
     }
 
-
     final Map<String, dynamic> order = {
       'title': titleController.text.isNotEmpty ? titleController.text : 'Demande d\'achat',
       'description': noteController.text.isNotEmpty ? noteController.text : (descriptionController.text.isNotEmpty ? descriptionController.text : 'Description par défaut'),
@@ -133,11 +127,8 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
       'start_date': '${DateTime.now().year}-${DateTime.now().month}-${DateTime.now().day}',
     };
 
-
     try {
       await Provider.of<PurchaseRequestController>(context, listen: false).addRequest(order);
-
-
       if (addAnother) {
         productController.clear();
         quantityController.clear();
@@ -181,33 +172,6 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
       quantityController.clear();
     });
   }
-
-  // void _openAddRequestForm() async {
-  //   final newOrder = await Navigator.push(
-  //     context,
-  //     MaterialPageRoute(
-  //       builder: (context) => PurchaseRequestorForm(
-  //         onSave: (_) {},
-  //         initialOrder: const {},
-  //       ),
-  //     ),
-  //   );
-  //   if (newOrder != null) {
-  //     setState(() {
-  //       final id = 'P${(_PurchaseRequests.length + 1).toString().padLeft(2, '0')}';
-  //       _PurchaseRequests.add({
-  //         'id': id,
-  //         'actionCreatedBy': 'Moi',
-  //         'dateSubmitted': newOrder['dateSubmitted'],
-  //         'dueDate': newOrder['dueDate'],
-  //         'priority': newOrder['priority'],
-  //         'status': 'Pending',
-  //         ...newOrder,
-  //       });
-  //     });
-  //   }
-  // }
-
   
   @override
   Widget build(BuildContext context) {
@@ -406,7 +370,6 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
                             ],
                           ),
                         );
-
                         if (shouldCancel == true) {
                           Navigator.of(context).pop(); // Retourne à la page précédente proprement
                         }
@@ -432,5 +395,3 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
     );
   }
 }
-
-

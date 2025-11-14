@@ -7,23 +7,16 @@ import 'package:flutter_application_1/screens/Supplier/Edit_suplier_screen.dart'
 import 'package:flutter_application_1/screens/Supplier/Supplier_registration_screen.dart';
 import 'package:flutter_application_1/screens/Supplier/View_supplier_screen.dart';
 import 'package:flutter_application_1/screens/auth/login_screen.dart';
-// import 'package:flutter_application_1/screens/profile/profile_user.dart';
 import 'package:flutter_application_1/screens/users/password_screen.dart';
 import 'package:flutter_application_1/screens/Role/Role_screen.dart';
 import 'package:flutter_application_1/screens/users/permission_screen.dart';
-
-
 import 'package:flutter_application_1/screens/users/add_user_screen.dart';
-
 import 'package:flutter_application_1/screens/Purchase Request/requestor_form_screen.dart';
-
 import 'package:go_router/go_router.dart';
 
 final GoRouter router = GoRouter(
   initialLocation: '/login',
-  // redirect: (context, state) => state. == '/login' || state.subloc == '/signup'
-  //     ? null
-  //     : '/main_screen',
+
   routes: [
     GoRoute(
       path: '/dashboard',
@@ -33,10 +26,6 @@ final GoRouter router = GoRouter(
       path: '/dashboard',
       builder: (context, state) => DashboardPage(),
     ),
-    // GoRoute(
-    //   path: '/',
-    //   builder: (context, state) => HomePage(),
-    // ),
     GoRoute(
       path: '/purchase_requestor_form',
       builder: (context, state) => PurchaseRequestorForm(
@@ -56,10 +45,6 @@ final GoRouter router = GoRouter(
       path: '/password',
       builder: (context, state) => PasswordScreen(),
     ),
-    // GoRoute(
-    //   path: '/users',
-    //   builder: (context, state) => UsersL(),
-    // ),
     GoRoute(
       path: '/role',
       builder: (context, state) => RolePage(),
@@ -68,11 +53,6 @@ final GoRouter router = GoRouter(
       path: '/permission',
       builder: (context, state) => PermissionPage(),
     ),
-    // GoRoute(
-    //   path: '/profile',
-    //   builder: (context, state) => ProfilePageScreen(),
-      
-    // ),
     GoRoute(
       path: '/purchase_order',
       builder: (context, state) => PurchaseOrderPage(),
@@ -97,35 +77,9 @@ final GoRouter router = GoRouter(
       path: '/product',
       builder: (context, state) => ProductPage(),
     ),
-    // GoRoute(
-    //   path: '/home_screen',
-    //   // builder: (context, state) => HomeScreen(),
-    // ),
     GoRoute(
       path: '/add_user',
       builder: (context, state) => AddUserPage(),
-    ),
-    
-    
+    ), 
   ],
 );
-
-
-// initialRoute: '/requestor_order',
-      // routes: {
-      //   '/users': (context) => const users_list.UserListPage(),
-
-
-      //   '/requestor_order': (context) => requestor_order.PurchaseRequestPage(),
-
-
-      //   '/dashboard': (context) => const dashboard.DashboardPage(),
-
-      //   '/requestor_form': (context) => PurchaseRequestorForm(
-      //     onSave: (order) {
-      //       // TODO: Implement save logic
-      //     },
-      //     initialOrder: <String, dynamic>{},
-      //   ),
-      //   // Add any additional routes here
-      // },
