@@ -175,70 +175,118 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
   }
 
   void _deleteRequest() {
-    showDialog(
+    // Open a dialog to collect refusal reason, send it to backend and then delete the request
+    final TextEditingController reasonController = TextEditingController();
+    bool submitting = false;
+
+    showDialog<bool>(
       context: context,
-      barrierColor: Colors.black.withOpacity(0.2),
-      builder: (context) => Dialog(
-        backgroundColor: const Color(0xFFF7F9FF),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(
-            maxWidth: 340,
-            minWidth: 260,
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 28),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  "Delete Purchase",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  "Are you sure you want to delete ${widget.purchaseRequest.id ?? 'this purchase'}?",
-                  style: const TextStyle(fontSize: 16),
-                ),
-                const SizedBox(height: 28),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+      barrierDismissible: false,
+      builder: (context) {
+        return StatefulBuilder(builder: (context, setState) {
+          return Dialog(
+            backgroundColor: const Color(0xFFF7F9FF),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: 420,
+                minWidth: 300,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      child: const Text(
-                        'Cancel',
-                        style: TextStyle(color: Colors.deepPurple, fontSize: 16),
+                    const Text(
+                      "Refuse Purchase Request",
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      "Please provide a reason for refusing purchase request ${widget.purchaseRequest.id ?? ''}",
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: reasonController,
+                      minLines: 3,
+                      maxLines: 5,
+                      decoration: const InputDecoration(
+                        hintText: 'Enter refusal reason',
+                        border: OutlineInputBorder(),
+                        filled: true,
+                        fillColor: Colors.white,
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context, true);
-                        // Ajoute ici la logique de suppression si besoin
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Purchase deleted")),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFEF5350),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 10),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: submitting ? null : () => Navigator.pop(context, false),
+                          child: const Text('Cancel', style: TextStyle(color: Colors.deepPurple)),
                         ),
-                        elevation: 0,
-                      ),
-                      child: const Text('Delete', style: TextStyle(fontSize: 16)),
+                        const SizedBox(width: 12),
+                        ElevatedButton(
+                          onPressed: submitting
+                              ? null
+                              : () async {
+                                  final reason = reasonController.text.trim();
+                                  if (reason.isEmpty) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Please provide a reason')),
+                                    );
+                                    return;
+                                  }
+                                  setState(() => submitting = true);
+                                  try {
+                                    final id = widget.purchaseRequest.id;
+                                    if (id == null) throw Exception('Missing purchase request id');
+                                    // First update the purchase request with refusal info
+                                    final payload = {
+                                      'status': 'rejected',
+                                      'refuse_reason': reason,
+                                    };
+                                    await PurchaseRequestNetwork().updatePurchaseRequest(id, payload, method: 'PATCH');
+                                    // Then delete the purchase request
+                                    await PurchaseRequestNetwork().deletePurchaseRequest(id);
+                                    if (mounted) {
+                                      Navigator.pop(context, true);
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('Purchase request refused and deleted')),
+                                      );
+                                      // Optionally notify controllers to refresh lists
+                                      Provider.of<PurchaseOrderController>(context, listen: false).fetchOrders();
+                                    }
+                                  } catch (e) {
+                                    String err = e.toString();
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Failed to refuse/delete: $err')),
+                                    );
+                                  } finally {
+                                    if (mounted) setState(() => submitting = false);
+                                  }
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFEF5350),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                          child: submitting
+                              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                              : const Text('Submit'),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
-          ),
-        ),
-      ),
+          );
+        });
+      },
     );
   }
 
