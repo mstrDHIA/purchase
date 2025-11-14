@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/screens/Product/family_screen.dart';
+import 'package:flutter_application_1/screens/Supplier/Supplier_registration_screen.dart';
+import 'package:go_router/go_router.dart';
 
 
 class MyApp extends StatelessWidget {
@@ -54,6 +56,12 @@ class _MyHomePageState extends State<MyHomePage> {
                     return const Padding(
                       padding: EdgeInsets.only(left: 0),
                       child: SizedBox.expand(child: FamiliesPage()),
+                    );
+                  }
+                  if (selected == 'Supplier') {
+                    return const Padding(
+                      padding: EdgeInsets.only(left: 0),
+                      child: SizedBox.expand(child: SupplierRegistrationPage()),
                     );
                   }
                   return Center(
@@ -130,6 +138,7 @@ class _AppSidebarState extends State<AppSidebar> {
       {'label': 'Roles and access', 'icon': Icons.security},
       // {'label': 'Support centre', 'icon': Icons.help},
       {'label': 'Settings', 'icon': Icons.settings},
+      {'label': 'Supplier', 'icon': Icons.store},
       {'label': 'Product', 'icon': Icons.production_quantity_limits},
     ]);
     }
@@ -206,6 +215,20 @@ class _AppSidebarState extends State<AppSidebar> {
     initSideBarItems();
     // TODO: implement initState
     super.initState();
+  }
+
+  void _onItemTap(String label) {
+    // update selected state in parent
+    widget.onItemSelected(label);
+
+    // Navigate to specific routes for some items
+    // if (label == 'Supplier') {
+    //   // Use GoRouter to navigate because the app uses MaterialApp.router
+    //   GoRouter.of(context).go('/supplier_registration');
+    //   return;
+    // }
+
+    // For other items we keep current behavior (the parent will show the appropriate content)
   }
 
   // added: confirmation + logout helper
@@ -312,7 +335,7 @@ class _AppSidebarState extends State<AppSidebar> {
                               icon,
                               color: selected ? Colors.deepPurple : Colors.grey[700],
                             ),
-                            onPressed: () => widget.onItemSelected(label),
+                            onPressed: () => _onItemTap(label),
                             iconSize: 28,
                             padding: const EdgeInsets.symmetric(vertical: 18),
                           ),
@@ -363,7 +386,7 @@ class _AppSidebarState extends State<AppSidebar> {
                             ),
                             tileColor: selected ? Colors.deepPurple.withOpacity(0.1) : null,
                             hoverColor: Colors.deepPurple.withOpacity(0.08),
-                            onTap: () => widget.onItemSelected(label),
+                            onTap: () => _onItemTap(label),
                           ),
                         );
                       }).toList(),

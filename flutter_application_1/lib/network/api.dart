@@ -63,7 +63,15 @@ class APIS {
   static const String createCategories = "category/category/";
   static const String editCategory = "category/category/";
   static const String deleteCategory = "category/category/";
-  static const String createSubfamily = "category/category/?parent_category="; // Added endpoint for subfamily creation
+  static const String createSubfamily = "category/category/?parent_category="; 
+
+   static const String fetchSuppliers = "supplier/supplier/";
+  static const String createSupplier = "supplier/supplier/";
+  static const String editSupplier = "supplier/supplier/";
+  static const String deleteSupplier = "supplier/supplier/";
+
+  
+  // Added endpoint for subfamily creation
 
 
 

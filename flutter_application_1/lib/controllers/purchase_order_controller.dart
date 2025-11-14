@@ -55,4 +55,19 @@ class PurchaseOrderController extends ChangeNotifier {
 			notifyListeners();
 		}
 	}
+
+	Future<void> archivePurchaseOrder(dynamic id) async {
+		try {
+			_isLoading = true;
+			notifyListeners();
+			final idInt = id is int ? id : int.parse(id.toString());
+			await _network.archivePurchaseOrder(idInt);
+			await fetchOrders();
+		} catch (e) {
+			_error = e.toString();
+			notifyListeners();
+		}
+		_isLoading = false;
+		notifyListeners();
+	}
 }
