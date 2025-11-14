@@ -16,7 +16,6 @@ class _RolePageState extends State<RolePage> {
   @override
   void initState() {
     super.initState();
-    // Fetch roles at startup
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<RoleController>(context, listen: false).fetchRoles();
     });
@@ -29,7 +28,6 @@ class _RolePageState extends State<RolePage> {
         final roles = roleController.roles;
         final isLoading = roleController.isLoading;
         final error = roleController.error;
-
         return Scaffold(
           backgroundColor: const Color(0xFFF8F8FB),
           body: SafeArea(
@@ -129,10 +127,6 @@ class _RolePageState extends State<RolePage> {
                                             ],
                                           ),
                                         ),
-                                        // Expanded(
-                                        //   flex: 1,
-                                        //   child: Text('Teammates', style: TextStyle(fontWeight: FontWeight.bold)),
-                                        // ),
                                         SizedBox(width: 120),
                                       ],
                                     ),
@@ -142,18 +136,6 @@ class _RolePageState extends State<RolePage> {
                                 final String title = (role.name ?? '').toString();
                                 final String desc = (role.description ?? '').toString();
                                 String teammatesText = '';
-                                // final teammatesRaw = role['teammates'];
-                                // if (teammatesRaw is int) {
-                                //   teammatesText = "$teammatesRaw teammate${teammatesRaw == 1 ? '' : 's'}";
-                                // } else if (teammatesRaw is List) {
-                                //   if (teammatesRaw.isNotEmpty && teammatesRaw.first is Map && teammatesRaw.first.containsKey('name')) {
-                                //     teammatesText = teammatesRaw.map((u) => u['name']).join(', ');
-                                //   } else {
-                                //     teammatesText = "${teammatesRaw.length} teammate${teammatesRaw.length == 1 ? '' : 's'}";
-                                //   }
-                                // } else {
-                                //   teammatesText = "0 teammate";
-                                // }
                                 return Padding(
                                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                                   child: Row(
@@ -180,16 +162,6 @@ class _RolePageState extends State<RolePage> {
                                           ],
                                         ),
                                       ),
-                                      // Expanded(
-                                      //   flex: 1,
-                                      //   child: Padding(
-                                      //     padding: const EdgeInsets.only(top: 2),
-                                      //     child: Text(
-                                      //       teammatesText,
-                                      //       style: const TextStyle(fontSize: 15),
-                                      //     ),
-                                      //   ),
-                                      // ),
                                       Row(
                                         children: [
                                           _actionIcon(
@@ -251,9 +223,6 @@ class _RolePageState extends State<RolePage> {
                                                       id: roleData.id ?? 0,
                                                       initialName: (roleData.name ?? '').toString(),
                                                       initialDescription: (roleData.description ?? '').toString(),
-                                                      // initialPermissions: (roleData['permissions'] is List<String>)
-                                                      //     ? roleData['permissions'] as List<String>
-                                                      //     : <String>[]
                                                     ),
                                                   ),
                                                 ),
@@ -263,51 +232,6 @@ class _RolePageState extends State<RolePage> {
                                               }
                                             },
                                           ),
-                                          // _actionIcon(
-                                          //   context,
-                                          //   icon: Icons.delete,
-                                          //   tooltip: 'Delete',
-                                          //   onTap: () {
-                                          //     final roleId = role.id;
-                                          //     final parentContext = context;
-                                          //     showDialog(
-                                          //       context: context,
-                                          //       builder: (dialogContext) => AlertDialog(
-                                          //         title: const Text('Delete Role'),
-                                          //         content: Text(
-                                          //           'Are you sure you want to delete the role "${title.isNotEmpty ? title : '(Sans nom)'}"?',
-                                          //         ),
-                                          //         actions: [
-                                          //           TextButton(
-                                          //             onPressed: () => Navigator.pop(dialogContext), // Utilise dialogContext ici
-                                          //             child: const Text('Cancel'),
-                                          //           ),
-                                          //           ElevatedButton(
-                                          //             style: ElevatedButton.styleFrom(
-                                          //               backgroundColor: Colors.red,
-                                          //               foregroundColor: Colors.white,
-                                          //             ),
-                                          //             onPressed: () async {
-                                          //               Navigator.pop(dialogContext); // Utilise dialogContext ici
-                                          //               await Future.delayed(const Duration(milliseconds: 100));
-                                          //               final success = await roleController.deleteRole(roleId);
-                                          //               if (success) {
-                                          //                 ScaffoldMessenger.of(parentContext).showSnackBar(
-                                          //                   SnackBar(content: Text('Role "$title" deleted')),
-                                          //                 );
-                                          //               } else {
-                                          //                 ScaffoldMessenger.of(parentContext).showSnackBar(
-                                          //                   const SnackBar(content: Text('Failed to delete role!'), backgroundColor: Colors.red),
-                                          //                 );
-                                          //               }
-                                          //             },
-                                          //             child: const Text('Delete'),
-                                          //           ),
-                                          //         ],
-                                          //       ),
-                                          //     );
-                                          //   },
-                                          // ),
                                         ],
                                       ),
                                     ],

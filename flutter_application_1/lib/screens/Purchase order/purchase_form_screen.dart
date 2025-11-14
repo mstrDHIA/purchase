@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
-import 'dart:convert'; // <-- Import jsonEncode
 
 class ProductLine {
 
@@ -13,7 +12,6 @@ class ProductLine {
   double unitPrice;
 
   ProductLine({
-  // this.productId,
     this.product,
     this.brand,
     this.supplier,
@@ -48,7 +46,6 @@ class PurchaseOrderForm extends StatefulWidget {
 
 class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
   String? _priority;
-  // String? _status; // Removed
   int? _id;
   int? _requestedByUser; // Now int
   int? _approvedBy;      // Now int
@@ -90,8 +87,6 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
         }
       }
       supplierNameController.text = supplierName ?? '';
-      
-
       if (initial['endDate'] != null) {
         try {
           DateTime endDate;
@@ -107,13 +102,10 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
       } else {
         dueDateController.text = DateFormat('dd-MM-yyyy').format(DateTime.now());
       }
-
       noteController.text = initial['description'] ?? '';
-
       if (initial['products'] != null && initial['products'] is List) {
         productLines = (initial['products'] as List).map((p) {
           return ProductLine(
-            // productId: p['product_id'] is int ? p['product_id'] : int.tryParse(p['product_id']?.toString() ?? ''), // Removed
             product: p['product']?.toString(),
             brand: p['brand']?.toString(),
             quantity: (p['quantity'] is int)
@@ -141,7 +133,6 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
       }
   _id = maxId + 1;
   _priority = null;
-  // _status = null; // Removed
   _requestedByUser = 1; // Default user ID
   _approvedBy = 2;      // Default approver ID
   _updatedAt = DateTime.now();
@@ -165,8 +156,6 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      // drawer: _buildDrawer(context),
-      // appBar: _buildAppBar(context),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -204,7 +193,6 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
               onChanged: (val) => setState(() => supplierName = val),
             ),
             const SizedBox(height: 24),
-
             const Text('Products',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
@@ -213,7 +201,6 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
               ProductLine product = entry.value;
               return _buildProductLine(product, index);
             }),
-
             Align(
               alignment: Alignment.centerRight,
               child: ElevatedButton.icon(
@@ -227,13 +214,10 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
                     setState(() => productLines.add(ProductLine())),
               ),
             ),
-
             const SizedBox(height: 32),
-
             const Text('Details',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
-
             TextFormField(
               controller: dueDateController,
               readOnly: true,
@@ -257,9 +241,7 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
                 }
               },
             ),
-
             const SizedBox(height: 24),
-
             TextField(
               controller: noteController,
               maxLines: 4,
@@ -270,9 +252,7 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
                 border: OutlineInputBorder(),
               ),
             ),
-
             const SizedBox(height: 32),
-
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -288,9 +268,7 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
                 ),
               ),
             ),
-
             const SizedBox(height: 32),
-
             Row(
               children: [
                 Expanded(
@@ -342,7 +320,6 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
       );
       return;
     }
-
     // Correction du parsing de la date de fin
     DateTime? parsedEndDate;
     try {
@@ -360,7 +337,6 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
       );
       return;
     }
-
     setState(() => _isSaving = true);
     try {
       // Adapter la structure des produits pour le backend
@@ -372,7 +348,6 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
         'price': (p.unitPrice * p.quantity),
         'supplier': supplierName,
       }).toList();
-
       // Construction du body attendu par le backend
       final jsonBody = {
         'id': _id,
@@ -388,10 +363,6 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
         'updated_at': DateFormat('yyyy-MM-dd').format(_updatedAt ?? DateTime.now()),
         'priority': _priority,
       };
-
-
-
-
       if (widget.initialOrder.isNotEmpty) {
         widget.onSave(jsonBody);
         if (mounted) Navigator.of(context).pop(jsonBody);
@@ -525,17 +496,4 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
       ),
     );
   }
-
-  // Drawer _buildDrawer(BuildContext context) {
-  //   return const Drawer(
-  //     child: Center(child: Text("Menu here")),
-  //   );
-  // }
-
-  // AppBar _buildAppBar(BuildContext context) {
-  //   return AppBar(
-  //     title: const Text('Purchase Order'),
-  //     backgroundColor: const Color(0xFF8C7AE6),
-  //   );
-  // }
 }

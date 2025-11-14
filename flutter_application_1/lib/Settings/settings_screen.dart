@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter_application_1/l10n/app_localizations.dart';
 import 'package:flutter_application_1/main.dart';
-
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_application_1/providers/theme_provider.dart';
@@ -19,9 +18,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late UserController userController;
   bool _notificationsEnabled = true;
   String _selectedLanguage = "English";
-  
-
- 
   Map<String, dynamic> user = {};
 
   @override
@@ -54,7 +50,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-
   final themeProvider = Provider.of<ThemeProvider>(context);
   final themeName = themeProvider.themeName;
   final loc = AppLocalizations.of(context)!;
@@ -88,7 +83,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         children: [
-          
           AnimatedContainer(
             duration: const Duration(milliseconds: 400),
             curve: Curves.easeInOut,
@@ -118,7 +112,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
           ),
-
           const SizedBox(height: 24),
 
           // ==== ACCOUNT SETTINGS ====
@@ -132,14 +125,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   leading: const Icon(Icons.person),
                   title: const Text('Edit Profile'),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                  onTap: () {
-                    // Navigator.push(
-                    //   context,
-                    //   MaterialPageRoute(
-                    //     builder: (context) => ProfilePageScreen(),
-                    //   ),
-                    // );
-                                    },
+                  onTap: () {},
                 ),
                 const Divider(height: 1),
                 ListTile(
@@ -158,7 +144,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ],
             ),
           ),
-
           const SizedBox(height: 16),
 
           // ==== APP SETTINGS ====
@@ -186,7 +171,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     );
                   },
                 ),
-
                 const Divider(height: 1),
 
                 // ==== LANGUAGE ====
@@ -244,7 +228,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ],
             ),
           ),
-
           const SizedBox(height: 16),
 
           // ==== THEME SECTION ====
@@ -322,10 +305,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                           TextButton(
                             onPressed: () {
-                              // Navigator.pop(context);
-                              
                               userController.logout(context);
-                              // Execute logout here
                             },
                             child: const Text("Logout"),
                           ),
@@ -337,7 +317,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ],
             ),
           ),
-
           const SizedBox(height: 30),
         ],
       ),
@@ -366,6 +345,4 @@ class FilterProvider extends ChangeNotifier {
     _search = value;
     notifyListeners();
   }
-
-  // Add more filter fields as needed (date, status, etc.)
 }

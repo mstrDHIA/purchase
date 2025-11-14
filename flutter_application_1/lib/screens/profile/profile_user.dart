@@ -7,8 +7,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 class ProfilePageScreen extends StatefulWidget {
-
-  // final Map<String, dynamic> user;
   final int userId;
   const ProfilePageScreen({super.key, required this.userId, });
 
@@ -31,16 +29,14 @@ class _ProfilePageScreenState extends State<ProfilePageScreen> {
     userController=Provider.of<UserController>(context, listen: false);
     super.initState();
   }
-  
-
 
   @override
   Future<void> didChangeDependencies() async {
     super.didChangeDependencies();
 
      await userController.getDetailedUser(widget.userId);
-
   }
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -48,7 +44,6 @@ class _ProfilePageScreenState extends State<ProfilePageScreen> {
     _lastNameFocusNode.dispose();
     _emailFocusNode.dispose();
     _usernameSuffixFocusNode.dispose();
-
     super.dispose();
   }
 
@@ -124,13 +119,10 @@ class _ProfilePageScreenState extends State<ProfilePageScreen> {
                       child: const Text('Copy link'),
                     ),
                     const SizedBox(width: 12),
-                    
                     OutlinedButton.icon(
                       onPressed: () async {
-                        // userController.selectedUserId = userController.currentUserId!;
                         Navigator.of(context).push(
                           MaterialPageRoute(builder: (context) =>  ModifyUserPage(user: userController.selectedUser)),
-                          
                         ).then((value) async {
                           if(userController.displaySnackBar) {
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -142,18 +134,7 @@ class _ProfilePageScreenState extends State<ProfilePageScreen> {
                             userController.displaySnackBar = false;
                             await userController.getDetailedUser(widget.userId);
                           }
-                          
                         });
-                        
-                        // if (isEditing) {
-                        //   setState(() {
-                        //     isEditing = false;
-                        //   });
-                        // } else {
-                        //   setState(() {
-                        //     isEditing = true;
-                        //   });
-                        // }
                       },
                       icon: Icon(isEditing ? Icons.check : Icons.edit, color: Colors.deepPurple),
                       label: Text(isEditing ? 'Save' : 'Edit', style: const TextStyle(color: Colors.deepPurple)),
@@ -201,7 +182,6 @@ class _ProfilePageScreenState extends State<ProfilePageScreen> {
                 InfoWidget(txt: userController.selectedUser.profile!.location??"Location is not set",field: 'Location'),
                 const SizedBox(height: 24),
                 InfoWidget(txt: userController.selectedUser.profile!.zipCode.toString(),field: 'Zip Code'),
-                
                   ],
                 ),
                 if(userController.selectedUser.profile == null)
@@ -240,51 +220,6 @@ class _ProfilePageScreenState extends State<ProfilePageScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    // OutlinedButton.icon(
-                    //   onPressed: () {
-                    //     showDialog(
-                    //       context: context,
-                    //       builder: (BuildContext dialogContext) {
-                    //         return AlertDialog(
-                    //           title: const Text('Log out?'),
-                    //           content: const Text('Are you sure you want to log out?'),
-                    //           actions: <Widget>[
-                    //             TextButton(
-                    //               onPressed: () {
-                    //                 Navigator.of(dialogContext).pop();
-                    //               },
-                    //               child: const Text('Cancel'),
-                    //             ),
-                    //             ElevatedButton(
-                    //               onPressed: () {
-                    //                 Navigator.of(dialogContext).pop();
-                    //                 Navigator.of(context).pushAndRemoveUntil(
-                    //                   MaterialPageRoute(builder: (context) => SignInPage()),
-                    //                   (route) => false,
-                    //                 );
-                    //               },
-                    //               style: ElevatedButton.styleFrom(
-                    //                 backgroundColor: Colors.red,
-                    //                 foregroundColor: Colors.white,
-                    //               ),
-                    //               child: const Text('Log out'),
-                    //             ),
-                    //           ],
-                    //         );
-                    //       },
-                    //     );
-                    //   },
-                    //   icon: const Icon(Icons.logout, color: Colors.deepPurple),
-                    //   label: const Text('Log out', style: TextStyle(color: Colors.deepPurple)),
-                    //   style: OutlinedButton.styleFrom(
-                    //     side: const BorderSide(color: Colors.deepPurple),
-                    //     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    //     shape: RoundedRectangleBorder(
-                    //       borderRadius: BorderRadius.circular(8),
-                    //     ),
-                    //     overlayColor: Colors.deepPurple.withOpacity(0.05),
-                    //   ),
-                    // ),
                     const Spacer(),
                     const SizedBox(width: 12),
                   ],
@@ -301,7 +236,6 @@ class _ProfilePageScreenState extends State<ProfilePageScreen> {
 class InfoWidget extends StatelessWidget {
   final String txt;
   final String field;
-  // final double width;
    const InfoWidget({
     super.key, required this.txt, required this.field,
   });
@@ -323,7 +257,6 @@ class InfoWidget extends StatelessWidget {
           width: MediaQuery.sizeOf(context).width,
           height: 40,
           decoration: BoxDecoration(
-            // border: Border.all(color: Colors.grey.shade300),
             color: Colors.grey.shade200,
             borderRadius: BorderRadius.circular(10),
           ),
