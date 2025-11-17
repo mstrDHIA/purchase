@@ -18,36 +18,36 @@ class ProductController extends ChangeNotifier {
 
 	 getCategoriesWithoutQuery() async {
     try {
-      
+
       return await network.fetchCategoriesWithoutQuery();
     } catch (e) {
       rethrow;
     }
   }
 
-	// Future<void> createCategories(Category category) async {
-	// 	try {
-	// 		await network.createCategory(category);
-	// 	} catch (e) {
-	// 		rethrow;
-	// 	}
-	// }
+	Future<void> createCategories(Category category) async {
+		try {
+			await network.createCategory(category);
+		} catch (e) {
+			rethrow;
+		}
+	}
 
-	// Future<void> editCategory(Category category) async {
-	// 	try {
-	// 		await network.editCategory(category);
-	// 	} catch (e) {
-	// 		rethrow;
-	// 	}
-	// }
+	Future<void> editCategory(Category category) async {
+		try {
+			await network.editCategory(category);
+		} catch (e) {
+			rethrow;
+		}
+	}
 
-	// Future<void> deleteCategory(String categoryId) async {
-  //       try {
-  //           await network.deleteCategory(categoryId);
-  //       } catch (e) {
-  //           rethrow;
-  //       }
-  //   }
+	Future<void> deleteCategory(String categoryId) async {
+      try {
+          await network.deleteCategory(categoryId);
+      } catch (e) {
+          rethrow;
+      }
+  }
 
 	// Future<void> createSubfamily(Map<String, dynamic> subfamilyData) async {
   //   try {

@@ -41,17 +41,18 @@ class _FamiliesPageState extends State<FamiliesPage> {
       final data = await productController.getCategoriesWithoutQuery();
       print(data);
       print('bbbb');
-      families = data
+      // data is expected to be a List of categories; build families and compute subfamilies by scanning children
+      final all = (data as List<dynamic>).map((e) => e as Map<String, dynamic>).toList();
+      families = all
           .where((f) => f['parent_category'] == null)
           .map<Map<String, dynamic>>((f) {
-        print('cccc');
-        print(f['parent_category']);
+        final subs = all.where((c) => c['parent_category'] == f['id']).map((c) => c as Map<String, dynamic>).toList();
         return {
           'id': f['id'],
           'name': f['name'],
           'description': f['description'] ?? '',
           'creationDate': f['created_at'] != null ? DateTime.tryParse(f['created_at']) : null,
-          'subfamilies': f['subfamilies'] ?? [],
+          'subfamilies': subs,
         };
       }).toList();
       print('dddd');
@@ -79,88 +80,168 @@ class _FamiliesPageState extends State<FamiliesPage> {
         ? a['name'].toString().toLowerCase().compareTo(b['name'].toString().toLowerCase())
         : b['name'].toString().toLowerCase().compareTo(a['name'].toString().toLowerCase()));
     setState(() {
+      // 'Family' is the second column in the DataTable (index 1)
+      _sortIndex = 1;
+      _sortAsc = asc;
+    });
+  }
+
+  void _sortById(bool asc) {
+    families.sort((a, b) {
+      final aId = a['id']?.toString() ?? '';
+      final bId = b['id']?.toString() ?? '';
+      final aNum = int.tryParse(aId);
+      final bNum = int.tryParse(bId);
+      int cmp;
+      if (aNum != null && bNum != null) {
+        cmp = aNum.compareTo(bNum);
+      } else {
+        cmp = aId.compareTo(bId);
+      }
+      return asc ? cmp : -cmp;
+    });
+    setState(() {
+      // ID is the first column (index 0)
       _sortIndex = 0;
       _sortAsc = asc;
     });
   }
 
   Future<void> _showEditDialog({Map<String, dynamic>? family, int? index}) async {
+    final _formKey = GlobalKey<FormState>();
     print('Opening edit dialog for family: ${family != null ? family['name'] : 'New Family'}');
     final nameCtrl = TextEditingController(text: family != null ? family['name'] : '');
     final descCtrl = TextEditingController(text: family != null ? family['description'] : '');
-    final dateCtrl = TextEditingController(
-      text: family != null && family['creationDate'] != null
-          ? (family['creationDate'] as DateTime).toIso8601String().substring(0, 10)
-          : DateTime.now().toIso8601String().substring(0, 10),
-    );
+    DateTime? selectedDate;
+    if (family != null && family['creationDate'] is DateTime) {
+      selectedDate = family['creationDate'] as DateTime;
+    } else if (family != null && family['creationDate'] is String) {
+      selectedDate = DateTime.tryParse(family['creationDate']);
+    }
 
     await showDialog<Map<String, String>>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(family == null ? 'Add Family' : 'Edit Family'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Name')),
-            const SizedBox(height: 8),
-            TextField(controller: descCtrl, decoration: const InputDecoration(labelText: 'Description')),
-            const SizedBox(height: 8),
-            TextField(controller: dateCtrl, decoration: const InputDecoration(labelText: 'Creation Date (YYYY-MM-DD)')),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
-          ElevatedButton(
-              onPressed: () async {
-                print('Save button clicked');
-                final updatedFamily = Category(
-                  id: family != null ? family['id'].toString() : '', // Convertir l'ID en chaîne de caractères
-                  name: nameCtrl.text,
-                  description: descCtrl.text,
-                  creationDate: DateTime.tryParse(dateCtrl.text) ?? DateTime.now(),
-                );
-
-                try {
-                  if (family != null && index != null) {
-                    print('Editing family with ID: ${updatedFamily.id}');
-                    // await productController.editCategory(updatedFamily);
-                    setState(() {
-                      families[index] = {
-                        'id': updatedFamily.id,
-                        'name': updatedFamily.name,
-                        'description': updatedFamily.description,
-                        'creationDate': updatedFamily.creationDate,
-                        'subfamilies': family['subfamilies'],
-                      };
-                    });
-                  } else {
-                    print('Creating new family');
-                    // await productController.createCategories(updatedFamily);
-                    setState(() {
-                      families.add({
-                        'id': updatedFamily.id,
-                        'name': updatedFamily.name,
-                        'description': updatedFamily.description,
-                        'creationDate': updatedFamily.creationDate,
-                        'subfamilies': [],
-                      });
-                    });
-                  }
-                  Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(family != null ? 'Family updated successfully!' : 'Family created successfully!')),
-                  );
-                } catch (e) {
-                  print('Error occurred: $e');
-                  Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Failed to ${family != null ? 'update' : 'create'} family: $e')),
-                  );
-                }
-              },
-              child: const Text('Save')),
-        ],
-      ),
+      builder: (context) => StatefulBuilder(builder: (context, setState) {
+        var _isSaving = false;
+        return Dialog(
+          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          // square / sharp corners
+          shape: const RoundedRectangleBorder(),
+          child: Container(
+            padding: const EdgeInsets.all(20),
+            decoration: const BoxDecoration(color: Colors.white),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(family == null ? 'Add Family' : 'Edit Family', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 12),
+                Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      TextFormField(
+                        controller: nameCtrl,
+                        autofocus: true,
+                        decoration: const InputDecoration(labelText: 'Name', prefixIcon: Icon(Icons.edit_note)),
+                        validator: (v) => (v == null || v.trim().isEmpty) ? 'Name is required' : null,
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: descCtrl,
+                        decoration: const InputDecoration(labelText: 'Description', prefixIcon: Icon(Icons.description)),
+                        maxLines: 2,
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(selectedDate != null ? selectedDate!.toIso8601String().substring(0, 10) : 'No creation date'),
+                          ),
+                          TextButton(
+                            onPressed: () async {
+                              final now = DateTime.now();
+                              final picked = await showDatePicker(
+                                context: context,
+                                initialDate: selectedDate ?? now,
+                                firstDate: DateTime(2000),
+                                lastDate: DateTime(now.year + 5),
+                              );
+                              if (picked != null) setState(() => selectedDate = picked);
+                            },
+                            child: const Text('Pick date'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: _isSaving
+                          ? null
+                          : () async {
+                              if (!(_formKey.currentState?.validate() ?? false)) return;
+                              setState(() => _isSaving = true);
+                              final updatedFamily = Category(
+                                id: family != null ? family['id'].toString() : '',
+                                name: nameCtrl.text.trim(),
+                                description: descCtrl.text.trim(),
+                                creationDate: selectedDate ?? DateTime.now(),
+                              );
+                              try {
+                                if (family != null && index != null) {
+                                  await productController.editCategory(updatedFamily);
+                                  setState(() {
+                                    families[index] = {
+                                      'id': updatedFamily.id,
+                                      'name': updatedFamily.name,
+                                      'description': updatedFamily.description,
+                                      'creationDate': updatedFamily.creationDate,
+                                      'subfamilies': family['subfamilies'],
+                                    };
+                                  });
+                                } else {
+                                  await productController.createCategories(updatedFamily);
+                                  await fetchFamilies();
+                                }
+                                Navigator.of(context).pop();
+                                ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(
+                                    content: Text(family != null ? 'Family updated successfully!' : 'Family created successfully!')));
+                              } catch (e) {
+                                ScaffoldMessenger.of(this.context)
+                                    .showSnackBar(SnackBar(content: Text('Failed to ${family != null ? 'update' : 'create'} family: $e')));
+                              } finally {
+                                try {
+                                  setState(() => _isSaving = false);
+                                } catch (_) {}
+                              }
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.deepPurple,
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                      ),
+                      child: _isSaving
+                          ? Row(mainAxisSize: MainAxisSize.min, children: const [
+                              SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
+                              SizedBox(width: 10),
+                              Text('Saving...'),
+                            ])
+                          : Text(family != null ? 'Save' : 'Create'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      }),
     );
   }
 
@@ -298,7 +379,10 @@ class _FamiliesPageState extends State<FamiliesPage> {
                         sortColumnIndex: _sortIndex,
                         sortAscending: _sortAsc,
                         columns: [
-                          DataColumn(label: const Text('ID')),
+                          DataColumn(
+                            label: const Text('ID'),
+                            onSort: (i, asc) => _sortById(asc),
+                          ),
                           DataColumn(
                             label: const Text('Family'),
                             onSort: (i, asc) => _sortByName(asc),

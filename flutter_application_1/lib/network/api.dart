@@ -12,7 +12,23 @@ class APIS {
   static const String purchaseOrderList = "purchase_order/purchaseOrders/";
   
   
-  final dio = Dio();
+  // Configure Dio with sensible defaults for debugging and to avoid
+  // accidental double-slashes when composing URLs.
+  final dio = Dio(BaseOptions(
+    baseUrl: baseUrl,
+  connectTimeout: Duration(milliseconds: 10000),
+  receiveTimeout: Duration(milliseconds: 10000),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  ))
+    ..interceptors.add(LogInterceptor(
+      request: true,
+      requestBody: true,
+      responseBody: true,
+      responseHeader: false,
+      error: true,
+    ));
   static String token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzNjM0MjgzLCJpYXQiOjE3NjMwMjk0ODMsImp0aSI6IjVhNjYyZTAwYThmZTRjZTBiZDdjMWM1NmExMDc4MmRkIiwidXNlcl9pZCI6MX0.5OE58vMoA6sA0HLKQc5lt-6FFw49VAKn3_5H3LWKC6U';
 
   // APIS() {
@@ -29,7 +45,9 @@ class APIS {
     // static const String httpbaseUrl = "72.60.90.60:8000/";
 
 
-  static const String login = "/user/login/";
+  // Remove leading slash to allow safe concatenation with baseUrl
+  // (baseUrl already ends with a slash).
+  static const String login = "user/login/";
 
   static const String register = "user/register/";
   static const String userList = "user/users/";
