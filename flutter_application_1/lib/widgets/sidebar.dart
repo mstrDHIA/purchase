@@ -5,14 +5,12 @@ import 'package:flutter_application_1/screens/Product/family_screen.dart';
 import 'package:flutter_application_1/screens/Supplier/Supplier_registration_screen.dart';
 import 'package:go_router/go_router.dart';
 
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return  const MyHomePage();
-   
   }
 }
 
@@ -24,9 +22,8 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   String selected = 'Home';
-  bool showSidebar = false; // Ajouté
+  bool showSidebar = false; 
   
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -113,12 +110,8 @@ class AppSidebar extends StatefulWidget {
 
 class _AppSidebarState extends State<AppSidebar> {
   late UserController userController;
-
   bool isCollapsed = false;
-
-  final items = [
-    // ...existing code...
-  ];
+  final items = [];
 
 // 1 admin
 // 2 user
@@ -228,7 +221,6 @@ class _AppSidebarState extends State<AppSidebar> {
   void initState() {
     userController = Provider.of<UserController>(context, listen: false);
     initSideBarItems();
-    // TODO: implement initState
     super.initState();
   }
 
@@ -338,7 +330,6 @@ class _AppSidebarState extends State<AppSidebar> {
                     mainAxisSize: MainAxisSize.max,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // existing item icons
                       ...items.map((item) {
                         final label = item['label'] as String;
                         final icon = item['icon'] as IconData;

@@ -120,7 +120,6 @@ class _SignUpPageState extends State<SignUpPage> {
                         ),
                       ),
                       const SizedBox(height: 60),
-
                       const Text(
                         'Email',
                         style: TextStyle(fontSize: 18, color: Colors.black54),
@@ -140,7 +139,6 @@ class _SignUpPageState extends State<SignUpPage> {
                         keyboardType: TextInputType.emailAddress,
                       ),
                       const SizedBox(height: 24),
-
                       const Text(
                         'Password',
                         style: TextStyle(fontSize: 18, color: Colors.black54),
@@ -200,9 +198,7 @@ class _SignUpPageState extends State<SignUpPage> {
                             ),
                           ],
                         ),
-
                       const SizedBox(height: 24),
-
                       const Text(
                         'Confirm Password',
                         style: TextStyle(fontSize: 18, color: Colors.black54),
@@ -223,7 +219,6 @@ class _SignUpPageState extends State<SignUpPage> {
                         ),
                       ),
                       const SizedBox(height: 24),
-
                       Row(
                         children: [
                           Checkbox(
@@ -244,7 +239,6 @@ class _SignUpPageState extends State<SignUpPage> {
                         ],
                       ),
                       const SizedBox(height: 32),
-
                       Consumer<UserController>(
                         builder: (context, userController, child) {
                           if(userController.isLoading) {
@@ -339,7 +333,6 @@ class _SignUpPageState extends State<SignUpPage> {
                             ),
                           );
                           }
-                          
                         }
                       ),
                       const SizedBox(height: 30),
@@ -374,4 +367,3 @@ class _SignUpPageState extends State<SignUpPage> {
     );
   }
 }
-

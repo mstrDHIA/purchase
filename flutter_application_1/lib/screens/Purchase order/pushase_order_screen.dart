@@ -1,13 +1,10 @@
 import 'package:flutter_application_1/screens/Purchase%20order/Edit_purchase_screen.dart';
 import 'package:flutter_application_1/screens/Purchase%20order/view_purchase_screen.dart';
 import 'package:provider/provider.dart';
-// import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter_application_1/models/user_model.dart';
 import 'package:flutter/material.dart';
-// import 'package:flutter_application_1/screens/Purchase%20order/purchase_form_screen.dart';
-// import 'package:flutter_application_1/screens/Purchase%20order/view_purchase_screen.dart';
 import 'package:intl/intl.dart';
 
 class PurchaseOrderPage extends StatelessWidget {
@@ -44,21 +41,16 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
   final TextEditingController _searchController = TextEditingController();
   String _searchText = '';
 
-  // Removed custom pagination footer. PaginatedDataTable will handle pagination.
 
   @override
   void initState() {
     super.initState();
     userController = Provider.of<UserController>(context, listen: false);
-    // Ensure users are loaded so we can display names instead of idshgh
     userController.getUsers();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<PurchaseOrderController>(context, listen: false).fetchOrders();
     });
   }
-
-  // Removed _page. PaginatedDataTable will handle pagination.
-
   List<Map<String, dynamic>> _filteredAndSortedOrders(List orders) {
   List<Map<String, dynamic>> mapped = orders
     .map((order) {
@@ -108,7 +100,6 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
           }
         }
       }
-
       return {
         'id': order.id?.toString() ?? '',
         'actionCreatedBy': actionCreatedBy,
@@ -119,7 +110,6 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
         'original': order,
       };
     }).toList();
-
     // Search filter: only show orders that match the search text in any main field
     if (_searchText.isNotEmpty) {
       final searchLower = _searchText.toLowerCase();
@@ -159,7 +149,6 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
         return date is DateTime && date.year == _selectedDueDate!.year && date.month == _selectedDueDate!.month && date.day == _selectedDueDate!.day;
       }).toList();
     }
-
     // Sorting logic
     if (_sortColumnIndex != null) {
       String sortKey = 'id';
@@ -176,7 +165,6 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
       } else if (_sortColumnIndex == 5) {
         sortKey = 'status';
       }
-
       mapped.sort((a, b) {
         dynamic aValue = a[sortKey];
         dynamic bValue = b[sortKey];
@@ -190,90 +178,6 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
     }
     return mapped;
   }
-
-  // Removed _goToPage. PaginatedDataTable will handle pagination.
-
-//   Widget _buildCustomPagination(int totalRows) {
-//     final maxPage = (totalRows / _rowsPerPage).ceil();
-//     return Row(
-//       mainAxisAlignment: MainAxisAlignment.center,
-//       children: [
-//         ...List.generate(maxPage, (index) => Padding(
-//           padding: const EdgeInsets.symmetric(horizontal: 2),
-//           child: ElevatedButton(
-//             style: ElevatedButton.styleFrom(
-//               backgroundColor: index == _page ? Colors.deepPurple : Colors.grey[200],
-//               foregroundColor: index == _page ? Colors.white : Colors.deepPurple,
-//               minimumSize: const Size(36, 36),
-//               padding: EdgeInsets.zero,
-//               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-//             ),
-//             onPressed: () => _goToPage(index, totalRows),
-//             child: Text('${index + 1}'),
-//           ),
-//         )),
-//       ],
-//     );
-// // =======
-//   // Filtering
-// //   if (_priorityFilter != null) {
-// //     mapped = mapped.where((order) => order['priority'].toString().toLowerCase() == _priorityFilter!.toLowerCase()).toList();
-// // >>>>>>> 3aef541da9fcbe051f5175130df5e72d614fba17
-// //   }
-// //   if (_statusFilter != null) {
-// //     mapped = mapped.where((order) => order['status'].toString().toLowerCase() == _statusFilter!.toLowerCase()).toList();
-// //   }
-// //   if (_selectedSubmissionDate != null) {
-// //     mapped = mapped.where((order) =>
-// //         order['dateSubmitted'].year == _selectedSubmissionDate!.year &&
-// //         order['dateSubmitted'].month == _selectedSubmissionDate!.month &&
-// //         order['dateSubmitted'].day == _selectedSubmissionDate!.day).toList();
-// //   }
-// //   if (_selectedDueDate != null) {
-// //     mapped = mapped.where((order) =>
-// //         order['dueDate'].year == _selectedDueDate!.year &&
-// //         order['dueDate'].month == _selectedDueDate!.month &&
-// //         order['dueDate'].day == _selectedDueDate!.day).toList();
-// //   }
-
-// //   // Sorting
-// //   if (_sortColumnIndex != null) {
-// //     String sortKey = '';
-// //     switch (_sortColumnIndex) {
-// //       case 0:
-// //         sortKey = 'id';
-// //         break;
-// //       case 1:
-// //         sortKey = 'actionCreatedBy';
-// //         break;
-// //       case 2:
-// //         sortKey = 'dateSubmitted';
-// //         break;
-// //       case 3:
-// //         sortKey = 'dueDate';
-// //         break;
-// //       case 4:
-// //         sortKey = 'priority';
-// //         break;
-// //       case 5:
-// //         sortKey = 'status';
-// //         break;
-// //     }
-
-// //     mapped.sort((a, b) {
-// //       dynamic aValue = a[sortKey];
-// //       dynamic bValue = b[sortKey];
-// //       if (aValue is String && bValue is String) {
-// //         return _sortAscending ? aValue.compareTo(bValue) : bValue.compareTo(aValue);
-// //       } else if (aValue is DateTime && bValue is DateTime) {
-// //         return _sortAscending ? aValue.compareTo(bValue) : bValue.compareTo(aValue);
-// //       }
-// //       return 0;
-// //     });
-// //   }
-
-// //   return mapped;
-// }
 
   void _sort<T>(int columnIndex, bool ascending) {
     setState(() {
@@ -322,7 +226,6 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
         }
         final allOrders = controller.orders;
         final filteredOrders = _filteredAndSortedOrders(allOrders);
-  // final totalRows = allOrders.length;
         final dataSource = _PurchaseOrderDataSource(
           filteredOrders,
           _dateFormat,
@@ -334,7 +237,6 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
         return Scaffold(
           appBar: AppBar(
             title: const Text('Purchase Orders'),
-            // actions: [ ], // Removed Add PO button
           ),
           body: 
           (MediaQuery.of(context).size.width<600)?
@@ -363,13 +265,6 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                                 isThreeLine: true,
                                 trailing: PopupMenuButton<String>(
                                   onSelected: (value) {
-                                    // if (value == 'view') {
-                                    //   viewPurchaseOrder(context, order['original']);
-                                    // } else if (value == 'edit') {
-                                    //   editPurchaseOrder(context, order['original']);
-                                    // } else if (value == 'delete') {
-                                    //   deletePurchaseOrder(context, order['original']);
-                                    // }
                                   },
                                   itemBuilder: (context) => [
                                     const PopupMenuItem(value: 'view', child: Text('View')),
@@ -380,7 +275,6 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                               ),
                             );
                           }
-                          
                           ,itemCount: filteredOrders.length,)
                           :
           Column(
@@ -639,7 +533,6 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
     );
   }
 
-  // TODO: implement viewPurchaseOrder, editPurchaseOrder, deletePurchaseOrder if needed
   Future<void> viewPurchaseOrder(Map<String, dynamic> order) async {
     // Utilise l'objet PurchaseOrder réel pour l'affichage
     final purchaseOrder = order['original'];
@@ -653,7 +546,6 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
     // Toujours rafraîchir la liste après retour de la page détail
     Provider.of<PurchaseOrderController>(context, listen: false).fetchOrders();
   }
-
   void editPurchaseOrder(Map<String, dynamic> order) async {
     // Navigation vers la page d'édition dédiée
     final controller = Provider.of<PurchaseOrderController>(context, listen: false);
@@ -971,7 +863,6 @@ class _PurchaseOrderDataSource extends DataTableSource {
         child: Text(
           v,
           textAlign: TextAlign.center,
-          
           style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.2),
         ),
       ),
@@ -987,7 +878,6 @@ class _PurchaseOrderDataSource extends DataTableSource {
   @override
   int get selectedRowCount => 0;
 }
-
 // Example for ViewPurchasePage
 class ViewPurchasePage extends StatelessWidget {
   final Map<String, dynamic> order;
@@ -1039,10 +929,7 @@ class ViewPurchasePage extends StatelessWidget {
               ),
             ),
           ],
-        ),
-         
-                                      
-                                    
+        ),                                
       ),
     );
   }

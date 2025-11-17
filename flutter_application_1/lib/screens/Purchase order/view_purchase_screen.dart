@@ -6,11 +6,6 @@ import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
 import 'package:flutter_application_1/screens/Purchase order/refuse_purchase_screen.dart';
 
-
-/// Helper to wrap PurchaseOrderView with required providers if not already provided higher up.
-/// Use this in your navigation or parent widget if you get ProviderNotFoundException.
-/// Example usage:
-/// Navigator.push(context, MaterialPageRoute(builder: (context) => PurchaseOrderView.withProviders(order: order)));
 class PurchaseOrderView extends StatefulWidget {
   final PurchaseOrder order;
   const PurchaseOrderView({super.key, required this.order});
@@ -40,7 +35,6 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
     super.initState();
     _order = widget.order;
   }
-
   /// Utilisez ce helper pour injecter le UserController global si besoin.
   static Widget withProviders({Key? key, required PurchaseOrder order, UserController? userController}) {
     return MultiProvider(
@@ -58,7 +52,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
   @override
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('dd-MM-yyyy');
-    final submittedDate = _order.startDate != null ? dateFormat.format(_order.startDate!) : '-';
+    // final submittedDate = _order.startDate != null ? dateFormat.format(_order.startDate!) : '-';
     final dueDate = _order.endDate != null ? dateFormat.format(_order.endDate!) : '-';
     final status = _order.status ?? '-';
     final priority = _order.priority ?? '-';
@@ -508,125 +502,5 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
         ),
       ),
     );
-  }
-
-  Widget _buildField(String label, String value, {double width = 180, String prefix = ''}) {
-    return SizedBox(
-      width: width,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.grey)),
-          const SizedBox(height: 4),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.deepPurple.shade50),
-            ),
-            child: Text(
-              '$prefix$value',
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildChipField(String label, String value, {double width = 120, required Color color}) {
-    // Custom design for "priority" and "status" chips to match your screenshot
-    final v = value.toLowerCase();
-    Color bg;
-    Color fg;
-
-    if (label.toLowerCase() == 'priority') {
-      if (v == 'low') {
-        bg = const Color(0xFF64B5F6); // blue
-        fg = Colors.white;
-      } else if (v == 'medium') {
-        bg = const Color(0xFFFFB74D); // orange
-        fg = Colors.white;
-      } else if (v == 'high') {
-        bg = const Color(0xFFE57373); // red
-        fg = Colors.white;
-      } else {
-        bg = Colors.grey[300]!;
-        fg = Colors.black;
-      }
-    } else if (label.toLowerCase() == 'status') {
-      if (v == 'approved') {
-        bg = const Color(0xFF4CAF50); // green
-        fg = Colors.white;
-      } else if (v == 'pending') {
-        bg = const Color(0xFFFFB74D); // orange
-        fg = Colors.white;
-      } else if (v == 'rejected') {
-        bg = const Color(0xFFEF5350); // red
-        fg = Colors.white;
-      } else {
-        bg = Colors.grey[300]!;
-        fg = Colors.black;
-      }
-    } else {
-      bg = color;
-      fg = color.computeLuminance() > 0.5 ? Colors.black : Colors.white;
-    }
-
-    return SizedBox(
-      width: width,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.grey)),
-          const SizedBox(height: 4),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: bg,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              v,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-                color: fg,
-                letterSpacing: 0.5,
-                fontFamily: 'Roboto',
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Color _priorityColor(String priority) {
-    switch (priority) {
-      case 'High':
-        return Colors.red[300]!;
-      case 'Medium':
-        return Colors.orange[300]!;
-      case 'Low':
-        return Colors.green[300]!;
-      default:
-        return Colors.grey[400]!;
-    }
-  }
-
-  Color _statusColor(String status) {
-    switch (status) {
-      case 'Pending':
-        return Colors.orange[200]!;
-      case 'Approved':
-        return Colors.green[200]!;
-      case 'Rejected':
-        return Colors.red[200]!;
-      default:
-        return Colors.grey[300]!;
-    }
   }
 }

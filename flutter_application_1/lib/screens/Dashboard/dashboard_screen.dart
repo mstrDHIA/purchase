@@ -13,7 +13,6 @@ class DashboardPage extends StatelessWidget {
     const int purchaseOrders = 10;
     const int pendingRequests = 4;
     const int users = 8;
-
     // Récupération du nom et rôle utilisateur connecté
     final user = Provider.of<UserController>(context).currentUser;
     String userName = '';
@@ -117,7 +116,6 @@ class DashboardPage extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 32),
-
             // Stats Row
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -160,9 +158,7 @@ class DashboardPage extends StatelessWidget {
                 ),
               ],
             ),
-
             const SizedBox(height: 32),
-
             // Cards Grid
             GridView.count(
               crossAxisCount: 3,

@@ -36,7 +36,6 @@ class _AddRolePageState extends State<AddRolePage> {
         );
         if (success) {
           Navigator.pop(context, {
-            
             'name': roleName,
             'description': _roleDescriptionController.text.trim(),
             'permissions': _selectedPermissions.toList(),
@@ -133,7 +132,6 @@ class _AddRolePageState extends State<AddRolePage> {
                     style: TextStyle(fontSize: 14, color: Colors.black54),
                   ),
                   const SizedBox(height: 24),
-
                   // Role Name
                   RichText(
                     text: const TextSpan(
@@ -161,7 +159,6 @@ class _AddRolePageState extends State<AddRolePage> {
                         value == null || value.trim().isEmpty ? 'Role name is required' : null,
                   ),
                   const SizedBox(height: 20),
-
                   // Description
                   const Text(
                     "Description",
@@ -183,7 +180,6 @@ class _AddRolePageState extends State<AddRolePage> {
                     ),
                   ),
                   const SizedBox(height: 24),
-
                   // Permissions
                   const Text(
                     "Permissions",
@@ -234,9 +230,7 @@ class _AddRolePageState extends State<AddRolePage> {
                       );
                     }).toList(),
                   ),
-
                   const SizedBox(height: 28),
-
                   // Buttons
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
