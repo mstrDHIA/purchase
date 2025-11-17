@@ -161,7 +161,21 @@ class _AppSidebarState extends State<AppSidebar> {
       {'label': 'Settings', 'icon': Icons.settings},
     ]);
     }
-    else if((userController.currentUser.role_id==4)||(userController.currentUser.role_id==6)){
+     else if((userController.currentUser.role_id==4)){
+      items.addAll([
+      // {'label': 'Home', 'icon': Icons.home},
+      // {'label': 'Dashboard', 'icon': Icons.dashboard},
+      {'label': 'Profile', 'icon': Icons.account_circle},
+      // {'label': 'Users', 'icon': Icons.people},
+      {'label': 'Password', 'icon': Icons.lock},
+      {'label': 'PurchaseRequest', 'icon': Icons.note_add},
+      {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
+      // {'label': 'Support centre', 'icon': Icons.help},
+      {'label': 'Settings', 'icon': Icons.settings},
+    ]);
+    // (userController.currentUser.role_id==4)
+    }
+    else if((userController.currentUser.role_id==6)){
       items.addAll([
       // {'label': 'Home', 'icon': Icons.home},
       // {'label': 'Dashboard', 'icon': Icons.dashboard},
@@ -173,6 +187,7 @@ class _AppSidebarState extends State<AppSidebar> {
       // {'label': 'Support centre', 'icon': Icons.help},
       {'label': 'Settings', 'icon': Icons.settings},
     ]);
+    // (userController.currentUser.role_id==4)
     }
     else if(userController.currentUser.role_id==5){
        items.addAll([

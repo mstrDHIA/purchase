@@ -99,80 +99,66 @@ class ProductNetwork {
 	// 	}
 	// }
 
-	// Future<void> createCategory(Category category) async {
-	// 	print('Creating category with data: ${category.toJson()}');
-	// 	final url = Uri.parse('${APIS.baseUrl}${APIS.createCategories}');
-	// 	final response = await http.post(
-	// 		url,
-	// 		headers: {
-	// 			'Authorization': 'Bearer ${APIS.token}',
-	// 			'Content-Type': 'application/json',
-	// 		},
-	// 		body: jsonEncode(category.toJson()),
-	// 	);
-	// 	print('Response status: ${response.statusCode}');
-	// 	if (response.statusCode != 201 && response.statusCode != 200) {
-	// 		print('Failed to create category: ${response.body}');
-	// 		throw Exception('Failed to create category');
-	// 	}
-	// 	print('Category created successfully');
-	// }
+	Future<void> createCategory(Category category) async {
+		print('Creating category with data: ${category.toJson()}');
+		final url = Uri.parse('${APIS.baseUrl}${APIS.createCategories}');
+		Response response = await api.dio.post(
+      APIS.baseUrl + APIS.createCategories,
+      data: jsonEncode(category.toJson()),
+      options: Options(
+        headers: {
+          'Authorization': 'Bearer ${APIS.token}',
+          'Content-Type': 'application/json',
+        },
+        
+      ),
+    );
+		print('Response status: ${response.statusCode}');
+		if (response.statusCode != 201 && response.statusCode != 200) {
+			print('Failed to create category: ${response.data}');
+			throw Exception('Failed to create category');
+		}
+		print('Category created successfully');
+	}
 
-	// Future<void> editCategory(Category category) async {
-  //   print('Editing category with ID: ${category.id} and data: ${category.toJson()}');
-  //   final url = Uri.parse('${APIS.baseUrl}${APIS.editCategory}${category.id}/');
-  //   final response = await http.put(
-  //     url,
-  //     headers: {
-  //       'Authorization': 'Bearer ${APIS.token}',
-  //       'Content-Type': 'application/json',
-  //     },
-  //     body: jsonEncode(category.toJson()),
-  //   );
-  //   print('Response status: ${response.statusCode}');
-  //   if (response.statusCode != 200) {
-  //     print('Failed to edit category: ${response.body}');
-  //     throw Exception('Failed to edit category: ${response.body}');
-  //   }
-  //   print('Category edited successfully');
-  // }
+	Future<void> editCategory(Category category) async {
+    print('Editing category with ID: ${category.id} and data: ${category.toJson()}');
+    Response response = await api.dio.put(
+      APIS.baseUrl + APIS.editCategory + category.id.toString() + '/',
+      data: jsonEncode(category.toJson()),
+      options: Options(
+        headers: {
+          'Authorization': 'Bearer ${APIS.token}',
+          'Content-Type': 'application/json',
+        },
+      ),
+    );
+    print('Response status: ${response.statusCode}');
+    if (response.statusCode != 200) {
+      print('Failed to edit category: ${response.data}');
+      throw Exception('Failed to edit category: ${response.data}');
+    }
+    print('Category edited successfully');
+  }
 
-  // Future<void> deleteCategory(String categoryId) async {
-  //       print('Deleting category with ID: $categoryId');
-  //       final url = Uri.parse('${APIS.baseUrl}${APIS.deleteCategory}$categoryId/');
-  //       final response = await http.delete(
-  //           url,
-  //           headers: {
-  //               'Authorization': 'Bearer ${APIS.token}',
-  //               'Content-Type': 'application/json',
-  //           },
-  //       );
-  //       print('Response status: ${response.statusCode}');
-  //       if (response.statusCode != 200 && response.statusCode != 204) {
-  //           print('Failed to delete category: ${response.body}');
-  //           throw Exception('Failed to delete category: ${response.body}');
-  //       }
-  //       print('Category deleted successfully');
-  //   }
+  Future<void> deleteCategory(String categoryId) async {
+        print('Deleting category with ID: $categoryId');
+        Response response = await api.dio.delete(
+          APIS.baseUrl + APIS.deleteCategory + categoryId + '/',
+          options: Options(
+            headers: {
+              'Authorization': 'Bearer ${APIS.token}',
+              'Content-Type': 'application/json',
+            },
+          ),
+        );
+        print('Response status: ${response.statusCode}');
+        if (response.statusCode != 200 && response.statusCode != 204) {
+            print('Failed to delete category: ${response.data}');
+            throw Exception('Failed to delete category: ${response.data}');
+        }
+        print('Category deleted successfully');
+    }
 
-    // Future<Map<String, dynamic>> createSubfamily(Map<String, dynamic> subfamilyData) async {
-    //     print('Creating subfamily with data: $subfamilyData');
-    //     final url = Uri.parse('${APIS.baseUrl}${APIS.createCategories}');
-    //     final response = await http.post(
-    //         url,
-    //         headers: {
-    //             'Authorization': 'Bearer ${APIS.token}',
-    //             'Content-Type': 'application/json',
-    //         },
-    //         body: jsonEncode(subfamilyData),
-    //     );
-    //     print('Response status: ${response.statusCode}');
-    //     if (response.statusCode == 201 || response.statusCode == 200) {
-    //         print('Subfamily created successfully');
-    //         return jsonDecode(response.body);
-    //     } else {
-    //         print('Failed to create subfamily: ${response.body}');
-    //         throw Exception('Failed to create subfamily: ${response.body}');
-    //     }
-    // }
+    
 }

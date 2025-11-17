@@ -34,6 +34,156 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
   purchaseOrderController = Provider.of<PurchaseOrderController>(context, listen: false);
   }
 
+  void _editRequest() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Edit Request'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(decoration: const InputDecoration(labelText: 'Product')),
+              TextField(decoration: const InputDecoration(labelText: 'Quantity'), keyboardType: TextInputType.number),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _deleteRequest() {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.2),
+      builder: (context) => Dialog(
+        backgroundColor: const Color(0xFFF7F9FF),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxWidth: 340,
+            minWidth: 260,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "Delete Purchase",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  "Are you sure you want to delete ${widget.purchaseRequest.id ?? 'this purchase'}?",
+                  style: const TextStyle(fontSize: 16),
+                ),
+                const SizedBox(height: 28),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(color: Colors.deepPurple, fontSize: 16),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context, true);
+                        // Ajoute ici la logique de suppression si besoin
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text("Purchase deleted")),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFEF5350),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text('Delete', style: TextStyle(fontSize: 16)),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+//   void _showDeleteDialog(String userName) {
+//   showDialog(
+//     context: context,
+//     barrierColor: Colors.black.withOpacity(0.2),
+//     builder: (context) => Dialog(
+//       backgroundColor: const Color(0xF7F3F7FF),
+//       shape: RoundedRectangleBpurchaseRequest(bpurchaseRequestRadius: BpurchaseRequestRadius.circular(24)),
+//       child: ConstrainedBox(
+//         constraints: const BoxConstraints(
+//           maxWidth: 340,
+//           minWidth: 260,
+//         ),
+//         child: Padding(
+//           padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 28),
+//           child: Column(
+//             mainAxisSize: MainAxisSize.min,
+//             crossAxisAlignment: CrossAxisAlignment.start,
+//             children: [
+//               const Text(
+//                 "Delete User",
+//                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
+//               ),
+//               const SizedBox(height: 16),
+//               Text(
+//                 "Are you sure you want to delete $userName?",
+//                 style: const TextStyle(fontSize: 16),
+//               ),
+//               const SizedBox(height: 28),
+//               Row(
+//                 mainAxisAlignment: MainAxisAlignment.end,
+//                 children: [
+//                   TextButton(
+//                     onPressed: () => Navigator.pop(context, false),
+//                     child: const Text(
+//                       'Cancel',
+//                       style: TextStyle(color: Colors.deepPurple, fontSize: 16),
+//                     ),
+//                   ),
+//                   const SizedBox(width: 12),
+//                   ElevatedButton(
+//                     onPressed: () => Navigator.pop(context, true),
+//                     style: ElevatedButton.styleFrom(
+//                       backgroundColor: Colors.red,
+//                       foregroundColor: Colors.white,
+//                       padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 10),
+//                       shape: RoundedRectangleBpurchaseRequest(
+//                         bpurchaseRequestRadius: BpurchaseRequestRadius.circular(24),
+//                       ),
+//                       elevation: 0,
+//                     ),
+//                     child: const Text('Delete', style: TextStyle(fontSize: 16)),
+//                   ),
+//                 ],
+//               ),
+//             ],
+//           ),
+//         ),
+//       ),
+//     ),
+//   );
+// }
+
+
+
   @override
   Widget build(BuildContext context) {
   String formatDate(dynamic date) {
@@ -150,7 +300,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                         child: buildReadOnlyField('Status', _status ?? ''),
                       ),
                       const Spacer(),
-                      if (_showActionButtons && !isApproved && !isRejected && (userController.currentUser.role!.id == 1 || userController.currentUser.role!.id == 3))
+                      if (_showActionButtons && !isApproved && !isRejected && (userController.currentUser.role!.id == 1 || userController.currentUser.role!.id == 3 || userController.currentUser.role!.id == 4))
                         Row(
                           children: [
                             ElevatedButton(

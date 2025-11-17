@@ -39,80 +39,65 @@ class _SubfamiliesPageState extends State<SubfamiliesPage> {
 
     final res = await showDialog<Map<String, String>>(
       context: context,
-      builder: (context) { 
-        
-
-        return AlertDialog(
-        title: Text(sub == null ? 'Add Subfamily' : 'Edit Subfamily'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Name')),
-            const SizedBox(height: 8),
-            TextField(controller: descCtrl, decoration: const InputDecoration(labelText: 'Description')),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () async {
-              try {
-                print('aaaa');
-                   Category updatedFamily = Category(
-                      parentCategory: widget.family['id'],
-                      name: nameCtrl.text,
-                      description: descCtrl.text,
-                      creationDate:  DateTime.now(),
-                    );
-                    print('bbbb');
-                    print('Editing family with ID: ${updatedFamily.id}');
-                    //  await productController.createCategories(updatedFamily);
-                     print('cccc');
-                    // setState(() {
-                    //   families[index] = {
-                    //     'id': updatedFamily.id,
-                    //     'name': updatedFamily.name,
-                    //     'description': updatedFamily.description,
-                    //     'creationDate': updatedFamily.creationDate,
-                    //     'subfamilies': family['subfamilies'],
-                    //   };
-                    // });
-                 
-                    // print('Creating new family');
-                    // await productController.createCategories(updatedFamily);
-                    // setState(() {
-                    //   families.add({
-                    //     'id': updatedFamily.id,
-                    //     'name': updatedFamily.name,
-                    //     'description': updatedFamily.description,
-                    //     'creationDate': updatedFamily.creationDate,
-                    //     'subfamilies': [],
-                    //   });
-                    // });
-                  
-                  Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(  'Family created successfully!')),
-                  );
-                  print('dddd');
-                } catch (e) {
-                  print('Error occurred: $e');
-                  Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Failed to create family')),
-                  );
-                }
-            },
-            // Navigator.of(context).pop({
-            //   'name': nameCtrl.text,
-            //   'description': descCtrl.text,
-            //   'parent_category': widget.family['id'].toString(), // Correct key for parent category
-            // }),
-            child: const Text('Save'),
+      builder: (context) => Dialog(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 120, vertical: 24),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 560),
+          child: Container(
+            padding: const EdgeInsets.all(22),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF6EEF6),
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 12, offset: Offset(0, 6))],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(sub == null ? 'Add Subfamily' : 'Edit Subfamily', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: Color(0xFF2B2B2B))),
+                const SizedBox(height: 12),
+                TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Name', prefixIcon: Icon(Icons.label))),
+                const SizedBox(height: 8),
+                TextField(controller: descCtrl, decoration: const InputDecoration(labelText: 'Description', prefixIcon: Icon(Icons.description))),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+                    const SizedBox(width: 12),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF7C3AED),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                        elevation: 2,
+                      ),
+                      onPressed: () async {
+                        try {
+                          Category updatedFamily = Category(
+                            parentCategory: widget.family['id'],
+                            name: nameCtrl.text,
+                            description: descCtrl.text,
+                            creationDate: DateTime.now(),
+                          );
+                          await productController.createCategories(updatedFamily);
+                          Navigator.of(context).pop();
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Subfamily created successfully!')));
+                        } catch (e) {
+                          Navigator.of(context).pop();
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to create subfamily')));
+                        }
+                      },
+                      child: const Text('Save', style: TextStyle(color: Colors.white)),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ],
-      );
-  }
+        ),
+      ),
     );
 
     if (res != null) {
@@ -136,12 +121,12 @@ class _SubfamiliesPageState extends State<SubfamiliesPage> {
     }
   }
 
-  Future<void> _confirmDelete(int index) async {
+  Future<void> _confirmDelete(Map<String, dynamic> subfamily) async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Subfamily'),
-        content: Text('Delete "${(widget.family['subfamilies'] as List)[index]['name']}"?'),
+        content: Text('Delete "${subfamily['name']}"?'),
         actions: [
           TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
           ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Colors.red), onPressed: () => Navigator.of(context).pop(true), child: const Text('Delete')),
@@ -150,11 +135,21 @@ class _SubfamiliesPageState extends State<SubfamiliesPage> {
     );
 
     if (ok == true) {
-      setState(() {
-        (widget.family['subfamilies'] as List).removeAt(index);
-      });
-      widget.onUpdate?.call(widget.family);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Subfamily deleted')));
+      try {
+        final subfamilyId = subfamily['id']?.toString();
+        if (subfamilyId != null) {
+          await productController.deleteCategory(subfamilyId);
+          // Refresh the list after deletion
+          setState(() {
+            _subfamiliesFuture = productController.getCategories(widget.family['id']);
+          });
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Subfamily deleted successfully')));
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error: Subfamily ID not found')));
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to delete subfamily: $e')));
+      }
     }
   }
 
@@ -240,15 +235,62 @@ class _SubfamiliesPageState extends State<SubfamiliesPage> {
                           DataCell(Text(s['name'] ?? '')),
                           DataCell(Text(s['description'] ?? '')),
                           DataCell(Row(children: [
-                            IconButton(icon: const Icon(Icons.visibility, color: Colors.blue), onPressed: () {
-                              showDialog(context: context, builder: (context) => AlertDialog(
-                                title: Text(s['name']),
-                                content: Text(s['description'] ?? ''),
-                                actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Close'))],
-                              ));
-                            }),
+                            IconButton(
+                              icon: const Icon(Icons.visibility, color: Colors.blue),
+                              onPressed: () => showDialog<void>(
+                                context: context,
+                                builder: (context) => Dialog(
+                                  insetPadding: const EdgeInsets.symmetric(horizontal: 120, vertical: 24),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                                  child: ConstrainedBox(
+                                    constraints: const BoxConstraints(maxWidth: 520),
+                                    child: Container(
+                                      padding: const EdgeInsets.all(20),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFF6EEF6),
+                                        borderRadius: BorderRadius.circular(18),
+                                        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 12, offset: Offset(0, 6))],
+                                      ),
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(s['name'] ?? '', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: Color(0xFF2B2B2B))),
+                                          const SizedBox(height: 16),
+                                          Row(children: [
+                                            const Icon(Icons.label, color: Colors.deepPurple),
+                                            const SizedBox(width: 12),
+                                            Expanded(child: Text(s['description'] ?? '-', style: const TextStyle(fontSize: 14))),
+                                          ]),
+                                          const SizedBox(height: 12),
+                                          Row(children: [
+                                            const Icon(Icons.confirmation_number, color: Colors.deepPurple),
+                                            const SizedBox(width: 12),
+                                            Text('ID: ${s['id']?.toString() ?? '-'}', style: const TextStyle(fontSize: 14)),
+                                          ]),
+                                          const SizedBox(height: 18),
+                                          Align(
+                                            alignment: Alignment.centerRight,
+                                            child: ElevatedButton(
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: const Color(0xFF7C3AED),
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                                elevation: 2,
+                                              ),
+                                              onPressed: () => Navigator.of(context).pop(),
+                                              child: const Text('Back', style: TextStyle(color: Colors.white)),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
                             IconButton(icon: const Icon(Icons.edit, color: Colors.teal), onPressed: () => _addOrEdit(sub: s, index: i)),
-                            IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => _confirmDelete(i)),
+                            IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => _confirmDelete(s)),
                           ]))
                         ]);
                       }).toList(),
