@@ -187,6 +187,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                   if (shouldCreate == true) {
                                     widget.purchaseRequest.approvedBy=responseData['approved_by'];
                                     Map<String,dynamic> purchaseOrderData = {
+                                      'id':widget.purchaseRequest.id,
                                       'title': widget.purchaseRequest.title,
                                       'description': widget.purchaseRequest.description,
                                       'requested_by_user': widget.purchaseRequest.approvedBy,
