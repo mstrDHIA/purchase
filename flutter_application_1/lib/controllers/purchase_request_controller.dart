@@ -132,6 +132,20 @@ class PurchaseRequestController extends ChangeNotifier {
 
   static void updatePurchaseRequest(Map<String, Object?> updatePurchaseRequest) {}
 
+  Future<void> archivePurchaseRequest(dynamic id) async {
+    try {
+      isLoading = true;
+      notifyListeners();
+      final idInt = id is int ? id : int.parse(id.toString());
+      await _network.archivePurchaseRequest(idInt);
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+    }
+    isLoading = false;
+    notifyListeners();
+  }
+
   @override
   String toString() {
     return 'PurchaseRequestController(requests: $requests, isLoading: $isLoading, error: $_error)';

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
+import 'package:flutter_application_1/controllers/supplier_controller.dart';
 
 class ProductLine {
   String? product;
@@ -51,9 +52,8 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
   final TextEditingController dueDateController = TextEditingController();
   final TextEditingController supplierNameController = TextEditingController();
   String? selectedSupplier;
-  final List<String> suppliers = [
-    'HP', 'Dell', 'Lenovo', 'Logitech', 'Fournisseur A', 'Fournisseur B', 'Autre'
-  ];
+  late List<String> suppliers = [];
+  late SupplierController supplierController;
 
   bool _isSaving = false;
   String? supplierName;
@@ -61,6 +61,8 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
   @override
   void initState() {
     super.initState();
+    supplierController = Provider.of<SupplierController>(context, listen: false);
+    _fetchSuppliers();
     final initial = widget.initialOrder;
     if (initial.isNotEmpty) {
       // Correction : forcer la casse pour correspondre aux DropdownMenuItem
@@ -158,6 +160,22 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
         0,
         (sum, p) => sum + (p.unitPrice * p.quantity.toDouble()),
       );
+
+  Future<void> _fetchSuppliers() async {
+    try {
+      await supplierController.fetchSuppliers();
+      setState(() {
+        suppliers = supplierController.suppliers.map((s) => s.name).toList();
+        suppliers.add('Autre'); // Add "Other" option at the end
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to fetch suppliers: $e')),
+        );
+      }
+    }
+  }
 
   @override
   void dispose() {
