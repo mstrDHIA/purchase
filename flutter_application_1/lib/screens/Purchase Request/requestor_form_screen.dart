@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/controllers/purchase_request_controller.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
+import 'package:flutter_application_1/controllers/product_controller.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
@@ -17,13 +18,8 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
   final TextEditingController productController = TextEditingController();
   String? selectedFamily;
   String? selectedSubFamily;
-  // Example families and subfamilies
-  final Map<String, List<String>> productFamilies = {
-    'IT': ['Souris', 'Clavier', 'Écran', 'Ordinateur'],
-    'Mobilier': ['Chaise', 'Table', 'Armoire'],
-    'Papeterie': ['Stylo', 'Carnet', 'Feuille'],
-    'Autre': ['Autre'],
-  };
+  late Map<String, List<String>> dynamicProductFamilies = {};
+  late ProductController productControllerProvider;
   final TextEditingController quantityController = TextEditingController();
   final TextEditingController noteController = TextEditingController();
   final TextEditingController dueDateController = TextEditingController();
@@ -39,6 +35,8 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
   void initState() {
     super.initState();
     userController = Provider.of<UserController>(context, listen: false);
+    productControllerProvider = Provider.of<ProductController>(context, listen: false);
+    _fetchProductFamilies();
     if (widget.initialOrder.isNotEmpty) {
       productController.text = widget.initialOrder['product'] ?? '';
       quantityController.text = widget.initialOrder['quantity']?.toString() ?? '';
@@ -54,6 +52,37 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
       }
       if (selectedDueDate != null) {
         dueDateController.text = DateFormat('MMM dd, yyyy').format(selectedDueDate!);
+      }
+    }
+  }
+
+  Future<void> _fetchProductFamilies() async {
+    try {
+      final categories = await productControllerProvider.getCategories(null);
+      if (categories is List<dynamic>) {
+        final families = <String, List<String>>{};
+        final allCategories = categories.cast<Map<String, dynamic>>();
+        // Get all parent categories (families)
+        final parentCategories = allCategories.where((cat) => cat['parent_category'] == null).toList();
+        for (final family in parentCategories) {
+          final familyId = family['id'];
+          final familyName = family['name'] as String;
+          // Get all subfamilies for this family
+          final subfamilies = allCategories
+              .where((cat) => cat['parent_category'] == familyId)
+              .map((cat) => cat['name'] as String)
+              .toList();
+          families[familyName] = subfamilies.isNotEmpty ? subfamilies : [familyName];
+        }
+        setState(() {
+          dynamicProductFamilies = families;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to fetch product families: $e')),
+        );
       }
     }
   }
@@ -229,7 +258,7 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
                         filled: true,
                         fillColor: Colors.white,
                       ),
-                      items: productFamilies.keys
+                      items: dynamicProductFamilies.keys
                           .map((fam) => DropdownMenuItem(value: fam, child: Text(fam)))
                           .toList(),
                       onChanged: (val) {
@@ -252,7 +281,7 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
                       ),
                       items: selectedFamily == null
                           ? []
-                          : productFamilies[selectedFamily]!
+                          : dynamicProductFamilies[selectedFamily]!
                               .map((sub) => DropdownMenuItem(value: sub, child: Text(sub)))
                               .toList(),
                       onChanged: (val) {

@@ -81,76 +81,90 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
     await showDialog<void>(
       context: context,
       builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text(supplier == null ? 'Add Supplier' : 'Edit Supplier'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameCtrl,
-                  decoration: const InputDecoration(labelText: 'Name'),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: emailCtrl,
-                  decoration: const InputDecoration(labelText: 'Contact Email'),
-                ),
-              ],
+        builder: (context, setDialogState) => Dialog(
+          insetPadding: const EdgeInsets.symmetric(horizontal: 120, vertical: 24),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 560),
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF6EEF6),
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 12, offset: Offset(0, 6))],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(supplier == null ? 'Add Supplier' : 'Edit Supplier', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: Color(0xFF2B2B2B))),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: 480,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextField(
+                          controller: nameCtrl,
+                          decoration: const InputDecoration(labelText: 'Name', prefixIcon: Icon(Icons.person)),
+                          enabled: !isSubmitting,
+                        ),
+                        const SizedBox(height: 12),
+                        TextField(
+                          controller: emailCtrl,
+                          decoration: const InputDecoration(labelText: 'Contact Email', prefixIcon: Icon(Icons.mail)),
+                          enabled: !isSubmitting,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(onPressed: isSubmitting ? null : () => Navigator.of(context).pop(), child: const Text('Cancel')),
+                      const SizedBox(width: 12),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF7C3AED), padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24))),
+                        onPressed: isSubmitting
+                            ? null
+                            : () async {
+                                setDialogState(() => isSubmitting = true);
+                                try {
+                                  if (supplier != null && index != null) {
+                                    await controller.editSupplier(
+                                      id: supplier.id,
+                                      name: nameCtrl.text,
+                                      contactEmail: emailCtrl.text,
+                                    );
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Supplier updated successfully!')));
+                                    }
+                                  } else {
+                                    await controller.createSupplier(
+                                      name: nameCtrl.text,
+                                      contactEmail: emailCtrl.text,
+                                    );
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Supplier created successfully!')));
+                                    }
+                                  }
+                                  if (mounted) Navigator.of(context).pop();
+                                } catch (e) {
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+                                    setDialogState(() => isSubmitting = false);
+                                  }
+                                }
+                              },
+                        child: isSubmitting ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Save', style: TextStyle(color: Colors.white)),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: isSubmitting ? null : () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: isSubmitting
-                  ? null
-                  : () async {
-                      setDialogState(() => isSubmitting = true);
-                      try {
-                        if (supplier != null && index != null) {
-                          // Update existing supplier via controller
-                          await controller.editSupplier(
-                            id: supplier.id,
-                            name: nameCtrl.text,
-                            contactEmail: emailCtrl.text,
-                          );
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Supplier updated successfully!')),
-                            );
-                          }
-                        } else {
-                          // Create new supplier via controller
-                          await controller.createSupplier(
-                            name: nameCtrl.text,
-                            contactEmail: emailCtrl.text,
-                          );
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Supplier created successfully!')),
-                            );
-                          }
-                        }
-                        if (mounted) {
-                          Navigator.of(context).pop();
-                        }
-                      } catch (e) {
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Error: ${e.toString()}')),
-                          );
-                          setDialogState(() => isSubmitting = false);
-                        }
-                      }
-                    },
-              child: isSubmitting
-                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Text('Save'),
-            ),
-          ],
         ),
       ),
     );
@@ -369,7 +383,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.deepPurple),
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Back'),
+            child: const Text('Back',selectionColor: Colors.white,),
           ),
         ],
       ),
