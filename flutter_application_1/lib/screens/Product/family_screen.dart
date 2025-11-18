@@ -73,6 +73,9 @@ class _FamiliesPageState extends State<FamiliesPage> {
   bool _sortAsc = true;
   int? _minSubfamilies;
   int? _maxSubfamilies;
+  // Pagination
+  int _currentPage = 1;
+  final int _rowsPerPage = 10;
 
 
   void _sortByName(bool asc) {
@@ -287,6 +290,13 @@ class _FamiliesPageState extends State<FamiliesPage> {
       return true;
     }).toList();
 
+    // Pagination calculation
+    final totalPages = (filtered.isEmpty) ? 1 : (filtered.length / _rowsPerPage).ceil();
+    if (_currentPage > totalPages) _currentPage = totalPages;
+    final startIndex = (_currentPage - 1) * _rowsPerPage;
+    final endIndex = (startIndex + _rowsPerPage) > filtered.length ? filtered.length : (startIndex + _rowsPerPage);
+    final displayed = filtered.sublist(startIndex, endIndex);
+
     return Scaffold(
       body: Column(
         children: [
@@ -375,7 +385,11 @@ class _FamiliesPageState extends State<FamiliesPage> {
               child: _loading
                   ? const Center(child: CircularProgressIndicator())
                   : SingleChildScrollView(
-                      child: DataTable(
+                      child: Column(
+                        children: [
+                          SizedBox(
+                            width: double.infinity,
+                            child: DataTable(
                         sortColumnIndex: _sortIndex,
                         sortAscending: _sortAsc,
                         columns: [
@@ -392,7 +406,7 @@ class _FamiliesPageState extends State<FamiliesPage> {
                           const DataColumn(label: Text('Subfamilies')),
                           const DataColumn(label: Text('')),
                         ],
-                        rows: filtered.asMap().entries.map((entry) {
+                        rows: displayed.asMap().entries.map((entry) {
                           final fam = entry.value;
                           // if(fam['parent_category']!=null)
                           return DataRow(cells: [
@@ -425,7 +439,31 @@ class _FamiliesPageState extends State<FamiliesPage> {
                               ),
                             ]))
                           ]);
-                        }).toList(),
+                        }).toList(),                          )),
+                          // Pagination controls
+                          if (filtered.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 12.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.chevron_left),
+                                    onPressed: _currentPage > 1
+                                        ? () => setState(() => _currentPage--)
+                                        : null,
+                                  ),
+                                  Text('Page $_currentPage of $totalPages'),
+                                  IconButton(
+                                    icon: const Icon(Icons.chevron_right),
+                                    onPressed: _currentPage < totalPages
+                                        ? () => setState(() => _currentPage++)
+                                        : null,
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
                       ),
                     ),
             ),

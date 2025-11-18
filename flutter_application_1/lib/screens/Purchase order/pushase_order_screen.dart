@@ -345,188 +345,196 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
   Widget _buildFiltersRow() {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 12,
-        alignment: WrapAlignment.start,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Search bar
-          SizedBox(
-            width: 500,
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Search...',
-                prefixIcon: const Icon(Icons.search),
-                filled: true,
-                fillColor: const Color(0xFFF7F3FF),
-                contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  borderSide: BorderSide.none,
+          // Large search bar on the left (Expanded)
+          Expanded(
+            child: SizedBox(
+              height: 48,
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Search...',
+                  prefixIcon: const Icon(Icons.search),
+                  filled: true,
+                  fillColor: const Color(0xFFF7F3FF),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(22),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+                style: const TextStyle(color: Colors.deepPurple, fontSize: 16),
+                onChanged: (value) {
+                  setState(() {
+                    _searchText = value;
+                  });
+                },
+              ),
+            ),
+          ),
+          const SizedBox(width: 24),
+          // Filters on the right
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              // Filter by Priority
+              PopupMenuButton<String?>(
+                onSelected: (value) {
+                  setState(() {
+                    _priorityFilter = value;
+                  });
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(value: 'high', child: Text('high')),
+                  const PopupMenuItem(value: 'medium', child: Text('medium')),
+                  const PopupMenuItem(value: 'low', child: Text('low')),
+                  if (_priorityFilter != null)
+                    const PopupMenuItem(value: null, child: Text('Clear Priority')),
+                ],
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: const Color(0xFFF7F3FF),
+                    foregroundColor: Colors.deepPurple,
+                    side: BorderSide.none,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                    elevation: 0,
+                  ),
+                  onPressed: null,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _priorityFilter == null ? 'Priority' : 'Priority: $_priorityFilter',
+                        style: const TextStyle(
+                          color: Colors.deepPurple,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const Icon(Icons.arrow_drop_down, color: Colors.deepPurple),
+                    ],
+                  ),
                 ),
               ),
-              style: const TextStyle(color: Colors.deepPurple, fontSize: 16),
-              onChanged: (value) {
-                setState(() {
-                  _searchText = value;
-                });
-              },
-            ),
-          ),
-          // Filter by Priority
-          PopupMenuButton<String?>(
-            onSelected: (value) {
-              setState(() {
-                _priorityFilter = value;
-              });
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(value: 'high', child: Text('high')),
-              const PopupMenuItem(value: 'medium', child: Text('medium')),
-              const PopupMenuItem(value: 'low', child: Text('low')),
-              if (_priorityFilter != null)
-                const PopupMenuItem(value: null, child: Text('Clear Priority')),
-            ],
-            child: OutlinedButton(
-              style: OutlinedButton.styleFrom(
-                backgroundColor: const Color(0xFFF7F3FF),
-                foregroundColor: Colors.deepPurple,
-                side: BorderSide.none,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                elevation: 0,
-              ),
-              onPressed: null,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    _priorityFilter == null ? 'Priority' : 'Priority: $_priorityFilter',
-                    style: const TextStyle(
-                      color: Colors.deepPurple,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const Icon(Icons.arrow_drop_down, color: Colors.deepPurple),
+              // Filter by Status
+              PopupMenuButton<String?>(
+                onSelected: (value) {
+                  setState(() {
+                    _statusFilter = value;
+                  });
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(value: 'Pending', child: Text('Pending')),
+                  const PopupMenuItem(value: 'Approved', child: Text('Approved')),
+                  const PopupMenuItem(value: 'Rejected', child: Text('Rejected')),
+                  if (_statusFilter != null)
+                    const PopupMenuItem(value: null, child: Text('Clear Status')),
                 ],
-              ),
-            ),
-          ),
-          // Filter by Status
-          PopupMenuButton<String?>(
-            onSelected: (value) {
-              setState(() {
-                _statusFilter = value;
-              });
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(value: 'Pending', child: Text('Pending')),
-              const PopupMenuItem(value: 'Approved', child: Text('Approved')),
-              const PopupMenuItem(value: 'Rejected', child: Text('Rejected')),
-              if (_statusFilter != null)
-                const PopupMenuItem(value: null, child: Text('Clear Status')),
-            ],
-            child: OutlinedButton(
-              style: OutlinedButton.styleFrom(
-                backgroundColor: const Color(0xFFF7F3FF),
-                foregroundColor: Colors.deepPurple,
-                side: BorderSide.none,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                elevation: 0,
-              ),
-              onPressed: null,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    _statusFilter == null ? 'Status' : 'Status: $_statusFilter',
-                    style: const TextStyle(
-                      color: Colors.deepPurple,
-                      fontWeight: FontWeight.w500,
-                    ),
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: const Color(0xFFF7F3FF),
+                    foregroundColor: Colors.deepPurple,
+                    side: BorderSide.none,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                    elevation: 0,
                   ),
-                  const Icon(Icons.arrow_drop_down, color: Colors.deepPurple),
-                ],
+                  onPressed: null,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _statusFilter == null ? 'Status' : 'Status: $_statusFilter',
+                        style: const TextStyle(
+                          color: Colors.deepPurple,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const Icon(Icons.arrow_drop_down, color: Colors.deepPurple),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ),
-          // Filter by Submission Date
-          OutlinedButton(
-            style: OutlinedButton.styleFrom(
-              backgroundColor: const Color(0xFFF7F3FF),
-              foregroundColor: Colors.deepPurple,
-              side: BorderSide.none,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-              elevation: 0,
-            ),
-            onPressed: () => _selectDate(context, true),
-            child: Text(
-              _selectedSubmissionDate == null
-                  ? 'Submission Date'
-                  : '${_dateFormat.format(_selectedSubmissionDate!)}',
-              style: const TextStyle(
-                color: Colors.deepPurple,
-                fontWeight: FontWeight.w500,
+              // Filter by Submission Date
+              OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: const Color(0xFFF7F3FF),
+                  foregroundColor: Colors.deepPurple,
+                  side: BorderSide.none,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                  elevation: 0,
+                ),
+                onPressed: () => _selectDate(context, true),
+                child: Text(
+                  _selectedSubmissionDate == null
+                      ? 'Submission Date'
+                      : '${_dateFormat.format(_selectedSubmissionDate!)}',
+                  style: const TextStyle(
+                    color: Colors.deepPurple,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ),
-            ),
-          ),
-          // Filter by Due Date
-          OutlinedButton(
-            style: OutlinedButton.styleFrom(
-              backgroundColor: const Color(0xFFF7F3FF),
-              foregroundColor: Colors.deepPurple,
-              side: BorderSide.none,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-              elevation: 0,
-            ),
-            onPressed: () => _selectDate(context, false),
-            child: Text(
-              _selectedDueDate == null
-                  ? 'Due Date'
-                  : '${_dateFormat.format(_selectedDueDate!)}',
-              style: const TextStyle(
-                color: Colors.deepPurple,
-                fontWeight: FontWeight.w500,
+              // Filter by Due Date
+              OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: const Color(0xFFF7F3FF),
+                  foregroundColor: Colors.deepPurple,
+                  side: BorderSide.none,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                  elevation: 0,
+                ),
+                onPressed: () => _selectDate(context, false),
+                child: Text(
+                  _selectedDueDate == null
+                      ? 'Due Date'
+                      : '${_dateFormat.format(_selectedDueDate!)}',
+                  style: const TextStyle(
+                    color: Colors.deepPurple,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ),
-            ),
-          ),
-          // Show/Hide Archived
-          OutlinedButton.icon(
-            style: OutlinedButton.styleFrom(
-              backgroundColor: _showArchived ? const Color(0xFF6F4DBF) : const Color(0xFFF7F3FF),
-              foregroundColor: _showArchived ? Colors.white : Colors.deepPurple,
-              side: BorderSide.none,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-              elevation: 0,
-            ),
-            onPressed: () {
-              setState(() {
-                _showArchived = !_showArchived;
-              });
-            },
-            icon: const Icon(Icons.archive),
-            label: Text(
-              _showArchived ? 'Hide Archived' : 'Show Archived',
-              style: const TextStyle(
-                fontWeight: FontWeight.w500,
+              // Show/Hide Archived
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: _showArchived ? const Color(0xFF6F4DBF) : const Color(0xFFF7F3FF),
+                  foregroundColor: _showArchived ? Colors.white : Colors.deepPurple,
+                  side: BorderSide.none,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                  elevation: 0,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _showArchived = !_showArchived;
+                  });
+                },
+                icon: const Icon(Icons.archive),
+                label: Text(
+                  _showArchived ? 'Hide Archived' : 'Show Archived',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ),
-            ),
-          ),
-          // Clear Filters
-          TextButton(
-            onPressed: _clearFilters,
-            child: const Text(
-              'Clear Filters',
-              style: TextStyle(
-                color: Colors.deepPurple,
-                fontWeight: FontWeight.w500,
+              // Clear Filters
+              TextButton(
+                onPressed: _clearFilters,
+                child: const Text(
+                  'Clear Filters',
+                  style: TextStyle(
+                    color: Colors.deepPurple,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
         ],
       ),
