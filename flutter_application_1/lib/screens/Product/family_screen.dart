@@ -368,66 +368,70 @@ class _FamiliesPageState extends State<FamiliesPage> {
           const SizedBox(height: 12),
 
           Expanded(
-            child: Container(
-              width: double.infinity,
-              color: const Color(0xFFF7F4FA),
-              padding: const EdgeInsets.all(24),
-              child: _loading
-                  ? const Center(child: CircularProgressIndicator())
-                  : SingleChildScrollView(
-                      child: DataTable(
-                        sortColumnIndex: _sortIndex,
-                        sortAscending: _sortAsc,
-                        columns: [
-                          DataColumn(
-                            label: const Text('ID'),
-                            onSort: (i, asc) => _sortById(asc),
-                          ),
-                          DataColumn(
-                            label: const Text('Family'),
-                            onSort: (i, asc) => _sortByName(asc),
-                          ),
-                          const DataColumn(label: Text('Description')),
-                          const DataColumn(label: Text('Created')),
-                          const DataColumn(label: Text('Subfamilies')),
-                          const DataColumn(label: Text('')),
-                        ],
-                        rows: filtered.asMap().entries.map((entry) {
-                          final fam = entry.value;
-                          // if(fam['parent_category']!=null)
-                          return DataRow(cells: [
-                            DataCell(Text(fam['id']?.toString() ?? '')),
-                            DataCell(Text(fam['name'] ?? '')),
-                            DataCell(Text(fam['description'] ?? '')),
-                            DataCell(Text(fam['creationDate'] is DateTime
-                                ? (fam['creationDate'] as DateTime).toIso8601String().substring(0, 10)
-                                : fam['creationDate']?.toString() ?? '')),
-                            DataCell(Text((fam['subfamilies'] is List)
-                                ? (fam['subfamilies'] as List).length.toString()
-                                : '0')),
-                            DataCell(Row(children: [
-                              IconButton(
-                                icon: const Icon(Icons.visibility, color: Colors.blue),
-                                tooltip: 'View Subfamilies',
-                                onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => SubfamiliesPage(family: fam, onUpdate: (updated) {
-                                  setState(() {});
-                                })) ),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.edit, color: Colors.teal),
-                                tooltip: 'Edit Family',
-                                onPressed: () => _showEditDialog(family: fam, index: families.indexOf(fam)),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.red),
-                                tooltip: 'Delete Family',
-                                onPressed: () => _confirmDelete(families.indexOf(fam)),
-                              ),
-                            ]))
-                          ]);
-                        }).toList(),
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Container(
+                width: double.infinity,
+                color: const Color(0xFFF7F4FA),
+                // padding: const EdgeInsets.all(24),
+                child: _loading
+                    ? const Center(child: CircularProgressIndicator())
+                    : SingleChildScrollView(
+                        child: DataTable(
+                          
+                          sortColumnIndex: _sortIndex,
+                          sortAscending: _sortAsc,
+                          columns: [
+                            DataColumn(
+                              label: const Text('ID'),
+                              onSort: (i, asc) => _sortById(asc),
+                            ),
+                            DataColumn(
+                              label: const Text('Family'),
+                              onSort: (i, asc) => _sortByName(asc),
+                            ),
+                            const DataColumn(label: Text('Description')),
+                            const DataColumn(label: Text('Created')),
+                            const DataColumn(label: Text('Subfamilies')),
+                            const DataColumn(label: Text('')),
+                          ],
+                          rows: filtered.asMap().entries.map((entry) {
+                            final fam = entry.value;
+                            // if(fam['parent_category']!=null)
+                            return DataRow(cells: [
+                              DataCell(Text(fam['id']?.toString() ?? '')),
+                              DataCell(Text(fam['name'] ?? '')),
+                              DataCell(Text(fam['description'] ?? '')),
+                              DataCell(Text(fam['creationDate'] is DateTime
+                                  ? (fam['creationDate'] as DateTime).toIso8601String().substring(0, 10)
+                                  : fam['creationDate']?.toString() ?? '')),
+                              DataCell(Text((fam['subfamilies'] is List)
+                                  ? (fam['subfamilies'] as List).length.toString()
+                                  : '0')),
+                              DataCell(Row(children: [
+                                IconButton(
+                                  icon: const Icon(Icons.visibility, color: Colors.blue),
+                                  tooltip: 'View Subfamilies',
+                                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => SubfamiliesPage(family: fam, onUpdate: (updated) {
+                                    setState(() {});
+                                  })) ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.edit, color: Colors.teal),
+                                  tooltip: 'Edit Family',
+                                  onPressed: () => _showEditDialog(family: fam, index: families.indexOf(fam)),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete, color: Colors.red),
+                                  tooltip: 'Delete Family',
+                                  onPressed: () => _confirmDelete(families.indexOf(fam)),
+                                ),
+                              ]))
+                            ]);
+                          }).toList(),
+                        ),
                       ),
-                    ),
+              ),
             ),
           ),
         ],
