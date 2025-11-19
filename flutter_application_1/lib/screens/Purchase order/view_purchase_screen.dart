@@ -199,7 +199,9 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                 final totalPrice = unitPrice * quantity;
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 12.0),
-                  child: Row(
+                  child: 
+                  (MediaQuery.of(context).size.width > 600)?
+                  Row(
                     children: [
                       Expanded(
                         flex: 2,
@@ -311,7 +313,151 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                         ),
                       ),
                     ],
-                  ),
+                  ):
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 4,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Column(
+                        children: [
+                          // Container(
+                          //     height: MediaQuery.of(context).size.height * 0.3,
+                          //     width: MediaQuery.of(context).size.width,
+                          //     child: TextField(
+                          //       controller: TextEditingController(text: prod.product ?? '-'),
+                          //       readOnly: true,
+                          //       decoration: InputDecoration(
+                          //         labelText: 'Product',
+                          //         filled: true,
+                          //         fillColor: Colors.white,
+                          //         enabledBorder: OutlineInputBorder(
+                          //           borderSide: const BorderSide(color: Colors.black87),
+                          //           borderRadius: BorderRadius.circular(12),
+                          //         ),
+                          //         focusedBorder: OutlineInputBorder(
+                          //           borderSide: const BorderSide(color: Colors.deepPurple),
+                          //           borderRadius: BorderRadius.circular(12),
+                          //         ),
+                          //         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          //       ),
+                          //     ),
+                          //   ),
+                          // Text('aaaaa')
+                      
+                      
+                      
+                          Container(
+                            // height: MediaQuery.of(context).size.height * 0.3,
+                            width: MediaQuery.of(context).size.width,
+                            child: TextField(
+                              controller: TextEditingController(text: prod.product ?? '-'),
+                              readOnly: true,
+                              decoration: InputDecoration(
+                                labelText: 'Product',
+                                filled: true,
+                                fillColor: Colors.white,
+                                enabledBorder: OutlineInputBorder(
+                                  borderSide: const BorderSide(color: Colors.black87),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderSide: const BorderSide(color: Colors.deepPurple),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: TextEditingController(text: (prod.brand ?? '').toString()),
+                            readOnly: true,
+                            decoration: InputDecoration(
+                              labelText: 'Brand',
+                              filled: true,
+                              fillColor: Colors.white,
+                              enabledBorder: OutlineInputBorder(
+                                borderSide: const BorderSide(color: Colors.black87),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: const BorderSide(color: Colors.deepPurple),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: TextEditingController(text: quantity.toString()),
+                            readOnly: true,
+                            decoration: InputDecoration(
+                              labelText: 'Quantity',
+                              filled: true,
+                              fillColor: Colors.white,
+                              enabledBorder: OutlineInputBorder(
+                                borderSide: const BorderSide(color: Colors.black87),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: const BorderSide(color: Colors.deepPurple),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: TextEditingController(text: unitPrice.toStringAsFixed(2)),
+                            readOnly: true,
+                            decoration: InputDecoration(
+                              labelText: 'Unit Price',
+                              filled: true,
+                              fillColor: Colors.white,
+                              enabledBorder: OutlineInputBorder(
+                                borderSide: const BorderSide(color: Colors.black87),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: const BorderSide(color: Colors.deepPurple),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: TextEditingController(text: totalPrice.toStringAsFixed(2)),
+                            readOnly: true,
+                            decoration: InputDecoration(
+                              labelText: 'Total Price',
+                              filled: true,
+                              fillColor: Colors.white,
+                              enabledBorder: OutlineInputBorder(
+                                borderSide: const BorderSide(color: Colors.black87),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: const BorderSide(color: Colors.deepPurple),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
                 );
               }),
               const SizedBox(height: 24),

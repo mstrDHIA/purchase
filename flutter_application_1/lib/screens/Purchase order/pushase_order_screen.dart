@@ -244,12 +244,14 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                           ListView.builder(itemBuilder:  (context,index){
                             final order = filteredOrders[index];
                             return Card(
+
                               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 side: BorderSide(color: Colors.grey.shade300),
                               ),
                               child: ListTile(
+                                onTap: () => viewPurchaseOrder(order),
                                 contentPadding: const EdgeInsets.all(16),
                                 title: Text('PO #${order['id']}', style: const TextStyle(fontWeight: FontWeight.bold)),
                                 subtitle: Column(
@@ -268,7 +270,11 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                                   onSelected: (value) {
                                   },
                                   itemBuilder: (context) => [
-                                    const PopupMenuItem(value: 'view', child: Text('View')),
+                                     PopupMenuItem(
+                                      onTap: () {
+                                        viewPurchaseOrder(order);
+                                      },
+                                      value: 'view', child: Text('View')),
                                     const PopupMenuItem(value: 'edit', child: Text('Edit')),
                                     const PopupMenuItem(value: 'delete', child: Text('Delete')),
                                   ],
@@ -547,6 +553,8 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
     // Toujours rafraîchir la liste après retour de la page détail
     Provider.of<PurchaseOrderController>(context, listen: false).fetchOrders();
   }
+
+
   void editPurchaseOrder(Map<String, dynamic> order) async {
     // Navigation vers la page d'édition dédiée
     final controller = Provider.of<PurchaseOrderController>(context, listen: false);
