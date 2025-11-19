@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/Settings/settings_screen.dart';
+import 'package:flutter_application_1/controllers/locale_controller.dart';
 import 'package:flutter_application_1/controllers/product_controller.dart';
 import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
 import 'package:flutter_application_1/controllers/purchase_request_controller.dart';
@@ -10,7 +11,7 @@ import 'package:flutter_application_1/controllers/role_controller.dart';
 import 'package:flutter_application_1/providers/theme_provider.dart';
 import 'package:flutter_application_1/screens/Dashboard/dashboard_screen.dart' as dashboard;
 import 'package:flutter_application_1/screens/Product/family_screen.dart';
-import 'package:flutter_application_1/screens/Product/product_screen.dart';
+// import 'package:flutter_application_1/screens/Product/product_screen.dart';
 import 'package:flutter_application_1/screens/Purchase%20Request/purchase_request_list_screen.dart' as requestor_order;
 import 'package:flutter_application_1/screens/Purchase%20order/pushase_order_screen.dart';
 import 'package:flutter_application_1/screens/Supplier/Supplier_registration_screen.dart';
@@ -25,18 +26,36 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import '../l10n/app_localizations.dart';
 import 'widgets/sidebar.dart';
 
-class LocaleProvider extends ChangeNotifier {
-  Locale _locale = const Locale('fr');
-  Locale get locale => _locale;
-  void setLocale(Locale locale) {
-    _locale = locale;
-    notifyListeners();
-  }
-}
 
 void main() {
   runApp(
-    MultiProvider(
+    const MyApp(),
+    // MultiProvider(
+    //   providers: [
+    //     ChangeNotifierProvider(create: (_) => ThemeProvider()), 
+    //     ChangeNotifierProvider(create: (_) => UserController()),
+    //     ChangeNotifierProvider(create: (_) => RoleController()),
+    //     ChangeNotifierProvider(create: (_) => SupplierController()),
+    //     ChangeNotifierProvider(create: (context) => PurchaseRequestController(context)),
+    //     ChangeNotifierProvider(create: (context) => PurchaseOrderController()),
+    //     ChangeNotifierProvider(create: (context) => ProductController()),
+    //     // ChangeNotifierProvider(create: (_) => ProductController()),
+    //     ChangeNotifierProvider(create: (_) => LocaleProvider()),
+    //   ],
+    //   child: const MyApp(),
+    // ),
+  );
+}
+
+
+
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()), 
         ChangeNotifierProvider(create: (_) => UserController()),
@@ -48,35 +67,66 @@ void main() {
         // ChangeNotifierProvider(create: (_) => ProductController()),
         ChangeNotifierProvider(create: (_) => LocaleProvider()),
       ],
-      child: const MyApp(),
-    ),
-  );
+        child: HomeScreen(),
+        // MaterialApp.router(
+        //   title: 'Purchase Requestor',
+        //   debugShowCheckedModeBanner: false,
+        //   theme: Provider.of<ThemeProvider>(context).currentTheme,
+        //   localizationsDelegates: [
+        //     AppLocalizations.delegate,
+        //     GlobalMaterialLocalizations.delegate,
+        //     GlobalWidgetsLocalizations.delegate,
+        //     GlobalCupertinoLocalizations.delegate,
+        //   ],
+        //   supportedLocales: const [
+        //     Locale('en'),
+        //     Locale('fr'),
+        //     Locale('ar'),
+        //   ],
+        //   locale: localeProvider.locale,
+        //   routerConfig: router,
+        // ),
+      
+    );
+  }
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class HomeScreen extends StatefulWidget{
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
 
+class _HomeScreenState extends State<HomeScreen> {
+  late LocaleProvider localeProvider;
+  @override
+  void initState() {
+     localeProvider = Provider.of<LocaleProvider>(context,listen: false);
+    // TODO: implement initState
+    super.initState();
+  }
+  
   @override
   Widget build(BuildContext context) {
-    final localeProvider = Provider.of<LocaleProvider>(context);
     return MaterialApp.router(
-      title: 'Purchase Requestor',
-      debugShowCheckedModeBanner: false,
-      theme: Provider.of<ThemeProvider>(context).currentTheme,
-      localizationsDelegates: [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [
-        Locale('en'),
-        Locale('fr'),
-        Locale('ar'),
-      ],
-      locale: localeProvider.locale,
-      routerConfig: router,
-    );
+          title: 'Purchase Requestor',
+          debugShowCheckedModeBanner: false,
+          theme: Provider.of<ThemeProvider>(context).currentTheme,
+          localizationsDelegates: [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [
+            Locale('en'),
+            Locale('fr'),
+            Locale('ar'),
+          ],
+          locale: localeProvider.locale,
+          routerConfig: router,
+        );
+    // TODO: implement build
+    throw UnimplementedError();
   }
 }
 
@@ -127,7 +177,7 @@ class _MainScreenState extends State<MainScreen> {
 
     //temporary fix to ensure user is logged in
     if(userController.currentUserId == null) {
-      userController.login('admin', 'admin',context);
+      userController.login('admin', 'admin',context, null);
     }
     super.initState();
   }

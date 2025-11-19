@@ -124,25 +124,30 @@ class _AppSidebarState extends State<AppSidebar> {
       // {'label': 'Home', 'icon': Icons.home},
       // {'label': 'Dashboard', 'icon': Icons.dashboard},
       // {'label': 'Profile', 'icon': Icons.account_circle},
-      {'label': 'Users', 'icon': Icons.people},
-      {'label': 'Password', 'icon': Icons.lock},
+      
+      
       {'label': 'PurchaseRequest', 'icon': Icons.note_add},
       {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
-      {'label': 'Roles and access', 'icon': Icons.security},
-      // {'label': 'Support centre', 'icon': Icons.help},
-      {'label': 'Settings', 'icon': Icons.settings},
       {'label': 'Supplier', 'icon': Icons.store},
       {'label': 'Product', 'icon': Icons.production_quantity_limits},
+      {'label': 'Users', 'icon': Icons.people},
+      {'label': 'Roles and access', 'icon': Icons.security},
+      {'label': 'Password', 'icon': Icons.lock},
+      // {'label': 'Support centre', 'icon': Icons.help},
+      
+      
+      {'label': 'Settings', 'icon': Icons.settings},
     ]);
     }
     else if(userController.currentUser.role_id==2){
       items.addAll([
       // {'label': 'Home', 'icon': Icons.home},
       // {'label': 'Dashboard', 'icon': Icons.dashboard},
+      {'label': 'PurchaseRequest', 'icon': Icons.note_add},
       {'label': 'Profile', 'icon': Icons.account_circle},
       // {'label': 'Users', 'icon': Icons.people},
       {'label': 'Password', 'icon': Icons.lock},
-      {'label': 'PurchaseRequest', 'icon': Icons.note_add},
+      
       // {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
       // {'label': 'Support centre', 'icon': Icons.help},
       {'label': 'Settings', 'icon': Icons.settings},
@@ -152,10 +157,11 @@ class _AppSidebarState extends State<AppSidebar> {
       items.addAll([
       // {'label': 'Home', 'icon': Icons.home},
       // {'label': 'Dashboard', 'icon': Icons.dashboard},
+      {'label': 'PurchaseRequest', 'icon': Icons.note_add},
       {'label': 'Profile', 'icon': Icons.account_circle},
       // {'label': 'Users', 'icon': Icons.people},
       {'label': 'Password', 'icon': Icons.lock},
-      {'label': 'PurchaseRequest', 'icon': Icons.note_add},
+      
       // {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
       // {'label': 'Support centre', 'icon': Icons.help},
       {'label': 'Settings', 'icon': Icons.settings},
@@ -165,11 +171,12 @@ class _AppSidebarState extends State<AppSidebar> {
       items.addAll([
       // {'label': 'Home', 'icon': Icons.home},
       // {'label': 'Dashboard', 'icon': Icons.dashboard},
+      {'label': 'PurchaseRequest', 'icon': Icons.note_add},
+      {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
       {'label': 'Profile', 'icon': Icons.account_circle},
       // {'label': 'Users', 'icon': Icons.people},
       {'label': 'Password', 'icon': Icons.lock},
-      {'label': 'PurchaseRequest', 'icon': Icons.note_add},
-      {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
+      
       // {'label': 'Support centre', 'icon': Icons.help},
       {'label': 'Settings', 'icon': Icons.settings},
     ]);
@@ -177,13 +184,14 @@ class _AppSidebarState extends State<AppSidebar> {
     }
     else if((userController.currentUser.role_id==6)){
       items.addAll([
+        {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
       // {'label': 'Home', 'icon': Icons.home},
       // {'label': 'Dashboard', 'icon': Icons.dashboard},
       {'label': 'Profile', 'icon': Icons.account_circle},
       // {'label': 'Users', 'icon': Icons.people},
       {'label': 'Password', 'icon': Icons.lock},
       // {'label': 'PurchaseRequest', 'icon': Icons.note_add},
-      {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
+      
       // {'label': 'Support centre', 'icon': Icons.help},
       {'label': 'Settings', 'icon': Icons.settings},
     ]);

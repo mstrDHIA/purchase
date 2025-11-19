@@ -259,6 +259,7 @@ class _SignUpPageState extends State<SignUpPage> {
                                    _emailController.text,
                                    _passwordController.text,
                                    context,
+                                  //  _formKey
                                 );
                               // }
                                 // _validateForm();
