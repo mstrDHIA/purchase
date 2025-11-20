@@ -131,7 +131,7 @@ class PurchaseRequestDataSource extends DataTableSource {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: const Icon(Icons.remove_red_eye_outlined, size: 20),
+              icon: const Icon(Icons.remove_red_eye_outlined, size: 28),
               padding: const EdgeInsets.all(8),
               constraints: const BoxConstraints(),
               onPressed: () async {
@@ -148,7 +148,7 @@ class PurchaseRequestDataSource extends DataTableSource {
               tooltip: 'View',
             ),
             IconButton(
-              icon: const Icon(Icons.edit_outlined, size: 20),
+              icon: const Icon(Icons.edit_outlined, size: 25),
               padding: const EdgeInsets.all(8),
               constraints: const BoxConstraints(),
               onPressed: () async {
@@ -181,7 +181,7 @@ class PurchaseRequestDataSource extends DataTableSource {
               tooltip: 'Edit',
             ),
               IconButton(
-                icon: const Icon(Icons.archive_outlined, size: 20),
+                icon: const Icon(Icons.archive_outlined, size: 25),
                 padding: const EdgeInsets.all(8),
                 constraints: const BoxConstraints(),
                 onPressed: () async {
@@ -230,7 +230,7 @@ class PurchaseRequestDataSource extends DataTableSource {
                 tooltip: 'Archive',
               ),
             IconButton(
-              icon: const Icon(Icons.delete_outline, size: 20),
+              icon: const Icon(Icons.delete_outline, size: 25),
               padding: const EdgeInsets.all(8),
               constraints: const BoxConstraints(),
               color: Colors.black,
