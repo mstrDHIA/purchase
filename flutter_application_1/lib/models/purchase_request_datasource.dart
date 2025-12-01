@@ -180,55 +180,111 @@ class PurchaseRequestDataSource extends DataTableSource {
               },
               tooltip: 'Edit',
             ),
-              IconButton(
-                icon: const Icon(Icons.archive_outlined, size: 25),
-                padding: const EdgeInsets.all(8),
-                constraints: const BoxConstraints(),
-                onPressed: () async {
-                  final bool? confirmed = await showDialog<bool>(
-                    context: context,
-                    barrierColor: Colors.black.withOpacity(0.2),
-                    builder: (context) => Dialog(
-                      backgroundColor: const Color(0xF7F3F7FF),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 340, minWidth: 260),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text('Archive Purchase Request', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22)),
-                              const SizedBox(height: 16),
-                              Text('Are you sure you want to archive request ${request.id}?', style: const TextStyle(fontSize: 16)),
-                              const SizedBox(height: 28),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
+            Builder(
+              builder: (cellContext) {
+                final bool isArchived = request.isArchived ?? false;
+                if (isArchived) {
+                  return IconButton(
+                    icon: const Icon(Icons.restore_outlined, size: 25),
+                    padding: const EdgeInsets.all(8),
+                    constraints: const BoxConstraints(),
+                    onPressed: () async {
+                      final bool? confirmed = await showDialog<bool>(
+                        context: cellContext,
+                        barrierColor: Colors.black.withOpacity(0.2),
+                        builder: (context) => Dialog(
+                          backgroundColor: const Color(0xF7F3F7FF),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 340, minWidth: 260),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel', style: TextStyle(color: Colors.deepPurple, fontSize: 16))),
-                                  const SizedBox(width: 12),
-                                  ElevatedButton(onPressed: () => Navigator.pop(context, true), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF7C3AED), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 10), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)), elevation: 0), child: const Text('Archive', style: TextStyle(fontSize: 16))),
+                                  const Text('Unarchive Purchase Request', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22)),
+                                  const SizedBox(height: 16),
+                                  Text('Are you sure you want to unarchive request ${request.id}?', style: const TextStyle(fontSize: 16)),
+                                  const SizedBox(height: 28),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel', style: TextStyle(color: Colors.deepPurple, fontSize: 16))),
+                                      const SizedBox(width: 12),
+                                      ElevatedButton(onPressed: () => Navigator.pop(context, true), style: ElevatedButton.styleFrom(backgroundColor: Colors.green, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 10), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)), elevation: 0), child: const Text('Unarchive', style: TextStyle(fontSize: 16))),
+                                    ],
+                                  ),
                                 ],
                               ),
-                            ],
+                            ),
+                          ),
+                        ),
+                      );
+                      if (confirmed == true) {
+                        try {
+                          await Provider.of<PurchaseRequestController>(cellContext, listen: false).unarchivePurchaseRequest(request.id!);
+                          await Provider.of<PurchaseRequestController>(cellContext, listen: false).fetchRequests(cellContext, Provider.of<UserController>(cellContext, listen: false).currentUser);
+                          ScaffoldMessenger.of(cellContext).showSnackBar(SnackBar(shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(8))), backgroundColor: Colors.green, content: Text('Purchase request ${request.id} unarchived')));
+                        } catch (e) {
+                          ScaffoldMessenger.of(cellContext).showSnackBar(SnackBar(shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(8))), backgroundColor: Colors.red, content: Text('Failed to unarchive purchase request: $e')));
+                        }
+                      }
+                    },
+                    tooltip: 'Unarchive',
+                  );
+                }
+                return IconButton(
+                  icon: const Icon(Icons.archive_outlined, size: 25),
+                  padding: const EdgeInsets.all(8),
+                  constraints: const BoxConstraints(),
+                  onPressed: () async {
+                    final bool? confirmed = await showDialog<bool>(
+                      context: cellContext,
+                      barrierColor: Colors.black.withOpacity(0.2),
+                      builder: (context) => Dialog(
+                        backgroundColor: const Color(0xF7F3F7FF),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 340, minWidth: 260),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Archive Purchase Request', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22)),
+                                const SizedBox(height: 16),
+                                Text('Are you sure you want to archive request ${request.id}?', style: const TextStyle(fontSize: 16)),
+                                const SizedBox(height: 28),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel', style: TextStyle(color: Colors.deepPurple, fontSize: 16))),
+                                    const SizedBox(width: 12),
+                                    ElevatedButton(onPressed: () => Navigator.pop(context, true), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF7C3AED), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 10), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)), elevation: 0), child: const Text('Archive', style: TextStyle(fontSize: 16))),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  );
-                  if (confirmed == true) {
-                    try {
-                      await Provider.of<PurchaseRequestController>(context, listen: false).archivePurchaseRequest(request.id!);
-                      await Provider.of<PurchaseRequestController>(context, listen: false).fetchRequests(context, Provider.of<UserController>(context, listen: false).currentUser);
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(8))), backgroundColor: const Color(0xFF7C3AED), content: Text('Purchase request ${request.id} archived')));
-                    } catch (e) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(8))), backgroundColor: Colors.red, content: Text('Failed to archive purchase request: $e')));
+                    );
+                    if (confirmed == true) {
+                      try {
+                        await Provider.of<PurchaseRequestController>(cellContext, listen: false).archivePurchaseRequest(request.id!);
+                        await Provider.of<PurchaseRequestController>(cellContext, listen: false).fetchRequests(cellContext, Provider.of<UserController>(cellContext, listen: false).currentUser);
+                        ScaffoldMessenger.of(cellContext).showSnackBar(SnackBar(shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(8))), backgroundColor: const Color(0xFF7C3AED), content: Text('Purchase request ${request.id} archived')));
+                      } catch (e) {
+                        ScaffoldMessenger.of(cellContext).showSnackBar(SnackBar(shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(8))), backgroundColor: Colors.red, content: Text('Failed to archive purchase request: $e')));
+                      }
                     }
-                  }
-                },
-                tooltip: 'Archive',
-              ),
+                  },
+                  tooltip: 'Archive',
+                );
+              },
+            ),
             IconButton(
               icon: const Icon(Icons.delete_outline, size: 25),
               padding: const EdgeInsets.all(8),

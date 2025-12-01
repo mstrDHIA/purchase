@@ -70,4 +70,19 @@ class PurchaseOrderController extends ChangeNotifier {
 		_isLoading = false;
 		notifyListeners();
 	}
+
+	Future<void> unarchivePurchaseOrder(dynamic id) async {
+		try {
+			_isLoading = true;
+			notifyListeners();
+			final idInt = id is int ? id : int.parse(id.toString());
+			await _network.unarchivePurchaseOrder(idInt);
+			await fetchOrders();
+		} catch (e) {
+			_error = e.toString();
+			notifyListeners();
+		}
+		_isLoading = false;
+		notifyListeners();
+	}
 }

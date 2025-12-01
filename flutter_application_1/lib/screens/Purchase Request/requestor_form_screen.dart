@@ -317,9 +317,16 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  IconButton(
-                    icon: const Icon(Icons.add_circle, color: Colors.green, size: 28),
+                  ElevatedButton.icon(
                     onPressed: _addProduct,
+                    icon: const Icon(Icons.add, color: Colors.white),
+                    label: const Text('Add Product', style: TextStyle(color: Colors.white)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      elevation: 0,
+                    ),
                   ),
                 ],
               ),
@@ -419,20 +426,20 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () => _save(addAnother: true),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF7B61FF),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: const Text('Save & add another', style: TextStyle(fontSize: 16, color: Colors.white)),
-                    ),
-                  ),
+                  // Expanded(
+                  //   child: ElevatedButton(
+                  //     onPressed: () => _save(addAnother: true),
+                  //     style: ElevatedButton.styleFrom(
+                  //       backgroundColor: const Color(0xFF7B61FF),
+                  //       padding: const EdgeInsets.symmetric(vertical: 16),
+                  //       shape: RoundedRectangleBorder(
+                  //         borderRadius: BorderRadius.circular(8),
+                  //       ),
+                  //       elevation: 0,
+                  //     ),
+                  //     child: const Text('Save & add another', style: TextStyle(fontSize: 16, color: Colors.white)),
+                  //   ),
+                  // ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: OutlinedButton(

@@ -146,6 +146,21 @@ class PurchaseRequestController extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> unarchivePurchaseRequest(dynamic id) async {
+    try {
+      isLoading = true;
+      notifyListeners();
+      final idInt = id is int ? id : int.parse(id.toString());
+      await _network.unarchivePurchaseRequest(idInt);
+      // After unarchiving, refresh list if needed by caller
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+    }
+    isLoading = false;
+    notifyListeners();
+  }
+
   @override
   String toString() {
     return 'PurchaseRequestController(requests: $requests, isLoading: $isLoading, error: $_error)';

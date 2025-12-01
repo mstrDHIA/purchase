@@ -113,10 +113,10 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              PopupMenuButton<String?>(
-                onSelected: (value) { setState(() { _priorityFilter = value; }); },
+              PopupMenuButton<String>(
+                onSelected: (value) { setState(() { _priorityFilter = value.isEmpty ? null : value; }); },
                 itemBuilder: (context) => [
-                  const PopupMenuItem(value: null, child: Text('All')),
+                  const PopupMenuItem(value: '', child: Text('All')),
                   ..._priorityOptions.map((p) => PopupMenuItem(value: p, child: Text(p[0].toUpperCase() + p.substring(1)))),
                 ],
                 child: OutlinedButton(
@@ -141,10 +141,10 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                   ),
                 ),
               ),
-              PopupMenuButton<String?>(
-                onSelected: (value) { setState(() { _statusFilter = value; }); },
+              PopupMenuButton<String>(
+                onSelected: (value) { setState(() { _statusFilter = value.isEmpty ? null : value; }); },
                 itemBuilder: (context) => [
-                  const PopupMenuItem(value: null, child: Text('All')),
+                  const PopupMenuItem(value: '', child: Text('All')),
                   ..._statusOptions.map((s) => PopupMenuItem(value: s, child: Text(s[0].toUpperCase() + s.substring(1)))),
                 ],
                 child: OutlinedButton(

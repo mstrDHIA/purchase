@@ -233,6 +233,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
           onEdit: editPurchaseOrder,
           onDelete: deletePurchaseOrder,
           onArchive: archivePurchaseOrder,
+          onUnarchive: unarchivePurchaseOrder,
         );
         return Scaffold(
           appBar: AppBar(
@@ -381,18 +382,17 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
             runSpacing: 8,
             children: [
               // Filter by Priority
-              PopupMenuButton<String?>(
+              PopupMenuButton<String>(
                 onSelected: (value) {
                   setState(() {
-                    _priorityFilter = value;
+                    _priorityFilter = value.isEmpty ? null : value;
                   });
                 },
                 itemBuilder: (context) => [
+                  const PopupMenuItem(value: '', child: Text('All')),
                   const PopupMenuItem(value: 'high', child: Text('high')),
                   const PopupMenuItem(value: 'medium', child: Text('medium')),
                   const PopupMenuItem(value: 'low', child: Text('low')),
-                  if (_priorityFilter != null)
-                    const PopupMenuItem(value: null, child: Text('Clear Priority')),
                 ],
                 child: OutlinedButton(
                   style: OutlinedButton.styleFrom(
@@ -408,7 +408,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        _priorityFilter == null ? 'Priority' : 'Priority: $_priorityFilter',
+                        _priorityFilter == null ? 'Priority' : 'Priority: ${_priorityFilter![0].toUpperCase() + _priorityFilter!.substring(1)}',
                         style: const TextStyle(
                           color: Colors.deepPurple,
                           fontWeight: FontWeight.w500,
@@ -420,18 +420,17 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                 ),
               ),
               // Filter by Status
-              PopupMenuButton<String?>(
+              PopupMenuButton<String>(
                 onSelected: (value) {
                   setState(() {
-                    _statusFilter = value;
+                    _statusFilter = value.isEmpty ? null : value;
                   });
                 },
                 itemBuilder: (context) => [
-                  const PopupMenuItem(value: 'Pending', child: Text('Pending')),
-                  const PopupMenuItem(value: 'Approved', child: Text('Approved')),
-                  const PopupMenuItem(value: 'Rejected', child: Text('Rejected')),
-                  if (_statusFilter != null)
-                    const PopupMenuItem(value: null, child: Text('Clear Status')),
+                  const PopupMenuItem(value: '', child: Text('All')),
+                  const PopupMenuItem(value: 'pending', child: Text('Pending')),
+                  const PopupMenuItem(value: 'approved', child: Text('Approved')),
+                  const PopupMenuItem(value: 'rejected', child: Text('Rejected')),
                 ],
                 child: OutlinedButton(
                   style: OutlinedButton.styleFrom(
@@ -447,7 +446,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        _statusFilter == null ? 'Status' : 'Status: $_statusFilter',
+                        _statusFilter == null ? 'Status' : 'Status: ${_statusFilter![0].toUpperCase() + _statusFilter!.substring(1)}',
                         style: const TextStyle(
                           color: Colors.deepPurple,
                           fontWeight: FontWeight.w500,
@@ -740,6 +739,88 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
       }
     }
   }
+
+  void unarchivePurchaseOrder(Map<String, dynamic> order) async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+        ),
+        backgroundColor: const Color(0xFFF7F2FA),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 320),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Unarchive Purchase Order',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Are you sure you want to unarchive purchase order ${order['id']}?',
+                  style: const TextStyle(fontSize: 14),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(
+                          color: Color(0xFF6F4DBF),
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: const Text(
+                        'Unarchive',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    if (confirmed == true) {
+      final controller = Provider.of<PurchaseOrderController>(context, listen: false);
+      try {
+        await controller.unarchivePurchaseOrder(order['id']);
+        await controller.fetchOrders();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Purchase order ${order['id']} unarchived')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to unarchive purchase order: $e')),
+        );
+      }
+    }
+  }
 }
 
 class _PurchaseOrderDataSource extends DataTableSource {
@@ -749,6 +830,7 @@ class _PurchaseOrderDataSource extends DataTableSource {
   final Function(Map<String, dynamic>) onEdit;
   final Function(Map<String, dynamic>) onDelete;
   final Function(Map<String, dynamic>) onArchive;
+  final Function(Map<String, dynamic>) onUnarchive;
 
   _PurchaseOrderDataSource(
     this._data,
@@ -757,6 +839,7 @@ class _PurchaseOrderDataSource extends DataTableSource {
     required this.onEdit,
     required this.onDelete,
     required this.onArchive,
+    required this.onUnarchive,
   });
 
   @override
@@ -797,10 +880,23 @@ class _PurchaseOrderDataSource extends DataTableSource {
               onPressed: () => onEdit(item),
               tooltip: 'Edit',
             ),
-            IconButton(
-              icon: const Icon(Icons.archive_outlined),
-              onPressed: () => onArchive(item),
-              tooltip: 'Archive',
+            Builder(
+              builder: (context) {
+                final original = item['original'];
+                final bool isArchived = (original?.isArchived ?? false);
+                if (isArchived) {
+                  return IconButton(
+                    icon: const Icon(Icons.restore_outlined),
+                    onPressed: () => onUnarchive(item),
+                    tooltip: 'Unarchive',
+                  );
+                }
+                return IconButton(
+                  icon: const Icon(Icons.archive_outlined),
+                  onPressed: () => onArchive(item),
+                  tooltip: 'Archive',
+                );
+              },
             ),
             IconButton(
               icon: const Icon(Icons.delete_outline),

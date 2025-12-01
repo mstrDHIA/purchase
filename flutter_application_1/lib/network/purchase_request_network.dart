@@ -128,4 +128,19 @@ class PurchaseRequestNetwork {
       throw Exception('Failed to archive purchase request');
     }
   }
+
+  // Unarchive a purchase request
+  Future<void> unarchivePurchaseRequest(int id) async {
+    final response = await api.dio.patch('${APIS.baseUrl}/purchase_request/purchaseRequests/$id/',
+      data: {'is_archived': false},
+      options: Options(headers: {
+        'Authorization': 'Bearer ${APIS.token}',
+        'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
+      }),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to unarchive purchase request');
+    }
+  }
 }

@@ -48,6 +48,8 @@ class PurchaseRequest {
         return ProductLine(
           product: item['product'],
           brand: item['brand'],
+          family: item['family'] ?? item['family_name'] ?? item['category'] ?? null,
+          subFamily: item['subFamily'] ?? item['sub_family'] ?? item['subcategory'] ?? null,
           quantity: item['quantity'] is int ? item['quantity'] : int.tryParse(item['quantity']?.toString() ?? '') ?? 1,
           unitPrice: item['unit_price'] is double
               ? item['unit_price']

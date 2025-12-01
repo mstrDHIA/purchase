@@ -236,22 +236,64 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                     ],
                   ),
                   const SizedBox(height: 30),
-                  // Afficher tous les produits et quantités
+                  // Afficher tous les produits, quantités, et leurs familles
                   if ((widget.purchaseRequest.products ?? []).isNotEmpty)
                     ...widget.purchaseRequest.products!.map((prod) => Padding(
                       padding: const EdgeInsets.only(bottom: 12),
-                      child: Row(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Expanded(
-                            child: buildReadOnlyField('Product', prod.product.toString()),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: buildReadOnlyField('Product', prod.product.toString()),
+                              ),
+                              const SizedBox(width: 20),
+                              Expanded(
+                                child: buildReadOnlyField('Quantity', prod.quantity.toString()),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 20),
-                          Expanded(
-                            child: buildReadOnlyField('Quantity', prod.quantity.toString()),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: buildReadOnlyField('Family', prod.family?.toString() ?? '-'),
+                              ),
+                              const SizedBox(width: 20),
+                              Expanded(
+                                child: buildReadOnlyField('Subfamily', prod.subFamily?.toString() ?? '-'),
+                              ),
+                            ],
                           ),
                         ],
                       ),
                     )),
+                    const SizedBox(height: 20),
+                    // Display Purchase Request ID
+                    const Text('ID', style: TextStyle(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 6),
+                    TextField(
+                      readOnly: true,
+                      controller: TextEditingController(text: widget.purchaseRequest.id?.toString() ?? '-'),
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.black, width: 1),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.black, width: 1),
+                        ),
+                        disabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide(color: Colors.black, width: 1),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                      ),
+                    ),
                   const SizedBox(height: 20),
                   // Ligne 2 : Due date | Priority
                   Row(
