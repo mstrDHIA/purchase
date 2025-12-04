@@ -165,7 +165,9 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
     try {
       await supplierController.fetchSuppliers();
       setState(() {
-        suppliers = supplierController.suppliers.map((s) => s.name).toList();
+        suppliers = supplierController.suppliers
+            .map((s) => s.name ?? '')
+            .toList();
         suppliers.add('Autre'); // Add "Other" option at the end
       });
     } catch (e) {

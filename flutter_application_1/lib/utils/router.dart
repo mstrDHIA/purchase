@@ -62,10 +62,10 @@ final GoRouter router = GoRouter(
       path: '/supplier_registration',
       builder: (context, state) => SupplierRegistrationPage(),
     ),
-    GoRoute(
-      path: '/edit_supplier',
-      builder: (context, state) => EditSupplierPage(),
-    ),
+    // GoRoute(
+    //   path: '/edit_supplier',
+    //   // builder: (context, state) => EditSupplierPage(),
+    // ),
     GoRoute(
       path: '/view_supplier',
       builder: (context, state) => ViewSupplierPage(),

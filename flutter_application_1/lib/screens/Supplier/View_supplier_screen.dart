@@ -33,13 +33,13 @@ class ViewSupplierPage extends StatelessWidget {
         backgroundColor: Colors.deepPurple,
         foregroundColor: Colors.white,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            tooltip: 'Edit Supplier',
-            onPressed: () {
-              Navigator.pushNamed(context, '/edit_supplier');
-            },
-          ),
+          // IconButton(
+          //   icon: const Icon(Icons.edit),
+          //   tooltip: 'Edit Supplier',
+          //   onPressed: () {
+          //     Navigator.pushNamed(context, '/edit_supplier');
+          //   },
+          // ),
         ],
       ),
       body: Padding(
