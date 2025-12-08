@@ -96,6 +96,50 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                 ],
               ),
               const SizedBox(height: 32),
+              // Display Purchase Order ID
+              const Text('ID'),
+              const SizedBox(height: 4),
+              TextField(
+                controller: TextEditingController(text: _order.id?.toString() ?? '-'),
+                readOnly: true,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.white,
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: Colors.black87),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: const BorderSide(color: Colors.deepPurple),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+              ),
+              const SizedBox(height: 24),
+              if ((_order.refuseReason ?? '').isNotEmpty) ...[
+                const Text('Refuse Reason'),
+                const SizedBox(height: 4),
+                TextField(
+                  controller: TextEditingController(text: _order.refuseReason ?? ''),
+                  readOnly: true,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Colors.white,
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(color: Colors.black87),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(color: Colors.deepPurple),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ],
               // Supplier name & Priority row (harmonized)
               Row(
                 children: [

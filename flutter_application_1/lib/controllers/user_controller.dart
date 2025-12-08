@@ -171,7 +171,7 @@ class UserController extends ChangeNotifier {
 
   Future<void> login(String email, String password,BuildContext context,GlobalKey<FormState>? _formKey) async {
   try {
-    if ((!(_formKey!.currentState!.validate()))&&_formKey!=null) {
+    // if ((!(_formKey!.currentState!.validate()))&&_formKey!=null) {
       isLoading = true;
     notifyListeners();
     Response? response = await userNetwork.login(email, password);
@@ -204,10 +204,10 @@ class UserController extends ChangeNotifier {
       isLoading = false;
       notifyListeners();
       // return;
-    }
-    else{
+    // }
+    // else{
 
-    }
+    // }
     
 
   } catch (e) {

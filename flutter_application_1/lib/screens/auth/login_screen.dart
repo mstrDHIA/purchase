@@ -29,9 +29,9 @@ class _SignInPageState extends State<SignInPage> {
   }
 
   emailValidator(String? value) {
-    if (value == null || value.isEmpty || !value.contains('@')) {
-      return 'Please enter a valid email.';
-    }
+    // if (value == null || value.isEmpty || !value.contains('@')) {
+    //   return 'Please enter a valid email.';
+    // }
     return null;
   }
 
@@ -96,9 +96,9 @@ class _SignInPageState extends State<SignInPage> {
                             CustomTextField(
                               controller: _emailController,
                               hintText: "abc123@gmail.com",
-                              validator: (value) {
-                               return emailValidator(value);
-                              },
+                              // validator: (value) {
+                              //  return emailValidator(value);
+                              // },
                             ),
                             const SizedBox(height: 16),
                             const Text("Password"),
@@ -158,14 +158,14 @@ class _SignInPageState extends State<SignInPage> {
                               //   return null;
                               // },
                               onFieldSubmitted: (_) {
-                                if (_formKey.currentState!.validate()) {
+                                // if (_formKey.currentState!.validate()) {
                                   userController.login(
                                   _emailController.text,
                                   _passwordController.text,
                                   context,
                                   _formKey
                                 );
-                                }
+                                // }
                                 
                               },
                             ),

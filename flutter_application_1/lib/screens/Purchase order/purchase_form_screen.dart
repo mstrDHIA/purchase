@@ -7,6 +7,8 @@ class ProductLine {
 
   String? product;
   String? brand;
+  String? family;
+  String? subFamily;
   int quantity;
   String? supplier;
   double unitPrice;
@@ -14,6 +16,8 @@ class ProductLine {
   ProductLine({
     this.product,
     this.brand,
+    this.family,
+    this.subFamily,
     this.supplier,
     this.quantity = 1,
     this.unitPrice = 12.33,
@@ -24,6 +28,8 @@ class ProductLine {
       // 'product_id': productId, // Removed
       'product': product,
       'brand': brand,
+      'family': family,
+      'subFamily': subFamily,
       'quantity': quantity,
       'unit_price': unitPrice,
     };

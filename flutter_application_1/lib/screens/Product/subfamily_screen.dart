@@ -24,6 +24,8 @@ class _SubfamiliesPageState extends State<SubfamiliesPage> {
   }
   late ProductController productController;
   late Future _subfamiliesFuture;
+  int _currentPage = 1;
+  final int _rowsPerPage = 10;
 
   @override
   void initState() {
@@ -221,79 +223,122 @@ class _SubfamiliesPageState extends State<SubfamiliesPage> {
                   // debug
                   // ignore: avoid_print
                   print('Subfamilies data: $list');
+
+                  // Pagination calculations
+                  final totalPagesCalc = (list.length / _rowsPerPage).ceil();
+                  final totalPages = totalPagesCalc == 0 ? 1 : totalPagesCalc;
+                  if (_currentPage > totalPages) {
+                    _currentPage = totalPages;
+                  }
+                  final startIndex = (_currentPage - 1) * _rowsPerPage;
+                  final displayed = list.skip(startIndex).take(_rowsPerPage).toList();
+
                   return SingleChildScrollView(
-                    child: DataTable(
-                      columns: const [
-                        DataColumn(label: Text('Subfamily')),
-                        DataColumn(label: Text('Description')),
-                        DataColumn(label: Text('')),
-                      ],
-                      rows: list.asMap().entries.map((e) {
-                        final i = e.key;
-                        final s = e.value;
-                        return DataRow(cells: [
-                          DataCell(Text(s['name'] ?? '')),
-                          DataCell(Text(s['description'] ?? '')),
-                          DataCell(Row(children: [
-                            IconButton(
-                              icon: const Icon(Icons.visibility, color: Colors.blue),
-                              onPressed: () => showDialog<void>(
-                                context: context,
-                                builder: (context) => Dialog(
-                                  insetPadding: const EdgeInsets.symmetric(horizontal: 120, vertical: 24),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-                                  child: ConstrainedBox(
-                                    constraints: const BoxConstraints(maxWidth: 520),
-                                    child: Container(
-                                      padding: const EdgeInsets.all(20),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFF6EEF6),
-                                        borderRadius: BorderRadius.circular(18),
-                                        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 12, offset: Offset(0, 6))],
-                                      ),
-                                      child: Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(s['name'] ?? '', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: Color(0xFF2B2B2B))),
-                                          const SizedBox(height: 16),
-                                          Row(children: [
-                                            const Icon(Icons.label, color: Colors.deepPurple),
-                                            const SizedBox(width: 12),
-                                            Expanded(child: Text(s['description'] ?? '-', style: const TextStyle(fontSize: 14))),
-                                          ]),
-                                          const SizedBox(height: 12),
-                                          Row(children: [
-                                            const Icon(Icons.confirmation_number, color: Colors.deepPurple),
-                                            const SizedBox(width: 12),
-                                            Text('ID: ${s['id']?.toString() ?? '-'}', style: const TextStyle(fontSize: 14)),
-                                          ]),
-                                          const SizedBox(height: 18),
-                                          Align(
-                                            alignment: Alignment.centerRight,
-                                            child: ElevatedButton(
-                                              style: ElevatedButton.styleFrom(
-                                                backgroundColor: const Color(0xFF7C3AED),
-                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                                                elevation: 2,
-                                              ),
-                                              onPressed: () => Navigator.of(context).pop(),
-                                              child: const Text('Back', style: TextStyle(color: Colors.white)),
-                                            ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(width: double.infinity, child: DataTable(
+                          columns: const [
+                            DataColumn(label: Text('Subfamily')),
+                            DataColumn(label: Text('Description')),
+                            DataColumn(label: Text('')),
+                          ],
+                          rows: displayed.asMap().entries.map((entry) {
+                            final localIndex = entry.key;
+                            final s = entry.value;
+                            final originalIndex = startIndex + localIndex;
+                            return DataRow(cells: [
+                              DataCell(Text(s['name'] ?? '')),
+                              DataCell(Text(s['description'] ?? '')),
+                              DataCell(Row(children: [
+                                IconButton(
+                                  icon: const Icon(Icons.visibility, color: Colors.blue),
+                                  onPressed: () => showDialog<void>(
+                                    context: context,
+                                    builder: (context) => Dialog(
+                                      insetPadding: const EdgeInsets.symmetric(horizontal: 120, vertical: 24),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                                      child: ConstrainedBox(
+                                        constraints: const BoxConstraints(maxWidth: 520),
+                                        child: Container(
+                                          padding: const EdgeInsets.all(20),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFF6EEF6),
+                                            borderRadius: BorderRadius.circular(18),
+                                            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 12, offset: Offset(0, 6))],
                                           ),
-                                        ],
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(s['name'] ?? '', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: Color(0xFF2B2B2B))),
+                                              const SizedBox(height: 16),
+                                              Row(children: [
+                                                const Icon(Icons.label, color: Colors.deepPurple),
+                                                const SizedBox(width: 12),
+                                                Expanded(child: Text(s['description'] ?? '-', style: const TextStyle(fontSize: 14))),
+                                              ]),
+                                              const SizedBox(height: 12),
+                                              Row(children: [
+                                                const Icon(Icons.confirmation_number, color: Colors.deepPurple),
+                                                const SizedBox(width: 12),
+                                                Text('ID: ${s['id']?.toString() ?? '-'}', style: const TextStyle(fontSize: 14)),
+                                              ]),
+                                              const SizedBox(height: 18),
+                                              Align(
+                                                alignment: Alignment.centerRight,
+                                                child: ElevatedButton(
+                                                  style: ElevatedButton.styleFrom(
+                                                    backgroundColor: const Color(0xFF7C3AED),
+                                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                                                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                                    elevation: 2,
+                                                  ),
+                                                  onPressed: () => Navigator.of(context).pop(),
+                                                  child: const Text('Back', style: TextStyle(color: Colors.white)),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
-                              ),
+                                IconButton(icon: const Icon(Icons.edit, color: Colors.teal), onPressed: () => _addOrEdit(sub: s, index: originalIndex)),
+                                IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => _confirmDelete(s)),
+                              ]))
+                            ]);
+                          }).toList(),
+                        )),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Text('Page $_currentPage of $totalPages'),
+                            const SizedBox(width: 12),
+                            IconButton(
+                              tooltip: 'Previous',
+                              icon: const Icon(Icons.chevron_left),
+                              onPressed: _currentPage > 1
+                                  ? () => setState(() {
+                                        _currentPage -= 1;
+                                      })
+                                  : null,
                             ),
-                            IconButton(icon: const Icon(Icons.edit, color: Colors.teal), onPressed: () => _addOrEdit(sub: s, index: i)),
-                            IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => _confirmDelete(s)),
-                          ]))
-                        ]);
-                      }).toList(),
+                            IconButton(
+                              tooltip: 'Next',
+                              icon: const Icon(Icons.chevron_right),
+                              onPressed: _currentPage < totalPages
+                                  ? () => setState(() {
+                                        _currentPage += 1;
+                                      })
+                                  : null,
+                            ),
+                            const SizedBox(width: 8),
+                          ],
+                        ),
+                      ],
                     ),
                   );
                 },

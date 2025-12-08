@@ -2,29 +2,38 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/controllers/supplier_controller.dart';
 
+/// A small local Supplier model used by the screen. The project's real
+/// Supplier model may differ; this mirrors the fields used in the UI.
 class Supplier {
   final int id;
-  final String email;
-  final String name;
+  final String? email;
+  final String? name;
+  final String? phone;
+  final String? matricule;
+  final String? cin;
 
-  Supplier(this.id, this.email, this.name);
+  Supplier({
+    required this.id,
+    this.email,
+    this.name,
+    this.phone,
+    this.matricule,
+    this.cin,
+  });
 
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'contact_email': email,
-      'name': name,
-    };
-  }
-
-  /// Factory constructor to create Supplier from API response
-  factory Supplier.fromJson(Map<String, dynamic> json) {
-    return Supplier(
-      json['id'] as int? ?? 0,
-      json['contact_email'] as String? ?? '',
-      json['name'] as String? ?? '',
-    );
-  }
+  factory Supplier.fromJson(Map<String, dynamic> json) => Supplier(
+        id: json['id'] as int? ?? 0,
+        email: json['contact_email'] as String?,
+        name: json['name'] as String?,
+        phone: json['phone'] as String? ??
+               json['phone_number'] as String? ??
+               json['contact_phone'] as String?,
+        matricule: json['matricule'] as String? ??
+                   json['registration_number'] as String?,
+        cin: json['cin'] as String? ??
+             json['cin_number'] as String? ??
+             json['identity_number'] as String?,
+      );
 }
 
 class SupplierRegistrationPage extends StatefulWidget {
@@ -35,35 +44,51 @@ class SupplierRegistrationPage extends StatefulWidget {
 }
 
 class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
-  String searchText = '';
-  bool _initialLoadDone = false;
-
   final TextEditingController _searchCtrl = TextEditingController();
+  bool _initialLoadDone = false;
   int? _sortIndex;
   bool _sortAsc = true;
+
+  int _currentPage = 1;
+  final int _rowsPerPage = 10;
 
   @override
   void initState() {
     super.initState();
-    // Fetch suppliers will be called in build() after widget is mounted
-    // This avoids BuildContext issues during initialization
   }
+
+  String _safeString(String? value) => value ?? '';
 
   void _sortByColumn(int columnIndex, bool asc) {
     final controller = context.read<SupplierController>();
     switch (columnIndex) {
-      case 0: // ID
+      case 0:
         controller.suppliers.sort((a, b) => asc ? a.id.compareTo(b.id) : b.id.compareTo(a.id));
         break;
-      case 1: // Email
+      case 1:
         controller.suppliers.sort((a, b) => asc
-            ? a.email.toLowerCase().compareTo(b.email.toLowerCase())
-            : b.email.toLowerCase().compareTo(a.email.toLowerCase()));
+            ? _safeString(a.email).toLowerCase().compareTo(_safeString(b.email).toLowerCase())
+            : _safeString(b.email).toLowerCase().compareTo(_safeString(a.email).toLowerCase()));
         break;
-      case 2: // Name
+      case 2:
         controller.suppliers.sort((a, b) => asc
-            ? a.name.toLowerCase().compareTo(b.name.toLowerCase())
-            : b.name.toLowerCase().compareTo(a.name.toLowerCase()));
+            ? _safeString(a.name).toLowerCase().compareTo(_safeString(b.name).toLowerCase())
+            : _safeString(b.name).toLowerCase().compareTo(_safeString(a.name).toLowerCase()));
+        break;
+      case 3:
+        controller.suppliers.sort((a, b) => asc
+            ? _safeString(a.phone).toLowerCase().compareTo(_safeString(b.phone).toLowerCase())
+            : _safeString(b.phone).toLowerCase().compareTo(_safeString(a.phone).toLowerCase()));
+        break;
+      case 4:
+        controller.suppliers.sort((a, b) => asc
+            ? _safeString(a.matricule).toLowerCase().compareTo(_safeString(b.matricule).toLowerCase())
+            : _safeString(b.matricule).toLowerCase().compareTo(_safeString(a.matricule).toLowerCase()));
+        break;
+      case 5:
+        controller.suppliers.sort((a, b) => asc
+            ? _safeString(a.cin).toLowerCase().compareTo(_safeString(b.cin).toLowerCase())
+            : _safeString(b.cin).toLowerCase().compareTo(_safeString(a.cin).toLowerCase()));
         break;
     }
     setState(() {
@@ -72,99 +97,15 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
     });
   }
 
-  Future<void> _showEditDialog({Supplier? supplier, int? index}) async {
-    final nameCtrl = TextEditingController(text: supplier?.name ?? '');
-    final emailCtrl = TextEditingController(text: supplier?.email ?? '');
-    bool isSubmitting = false;
-    final controller = context.read<SupplierController>();
-
-    await showDialog<void>(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) => AlertDialog(
-          title: Text(supplier == null ? 'Add Supplier' : 'Edit Supplier'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: nameCtrl,
-                  decoration: const InputDecoration(labelText: 'Name'),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: emailCtrl,
-                  decoration: const InputDecoration(labelText: 'Contact Email'),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: isSubmitting ? null : () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: isSubmitting
-                  ? null
-                  : () async {
-                      setDialogState(() => isSubmitting = true);
-                      try {
-                        if (supplier != null && index != null) {
-                          // Update existing supplier via controller
-                          await controller.editSupplier(
-                            id: supplier.id,
-                            name: nameCtrl.text,
-                            contactEmail: emailCtrl.text,
-                          );
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Supplier updated successfully!')),
-                            );
-                          }
-                        } else {
-                          // Create new supplier via controller
-                          await controller.createSupplier(
-                            name: nameCtrl.text,
-                            contactEmail: emailCtrl.text,
-                          );
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Supplier created successfully!')),
-                            );
-                          }
-                        }
-                        if (mounted) {
-                          Navigator.of(context).pop();
-                        }
-                      } catch (e) {
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Error: ${e.toString()}')),
-                          );
-                          setDialogState(() => isSubmitting = false);
-                        }
-                      }
-                    },
-              child: isSubmitting
-                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Text('Save'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Future<void> _confirmDelete(int index) async {
     final controller = context.read<SupplierController>();
     final supplier = controller.suppliers[index];
-    
+
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Supplier'),
-        content: Text('Delete "${supplier.name}" ?'),
+        content: Text('Delete "${_safeString(supplier.name)}" ?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -181,9 +122,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
 
     if (ok == true) {
       try {
-        final supplierId = supplier.id;
-        await controller.deleteSupplier(supplierId);
-        
+        await controller.deleteSupplier(supplier.id);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Supplier deleted successfully')),
@@ -203,6 +142,8 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
     final nameCtrl = TextEditingController();
     final emailCtrl = TextEditingController();
     final phoneCtrl = TextEditingController();
+    final matriculeCtrl = TextEditingController();
+    final cinCtrl = TextEditingController();
     final addressCtrl = TextEditingController();
     final formKey = GlobalKey<FormState>();
     bool isSubmitting = false;
@@ -248,6 +189,18 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
+                      controller: matriculeCtrl,
+                      decoration: const InputDecoration(labelText: 'Matricule'),
+                      enabled: !isSubmitting,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: cinCtrl,
+                      decoration: const InputDecoration(labelText: 'CIN'),
+                      enabled: !isSubmitting,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
                       controller: addressCtrl,
                       decoration: const InputDecoration(labelText: 'Address'),
                       enabled: !isSubmitting,
@@ -275,7 +228,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                             phoneNumber: phoneCtrl.text.isNotEmpty ? phoneCtrl.text : null,
                             address: addressCtrl.text.isNotEmpty ? addressCtrl.text : null,
                           );
-                          
+
                           if (mounted) {
                             Navigator.of(context).pop();
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -302,6 +255,72 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
     );
   }
 
+  Future<void> _showEditDialog({Supplier? supplier, int? index}) async {
+    final nameCtrl = TextEditingController(text: supplier?.name ?? '');
+    final emailCtrl = TextEditingController(text: supplier?.email ?? '');
+    final phoneCtrl = TextEditingController(text: supplier?.phone ?? '');
+    final matriculeCtrl = TextEditingController(text: supplier?.matricule ?? '');
+    final cinCtrl = TextEditingController(text: supplier?.cin ?? '');
+    bool isSubmitting = false;
+    final controller = context.read<SupplierController>();
+
+    await showDialog<void>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: Text(supplier == null ? 'Add Supplier' : 'Edit Supplier'),
+          content: SizedBox(
+            width: 480,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Name')),
+                  const SizedBox(height: 12),
+                  TextField(controller: emailCtrl, decoration: const InputDecoration(labelText: 'Contact Email')),
+                  const SizedBox(height: 12),
+                  TextField(controller: phoneCtrl, decoration: const InputDecoration(labelText: 'Phone Number')),
+                  const SizedBox(height: 12),
+                  TextField(controller: matriculeCtrl, decoration: const InputDecoration(labelText: 'Matricule')),
+                  const SizedBox(height: 12),
+                  TextField(controller: cinCtrl, decoration: const InputDecoration(labelText: 'CIN')),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+            ElevatedButton(
+              onPressed: isSubmitting
+                  ? null
+                  : () async {
+                      setDialogState(() => isSubmitting = true);
+                      try {
+                        if (supplier != null && index != null) {
+                          await controller.editSupplier(
+                            id: supplier.id,
+                            name: nameCtrl.text,
+                            contactEmail: emailCtrl.text,
+                            phoneNumber: phoneCtrl.text,
+                          );
+                          if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Supplier updated')));
+                        }
+                        Navigator.of(context).pop();
+                      } catch (e) {
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                          setDialogState(() => isSubmitting = false);
+                        }
+                      }
+                    },
+              child: const Text('Save'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _showViewSupplierDialog(Supplier supplier) async {
     await showDialog<void>(
       context: context,
@@ -314,53 +333,17 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    const Icon(Icons.mail, color: Colors.purple),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Email', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                          Text(supplier.email, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                _buildDetailRow(Icons.mail, 'Email', _safeString(supplier.email)),
                 const SizedBox(height: 16),
-                Row(
-                  children: [
-                    const Icon(Icons.person, color: Colors.purple),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Name', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                          Text(supplier.name, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                _buildDetailRow(Icons.person, 'Name', _safeString(supplier.name)),
                 const SizedBox(height: 16),
-                Row(
-                  children: [
-                    const Icon(Icons.tag, color: Colors.purple),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('ID', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                          Text(supplier.id.toString(), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                _buildDetailRow(Icons.phone, 'Phone', _safeString(supplier.phone)),
+                const SizedBox(height: 16),
+                _buildDetailRow(Icons.badge, 'Matricule', _safeString(supplier.matricule)),
+                const SizedBox(height: 16),
+                _buildDetailRow(Icons.credit_card, 'CIN', _safeString(supplier.cin)),
+                const SizedBox(height: 16),
+                _buildDetailRow(Icons.tag, 'ID', supplier.id.toString()),
               ],
             ),
           ),
@@ -369,34 +352,60 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.deepPurple),
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Back'),
+            child: const Text('Back', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
     );
   }
 
+  Widget _buildDetailRow(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(icon, color: Colors.purple),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+              Text(value.isNotEmpty ? value : '-', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final controller = context.watch<SupplierController>();
-    
-    // Fetch suppliers on first build if not already done
+
     if (!_initialLoadDone && controller.suppliers.isEmpty && !controller.isLoading) {
       _initialLoadDone = true;
       Future.microtask(() {
         controller.fetchSuppliers();
       });
     }
-    
+
     final suppliers = controller.suppliers;
     final filter = _searchCtrl.text.toLowerCase();
 
     final filtered = suppliers.where((s) {
-      final name = s.name.toLowerCase();
-      final email = s.email.toLowerCase();
-      final matchesSearch = name.contains(filter) || email.contains(filter);
+      final name = _safeString(s.name).toLowerCase();
+      final email = _safeString(s.email).toLowerCase();
+      final phone = _safeString(s.phone).toLowerCase();
+      final matricule = _safeString(s.matricule).toLowerCase();
+      final cin = _safeString(s.cin).toLowerCase();
+      final matchesSearch = name.contains(filter) || email.contains(filter) || phone.contains(filter) || matricule.contains(filter) || cin.contains(filter);
       return matchesSearch;
     }).toList();
+
+    final totalPages = (filtered.isEmpty) ? 1 : (filtered.length / _rowsPerPage).ceil();
+    if (_currentPage > totalPages) _currentPage = totalPages;
+    final startIndex = (_currentPage - 1) * _rowsPerPage;
+    final endIndex = (startIndex + _rowsPerPage) > filtered.length ? filtered.length : (startIndex + _rowsPerPage);
+    final paginatedFiltered = filtered.sublist(startIndex, endIndex);
 
     return Scaffold(
       body: Column(
@@ -435,7 +444,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                         child: TextField(
                           controller: _searchCtrl,
                           decoration: InputDecoration(
-                            hintText: 'Search supplier name, email ...',
+                            hintText: 'Search supplier name, email, phone, matricule, cin ...',
                             prefixIcon: const Icon(Icons.search),
                             filled: true,
                             fillColor: const Color(0xFFF7F3FF),
@@ -449,12 +458,16 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                                     icon: const Icon(Icons.clear, size: 18),
                                     onPressed: () {
                                       _searchCtrl.clear();
-                                      setState(() {});
+                                      setState(() {
+                                        _currentPage = 1;
+                                      });
                                     },
                                   )
                                 : null,
                           ),
-                          onChanged: (_) => setState(() {}),
+                          onChanged: (_) => setState(() {
+                            _currentPage = 1;
+                          }),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -466,7 +479,9 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                   onPressed: () {
                     _searchCtrl.clear();
                     context.read<SupplierController>().fetchSuppliers();
-                    setState(() {});
+                    setState(() {
+                      _currentPage = 1;
+                    });
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.grey.shade200,
@@ -500,7 +515,6 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
             child: Container(
               width: double.infinity,
               color: const Color(0xFFF7F4FA),
-              // left padding for ID column flush after sidebar
               padding: const EdgeInsets.only(left: 16, right: 0, top: 24, bottom: 24),
               child: controller.isLoading
                   ? const Center(child: CircularProgressIndicator())
@@ -523,61 +537,57 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                           ),
                         )
                       : SingleChildScrollView(
-                          child: DataTable(
-                            horizontalMargin: 16,
-                            columnSpacing: 0,
-                            sortColumnIndex: _sortIndex,
-                            sortAscending: _sortAsc,
-                            columns: [
-                              DataColumn(
-                                label: SizedBox(
-                                  width: 80,
-                                  child: Align(alignment: Alignment.centerLeft, child: const Text('ID', style: TextStyle(fontWeight: FontWeight.w600))),
-                                ),
-                                numeric: true,
-                                onSort: (i, asc) => _sortByColumn(0, asc),
-                              ),
-                              DataColumn(
-                                label: SizedBox(
-                                  width: 360,
-                                  child: Align(alignment: Alignment.centerLeft, child: const Text('Email', style: TextStyle(fontWeight: FontWeight.w600))),
-                                ),
-                                onSort: (i, asc) => _sortByColumn(1, asc),
-                              ),
-                              DataColumn(
-                                label: SizedBox(
-                                  width: 360,
-                                  child: Align(alignment: Alignment.centerLeft, child: const Text('Name', style: TextStyle(fontWeight: FontWeight.w600))),
-                                ),
-                                onSort: (i, asc) => _sortByColumn(2, asc),
-                              ),
-                              DataColumn(
-                                label: SizedBox(
-                                  width: 120,
-                                  child: Align(alignment: Alignment.centerRight, child: Text('Actions', style: TextStyle(fontWeight: FontWeight.w600))),
-                                ),
-                              ),
-                            ],
-                            rows: filtered.asMap().entries.map((entry) {
-                              final supplier = entry.value;
-                              final index = suppliers.indexOf(supplier);
-                              return DataRow(
-                                cells: [
-                                  DataCell(SizedBox(width: 80, child: Align(alignment: Alignment.centerLeft, child: Text(supplier.id.toString())))),
-                                  DataCell(SizedBox(width: 360, child: Align(alignment: Alignment.centerLeft, child: Text(supplier.email)))),
-                                  DataCell(SizedBox(width: 360, child: Align(alignment: Alignment.centerLeft, child: Text(supplier.name)))),
-                                  DataCell(
-                                    SizedBox(
-                                      width: 120,
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.end,
-                                        children: [
+                          child: Column(
+                            children: [
+                              SizedBox(
+                                width: double.infinity,
+                                child: DataTable(
+                                  horizontalMargin: 16,
+                                  columnSpacing: 24,
+                                  sortColumnIndex: _sortIndex,
+                                  sortAscending: _sortAsc,
+                                  columns: [
+                                    DataColumn(
+                                      label: const Text('ID', style: TextStyle(fontWeight: FontWeight.w600)),
+                                      onSort: (i, asc) => _sortByColumn(0, asc),
+                                    ),
+                                    DataColumn(
+                                      label: const Text('Email', style: TextStyle(fontWeight: FontWeight.w600)),
+                                      onSort: (i, asc) => _sortByColumn(1, asc),
+                                    ),
+                                    DataColumn(
+                                      label: const Text('Name', style: TextStyle(fontWeight: FontWeight.w600)),
+                                      onSort: (i, asc) => _sortByColumn(2, asc),
+                                    ),
+                                    DataColumn(
+                                      label: const Text('Phone', style: TextStyle(fontWeight: FontWeight.w600)),
+                                      onSort: (i, asc) => _sortByColumn(3, asc),
+                                    ),
+                                    DataColumn(
+                                      label: const Text('Matricule fiscale', style: TextStyle(fontWeight: FontWeight.w600)),
+                                      onSort: (i, asc) => _sortByColumn(4, asc),
+                                    ),
+                                    DataColumn(
+                                      label: const Text('CIN', style: TextStyle(fontWeight: FontWeight.w600)),
+                                      onSort: (i, asc) => _sortByColumn(5, asc),
+                                    ),
+                                    const DataColumn(label: Text('')),
+                                  ],
+                                  rows: paginatedFiltered.map((supplier) {
+                                    final index = suppliers.indexOf(supplier);
+                                    return DataRow(
+                                      cells: [
+                                        DataCell(Text(supplier.id.toString())),
+                                        DataCell(Text(_safeString(supplier.email))),
+                                        DataCell(Text(_safeString(supplier.name))),
+                                        DataCell(Text(_safeString(supplier.phone))),
+                                        DataCell(Text(_safeString(supplier.matricule))),
+                                        DataCell(Text(_safeString(supplier.cin))),
+                                        DataCell(Row(mainAxisSize: MainAxisSize.min, children: [
                                           IconButton(
                                             icon: const Icon(Icons.visibility, color: Colors.blue),
                                             tooltip: 'View',
-                                            onPressed: () {
-                                              _showViewSupplierDialog(supplier);
-                                            },
+                                            onPressed: () => _showViewSupplierDialog(supplier),
                                           ),
                                           IconButton(
                                             icon: const Icon(Icons.edit, color: Colors.teal),
@@ -589,13 +599,30 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                                             tooltip: 'Delete',
                                             onPressed: () => _confirmDelete(index),
                                           ),
-                                        ],
-                                      ),
+                                        ])),
+                                      ],
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.chevron_left),
+                                      onPressed: _currentPage > 1 ? () => setState(() => _currentPage--) : null,
                                     ),
-                                  ),
-                                ],
-                              );
-                            }).toList(),
+                                    Text('Page $_currentPage of $totalPages'),
+                                    IconButton(
+                                      icon: const Icon(Icons.chevron_right),
+                                      onPressed: _currentPage < totalPages ? () => setState(() => _currentPage++) : null,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ),
             ),
