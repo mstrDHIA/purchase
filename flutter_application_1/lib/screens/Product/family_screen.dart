@@ -73,6 +73,9 @@ class _FamiliesPageState extends State<FamiliesPage> {
   bool _sortAsc = true;
   int? _minSubfamilies;
   int? _maxSubfamilies;
+  // Pagination
+  int _currentPage = 1;
+  final int _rowsPerPage = 10;
 
 
   void _sortByName(bool asc) {
@@ -287,6 +290,13 @@ class _FamiliesPageState extends State<FamiliesPage> {
       return true;
     }).toList();
 
+    // Pagination calculation
+    final totalPages = (filtered.isEmpty) ? 1 : (filtered.length / _rowsPerPage).ceil();
+    if (_currentPage > totalPages) _currentPage = totalPages;
+    final startIndex = (_currentPage - 1) * _rowsPerPage;
+    final endIndex = (startIndex + _rowsPerPage) > filtered.length ? filtered.length : (startIndex + _rowsPerPage);
+    final displayed = filtered.sublist(startIndex, endIndex);
+
     return Scaffold(
       body: Column(
         children: [
@@ -368,68 +378,92 @@ class _FamiliesPageState extends State<FamiliesPage> {
           const SizedBox(height: 12),
 
           Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Container(
-                width: double.infinity,
-                color: const Color(0xFFF7F4FA),
-                // padding: const EdgeInsets.all(24),
-                child: _loading
-                    ? const Center(child: CircularProgressIndicator())
-                    : SingleChildScrollView(
-                        child: DataTable(
-                          
-                          sortColumnIndex: _sortIndex,
-                          sortAscending: _sortAsc,
-                          columns: [
-                            DataColumn(
-                              label: const Text('ID'),
-                              onSort: (i, asc) => _sortById(asc),
+            child: Container(
+              width: double.infinity,
+              color: const Color(0xFFF7F4FA),
+              padding: const EdgeInsets.all(24),
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          SizedBox(
+                            width: double.infinity,
+                            child: DataTable(
+                        sortColumnIndex: _sortIndex,
+                        sortAscending: _sortAsc,
+                        columns: [
+                          DataColumn(
+                            label: const Text('ID'),
+                            onSort: (i, asc) => _sortById(asc),
+                          ),
+                          DataColumn(
+                            label: const Text('Family'),
+                            onSort: (i, asc) => _sortByName(asc),
+                          ),
+                          const DataColumn(label: Text('Description')),
+                          const DataColumn(label: Text('Created')),
+                          const DataColumn(label: Text('Subfamilies')),
+                          const DataColumn(label: Text('')),
+                        ],
+                        rows: displayed.asMap().entries.map((entry) {
+                          final fam = entry.value;
+                          // if(fam['parent_category']!=null)
+                          return DataRow(cells: [
+                            DataCell(Text(fam['id']?.toString() ?? '')),
+                            DataCell(Text(fam['name'] ?? '')),
+                            DataCell(Text(fam['description'] ?? '')),
+                            DataCell(Text(fam['creationDate'] is DateTime
+                                ? (fam['creationDate'] as DateTime).toIso8601String().substring(0, 10)
+                                : fam['creationDate']?.toString() ?? '')),
+                            DataCell(Text((fam['subfamilies'] is List)
+                                ? (fam['subfamilies'] as List).length.toString()
+                                : '0')),
+                            DataCell(Row(children: [
+                              IconButton(
+                                icon: const Icon(Icons.visibility, color: Colors.blue),
+                                tooltip: 'View Subfamilies',
+                                onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => SubfamiliesPage(family: fam, onUpdate: (updated) {
+                                  setState(() {});
+                                })) ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.edit, color: Colors.teal),
+                                tooltip: 'Edit Family',
+                                onPressed: () => _showEditDialog(family: fam, index: families.indexOf(fam)),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red),
+                                tooltip: 'Delete Family',
+                                onPressed: () => _confirmDelete(families.indexOf(fam)),
+                              ),
+                            ]))
+                          ]);
+                        }).toList(),                          )),
+                          // Pagination controls
+                          if (filtered.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 12.0),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.chevron_left),
+                                    onPressed: _currentPage > 1
+                                        ? () => setState(() => _currentPage--)
+                                        : null,
+                                  ),
+                                  Text('Page $_currentPage of $totalPages'),
+                                  IconButton(
+                                    icon: const Icon(Icons.chevron_right),
+                                    onPressed: _currentPage < totalPages
+                                        ? () => setState(() => _currentPage++)
+                                        : null,
+                                  ),
+                                ],
+                              ),
                             ),
-                            DataColumn(
-                              label: const Text('Family'),
-                              onSort: (i, asc) => _sortByName(asc),
-                            ),
-                            const DataColumn(label: Text('Description')),
-                            const DataColumn(label: Text('Created')),
-                            const DataColumn(label: Text('Subfamilies')),
-                            const DataColumn(label: Text('')),
-                          ],
-                          rows: filtered.asMap().entries.map((entry) {
-                            final fam = entry.value;
-                            // if(fam['parent_category']!=null)
-                            return DataRow(cells: [
-                              DataCell(Text(fam['id']?.toString() ?? '')),
-                              DataCell(Text(fam['name'] ?? '')),
-                              DataCell(Text(fam['description'] ?? '')),
-                              DataCell(Text(fam['creationDate'] is DateTime
-                                  ? (fam['creationDate'] as DateTime).toIso8601String().substring(0, 10)
-                                  : fam['creationDate']?.toString() ?? '')),
-                              DataCell(Text((fam['subfamilies'] is List)
-                                  ? (fam['subfamilies'] as List).length.toString()
-                                  : '0')),
-                              DataCell(Row(children: [
-                                IconButton(
-                                  icon: const Icon(Icons.visibility, color: Colors.blue),
-                                  tooltip: 'View Subfamilies',
-                                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => SubfamiliesPage(family: fam, onUpdate: (updated) {
-                                    setState(() {});
-                                  })) ),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.edit, color: Colors.teal),
-                                  tooltip: 'Edit Family',
-                                  onPressed: () => _showEditDialog(family: fam, index: families.indexOf(fam)),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete, color: Colors.red),
-                                  tooltip: 'Delete Family',
-                                  onPressed: () => _confirmDelete(families.indexOf(fam)),
-                                ),
-                              ]))
-                            ]);
-                          }).toList(),
-                        ),
+                        ],
                       ),
               ),
             ),

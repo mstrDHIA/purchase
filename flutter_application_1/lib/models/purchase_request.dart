@@ -16,6 +16,8 @@ class PurchaseRequest {
   String? requestedByName;
   String? priority;
 
+  bool? isArchived;
+
   PurchaseRequest(
       {this.id,
       this.startDate,
@@ -28,7 +30,8 @@ class PurchaseRequest {
       this.updatedAt,
       this.approvedBy,
       this.requestedBy,
-      this.priority
+      this.priority,
+      this.isArchived
       });
 
   PurchaseRequest.fromJson(Map<String, dynamic> json) {
@@ -45,6 +48,8 @@ class PurchaseRequest {
         return ProductLine(
           product: item['product'],
           brand: item['brand'],
+          family: item['family'] ?? item['family_name'] ?? item['category'] ?? null,
+          subFamily: item['subFamily'] ?? item['sub_family'] ?? item['subcategory'] ?? null,
           quantity: item['quantity'] is int ? item['quantity'] : int.tryParse(item['quantity']?.toString() ?? '') ?? 1,
           unitPrice: item['unit_price'] is double
               ? item['unit_price']
@@ -74,7 +79,7 @@ class PurchaseRequest {
       approvedBy = json['approved_by'];
     }
     priority = json['priority'];
-  }
+    isArchived = json['is_archived'] ?? false;
 
   // get priority => null;
 
@@ -97,6 +102,8 @@ class PurchaseRequest {
   data['approved_by_name'] = approvedByName;
   data['requested_by_name'] = requestedByName;
   data['priority'] = priority;
+  data['is_archived'] = isArchived ?? false;
   return data;
-  }
+   }
+}
 }

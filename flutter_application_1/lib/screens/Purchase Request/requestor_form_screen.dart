@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/controllers/purchase_request_controller.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
+import 'package:flutter_application_1/controllers/product_controller.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
@@ -17,13 +18,8 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
   final TextEditingController productController = TextEditingController();
   String? selectedFamily;
   String? selectedSubFamily;
-  // Example families and subfamilies
-  final Map<String, List<String>> productFamilies = {
-    'IT': ['Souris', 'Clavier', 'Écran', 'Ordinateur'],
-    'Mobilier': ['Chaise', 'Table', 'Armoire'],
-    'Papeterie': ['Stylo', 'Carnet', 'Feuille'],
-    'Autre': ['Autre'],
-  };
+  late Map<String, List<String>> dynamicProductFamilies = {};
+  late ProductController productControllerProvider;
   final TextEditingController quantityController = TextEditingController();
   final TextEditingController noteController = TextEditingController();
   final TextEditingController dueDateController = TextEditingController();
@@ -39,6 +35,8 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
   void initState() {
     super.initState();
     userController = Provider.of<UserController>(context, listen: false);
+    productControllerProvider = Provider.of<ProductController>(context, listen: false);
+    _fetchProductFamilies();
     if (widget.initialOrder.isNotEmpty) {
       productController.text = widget.initialOrder['product'] ?? '';
       quantityController.text = widget.initialOrder['quantity']?.toString() ?? '';
@@ -54,6 +52,37 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
       }
       if (selectedDueDate != null) {
         dueDateController.text = DateFormat('MMM dd, yyyy').format(selectedDueDate!);
+      }
+    }
+  }
+
+  Future<void> _fetchProductFamilies() async {
+    try {
+      final categories = await productControllerProvider.getCategories(null);
+      if (categories is List<dynamic>) {
+        final families = <String, List<String>>{};
+        final allCategories = categories.cast<Map<String, dynamic>>();
+        // Get all parent categories (families)
+        final parentCategories = allCategories.where((cat) => cat['parent_category'] == null).toList();
+        for (final family in parentCategories) {
+          final familyId = family['id'];
+          final familyName = family['name'] as String;
+          // Get all subfamilies for this family
+          final subfamilies = allCategories
+              .where((cat) => cat['parent_category'] == familyId)
+              .map((cat) => cat['name'] as String)
+              .toList();
+          families[familyName] = subfamilies.isNotEmpty ? subfamilies : [familyName];
+        }
+        setState(() {
+          dynamicProductFamilies = families;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to fetch product families: $e')),
+        );
       }
     }
   }
@@ -214,238 +243,263 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              // Famille, Sous-famille, Produit & Quantité row
-              Row(
-                children: [
-                  Expanded(
-                    child: DropdownButtonFormField<String>(
-                      value: selectedFamily,
-                      decoration: const InputDecoration(
-                        labelText: 'Famille',
-                        border: OutlineInputBorder(),
-                        filled: true,
-                        fillColor: Colors.white,
-                      ),
-                      items: productFamilies.keys
-                          .map((fam) => DropdownMenuItem(value: fam, child: Text(fam)))
-                          .toList(),
-                      onChanged: (val) {
-                        setState(() {
-                          selectedFamily = val;
-                          selectedSubFamily = null;
-                        });
-                      },
+              // LEFT CONTAINER - Products
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.2),
+                      spreadRadius: 2,
+                      blurRadius: 5,
+                      offset: const Offset(0, 3),
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: DropdownButtonFormField<String>(
-                      value: selectedSubFamily,
-                      decoration: const InputDecoration(
-                        labelText: 'Sous-famille',
-                        border: OutlineInputBorder(),
-                        filled: true,
-                        fillColor: Colors.white,
-                      ),
-                      items: selectedFamily == null
-                          ? []
-                          : productFamilies[selectedFamily]!
-                              .map((sub) => DropdownMenuItem(value: sub, child: Text(sub)))
-                              .toList(),
-                      onChanged: (val) {
-                        setState(() {
-                          selectedSubFamily = val;
-                        });
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: TextField(
-                      controller: productController,
-                      decoration: const InputDecoration(
-                        labelText: 'Produit (optionnel)',
-                        border: OutlineInputBorder(),
-                        filled: true,
-                        fillColor: Colors.white,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: TextField(
-                      controller: quantityController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Quantité',
-                        border: OutlineInputBorder(),
-                        filled: true,
-                        fillColor: Colors.white,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    icon: const Icon(Icons.add_circle, color: Colors.green, size: 28),
-                    onPressed: _addProduct,
-                  ),
-                ],
-              ),
-              // Show the list of added products
-              if (products.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                const Text('Products:', style: TextStyle(fontWeight: FontWeight.bold)),
-                ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: products.length,
-                  itemBuilder: (context, index) {
-                    final item = products[index];
-                    return ListTile(
-                      title: Text(item['product']),
-                      subtitle: Text('Quantity: ${item['quantity']}'),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () {
+                  ],
+                ),
+                width: MediaQuery.of(context).size.width * 0.4,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Family, SubFamily, Product, Quantity fields
+                      DropdownButtonFormField<String>(
+                        value: selectedFamily,
+                        decoration: const InputDecoration(
+                          labelText: 'Famille',
+                          border: OutlineInputBorder(),
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                        items: dynamicProductFamilies.keys
+                            .map((fam) => DropdownMenuItem(value: fam, child: Text(fam)))
+                            .toList(),
+                        onChanged: (val) {
                           setState(() {
-                            products.removeAt(index);
+                            selectedFamily = val;
+                            selectedSubFamily = null;
                           });
                         },
                       ),
-                    );
-                  },
-                ),
-              ],
-              const SizedBox(height: 24),
-              // Due date & Priority row
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: dueDateController,
-                      readOnly: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Due date',
-                        border: OutlineInputBorder(),
-                        filled: true,
-                        fillColor: Colors.white,
-                        suffixIcon: Icon(Icons.calendar_today),
-                      ),
-                      onTap: _pickDueDate,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: DropdownButtonFormField<String>(
-                      initialValue: selectedPriority,
-                      decoration: const InputDecoration(
-                        labelText: 'Priority',
-                        border: OutlineInputBorder(),
-                        filled: true,
-                        fillColor: Colors.white,
-                      ),
-                      items: ['high', 'medium', 'low']
-                          .map((p) => DropdownMenuItem(value: p, child: Text(p)))
-                          .toList(),
-                      onChanged: (val) => setState(() => selectedPriority = val),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              // Note field
-              const Text(
-                'Note',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: noteController,
-                maxLines: 5,
-                decoration: const InputDecoration(
-                  hintText: 'Enter text',
-                  border: OutlineInputBorder(),
-                  filled: true,
-                  fillColor: Colors.white,
-                ),
-              ),
-              const Spacer(),
-              // Buttons row
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () => _save(addAnother: false),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF7B61FF),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        value: selectedSubFamily,
+                        decoration: const InputDecoration(
+                          labelText: 'Sous-famille',
+                          border: OutlineInputBorder(),
+                          filled: true,
+                          fillColor: Colors.white,
                         ),
-                        elevation: 0,
+                        items: selectedFamily == null
+                            ? []
+                            : dynamicProductFamilies[selectedFamily]!
+                                .map((sub) => DropdownMenuItem(value: sub, child: Text(sub)))
+                                .toList(),
+                        onChanged: (val) {
+                          setState(() {
+                            selectedSubFamily = val;
+                          });
+                        },
                       ),
-                      child: const Text('Save', style: TextStyle(fontSize: 16, color: Colors.white)),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () => _save(addAnother: true),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF7B61FF),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: productController,
+                        decoration: const InputDecoration(
+                          labelText: 'Produit (optionnel)',
+                          border: OutlineInputBorder(),
+                          filled: true,
+                          fillColor: Colors.white,
                         ),
-                        elevation: 0,
                       ),
-                      child: const Text('Save & add another', style: TextStyle(fontSize: 16, color: Colors.white)),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () async {
-                        final shouldCancel = await showDialog<bool>(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: const Text('Cancel Request'),
-                            content: const Text('Are you sure you want to cancel? Unsaved changes will be lost.'),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.of(context).pop(false), // User chooses not to cancel
-                                child: const Text('No'),
-                              ),
-                              ElevatedButton(
-                                onPressed: () => Navigator.of(context).pop(true), // User confirms cancellation
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.red,
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: quantityController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Quantité',
+                          border: OutlineInputBorder(),
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      ElevatedButton.icon(
+                        onPressed: _addProduct,
+                        icon: const Icon(Icons.check, color: Colors.white),
+                        label: const Text('Confirm Product', style: TextStyle(color: Colors.white)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          elevation: 0,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      // Products List
+                      if (products.isNotEmpty) ...[
+                        const Text('Products:', style: TextStyle(fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 8),
+                        Expanded(
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            itemCount: products.length,
+                            itemBuilder: (context, index) {
+                              final item = products[index];
+                              return ListTile(
+                                title: Text(item['product']),
+                                subtitle: Text('Quantity: ${item['quantity']}'),
+                                trailing: IconButton(
+                                  icon: const Icon(Icons.delete, color: Colors.red),
+                                  onPressed: () {
+                                    setState(() {
+                                      products.removeAt(index);
+                                    });
+                                  },
                                 ),
-                                child: const Text('Yes'),
-                              ),
-                            ],
+                              );
+                            },
                           ),
-                        );
-                        if (shouldCancel == true) {
-                          Navigator.of(context).pop(); // Retourne à la page précédente proprement
-                        }
-                      },
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
                         ),
-                        foregroundColor: Colors.black54,
-                        backgroundColor: const Color(0xFFF3F3F3),
-                      ),
-                      child: const Text('Cancel', style: TextStyle(fontSize: 16)),
-                    ),
+                      ] else
+                        const Spacer(),
+                    ],
                   ),
-                ],
+                ),
               ),
-              const SizedBox(height: 24),
+              // RIGHT CONTAINER - Due Date, Priority, Note, Buttons
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.2),
+                      spreadRadius: 2,
+                      blurRadius: 5,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                width: MediaQuery.of(context).size.width * 0.4,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      TextField(
+                        controller: dueDateController,
+                        readOnly: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Due date',
+                          border: OutlineInputBorder(),
+                          filled: true,
+                          fillColor: Colors.white,
+                          suffixIcon: Icon(Icons.calendar_today),
+                        ),
+                        onTap: _pickDueDate,
+                      ),
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<String>(
+                        value: selectedPriority,
+                        decoration: const InputDecoration(
+                          labelText: 'Priority',
+                          border: OutlineInputBorder(),
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                        items: ['high', 'medium', 'low']
+                            .map((p) => DropdownMenuItem(value: p, child: Text(p)))
+                            .toList(),
+                        onChanged: (val) => setState(() => selectedPriority = val),
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Note',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                      const SizedBox(height: 8),
+                      Expanded(
+                        child: TextField(
+                          controller: noteController,
+                          maxLines: null,
+                          expands: true,
+                          decoration: const InputDecoration(
+                            // hintText: 'Enter text',
+                            border: OutlineInputBorder(),
+                            filled: true,
+                            fillColor: Colors.white,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      // Buttons row
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          SizedBox(
+                            width: 120,
+                            height: 50,
+                            child: OutlinedButton(
+                              onPressed: () async {
+                                final shouldCancel = await showDialog<bool>(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: const Text('Cancel Request'),
+                                    content: const Text('Are you sure you want to cancel? Unsaved changes will be lost.'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.of(context).pop(false),
+                                        child: const Text('No'),
+                                      ),
+                                      ElevatedButton(
+                                        onPressed: () => Navigator.of(context).pop(true),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.red,
+                                        ),
+                                        child: const Text('Yes'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                                if (shouldCancel == true) {
+                                  Navigator.of(context).pop();
+                                }
+                              },
+                              style: OutlinedButton.styleFrom(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                foregroundColor: Colors.black54,
+                                backgroundColor: const Color(0xFFF3F3F3),
+                              ),
+                              child: const Text('Cancel', style: TextStyle(fontSize: 14)),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 120,
+                            height: 50,
+                            child: ElevatedButton(
+                              onPressed: () => _save(addAnother: false),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF7B61FF),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                elevation: 0,
+                              ),
+                              child: const Text('Save', style: TextStyle(fontSize: 14, color: Colors.white)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         ),
