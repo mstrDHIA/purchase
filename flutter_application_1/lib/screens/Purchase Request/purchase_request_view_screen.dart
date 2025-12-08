@@ -86,7 +86,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                     TextButton(
                       onPressed: () => Navigator.pop(context, false),
                       child: const Text(
-                        'Cancel',
+                        'Reject',
                         style: TextStyle(color: Colors.deepPurple, fontSize: 16),
                       ),
                     ),
@@ -400,7 +400,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                   ),
                                   elevation: 0,
                                 ),
-                                child: Text(AppLocalizations.of(context)?.confirm ?? 'Accept'),
+                                child: Text(AppLocalizations.of(context)?.approve ?? 'Approve'),
                               ),
                               const SizedBox(width: 24),
                               ElevatedButton(
@@ -443,7 +443,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                     const SnackBar(backgroundColor: Color.fromARGB(255, 9, 37, 250), content: Text('rejected!')),
                                   );
                                 },
-                                child: Text(AppLocalizations.of(context)?.cancel ?? 'Refuse'),
+                                child: Text(AppLocalizations.of(context)?.reject ?? 'Reject'),
                               ),
                             ],
                           ),

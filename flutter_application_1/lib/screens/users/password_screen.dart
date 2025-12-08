@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
+import 'package:flutter_application_1/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
 class PasswordScreen extends StatefulWidget {
@@ -27,6 +28,9 @@ class _PasswordScreenState extends State<PasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    if (l10n == null) return const SizedBox.shrink();
+    
     return Scaffold(
       backgroundColor: const Color(0xFFF8F8FA),
       body: SafeArea(
@@ -36,30 +40,30 @@ class _PasswordScreenState extends State<PasswordScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 8),
-              const Text(
-                'Change Password',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              Text(
+                l10n.changePassword,
+                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 24),
-              const Text(
-                'Update your password',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF6F4DBF)),
+              Text(
+                l10n.updatePassword,
+                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF6F4DBF)),
               ),
               const SizedBox(height: 4),
-              const Text(
-                'For your security, please use a strong password that you do not use elsewhere.',
-                style: TextStyle(fontSize: 15, color: Colors.grey),
+              Text(
+                l10n.forYourSecurity,
+                style: const TextStyle(fontSize: 15, color: Colors.grey),
               ),
               const SizedBox(height: 32),
               _buildPasswordField(
-                label: 'Current password',
+                label: l10n.currentPassword,
                 controller: _currentPasswordController,
                 showPassword: _showCurrentPassword,
                 onToggle: () => setState(() => _showCurrentPassword = !_showCurrentPassword),
               ),
               const SizedBox(height: 24),
               _buildPasswordField(
-                label: 'New password',
+                label: l10n.newPassword,
                 controller: _newPasswordController,
                 showPassword: _showNewPassword,
                 onToggle: () => setState(() => _showNewPassword = !_showNewPassword),
@@ -67,7 +71,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
               ),
               const SizedBox(height: 24),
               _buildPasswordField(
-                label: 'Confirm new password',
+                label: l10n.confirmNewPassword,
                 controller: _confirmPasswordController,
                 showPassword: _showConfirmPassword,
                 onToggle: () => setState(() => _showConfirmPassword = !_showConfirmPassword),
@@ -81,11 +85,11 @@ class _PasswordScreenState extends State<PasswordScreen> {
                         Navigator.pop(context);
                       },
                       style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: Color(0xFF6F4DBF)),
+                        side: const BorderSide(color: Color(0xFF6F4DBF)),
                         padding: const EdgeInsets.symmetric(vertical: 18),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
-                      child: const Text('Cancel', style: TextStyle(color: Color(0xFF6F4DBF), fontSize: 16)),
+                      child: Text(l10n.cancel, style: const TextStyle(color: Color(0xFF6F4DBF), fontSize: 16)),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -97,13 +101,13 @@ class _PasswordScreenState extends State<PasswordScreen> {
                         final confirmPassword = _confirmPasswordController.text.trim();
                         if (currentPassword.isEmpty || newPassword.isEmpty || confirmPassword.isEmpty) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Please fill all fields')),
+                            SnackBar(content: Text(l10n.allFieldsRequired)),
                           );
                           return;
                         }
                         if (newPassword != confirmPassword) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('New passwords do not match')),
+                            SnackBar(content: Text(l10n.passwordsDoNotMatch)),
                           );
                           return;
                         }
@@ -129,7 +133,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         elevation: 0,
                       ),
-                      child: const Text('Update password', style: TextStyle(fontSize: 16)),
+                      child: Text(l10n.updatePasswordBtn, style: const TextStyle(fontSize: 16)),
                     ),
                   ),
                 ],
@@ -165,18 +169,21 @@ class _PasswordScreenState extends State<PasswordScreen> {
               obscureText: !showPassword,
               onSubmitted: label.toLowerCase().contains('confirm')
                   ? (_) async {
+                      final l10n = AppLocalizations.of(context);
+                      if (l10n == null) return;
+                      
                       final currentPassword = _currentPasswordController.text.trim();
                       final newPassword = _newPasswordController.text.trim();
                       final confirmPassword = _confirmPasswordController.text.trim();
                       if (currentPassword.isEmpty || newPassword.isEmpty || confirmPassword.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Please fill all fields')),
+                          SnackBar(content: Text(l10n.allFieldsRequired)),
                         );
                         return;
                       }
                       if (newPassword != confirmPassword) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('New passwords do not match')),
+                          SnackBar(content: Text(l10n.passwordsDoNotMatch)),
                         );
                         return;
                       }
