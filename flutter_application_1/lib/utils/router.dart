@@ -13,6 +13,7 @@ import 'package:flutter_application_1/screens/Role/Role_screen.dart';
 import 'package:flutter_application_1/screens/users/permission_screen.dart';
 import 'package:flutter_application_1/screens/users/add_user_screen.dart';
 import 'package:flutter_application_1/screens/Purchase Request/requestor_form_screen.dart';
+import 'package:flutter_application_1/screens/Purchase Request/purchase_request_list_screen.dart';
 import 'package:go_router/go_router.dart';
 
 final GoRouter router = GoRouter(
@@ -55,8 +56,13 @@ final GoRouter router = GoRouter(
       builder: (context, state) => PermissionPage(),
     ),
     GoRoute(
+      path: '/purchase_request',
+      builder: (context, state) => PurchaseRequestPage(),
+    ),
+    GoRoute(
       path: '/purchase_order',
       builder: (context, state) => PurchaseOrderPage(),
+  
     ),
     GoRoute(
       path: '/supplier_registration',

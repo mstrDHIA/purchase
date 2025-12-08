@@ -114,7 +114,9 @@ class UserNetwork {
             }),
       );
       
-   
+      print('📡 Network request to: ${APIS.baseUrl}${APIS.userListDetailed}');
+      print('🔑 Token: ${APIS.token.substring(0, 20)}...');
+      print('📊 Raw response: ${response.data}');
     
     return response;
     }
