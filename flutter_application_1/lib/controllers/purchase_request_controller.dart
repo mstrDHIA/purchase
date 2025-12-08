@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter_application_1/models/purchase_request.dart';
-import 'package:flutter_application_1/models/purchase_request_datasource.dart';
+import 'package:flutter_application_1/models/datasources/purchase_request_datasource.dart';
 import 'package:flutter_application_1/models/user_model.dart';
 import 'package:flutter_application_1/network/purchase_request_network.dart';
 import 'package:provider/provider.dart';

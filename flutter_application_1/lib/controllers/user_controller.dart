@@ -189,9 +189,10 @@ class UserController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> login(String email, String password,BuildContext context) async {
+  Future<void> login(String email, String password,BuildContext context,GlobalKey<FormState>? _formKey) async {
   try {
-    isLoading = true;
+    // if ((!(_formKey!.currentState!.validate()))&&_formKey!=null) {
+      isLoading = true;
     notifyListeners();
     Response? response = await userNetwork.login(email, password);
     if (response!.statusCode == 200) {
@@ -239,6 +240,12 @@ class UserController extends ChangeNotifier {
       }
       isLoading = false;
       notifyListeners();
+      // return;
+    // }
+    // else{
+
+    // }
+    
 
   } catch (e) {
     print('Login error: $e');
@@ -258,7 +265,7 @@ class UserController extends ChangeNotifier {
     notifyListeners();
     Response response = await userNetwork.register(username: email, password: password);
     if (response.statusCode == 201) {
-      login(email, password, context);
+      login(email, password, context,null);
 
     } 
    

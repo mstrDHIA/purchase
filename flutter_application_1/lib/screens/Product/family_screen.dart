@@ -465,7 +465,7 @@ class _FamiliesPageState extends State<FamiliesPage> {
                             ),
                         ],
                       ),
-                    ),
+              ),
             ),
           ),
         ],

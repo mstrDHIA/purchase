@@ -28,6 +28,13 @@ class _SignInPageState extends State<SignInPage> {
     userController = Provider.of<UserController>(context, listen: false);
   }
 
+  emailValidator(String? value) {
+    // if (value == null || value.isEmpty || !value.contains('@')) {
+    //   return 'Please enter a valid email.';
+    // }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -89,12 +96,9 @@ class _SignInPageState extends State<SignInPage> {
                             CustomTextField(
                               controller: _emailController,
                               hintText: "abc123@gmail.com",
-                              validator: (value) {
-                                if (value == null || value.isEmpty || !value.contains('@')) {
-                                  return 'Please enter a valid email.';
-                                }
-                                return null;
-                              },
+                              // validator: (value) {
+                              //  return emailValidator(value);
+                              // },
                             ),
                             const SizedBox(height: 16),
                             const Text("Password"),
@@ -124,41 +128,45 @@ class _SignInPageState extends State<SignInPage> {
                                   },
                                 ),
                               ),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Password is required.';
-                                }
+                              // validator: (value) {
+                              //   if (value == null || value.isEmpty) {
+                              //     return 'Password is required.';
+                              //   }
 
-                                final password = value.trim();
+                              //   final password = value.trim();
 
-                                if (password.length < 8) {
-                                  return 'Password must be at least 8 characters long.';
-                                }
+                              //   if (password.length < 8) {
+                              //     return 'Password must be at least 8 characters long.';
+                              //   }
 
-                                if (!RegExp(r'[A-Z]').hasMatch(password)) {
-                                  return 'Include at least one uppercase letter.';
-                                }
+                              //   if (!RegExp(r'[A-Z]').hasMatch(password)) {
+                              //     return 'Include at least one uppercase letter.';
+                              //   }
 
-                                if (!RegExp(r'[a-z]').hasMatch(password)) {
-                                  return 'Include at least one lowercase letter.';
-                                }
+                              //   if (!RegExp(r'[a-z]').hasMatch(password)) {
+                              //     return 'Include at least one lowercase letter.';
+                              //   }
 
-                                if (!RegExp(r'[0-9]').hasMatch(password)) {
-                                  return 'Include at least one number.';
-                                }
+                              //   if (!RegExp(r'[0-9]').hasMatch(password)) {
+                              //     return 'Include at least one number.';
+                              //   }
 
-                                if (!RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(password)) {
-                                  return 'Include at least one special character.';
-                                }
+                              //   if (!RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(password)) {
+                              //     return 'Include at least one special character.';
+                              //   }
 
-                                return null;
-                              },
+                              //   return null;
+                              // },
                               onFieldSubmitted: (_) {
-                                userController.login(
+                                // if (_formKey.currentState!.validate()) {
+                                  userController.login(
                                   _emailController.text,
                                   _passwordController.text,
-                                  context
+                                  context,
+                                  _formKey
                                 );
+                                // }
+                                
                               },
                             ),
                             
@@ -195,7 +203,8 @@ class _SignInPageState extends State<SignInPage> {
                                     userController.login(
                                       _emailController.text,
                                       _passwordController.text,
-                                      context
+                                      context,
+                                      _formKey
                                     );
                                   },
                                   child: SizedBox(

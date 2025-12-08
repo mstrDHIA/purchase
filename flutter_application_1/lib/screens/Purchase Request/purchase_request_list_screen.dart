@@ -6,7 +6,7 @@ import 'package:flutter_application_1/controllers/purchase_request_controller.da
 import 'package:flutter_application_1/screens/Purchase%20Request/requestor_form_screen.dart';
 import 'package:flutter_application_1/screens/Purchase%20order/pushase_order_screen.dart' as purchase_order;
 import 'package:provider/provider.dart';
-import 'package:flutter_application_1/models/purchase_request_datasource.dart';
+import 'package:flutter_application_1/models/datasources/purchase_request_datasource.dart';
 
 class PurchaseRequestPage extends StatefulWidget {
   const PurchaseRequestPage({super.key});
