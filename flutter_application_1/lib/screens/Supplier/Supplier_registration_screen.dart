@@ -564,7 +564,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                                       onSort: (i, asc) => _sortByColumn(3, asc),
                                     ),
                                     DataColumn(
-                                      label: const Text('Matricule', style: TextStyle(fontWeight: FontWeight.w600)),
+                                      label: const Text('Matricule fiscale', style: TextStyle(fontWeight: FontWeight.w600)),
                                       onSort: (i, asc) => _sortByColumn(4, asc),
                                     ),
                                     DataColumn(
