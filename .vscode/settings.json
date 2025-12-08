@@ -1,11 +1,15 @@
 {
-    "github.copilot.chat.newWorkspaceCreation.enabled": false,
-    "github.copilot.chat.agent.currentEditorContext.enabled": false,
-    "chat.agent.enabled": false,
-    "github.copilot.chat.agent.autoFix": false,
+    "github.copilot.chat.newWorkspaceCreation.enabled": true,
+    "github.copilot.chat.agent.currentEditorContext.enabled": true,
+    "chat.agent.enabled": true,
+    "github.copilot.chat.agent.autoFix": true,
     "github.copilot.chat.reviewAgent.enabled": false,
-    "github.copilot.chat.summarizeAgentConversationHistory.enabled": false,
-    "githubPullRequests.codingAgent.autoCommitAndPush": false,
-    "githubPullRequests.codingAgent.codeLens": false,
-    "githubPullRequests.codingAgent.enabled": false
+    "github.copilot.chat.summarizeAgentConversationHistory.enabled": true,
+    "githubPullRequests.codingAgent.autoCommitAndPush": true,
+    "githubPullRequests.codingAgent.codeLens": true,
+    "githubPullRequests.codingAgent.enabled": true,
+    "github.copilot.chat.codesearch.enabled": true,
+    "accessibility.openChatEditedFiles": true,
+    "inlineChat.notebookAgent": true,
+    "chat.useNestedAgentsMdFiles": true
 }

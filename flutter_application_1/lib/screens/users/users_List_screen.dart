@@ -4,7 +4,7 @@ import 'package:flutter_application_1/models/user_model.dart';
 import 'package:flutter_application_1/network/user_network.dart';
 import 'package:flutter_application_1/screens/profile/profile_user.dart';
 import 'package:flutter_application_1/screens/users/modify_user_screen.dart';
-
+import 'package:flutter_application_1/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -37,10 +37,10 @@ class _UserListPageState extends State<UserListPage> {
             // Titre, bouton et refresh
             Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Text(
-                    "User’s List",
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    _getLocalizedText(context, 'users_list', "User's List"),
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                 ),
                 ElevatedButton.icon(
@@ -57,7 +57,7 @@ class _UserListPageState extends State<UserListPage> {
                         userController.displaySnackBar = false; // Reset the flag
                         SnackBar snackBar = SnackBar(
         backgroundColor: Colors.green,
-        content: Text('User added successfully.'),
+        content: Text(_getLocalizedText(context, 'user_added', 'User added successfully.')),
       );
                       userController.getUsers();
                         ScaffoldMessenger.of(context).showSnackBar(
@@ -68,7 +68,7 @@ class _UserListPageState extends State<UserListPage> {
                     });
                   },
                   icon: const Icon(Icons.add, color: Colors.white),
-                  label: const Text("Add New User"),
+                  label: Text(_getLocalizedText(context, 'add_new_user', "Add New User")),
                 ),
               ],
             ),
@@ -82,7 +82,7 @@ class _UserListPageState extends State<UserListPage> {
                       Provider.of<UserController>(context, listen: false).setSearchText(value);
                     },
                     decoration: InputDecoration(
-                      hintText: "Search user name, email ...",
+                      hintText: _getLocalizedText(context, 'search_user', "Search user name, email ..."),
                       hintStyle: const TextStyle(fontSize: 16),
                       filled: true,
                       fillColor: const Color(0xFFEFEFEF),
@@ -135,30 +135,30 @@ class _UserListPageState extends State<UserListPage> {
                                 dividerThickness: 0.6,
                                 columns: [
                                   DataColumn(
-                                    label: const Text('Email', style: TextStyle(fontWeight: FontWeight.bold)),
+                                    label: Text(_getLocalizedText(context, 'email', 'Email'), style: const TextStyle(fontWeight: FontWeight.bold)),
                                     onSort: (columnIndex, ascending) {
                                       userController.sortUsers(columnIndex, ascending);
                                     },
                                   ),
                                   DataColumn(
-                                    label: const Text('Name', style: TextStyle(fontWeight: FontWeight.bold)),
+                                    label: Text(_getLocalizedText(context, 'name', 'Name'), style: const TextStyle(fontWeight: FontWeight.bold)),
                                     onSort: (columnIndex, ascending) {
                                       userController.sortUsers(columnIndex, ascending);
                                     },
                                   ),
                                   DataColumn(
-                                    label: const Text('Status', style: TextStyle(fontWeight: FontWeight.bold)),
+                                    label: Text(_getLocalizedText(context, 'status', 'Status'), style: const TextStyle(fontWeight: FontWeight.bold)),
                                     onSort: (columnIndex, ascending) {
                                       userController.sortUsers(columnIndex, ascending);
                                     },
                                   ),
                                   DataColumn(
-                                    label: const Text('User Permission', style: TextStyle(fontWeight: FontWeight.bold)),
+                                    label: Text(_getLocalizedText(context, 'user_permission', 'User Permission'), style: const TextStyle(fontWeight: FontWeight.bold)),
                                     onSort: (columnIndex, ascending) {
                                       userController.sortUsers(columnIndex, ascending);
                                     },
                                   ),
-                                  const DataColumn(label: Text('Actions', style: TextStyle(fontWeight: FontWeight.bold))),
+                                  DataColumn(label: Text(_getLocalizedText(context, 'actions', 'Actions'), style: const TextStyle(fontWeight: FontWeight.bold))),
                                 ],
                                 rows: userController.filteredUsers.map((user) {
                                   return DataRow(
@@ -181,7 +181,7 @@ class _UserListPageState extends State<UserListPage> {
                                                   borderRadius: BorderRadius.circular(18),
                                                 ),
                                                 child: Text(
-                                                  user.isActive! ? 'Active' : 'Inactive',
+                                                  user.isActive! ? _getLocalizedText(context, 'active', 'Active') : _getLocalizedText(context, 'inactive', 'Inactive'),
                                                   style: TextStyle(
                                                     color: user.isActive!
                                                         ? Colors.green.shade800
@@ -193,7 +193,7 @@ class _UserListPageState extends State<UserListPage> {
                                               ),
                                             )
                                       ),
-                                      DataCell(Text(user.role!=null?user.role!.name??'Unknown':'None', style: const TextStyle(fontSize: 15))),
+                                      DataCell(Text(user.role!=null?user.role!.name??_getLocalizedText(context, 'unknown', 'Unknown'):_getLocalizedText(context, 'none', 'None'), style: const TextStyle(fontSize: 15))),
                                       DataCell(Row(
                                         children: [
                                           IconButton(
@@ -211,14 +211,14 @@ class _UserListPageState extends State<UserListPage> {
                                                   userController.displaySnackBar = false; // Reset the flag
                                                 SnackBar snackBar = SnackBar(
                                                   backgroundColor: Colors.green,
-                                                  content: Text('User updated successfully.'),
+                                                  content: Text(_getLocalizedText(context, 'user_updated', 'User updated successfully.')),
                                                 );
                                                   ScaffoldMessenger.of(context).showSnackBar(snackBar);
                                                   userController.getUsers();
                                                 }
                                               });
                                             },
-                                            tooltip: 'Edit',
+                                            tooltip: _getLocalizedText(context, 'edit', 'Edit'),
                                           ),
                                           IconButton(
                                             icon: const Icon(Icons.visibility, size: 18, color: Color(0xFF6F4DBF)),
@@ -244,18 +244,18 @@ class _UserListPageState extends State<UserListPage> {
                                                 );
                                               } else {
                                                 ScaffoldMessenger.of(context).showSnackBar(
-                                                  const SnackBar(content: Text('Impossible de charger le profil utilisateur.')),
+                                                  SnackBar(content: Text(_getLocalizedText(context, 'load_profile_error', 'Unable to load user profile.'))),
                                                 );
                                               }
                                             },
-                                            tooltip: 'View',
+                                            tooltip: _getLocalizedText(context, 'view', 'View'),
                                           ),
                                           IconButton(
                                             icon: const Icon(Icons.delete, size: 20, color: Color(0xFF6F4DBF)),
                                             onPressed: () {
                                               _confirmDelete(context, user);
                                             },
-                                            tooltip: 'Delete',
+                                            tooltip: _getLocalizedText(context, 'delete', 'Delete'),
                                           ),
                                         ],
                                       )),
@@ -285,9 +285,9 @@ class _UserListPageState extends State<UserListPage> {
             userController.setStatus(value);
           },
           itemBuilder: (context) => [
-            const PopupMenuItem(value: 'All', child: Text('All')),
-            const PopupMenuItem(value: 'Active', child: Text('Active')),
-            const PopupMenuItem(value: 'Inactive', child: Text('Inactive')),
+            PopupMenuItem(value: 'All', child: Text(_getLocalizedText(context, 'all', 'All'))),
+            PopupMenuItem(value: 'Active', child: Text(_getLocalizedText(context, 'active', 'Active'))),
+            PopupMenuItem(value: 'Inactive', child: Text(_getLocalizedText(context, 'inactive', 'Inactive'))),
           ],
           child: TextButton(
             style: TextButton.styleFrom(
@@ -301,7 +301,7 @@ class _UserListPageState extends State<UserListPage> {
             ),
             onPressed: null,
             child: Text(
-              userController.selectedStatus ?? "Filter by Status",
+              userController.selectedStatus ?? _getLocalizedText(context, 'filter_status', "Filter by Status"),
               style: const TextStyle(
                 color: Color(0xFF6F4DBF),
                 fontWeight: FontWeight.w500,
@@ -316,10 +316,10 @@ class _UserListPageState extends State<UserListPage> {
             userController.setPermission(value);
           },
           itemBuilder: (context) => [
-            const PopupMenuItem(value: 'All', child: Text('All')),
-            const PopupMenuItem(value: 'Operational', child: Text('Operational')),
-            const PopupMenuItem(value: 'Full', child: Text('Full')),
-            const PopupMenuItem(value: 'Basic', child: Text('Basic')),
+            PopupMenuItem(value: 'All', child: Text(_getLocalizedText(context, 'all', 'All'))),
+            PopupMenuItem(value: 'Operational', child: Text(_getLocalizedText(context, 'operational', 'Operational'))),
+            PopupMenuItem(value: 'Full', child: Text(_getLocalizedText(context, 'full', 'Full'))),
+            PopupMenuItem(value: 'Basic', child: Text(_getLocalizedText(context, 'basic', 'Basic'))),
           ],
           child: TextButton(
             style: TextButton.styleFrom(
@@ -333,7 +333,7 @@ class _UserListPageState extends State<UserListPage> {
             ),
             onPressed: null,
             child: Text(
-              userController.selectedPermission ?? "Filter by User Permission",
+              userController.selectedPermission ?? _getLocalizedText(context, 'filter_permission', "Filter by User Permission"),
               style: const TextStyle(
                 color: Color(0xFF6F4DBF),
                 fontWeight: FontWeight.w500,
@@ -347,27 +347,64 @@ class _UserListPageState extends State<UserListPage> {
   }
 
   void _confirmDelete(BuildContext context, User user) {
-    final parentContext = context; // Capture le contexte parent
+    final parentContext = context;
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete User'),
-        content: Text('Are you sure you want to delete ${user.username}?'),
+        title: Text(_getLocalizedText(context, 'delete_user', 'Delete User')),
+        content: Text('${_getLocalizedText(context, 'confirm_delete_user', 'Are you sure you want to delete')} ${user.username}?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
+            child: Text(_getLocalizedText(context, 'cancel', 'Cancel')),
           ),
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(dialogContext);
               await Provider.of<UserController>(parentContext, listen: false).deleteUser(parentContext, user);
             },
-            child: const Text('Delete'),
+            child: Text(_getLocalizedText(context, 'delete', 'Delete')),
           ),
         ],
       ),
     );
+  }
+
+  String _getLocalizedText(BuildContext context, String key, String defaultValue) {
+    final l10n = AppLocalizations.of(context);
+    if (l10n == null) return defaultValue;
+    
+    final keyMap = {
+      'users_list': l10n.usersList,
+      'add_new_user': l10n.addNewUser,
+      'user_added': l10n.userAdded,
+      'search_user': l10n.searchUser,
+      'email': l10n.email,
+      'name': l10n.name,
+      'status': l10n.status,
+      'user_permission': l10n.userPermission,
+      'actions': l10n.actions,
+      'active': l10n.active,
+      'inactive': l10n.inactive,
+      'unknown': l10n.unknown,
+      'none': l10n.none,
+      'edit': l10n.edit,
+      'view': l10n.view,
+      'delete': l10n.delete,
+      'load_profile_error': l10n.loadProfileError,
+      'user_updated': l10n.userUpdated,
+      'all': l10n.all,
+      'filter_status': l10n.filterStatus,
+      'filter_permission': l10n.filterPermission,
+      'operational': l10n.operational,
+      'full': l10n.full,
+      'basic': l10n.basic,
+      'delete_user': l10n.deleteUser,
+      'confirm_delete_user': l10n.confirmDeleteUser,
+      'cancel': l10n.cancel,
+    };
+    
+    return keyMap[key] ?? defaultValue;
   }
 }
 

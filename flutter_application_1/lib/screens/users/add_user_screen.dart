@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
+import 'package:flutter_application_1/l10n/app_localizations.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
@@ -63,11 +64,14 @@ class _AddUserPageState extends State<AddUserPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    if (l10n == null) return const SizedBox.shrink();
+    
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'User Information Form',
-          style: TextStyle(
+          l10n.userInformationForm,
+          style: const TextStyle(
             fontSize: 32,
             fontWeight: FontWeight.bold,
             color: Colors.blue,
@@ -97,7 +101,7 @@ class _AddUserPageState extends State<AddUserPage> {
                   ElevatedButton.icon(
                     onPressed: _pickProfileImageFromFile,
                     icon: const Icon(Icons.folder_open),
-                    label: const Text('Open File to Select Image'),
+                    label: Text(l10n.openFileToSelectImage),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.deepPurple.shade200,
                     ),
@@ -107,15 +111,15 @@ class _AddUserPageState extends State<AddUserPage> {
             ),
             const SizedBox(height: 24),
             const SizedBox(height: 60),
-                      const Text(
-                        'Username',
-                        style: TextStyle(fontSize: 18, color: Colors.black54),
+                      Text(
+                        l10n.username,
+                        style: const TextStyle(fontSize: 18, color: Colors.black54),
                       ),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _usernameController,
                         decoration: InputDecoration(
-                          hintText: 'Enter your username',
+                          hintText: l10n.username,
                           filled: true,
                           fillColor: Colors.blue.shade50,
                           border: OutlineInputBorder(
@@ -126,15 +130,15 @@ class _AddUserPageState extends State<AddUserPage> {
                         keyboardType: TextInputType.emailAddress,
                       ),
                       const SizedBox(height: 24),
-                      const Text(
-                        'Password',
-                        style: TextStyle(fontSize: 18, color: Colors.black54),
+                      Text(
+                        l10n.password,
+                        style: const TextStyle(fontSize: 18, color: Colors.black54),
                       ),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _passwordController,
                         decoration: InputDecoration(
-                          hintText: 'Enter your password',
+                          hintText: l10n.enterYourPassword,
                           filled: true,
                           fillColor: Colors.blue.shade50,
                           border: OutlineInputBorder(
@@ -145,16 +149,16 @@ class _AddUserPageState extends State<AddUserPage> {
                       ),
                       const SizedBox(height: 8),
                       const SizedBox(height: 24),
-                      const Text(
-                        'Confirm Password',
-                        style: TextStyle(fontSize: 18, color: Colors.black54),
+                      Text(
+                        l10n.confirmPasswordField,
+                        style: const TextStyle(fontSize: 18, color: Colors.black54),
                       ),
                       const SizedBox(height: 8),
                       TextFormField(
                         controller: _confirmPasswordController,
                         obscureText: true,
                         decoration: InputDecoration(
-                          hintText: 'Re-enter your password',
+                          hintText: l10n.reenterPassword,
                           filled: true,
                           fillColor: Colors.blue.shade50,
                           border: OutlineInputBorder(
@@ -169,24 +173,24 @@ class _AddUserPageState extends State<AddUserPage> {
                           return ElevatedButton(onPressed: (){
                             if (_usernameController.text.isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Username is required')),
+                                SnackBar(content: Text(l10n.usernameRequired)),
                               );
                               return;
                             }
                             if (_passwordController.text.isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Password is required')),
+                                SnackBar(content: Text(l10n.passwordRequired)),
                               );
                               return;
                             }
                             if (_confirmPasswordController.text != _passwordController.text) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Passwords do not match')),
+                                SnackBar(content: Text(l10n.passwordsDoNotMatch)),
                               );
                               return;
                             }
                             userController.addUser(_usernameController.text, _passwordController.text, context);
-                          }, child: Text('Save'));
+                          }, child: Text(l10n.save));
                         }
                       ),
           ],

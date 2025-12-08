@@ -61,8 +61,13 @@ class UserController extends ChangeNotifier {
           user.email!.toLowerCase().contains(searchText.toLowerCase()) ||
           user.username!.toLowerCase().contains(searchText.toLowerCase());
       final matchesPermission = selectedPermission == null || user.permission == selectedPermission;
-      final matchesStatus = selectedStatus == null || user.isActive == selectedStatus;
-      return matchesSearch && matchesPermission && matchesStatus;
+      
+      // Fix: Compare boolean isActive with string selectedStatus
+      final statusMatches = selectedStatus == null || 
+          (user.isActive == true && selectedStatus == 'Active') ||
+          (user.isActive == false && selectedStatus == 'Inactive');
+      
+      return matchesSearch && matchesPermission && statusMatches;
     }).toList();
 
     if (sortColumnIndex != null) {
@@ -97,29 +102,44 @@ class UserController extends ChangeNotifier {
     isLoading = true;
     notifyListeners();
     try {
+      print('🔄 Fetching users from server...');
       Response response = await userNetwork.uesresList();
+      print('✅ Response received: Status ${response.statusCode}');
+      print('📋 Response data: ${response.data}');
+      
       if (response.statusCode == 200) {
         if (response.data is List) {
-          users = (response.data as List).map((user) => User.fromJson(user)).toList();
-          for (var u in users) {
-          }
+          users = (response.data as List).map((user) {
+            print('👤 Parsing user: $user');
+            return User.fromJson(user);
+          }).toList();
+          print('✅ Successfully loaded ${users.length} users');
+        } else if (response.data is Map && response.data['results'] is List) {
+          // Handle paginated response
+          users = (response.data['results'] as List).map((user) => User.fromJson(user)).toList();
+          print('✅ Successfully loaded ${users.length} users (paginated)');
         } else {
+          print('⚠️ Unexpected data format: ${response.data.runtimeType}');
         }
         isLoading = false;
         notifyListeners();
       } else {
         isLoading = false;
         notifyListeners();
-        throw Exception('Failed to load users');
+        throw Exception('Failed to load users: Status ${response.statusCode}');
       }
     } on DioException catch (e) {
       isLoading = false;
       notifyListeners();
-      print('Erreur Dio : ${e.message}, type: ${e.type}, data: ${e.response?.data}, error: ${e.error}');
+      print('❌ Dio Error: ${e.message}');
+      print('❌ Error type: ${e.type}');
+      print('❌ Response status: ${e.response?.statusCode}');
+      print('❌ Response data: ${e.response?.data}');
+      print('❌ Error detail: ${e.error}');
     } catch (e) {
       isLoading = false;
       notifyListeners();
-      print('Erreur inattendue lors de la récupération des utilisateurs : $e');
+      print('❌ Unexpected error while fetching users: $e');
     }
   }
 
@@ -180,9 +200,26 @@ class UserController extends ChangeNotifier {
       currentUserId = decodedToken['user_id'];
       selectedUserId = currentUserId;
       currentUser = User.fromJson(response.data['user']);
-  context.go('/main_screen');
+      
+      // Redirect based on user role
+      int roleId = currentUser.role?.id ?? currentUser.role_id ?? 0;
+      print('🔐 Login successful - User Role ID: $roleId');
+      
       isLoading = false;
       notifyListeners();
+      
+      // N1 (User=1) and N2 (Manager=2) -> Purchase Request
+      // N3 (Supervisor=3) and N4 (Admin/others) -> Purchase Order
+      if (roleId == 1 || roleId == 2) {
+        print('👤 Role 1/2 detected -> Navigate to Purchase Request');
+        context.go('/purchase_request');
+      } else if (roleId == 3 || roleId == 4) {
+        print('👮 Role 3/4 detected -> Navigate to Purchase Order');
+        context.go('/purchase_order');
+      } else {
+        print('⚙️ Default role -> Navigate to main_screen');
+        context.go('/main_screen');
+      }
     } else if (response.statusCode == 401) {
       isLoading = false;
       notifyListeners();
@@ -221,11 +258,6 @@ class UserController extends ChangeNotifier {
       ),
     );
   }
-
-
-     
-
-
   }
    Future<void> register(String email, String password,BuildContext context) async {
     try{

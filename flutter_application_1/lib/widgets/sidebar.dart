@@ -3,7 +3,7 @@ import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/screens/Product/family_screen.dart';
 import 'package:flutter_application_1/screens/Supplier/Supplier_registration_screen.dart';
-import 'package:go_router/go_router.dart';
+import 'package:flutter_application_1/l10n/app_localizations.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -118,6 +118,21 @@ class _AppSidebarState extends State<AppSidebar> {
 // 3 manager
 // 4 supervisor
 // 5 visitor
+  String _getLocalizedLabel(String label, AppLocalizations localizations) {
+    final labelMap = {
+      'Users': localizations.users,
+      'Password': localizations.password,
+      'PurchaseRequest': localizations.purchaseRequest,
+      'Purchase Order': localizations.purchaseOrder,
+      'Roles and access': localizations.rolesAccess,
+      'Settings': localizations.settings,
+      'Supplier': localizations.supplier,
+      'Product': localizations.product,
+      'Profile': localizations.profile,
+    };
+    return labelMap[label] ?? label;
+  }
+
   void initSideBarItems() {
     if(userController.currentUser.role_id==1){
       items.addAll([
@@ -248,14 +263,17 @@ class _AppSidebarState extends State<AppSidebar> {
 
   // added: confirmation + logout helper
   Future<void> _confirmLogout() async {
+    final l10n = AppLocalizations.of(context);
+    if (l10n == null) return;
+    
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Confirm"),
-        content: const Text("Do you really want to logout?"),
+        title: Text(l10n.confirm),
+        content: Text(l10n.doYouReallyWantToLogout),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Cancel")),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text("Logout")),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(l10n.cancel)),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: Text(l10n.logout)),
         ],
       ),
     );
@@ -266,6 +284,9 @@ class _AppSidebarState extends State<AppSidebar> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    if (l10n == null) return const SizedBox.shrink();
+    
     return AnimatedContainer(
       alignment: Alignment.topCenter,
       duration: const Duration(milliseconds: 250),
@@ -342,8 +363,9 @@ class _AppSidebarState extends State<AppSidebar> {
                         final label = item['label'] as String;
                         final icon = item['icon'] as IconData;
                         final selected = label == widget.selected;
+                        final localizedLabel = _getLocalizedLabel(label, l10n);
                         return Tooltip(
-                          message: label,
+                          message: localizedLabel,
                           child: IconButton(
                             icon: Icon(
                               icon,
@@ -357,7 +379,7 @@ class _AppSidebarState extends State<AppSidebar> {
                       }).toList(),
                       // logout icon for collapsed state
                       Tooltip(
-                        message: 'Logout',
+                        message: l10n.logout,
                         child: IconButton(
                           icon: const Icon(Icons.logout, color: Colors.red),
                           onPressed: _confirmLogout,
@@ -374,9 +396,10 @@ class _AppSidebarState extends State<AppSidebar> {
                         final label = item['label'] as String;
                         final icon = item['icon'] as IconData;
                         final selected = label == widget.selected;
+                        final localizedLabel = _getLocalizedLabel(label, l10n);
 
                         return Tooltip(
-                          message: isCollapsed ? label : '',
+                          message: isCollapsed ? localizedLabel : '',
                           child: ListTile(
                             contentPadding: EdgeInsets.symmetric(
                               horizontal: isCollapsed ? 8 : 16,
@@ -389,7 +412,7 @@ class _AppSidebarState extends State<AppSidebar> {
                             title: isCollapsed
                                 ? null
                                 : Text(
-                                    label,
+                                    localizedLabel,
                                     style: TextStyle(
                                       color: selected ? Colors.deepPurple : Colors.black87,
                                       fontWeight: selected ? FontWeight.bold : FontWeight.normal,
@@ -408,9 +431,9 @@ class _AppSidebarState extends State<AppSidebar> {
                       // Logout tile in expanded sidebar
                       ListTile(
                         leading: const Icon(Icons.logout, color: Colors.red),
-                        title: const Text(
-                          'Logout',
-                          style: TextStyle(color: Colors.red, fontWeight: FontWeight.w600),
+                        title: Text(
+                          l10n.logout,
+                          style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w600),
                         ),
                         onTap: _confirmLogout,
                       ),
