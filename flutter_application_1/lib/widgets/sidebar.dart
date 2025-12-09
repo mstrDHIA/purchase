@@ -248,17 +248,32 @@ class _AppSidebarState extends State<AppSidebar> {
   }
 
   void _onItemTap(String label) {
-    // update selected state in parent
+    // conserve le comportement actuel (mise à jour du selected dans le parent)
     widget.onItemSelected(label);
 
-    // Navigate to specific routes for some items
-    // if (label == 'Supplier') {
-    //   // Use GoRouter to navigate because the app uses MaterialApp.router
-    //   GoRouter.of(context).go('/supplier_registration');
-    //   return;
-    // }
+    // mapping labels -> routes (ne modifie pas la façon dont les items sont générés par rôle)
+    final Map<String, String> labelToRoute = {
+      'Profile': '/Profile',
+      'PurchaseRequest': '/purchase_requests',
+      'Purchase Order': '/purchase_orders',
+      'Supplier': '/supplier_registration',
+      'Product': '/families',
+      'Users': '/users_list',
+      'Roles and access': '/role',
+      'Password': '/password',
+      'Settings': '/settings',
+      // 'Profile': '/dashboard',
+      // add other mappings if needed
+    };
 
-    // For other items we keep current behavior (the parent will show the appropriate content)
+    final route = labelToRoute[label];
+    if (route != null) {
+      // si le sidebar est ouvert en tant que Drawer, le fermer d'abord
+      if (Scaffold.maybeOf(context)?.isDrawerOpen ?? false) {
+        Navigator.of(context).pop();
+      }
+      GoRouter.of(context).go(route);
+    }
   }
 
   // added: confirmation + logout helper

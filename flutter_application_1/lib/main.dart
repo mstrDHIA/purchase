@@ -101,37 +101,36 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
      localeProvider = Provider.of<LocaleProvider>(context,listen: false);
-    // TODO: implement initState
     super.initState();
   }
   
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-          title: 'Purchase Requestor',
-          debugShowCheckedModeBanner: false,
-          theme: Provider.of<ThemeProvider>(context).currentTheme,
-          localizationsDelegates: [
-            AppLocalizations.delegate,
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          supportedLocales: const [
-            Locale('en'),
-            Locale('fr'),
-            Locale('ar'),
-          ],
-          locale: localeProvider.locale,
-          routerConfig: router,
-        );
-    // TODO: implement build
-    throw UnimplementedError();
+      title: 'Purchase Requestor',
+      debugShowCheckedModeBanner: false,
+      theme: Provider.of<ThemeProvider>(context).currentTheme,
+      localizationsDelegates: [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en'),
+        Locale('fr'),
+        Locale('ar'),
+      ],
+      locale: localeProvider.locale,
+      routerConfig: router, // <-- Utilisation du ShellRoute
+    );
   }
 }
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  final Widget? child; // Ajout du paramètre child
+
+  const MainScreen({super.key, this.child});
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -143,8 +142,6 @@ class _MainScreenState extends State<MainScreen> {
 
   Widget _getPage({required int id}) {
     switch (_selected) {
-      // case 'Dashboard':
-      //   return const dashboard.DashboardPage();
       case 'Profile':
         return ProfilePageScreen(userId: id);
       case 'Users':
@@ -157,58 +154,58 @@ class _MainScreenState extends State<MainScreen> {
         return const PurchaseOrderPage();
       case 'Roles and access':
         return const RolePage();
-      // case 'Support centre':
-      //   return const SupportCenterPage();
       case 'Settings':
         return const SettingsScreen();
       case 'Product':
         return const FamiliesPage();
-         case 'Supplier':
+      case 'Supplier':
         return const SupplierRegistrationPage();
       default:
-
-        return  ProfilePageScreen(userId:id) ;
+        return ProfilePageScreen(userId: id);
     }
   }
 
   @override
   void initState() {
     userController = Provider.of<UserController>(context, listen: false);
-
-    //temporary fix to ensure user is logged in
-    if(userController.currentUserId == null) {
-      userController.login('admin', 'admin',context, null);
+    if (userController.currentUserId == null) {
+      userController.login('admin', 'admin', context, null);
     }
     super.initState();
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: (MediaQuery.of(context).size.width < 600)?AppBar(
-        // title: Text(_selected),
-      ):null,
-      drawer: (MediaQuery.of(context).size.width < 600)?
-          AppSidebar(
-            selected: _selected,
-            onItemSelected: (item) {
-              setState(() {
-                _selected = item;
-              });
-              Navigator.pop(context); // Close the drawer after selection
-            },
-          ):null,
+      appBar: (MediaQuery.of(context).size.width < 600) ? AppBar() : null,
+      drawer: (MediaQuery.of(context).size.width < 600)
+          ? AppSidebar(
+              selected: _selected,
+              onItemSelected: (item) {
+                setState(() {
+                  _selected = item;
+                });
+                Navigator.pop(context);
+              },
+            )
+          : null,
       body: Row(
         children: [
-          if(MediaQuery.of(context).size.width >= 600)
-          AppSidebar(
-            selected: _selected,
-            onItemSelected: (item) {
-              setState(() {
-                _selected = item;
-              });
-            },
+          if (MediaQuery.of(context).size.width >= 600)
+            SizedBox(
+              width: 220,
+              child: AppSidebar(
+                selected: _selected,
+                onItemSelected: (item) {
+                  setState(() {
+                    _selected = item;
+                  });
+                },
+              ),
+            ),
+          Expanded(
+            child: widget.child ?? _getPage(id: userController.currentUserId ?? 0),
           ),
-          Expanded(child: _getPage(id:userController.currentUserId!)),
         ],
       ),
     );
