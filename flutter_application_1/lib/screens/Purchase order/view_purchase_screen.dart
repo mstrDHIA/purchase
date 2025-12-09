@@ -469,7 +469,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         elevation: 0,
                       ),
-                      child: const Text('Accept'),
+                      child: const Text('Approve'),
                     ),
                     const SizedBox(width: 24),
                     ElevatedButton(
@@ -535,7 +535,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                         side: const BorderSide(color: Color(0xFFE0E0E0)),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
-                      child: const Text('Refuse'),
+                      child: const Text('Reject'),
                     ),
                   ],
                 ],

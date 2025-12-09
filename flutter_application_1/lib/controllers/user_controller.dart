@@ -63,8 +63,13 @@ class UserController extends ChangeNotifier {
           user.email!.toLowerCase().contains(searchText.toLowerCase()) ||
           user.username!.toLowerCase().contains(searchText.toLowerCase());
       final matchesPermission = selectedPermission == null || user.permission == selectedPermission;
-      final matchesStatus = selectedStatus == null || user.isActive == selectedStatus;
-      return matchesSearch && matchesPermission && matchesStatus;
+      
+      // Fix: Compare boolean isActive with string selectedStatus
+      final statusMatches = selectedStatus == null || 
+          (user.isActive == true && selectedStatus == 'Active') ||
+          (user.isActive == false && selectedStatus == 'Inactive');
+      
+      return matchesSearch && matchesPermission && statusMatches;
     }).toList();
 
     if (sortColumnIndex != null) {
@@ -99,29 +104,44 @@ class UserController extends ChangeNotifier {
     isLoading = true;
     notifyListeners();
     try {
+      print('🔄 Fetching users from server...');
       Response response = await userNetwork.uesresList();
+      print('✅ Response received: Status ${response.statusCode}');
+      print('📋 Response data: ${response.data}');
+      
       if (response.statusCode == 200) {
         if (response.data is List) {
-          users = (response.data as List).map((user) => User.fromJson(user)).toList();
-          for (var u in users) {
-          }
+          users = (response.data as List).map((user) {
+            print('👤 Parsing user: $user');
+            return User.fromJson(user);
+          }).toList();
+          print('✅ Successfully loaded ${users.length} users');
+        } else if (response.data is Map && response.data['results'] is List) {
+          // Handle paginated response
+          users = (response.data['results'] as List).map((user) => User.fromJson(user)).toList();
+          print('✅ Successfully loaded ${users.length} users (paginated)');
         } else {
+          print('⚠️ Unexpected data format: ${response.data.runtimeType}');
         }
         isLoading = false;
         notifyListeners();
       } else {
         isLoading = false;
         notifyListeners();
-        throw Exception('Failed to load users');
+        throw Exception('Failed to load users: Status ${response.statusCode}');
       }
     } on DioException catch (e) {
       isLoading = false;
       notifyListeners();
-      print('Erreur Dio : ${e.message}, type: ${e.type}, data: ${e.response?.data}, error: ${e.error}');
+      print('❌ Dio Error: ${e.message}');
+      print('❌ Error type: ${e.type}');
+      print('❌ Response status: ${e.response?.statusCode}');
+      print('❌ Response data: ${e.response?.data}');
+      print('❌ Error detail: ${e.error}');
     } catch (e) {
       isLoading = false;
       notifyListeners();
-      print('Erreur inattendue lors de la récupération des utilisateurs : $e');
+      print('❌ Unexpected error while fetching users: $e');
     }
   }
 
