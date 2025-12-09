@@ -5,6 +5,8 @@ import 'package:flutter_application_1/models/user_model.dart';
 import 'package:flutter_application_1/network/user_network.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_application_1/screens/Purchase%20Request/purchase_request_list_screen.dart';
+import 'package:flutter_application_1/screens/Purchase%20order/pushase_order_screen.dart';
 
 class UserController extends ChangeNotifier {
   bool displaySnackBar = false;
@@ -170,64 +172,70 @@ class UserController extends ChangeNotifier {
   }
 
   Future<void> login(String email, String password,BuildContext context,GlobalKey<FormState>? _formKey) async {
-  try {
-    // if ((!(_formKey!.currentState!.validate()))&&_formKey!=null) {
-      isLoading = true;
-    notifyListeners();
-    Response? response = await userNetwork.login(email, password);
-    if (response!.statusCode == 200) {
-      Map<String, dynamic> decodedToken = JwtDecoder.decode(response.data['access']);
-      currentUserId = decodedToken['user_id'];
-      selectedUserId = currentUserId;
-      currentUser = User.fromJson(response.data['user']);
-  context.go('/main_screen');
-      isLoading = false;
+    try {
+      // if ((!(_formKey!.currentState!.validate()))&&_formKey!=null) {
+        isLoading = true;
       notifyListeners();
-    } else if (response.statusCode == 401) {
-      isLoading = false;
-      notifyListeners();
-      SnackBar snackBar = SnackBar(
-        backgroundColor: Colors.amber,
-        content: Text('Invalid email or password. Please try again.'),
-      );
-      ScaffoldMessenger.of(context).showSnackBar(snackBar);
-    }
-    else {
-      isLoading = false;
-      notifyListeners();
-      SnackBar snackBar = SnackBar(
-        backgroundColor: Colors.red,
-        content: Text('An error occurred during login. Please try again.'),
-      );
-      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      Response? response = await userNetwork.login(email, password);
+      if (response!.statusCode == 200) {
+        Map<String, dynamic> decodedToken = JwtDecoder.decode(response.data['access']);
+        currentUserId = decodedToken['user_id'];
+        selectedUserId = currentUserId;
+        currentUser = User.fromJson(response.data['user']);
+        // navigation decided by role id
+        final int? roleId = currentUser.role?.id;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          final router = GoRouter.of(context);
+          if (roleId == 1 || roleId == 2) {
+            router.go('/purchase_requests'); // ensure this route exists in your GoRouter routes
+          } else if (roleId == 3 || roleId == 4) {
+            router.go('/purchase_orders'); // ensure this route exists in your GoRouter routes
+          } else {
+            router.go('/main_screen');
+          }
+        });
+        isLoading = false;
+        notifyListeners();
+      } else if (response.statusCode == 401) {
+        isLoading = false;
+        notifyListeners();
+        SnackBar snackBar = SnackBar(
+          backgroundColor: Colors.amber,
+          content: Text('Invalid email or password. Please try again.'),
+        );
+        ScaffoldMessenger.of(context).showSnackBar(snackBar);
       }
+      else {
+        isLoading = false;
+        notifyListeners();
+        SnackBar snackBar = SnackBar(
+          backgroundColor: Colors.red,
+          content: Text('An error occurred during login. Please try again.'),
+        );
+        ScaffoldMessenger.of(context).showSnackBar(snackBar);
+        }
+        isLoading = false;
+        notifyListeners();
+        // return;
+      // }
+      // else{
+
+      // }
+      
+    } catch (e) {
+      print('Login error: $e');
       isLoading = false;
       notifyListeners();
-      // return;
-    // }
-    // else{
-
-    // }
-    
-
-  } catch (e) {
-    print('Login error: $e');
-    isLoading = false;
-    notifyListeners();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        backgroundColor: Colors.red,
-        content: Text('An error occurred during login'),
-      ),
-    );
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          backgroundColor: Colors.red,
+          content: Text('An error occurred during login'),
+        ),
+      );
+    }
   }
 
-
-     
-
-
-  }
-   Future<void> register(String email, String password,BuildContext context) async {
+  Future<void> register(String email, String password,BuildContext context) async {
     try{
       isLoading = true;
     notifyListeners();
