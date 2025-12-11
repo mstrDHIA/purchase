@@ -600,10 +600,11 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
               Expanded(
                 flex: 3,
                 child: TextFormField(
-                  initialValue: product.unitPrice.toStringAsFixed(2),
+                //  initialValue: product.unitPrice.toStringAsFixed(2),
                   keyboardType:
                       const TextInputType.numberWithOptions(decimal: true),
                   decoration: const InputDecoration(
+                    hintText: '0.00',
                     labelText: 'Unit Price',
                     border: OutlineInputBorder(),
                   ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter_application_1/controllers/supplier_controller.dart';
 
 /// A small local Supplier model used by the screen. The project's real
@@ -131,7 +133,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error deleting supplier: $e')),
+            SnackBar(content: Text('Error deleting supplier: $e', style: const TextStyle(color: Colors.red))),
           );
         }
       }
@@ -147,6 +149,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
     final addressCtrl = TextEditingController();
     final formKey = GlobalKey<FormState>();
     bool isSubmitting = false;
+    String _selectedCountryCode = '+1'; // default country code
     final controller = context.read<SupplierController>();
 
     await showDialog<void>(
@@ -182,10 +185,53 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                       enabled: !isSubmitting,
                     ),
                     const SizedBox(height: 12),
-                    TextFormField(
-                      controller: phoneCtrl,
-                      decoration: const InputDecoration(labelText: 'Phone Number'),
-                      enabled: !isSubmitting,
+                    // Phone number with country code picker
+                    Row(
+                      children: [
+                        CountryCodePicker(
+                          onChanged: (country) {
+                            setDialogState(() {
+                              _selectedCountryCode = country.dialCode ?? '+216';
+                            });
+                          },
+                          initialSelection: 'TN',
+                          favorite: const ['US', 'TN', 'FR'],
+                          showCountryOnly: false,
+                          showOnlyCountryWhenClosed: false,
+                          alignLeft: false,
+                          textStyle: const TextStyle(fontSize: 14),
+                          dialogSize: const Size(300, 400),
+                          searchDecoration: InputDecoration(
+                            hintText: 'Search country',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          ),
+                          boxDecoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(8),
+                            color: Colors.white,
+                          ),
+                        ),
+                        Expanded(
+                          child: TextFormField(
+                            controller: phoneCtrl,
+                            decoration: const InputDecoration(
+                              labelText: 'Phone Number',
+                              hintText: 'Enter phone number (min 8 digits)',
+                            ),
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                            validator: (v) {
+                              if (v == null || v.isEmpty) return 'Phone is required';
+                              if (v.length < 8) return 'Phone must be at least 8 digits';
+                              if (!RegExp(r'^[0-9]+$').hasMatch(v)) return 'Phone must contain only digits';
+                              return null;
+                            },
+                            enabled: !isSubmitting,
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
@@ -222,10 +268,11 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                       if (formKey.currentState!.validate()) {
                         setDialogState(() => isSubmitting = true);
                         try {
+                          final fullPhoneNumber = _selectedCountryCode + phoneCtrl.text;
                           await controller.createSupplier(
                             name: nameCtrl.text,
                             contactEmail: emailCtrl.text,
-                            phoneNumber: phoneCtrl.text.isNotEmpty ? phoneCtrl.text : null,
+                            phoneNumber: fullPhoneNumber,
                             address: addressCtrl.text.isNotEmpty ? addressCtrl.text : null,
                           );
 
@@ -262,6 +309,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
     final matriculeCtrl = TextEditingController(text: supplier?.matricule ?? '');
     final cinCtrl = TextEditingController(text: supplier?.cin ?? '');
     bool isSubmitting = false;
+    String _selectedCountryCode = '+216'; // Tunisie par défaut
     final controller = context.read<SupplierController>();
 
     await showDialog<void>(
@@ -279,7 +327,46 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                   const SizedBox(height: 12),
                   TextField(controller: emailCtrl, decoration: const InputDecoration(labelText: 'Contact Email')),
                   const SizedBox(height: 12),
-                  TextField(controller: phoneCtrl, decoration: const InputDecoration(labelText: 'Phone Number')),
+                  Row(
+                    children: [
+                      CountryCodePicker(
+                        onChanged: (country) {
+                          setDialogState(() {
+                            _selectedCountryCode = country.dialCode ?? '+216';
+                          });
+                        },
+                        initialSelection: 'TN',
+                        favorite: const ['US', 'TN', 'FR'],
+                        showCountryOnly: false,
+                        showOnlyCountryWhenClosed: false,
+                        alignLeft: false,
+                        textStyle: const TextStyle(fontSize: 14),
+                        dialogSize: const Size(300, 400),
+                        searchDecoration: InputDecoration(
+                          hintText: 'Search country',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        ),
+                        boxDecoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.white,
+                        ),
+                      ),
+                      Expanded(
+                        child: TextField(
+                          controller: phoneCtrl,
+                          decoration: const InputDecoration(
+                            labelText: 'Phone Number',
+                            hintText: 'Min 8 digits',
+                          ),
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 12),
                   TextField(controller: matriculeCtrl, decoration: const InputDecoration(labelText: 'Matricule')),
                   const SizedBox(height: 12),
@@ -297,11 +384,12 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                       setDialogState(() => isSubmitting = true);
                       try {
                         if (supplier != null && index != null) {
+                          final fullPhoneNumber = _selectedCountryCode + phoneCtrl.text;
                           await controller.editSupplier(
                             id: supplier.id,
                             name: nameCtrl.text,
                             contactEmail: emailCtrl.text,
-                            phoneNumber: phoneCtrl.text,
+                            phoneNumber: fullPhoneNumber,
                           );
                           if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Supplier updated')));
                         }

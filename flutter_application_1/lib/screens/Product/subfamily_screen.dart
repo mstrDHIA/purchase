@@ -39,67 +39,85 @@ class _SubfamiliesPageState extends State<SubfamiliesPage> {
     final descCtrl = TextEditingController(text: sub != null ? sub['description'] : '');
 
 
-    final res = await showDialog<Map<String, String>>(
+    final res = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (context) => Dialog(
-        insetPadding: const EdgeInsets.symmetric(horizontal: 120, vertical: 24),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 560),
-          child: Container(
-            padding: const EdgeInsets.all(22),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF6EEF6),
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 12, offset: Offset(0, 6))],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(sub == null ? 'Add Subfamily' : 'Edit Subfamily', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: Color(0xFF2B2B2B))),
-                const SizedBox(height: 12),
-                TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Name', prefixIcon: Icon(Icons.label))),
-                const SizedBox(height: 8),
-                TextField(controller: descCtrl, decoration: const InputDecoration(labelText: 'Description', prefixIcon: Icon(Icons.description))),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
-                    const SizedBox(width: 12),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF7C3AED),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-                        elevation: 2,
+      builder: (context) => StatefulBuilder(builder: (context, setState) {
+        var _isSaving = false;
+        return Dialog(
+          insetPadding: const EdgeInsets.symmetric(horizontal: 120, vertical: 24),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 560),
+            child: Container(
+              padding: const EdgeInsets.all(22),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF6EEF6),
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 12, offset: Offset(0, 6))],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(sub == null ? 'Add Subfamily' : 'Edit Subfamily', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: Color(0xFF2B2B2B))),
+                  const SizedBox(height: 12),
+                  TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Name', prefixIcon: Icon(Icons.label))),
+                  const SizedBox(height: 8),
+                  TextField(controller: descCtrl, decoration: const InputDecoration(labelText: 'Description', prefixIcon: Icon(Icons.description))),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+                      const SizedBox(width: 12),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF7C3AED),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                          elevation: 2,
+                        ),
+                        onPressed: _isSaving
+                            ? null
+                            : () async {
+                                setState(() => _isSaving = true);
+                                try {
+                                  Category updatedFamily = Category(
+                                    parentCategory: widget.family['id'],
+                                    name: nameCtrl.text,
+                                    description: descCtrl.text,
+                                    creationDate: DateTime.now(),
+                                  );
+                                  // add a timeout to avoid indefinite UI blocking
+                                  await productController.createCategories(updatedFamily).timeout(const Duration(seconds: 15));
+                                  // Return the created subfamily data so the caller can update the UI immediately
+                                  if (mounted) Navigator.of(context).pop({
+                                    'name': nameCtrl.text,
+                                    'description': descCtrl.text,
+                                    'parent_category': widget.family['id'],
+                                  });
+                                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Subfamily created successfully!')));
+                                } catch (e) {
+                                  setState(() => _isSaving = false);
+                                  if (e is Exception) {
+                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to create subfamily: $e')));
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to create subfamily')));
+                                  }
+                                }
+                              },
+                        child: _isSaving
+                            ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                            : const Text('Save', style: TextStyle(color: Colors.white)),
                       ),
-                      onPressed: () async {
-                        try {
-                          Category updatedFamily = Category(
-                            parentCategory: widget.family['id'],
-                            name: nameCtrl.text,
-                            description: descCtrl.text,
-                            creationDate: DateTime.now(),
-                          );
-                          await productController.createCategories(updatedFamily);
-                          Navigator.of(context).pop();
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Subfamily created successfully!')));
-                        } catch (e) {
-                          Navigator.of(context).pop();
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Failed to create subfamily')));
-                        }
-                      },
-                      child: const Text('Save', style: TextStyle(color: Colors.white)),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      }),
     );
 
     if (res != null) {
@@ -118,6 +136,8 @@ class _SubfamiliesPageState extends State<SubfamiliesPage> {
             'parent_category': res['parent_category'], // Correct key for parent category
           });
         }
+        // Refresh the future so the FutureBuilder reloads data from the backend
+        _subfamiliesFuture = productController.getCategories(widget.family['id']);
       });
       widget.onUpdate?.call(widget.family);
     }

@@ -5,8 +5,6 @@ import 'package:flutter_application_1/models/user_model.dart';
 import 'package:flutter_application_1/network/user_network.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_application_1/screens/Purchase%20Request/purchase_request_list_screen.dart';
-import 'package:flutter_application_1/screens/Purchase%20order/pushase_order_screen.dart';
 
 class UserController extends ChangeNotifier {
   bool displaySnackBar = false;
@@ -425,11 +423,12 @@ data['profile'] = profileData;
 if(role.id!=selectedUser.role!.id){
 data['role_id'] = role.id;
 }
-      Response result = await userNetwork.updateAllUsers(data, selectedUserId!);
+      await userNetwork.updateAllUsers(data, selectedUserId!);
       displaySnackBar = true;
       notifyListeners();
 
       context.pop();
+      return null;
     } catch (e) {
       print('problem $e');
       isLoading = false;

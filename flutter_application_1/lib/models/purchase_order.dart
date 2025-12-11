@@ -98,14 +98,18 @@ class Products {
   String? supplier;
   double? price;
   double? unitPrice;
+  String? family;
+  String? subFamily;
 
-  Products({this.product, this.quantity, this.brand, this.supplier, this.price, this.unitPrice});
+  Products({this.product, this.quantity, this.brand, this.supplier, this.price, this.unitPrice, this.family, this.subFamily});
 
   Products.fromJson(Map<String, dynamic> json) {
     product = json['product'];
     quantity = json['quantity'];
     brand = json['brand'];
     supplier = json['supplier'];
+    family = json['family'] ?? json['family_name'] ?? json['category'] ?? null;
+    subFamily = json['subFamily'] ?? json['sub_family'] ?? json['subcategory'] ?? null;
     price = (json['price'] is int)
         ? (json['price'] as int).toDouble()
         : (json['price'] is double)
@@ -124,6 +128,8 @@ class Products {
     data['quantity'] = quantity;
     data['brand'] = brand;
     data['supplier'] = supplier;
+    data['family'] = family;
+    data['subfamily'] = subFamily;
     data['price'] = price;
     data['unit_price'] = unitPrice;
     return data;

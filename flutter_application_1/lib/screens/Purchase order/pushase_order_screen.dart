@@ -32,8 +32,8 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
   late UserController userController;
   final DateFormat _dateFormat = DateFormat('MMM dd, yyyy');
   int _rowsPerPage = PaginatedDataTable.defaultRowsPerPage;
-  int? _sortColumnIndex;
-  bool _sortAscending = true;
+  int? _sortColumnIndex = 0; // default to ID column
+  bool _sortAscending = false; // default descending order
   String? _priorityFilter;
   String? _statusFilter;
   bool _showArchived = false;
@@ -103,7 +103,8 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
         }
       }
       return {
-        'id': order.id?.toString() ?? '',
+        // keep id as numeric to allow proper numeric sorting (not string lexicographic)
+        'id': order.id ?? 0,
         'actionCreatedBy': actionCreatedBy,
         'dateSubmitted': parseDate(order.startDate),
         'dueDate': parseDate(order.endDate),
@@ -116,10 +117,10 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
     if (_searchText.isNotEmpty) {
       final searchLower = _searchText.toLowerCase();
       mapped = mapped.where((order) =>
-        order['id'].toLowerCase().contains(searchLower) ||
-        order['actionCreatedBy'].toLowerCase().contains(searchLower) ||
-        order['priority'].toLowerCase().contains(searchLower) ||
-        order['status'].toLowerCase().contains(searchLower)
+        order['id'].toString().toLowerCase().contains(searchLower) ||
+        (order['actionCreatedBy'] ?? '').toString().toLowerCase().contains(searchLower) ||
+        (order['priority'] ?? '').toString().toLowerCase().contains(searchLower) ||
+        (order['status'] ?? '').toString().toLowerCase().contains(searchLower)
       ).toList();
     }
 
@@ -170,7 +171,9 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
       mapped.sort((a, b) {
         dynamic aValue = a[sortKey];
         dynamic bValue = b[sortKey];
-        if (aValue is String && bValue is String) {
+        if (aValue is num && bValue is num) {
+          return _sortAscending ? aValue.compareTo(bValue) : bValue.compareTo(aValue);
+        } else if (aValue is String && bValue is String) {
           return _sortAscending ? aValue.compareTo(bValue) : bValue.compareTo(aValue);
         } else if (aValue is DateTime && bValue is DateTime) {
           return _sortAscending ? aValue.compareTo(bValue) : bValue.compareTo(aValue);
@@ -284,6 +287,151 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
             children: [
               _buildFiltersRow(),
               const SizedBox(height: 16),
+              // Batch actions shown when any row is selected
+              AnimatedBuilder(
+                animation: dataSource,
+                builder: (context, _) {
+                  if (dataSource.selectedRowCount == 0) return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Row(
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: () async {
+                            final bool? confirmed = await showDialog<bool>(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (context) => Dialog(
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                                backgroundColor: const Color(0xFFF7F2FA),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+                                  child: ConstrainedBox(
+                                    constraints: const BoxConstraints(maxWidth: 360),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          _showArchived ? 'Unarchive Purchase Orders' : 'Archive Purchase Orders',
+                                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                        const SizedBox(height: 12),
+                                        Text(
+                                          'Are you sure you want to ${_showArchived ? 'unarchive' : 'archive'} ${dataSource.selectedRowCount} selected purchase orders?',
+                                          style: const TextStyle(fontSize: 14),
+                                          textAlign: TextAlign.center,
+                                        ),
+                                        const SizedBox(height: 20),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            TextButton(
+                                              onPressed: () => Navigator.pop(context, false),
+                                              child: const Text('Cancel', style: TextStyle(color: Color(0xFF6F4DBF), fontWeight: FontWeight.w500, fontSize: 14)),
+                                            ),
+                                            const SizedBox(width: 16),
+                                            ElevatedButton(
+                                              onPressed: () => Navigator.pop(context, true),
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: _showArchived ? Colors.green : Colors.blue,
+                                                foregroundColor: Colors.white,
+                                                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                              ),
+                                              child: Text(_showArchived ? 'Unarchive' : 'Archive', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                            if (confirmed == true) {
+                              final controller = Provider.of<PurchaseOrderController>(context, listen: false);
+                              final ids = dataSource.getSelectedIds();
+                              for (final id in ids) {
+                                try {
+                                  if (_showArchived) {
+                                    await controller.unarchivePurchaseOrder(id);
+                                  } else {
+                                    await controller.archivePurchaseOrder(id);
+                                  }
+                                } catch (e) {
+                                  // ignore individual errors; continue
+                                }
+                              }
+                              await controller.fetchOrders();
+                              dataSource.clearSelection();
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${_showArchived ? 'Unarchived' : 'Archived'} ${ids.length} purchase orders')));
+                            }
+                          },
+                          icon: Icon(_showArchived ? Icons.unarchive_outlined : Icons.archive_outlined),
+                          label: Text(_showArchived ? 'Unarchive Selected' : 'Archive Selected'),
+                          style: ElevatedButton.styleFrom(backgroundColor: _showArchived ? Colors.green : Colors.blue, foregroundColor: Colors.white),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton.icon(
+                          onPressed: () async {
+                            final bool? confirmed = await showDialog<bool>(
+                              context: context,
+                              barrierDismissible: false,
+                              builder: (context) => Dialog(
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                                backgroundColor: const Color(0xFFF7F2FA),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+                                  child: ConstrainedBox(
+                                    constraints: const BoxConstraints(maxWidth: 360),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Text('Delete Purchase Orders', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+                                        const SizedBox(height: 12),
+                                        Text('Are you sure you want to delete ${dataSource.selectedRowCount} selected purchase orders?', style: const TextStyle(fontSize: 14), textAlign: TextAlign.center),
+                                        const SizedBox(height: 20),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel', style: TextStyle(color: Color(0xFF6F4DBF), fontWeight: FontWeight.w500, fontSize: 14))),
+                                            const SizedBox(width: 16),
+                                            ElevatedButton(onPressed: () => Navigator.pop(context, true), style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))), child: const Text('Delete', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14))),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                            if (confirmed == true) {
+                              final controller = Provider.of<PurchaseOrderController>(context, listen: false);
+                              final ids = dataSource.getSelectedIds();
+                              for (final id in ids) {
+                                try {
+                                  await controller.deleteOrder(id);
+                                } catch (e) {
+                                  // ignore individual errors
+                                }
+                              }
+                              await controller.fetchOrders();
+                              dataSource.clearSelection();
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Deleted ${ids.length} purchase orders')));
+                            }
+                          },
+                          icon: const Icon(Icons.delete_outline),
+                          label: const Text('Delete Selected'),
+                          style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
+                        ),
+                        const SizedBox(width: 12),
+                        Text('${dataSource.selectedRowCount} selected', style: const TextStyle(fontWeight: FontWeight.w600)),
+                      ],
+                    ),
+                  );
+                },
+              ),
               Expanded(
                 child: Column(
                   children: [
@@ -863,8 +1011,18 @@ class _PurchaseOrderDataSource extends DataTableSource {
       return dt != null ? _dateFormat.format(dt) : '-';
     }
     return DataRow(
+      selected: _selectedIds.contains(item['id']),
+      onSelectChanged: (selected) {
+        if (selected == null) return;
+        if (selected) {
+          _selectedIds.add(item['id']);
+        } else {
+          _selectedIds.remove(item['id']);
+        }
+        notifyListeners();
+      },
       cells: [
-        DataCell(Text(item['id'] ?? '-')),
+        DataCell(Text(item['id']?.toString() ?? '-')),
         DataCell(Text(item['actionCreatedBy'] ?? '-')),
         DataCell(Text(formatDateCell(item['dateSubmitted']))),
         DataCell(Text(formatDateCell(item['dueDate']))),
@@ -909,6 +1067,15 @@ class _PurchaseOrderDataSource extends DataTableSource {
         )),
       ],
     );
+  }
+
+  final Set<dynamic> _selectedIds = <dynamic>{};
+
+  List<dynamic> getSelectedIds() => _selectedIds.toList(growable: false);
+
+  void clearSelection() {
+    _selectedIds.clear();
+    notifyListeners();
   }
 
   Widget _buildPriorityChip(String priority) {
@@ -982,7 +1149,7 @@ class _PurchaseOrderDataSource extends DataTableSource {
   int get rowCount => _data.length;
 
   @override
-  int get selectedRowCount => 0;
+  int get selectedRowCount => _selectedIds.length;
 }
 // Example for ViewPurchasePage
 class ViewPurchasePage extends StatelessWidget {

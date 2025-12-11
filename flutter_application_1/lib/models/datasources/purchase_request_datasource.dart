@@ -13,6 +13,9 @@ class PurchaseRequestDataSource extends DataTableSource {
   final BuildContext context;
   final String someArgument;
 
+  // Keep track of selected request ids
+  final Set<int> _selectedIds = {};
+
   PurchaseRequestDataSource(this.requests, this.context, this.someArgument) {
   }
 
@@ -21,6 +24,17 @@ class PurchaseRequestDataSource extends DataTableSource {
     if (index >= requests.length) return null;
     final request = requests[index];
     return DataRow(
+      selected: request.id != null && _selectedIds.contains(request.id),
+      onSelectChanged: (sel) {
+        if (sel == null) return;
+        if (request.id == null) return;
+        if (sel) {
+          _selectedIds.add(request.id!);
+        } else {
+          _selectedIds.remove(request.id!);
+        }
+        notifyListeners();
+      },
       cells: [
         DataCell(Text(request.id.toString())),
         // Show user display name if available, otherwise fallback to id
@@ -347,9 +361,18 @@ class PurchaseRequestDataSource extends DataTableSource {
   int get rowCount => requests.length;
 
   @override
-  int get selectedRowCount => 0;
+  int get selectedRowCount => _selectedIds.length;
 
   Null get selectedRow => null;
+  
+  /// Return selected request ids
+  List<int> getSelectedIds() => _selectedIds.toList(growable: false);
+
+  /// Clear selection
+  void clearSelection() {
+    _selectedIds.clear();
+    notifyListeners();
+  }
   
   Null get order => null;
 }
