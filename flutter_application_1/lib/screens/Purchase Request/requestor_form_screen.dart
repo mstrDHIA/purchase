@@ -22,6 +22,7 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
   late ProductController productControllerProvider;
   final TextEditingController quantityController = TextEditingController();
   final TextEditingController noteController = TextEditingController();
+  late FocusNode noteFocusNode;
   final TextEditingController dueDateController = TextEditingController();
   final TextEditingController titleController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
@@ -34,26 +35,37 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
   @override
   void initState() {
     super.initState();
+
     userController = Provider.of<UserController>(context, listen: false);
     productControllerProvider = Provider.of<ProductController>(context, listen: false);
     _fetchProductFamilies();
+
+    // Charger l'ordre existant
     if (widget.initialOrder.isNotEmpty) {
       productController.text = widget.initialOrder['product'] ?? '';
       quantityController.text = widget.initialOrder['quantity']?.toString() ?? '';
       noteController.text = widget.initialOrder['note'] ?? '';
       selectedPriority = widget.initialOrder['priority'];
+
       var dueDateValue = widget.initialOrder['dueDate'];
       if (dueDateValue is String) {
         selectedDueDate = DateTime.tryParse(dueDateValue);
       } else if (dueDateValue is DateTime) {
         selectedDueDate = dueDateValue;
-      } else {
-        selectedDueDate = null;
       }
+
       if (selectedDueDate != null) {
         dueDateController.text = DateFormat('MMM dd, yyyy').format(selectedDueDate!);
       }
     }
+
+    // Focus node for note field and initial caret position
+    noteFocusNode = FocusNode();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        noteController.selection = const TextSelection.collapsed(offset: 0);
+      }
+    });
   }
 
   Future<void> _fetchProductFamilies() async {
@@ -62,18 +74,20 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
       if (categories is List<dynamic>) {
         final families = <String, List<String>>{};
         final allCategories = categories.cast<Map<String, dynamic>>();
-        // Get all parent categories (families)
+
         final parentCategories = allCategories.where((cat) => cat['parent_category'] == null).toList();
         for (final family in parentCategories) {
           final familyId = family['id'];
           final familyName = family['name'] as String;
-          // Get all subfamilies for this family
+
           final subfamilies = allCategories
               .where((cat) => cat['parent_category'] == familyId)
               .map((cat) => cat['name'] as String)
               .toList();
+
           families[familyName] = subfamilies.isNotEmpty ? subfamilies : [familyName];
         }
+
         setState(() {
           dynamicProductFamilies = families;
         });
@@ -92,6 +106,7 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
     productController.dispose();
     quantityController.dispose();
     noteController.dispose();
+    noteFocusNode.dispose();
     dueDateController.dispose();
     titleController.dispose();
     descriptionController.dispose();
@@ -120,12 +135,14 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
       );
       return;
     }
+
     if (products.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please add at least one product')),
       );
       return;
     }
+
     for (final p in products) {
       if ((p['product'] == null || p['product'].toString().isEmpty) ||
           (p['quantity'] == null || p['quantity'].toString().isEmpty)) {
@@ -135,18 +152,21 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
         return;
       }
     }
+
     if (selectedDueDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select a due date')),
       );
       return;
     }
+
     if (selectedPriority == null || selectedPriority!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select a priority')),
       );
       return;
     }
+
     final dateSubmitted = DateTime.now();
     if (!selectedDueDate!.isAfter(dateSubmitted)) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -167,16 +187,19 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
 
     try {
       await Provider.of<PurchaseRequestController>(context, listen: false).addRequest(order);
+
       if (addAnother) {
         productController.clear();
         quantityController.clear();
         noteController.clear();
         dueDateController.clear();
+
         setState(() {
           selectedPriority = null;
           selectedDueDate = null;
           products.clear();
         });
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Request saved! You can now add another.')),
         );
@@ -195,12 +218,16 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
     final subFamily = selectedSubFamily;
     final product = productController.text.trim();
     final quantity = int.tryParse(quantityController.text.trim()) ?? 0;
-    if ((family == null || family.isEmpty) || (subFamily == null || subFamily.isEmpty) || quantity <= 0) {
+
+    if ((family == null || family.isEmpty) ||
+        (subFamily == null || subFamily.isEmpty) ||
+        quantity <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Veuillez choisir une famille, une sous-famille et une quantité valide')),
       );
       return;
     }
+
     setState(() {
       products.add({
         'family': family,
@@ -210,13 +237,14 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
         'brand': null,
         'unit_price': 0.0,
       });
+
       productController.clear();
       quantityController.clear();
       selectedFamily = null;
       selectedSubFamily = null;
     });
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -246,7 +274,7 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              // LEFT CONTAINER - Products
+              // LEFT CONTAINER — Produits
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -266,7 +294,6 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Family, SubFamily, Product, Quantity fields
                       DropdownButtonFormField<String>(
                         value: selectedFamily,
                         decoration: const InputDecoration(
@@ -309,7 +336,7 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
                       TextField(
                         controller: productController,
                         decoration: const InputDecoration(
-                          labelText: 'Produit (optionnel)',
+                          labelText: 'Description du produit',
                           border: OutlineInputBorder(),
                           filled: true,
                           fillColor: Colors.white,
@@ -339,7 +366,7 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      // Products List
+
                       if (products.isNotEmpty) ...[
                         const Text('Products:', style: TextStyle(fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
@@ -370,7 +397,8 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
                   ),
                 ),
               ),
-              // RIGHT CONTAINER - Due Date, Priority, Note, Buttons
+
+              // RIGHT CONTAINER — Notes, priorité, dates
               Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -403,6 +431,7 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
                         onTap: _pickDueDate,
                       ),
                       const SizedBox(height: 16),
+
                       DropdownButtonFormField<String>(
                         value: selectedPriority,
                         decoration: const InputDecoration(
@@ -416,27 +445,37 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
                             .toList(),
                         onChanged: (val) => setState(() => selectedPriority = val),
                       ),
+
                       const SizedBox(height: 16),
-                      const Text(
-                        'Note',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
+                      const Text('Note', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                       const SizedBox(height: 8),
+
                       Expanded(
                         child: TextField(
                           controller: noteController,
-                          maxLines: null,
-                          expands: true,
+                          focusNode: noteFocusNode,
+                          maxLines: 25,
+                          // expands: true,
+                          onTap: () {
+                            // Force caret to the start whenever user taps the field
+                            // if (mounted) {
+                            //   // Request focus then set selection at beginning
+                            //   noteFocusNode.requestFocus();
+                            //   noteController.selection = const TextSelection.collapsed(offset: 0);
+                            //   WidgetsBinding.instance.addPostFrameCallback((_) {
+                            //     if (mounted) noteController.selection = const TextSelection.collapsed(offset: 0);
+                            //   });
+                            // }
+                          },
                           decoration: const InputDecoration(
-                            // hintText: 'Enter text',
                             border: OutlineInputBorder(),
                             filled: true,
                             fillColor: Colors.white,
                           ),
                         ),
                       ),
+
                       const SizedBox(height: 24),
-                      // Buttons row
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
@@ -465,9 +504,7 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
                                     ],
                                   ),
                                 );
-                                if (shouldCancel == true) {
-                                  Navigator.of(context).pop();
-                                }
+                                if (shouldCancel == true) Navigator.of(context).pop();
                               },
                               style: OutlinedButton.styleFrom(
                                 shape: RoundedRectangleBorder(
@@ -486,9 +523,7 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
                               onPressed: () => _save(addAnother: false),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF7B61FF),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                 elevation: 0,
                               ),
                               child: const Text('Save', style: TextStyle(fontSize: 14, color: Colors.white)),

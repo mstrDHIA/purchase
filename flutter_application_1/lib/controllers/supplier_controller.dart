@@ -38,6 +38,10 @@ class SupplierController extends ChangeNotifier {
     required String contactEmail,
     String? phoneNumber,
     String? address,
+    String? groupName,
+    String? contactName,
+    String? matricule,
+    String? cin,
   }) async {
     try {
       final response = await _network.createSupplier(
@@ -45,6 +49,10 @@ class SupplierController extends ChangeNotifier {
         contactEmail: contactEmail,
         phoneNumber: phoneNumber,
         address: address,
+        groupName: groupName,
+        contactName: contactName,
+        matricule: matricule,
+        cin: cin,
       );
       
       // Convert response to Supplier and add to list
@@ -66,6 +74,10 @@ class SupplierController extends ChangeNotifier {
     required String contactEmail,
     String? phoneNumber,
     String? address,
+    String? groupName,
+    String? contactName,
+    String? matricule,
+    String? cin,
   }) async {
     try {
       final response = await _network.editSupplier(
@@ -74,6 +86,10 @@ class SupplierController extends ChangeNotifier {
         contactEmail: contactEmail,
         phoneNumber: phoneNumber,
         address: address,
+        groupName: groupName,
+        contactName: contactName,
+        matricule: matricule,
+        cin: cin,
       );
       
       // Convert response to Supplier and update in list

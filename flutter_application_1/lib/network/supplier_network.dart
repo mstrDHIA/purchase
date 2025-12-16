@@ -48,6 +48,10 @@ class SupplierNetwork {
     required String contactEmail,
     String? phoneNumber,
     String? address,
+    String? groupName,
+    String? contactName,
+    String? matricule,
+    String? cin,
   }) async {
     try {
       print('Creating supplier with data: name=$name, email=$contactEmail');
@@ -63,6 +67,18 @@ class SupplierNetwork {
       }
       if (address != null && address.isNotEmpty) {
         payload['address'] = address;
+      }
+      if (groupName != null && groupName.isNotEmpty) {
+        payload['group_name'] = groupName;
+      }
+      if (contactName != null && contactName.isNotEmpty) {
+        payload['contact_name'] = contactName;
+      }
+      if (matricule != null && matricule.isNotEmpty) {
+        payload['matricule_fiscale'] = matricule;
+      }
+      if (cin != null && cin.isNotEmpty) {
+        payload['cin'] = cin;
       }
 
       final Response response = await api.dio.post(
@@ -99,6 +115,10 @@ class SupplierNetwork {
     required String contactEmail,
     String? phoneNumber,
     String? address,
+    String? groupName,
+    String? contactName,
+    String? matricule,
+    String? cin,
   }) async {
     try {
       print('Updating supplier with id=$id');
@@ -114,6 +134,18 @@ class SupplierNetwork {
       }
       if (address != null && address.isNotEmpty) {
         payload['address'] = address;
+      }
+      if (groupName != null && groupName.isNotEmpty) {
+        payload['group_name'] = groupName;
+      }
+      if (contactName != null && contactName.isNotEmpty) {
+        payload['contact_name'] = contactName;
+      }
+      if (matricule != null && matricule.isNotEmpty) {
+        payload['matricule_fiscale'] = matricule;
+      }
+      if (cin != null && cin.isNotEmpty) {
+        payload['cin'] = cin;
       }
 
       final Response response = await api.dio.put(

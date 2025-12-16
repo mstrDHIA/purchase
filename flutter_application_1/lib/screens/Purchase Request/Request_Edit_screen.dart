@@ -5,13 +5,14 @@ import 'package:flutter_application_1/models/purchase_request.dart';
 import 'package:flutter_application_1/screens/Purchase order/purchase_form_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_application_1/controllers/product_controller.dart';
 
 class RequestEditPage extends StatefulWidget {
   final PurchaseRequest purchaseRequest;
   const RequestEditPage({super.key, required this.purchaseRequest, required Null Function(dynamic _) onSave, required Map order, required Map<String, dynamic> request});
-
   @override
   State<RequestEditPage> createState() => _RequestEditPageState();
+
 }
 
 class _RequestEditPageState extends State<RequestEditPage> {
@@ -28,8 +29,12 @@ class _RequestEditPageState extends State<RequestEditPage> {
 
   // Liste dynamique de produits (ProductLine)
   late List<ProductLine> productLines;
-
-  // Normalize status to match dropdown items
+  // Families/subfamilies map used for dropdowns
+  late ProductController productController;
+  Map<String, List<String>> dynamicProductFamilies = {};
+  bool _loadingFamilies = false;
+  String? _familiesError;
+  
   String _normalizeStatus(dynamic value) {
     if (value == null) return 'Pending';
     final s = value.toString().toLowerCase();
@@ -53,15 +58,40 @@ class _RequestEditPageState extends State<RequestEditPage> {
     status = _normalizeStatus(pr.status);
 
     // Initialisation de la liste des produits comme ProductLine
-    productLines = (pr.products ?? []).map<ProductLine>((prod) {
+    productLines = (pr.products ?? []).map<ProductLine>((dynamic prod) {
+      // support both Map representations and ProductLine-like objects
+      String? productVal;
+      String? familyVal;
+      String? subVal;
+      int qty = 1;
+      double unitPrice = 0.0;
+      if (prod is Map) {
+        productVal = prod['product']?.toString();
+        familyVal = prod['family']?.toString() ?? prod['family_name']?.toString();
+        subVal = prod['subFamily']?.toString() ?? prod['sub_family']?.toString() ?? prod['subcategory']?.toString();
+        qty = prod['quantity'] is int ? prod['quantity'] : int.tryParse(prod['quantity']?.toString() ?? '') ?? 1;
+        unitPrice = prod['unit_price'] is double ? prod['unit_price'] : double.tryParse(prod['unit_price']?.toString() ?? '') ?? 0.0;
+      } else {
+        productVal = prod.product;
+        familyVal = prod.family?.toString();
+        subVal = prod.subFamily?.toString();
+        qty = prod.quantity ?? 1;
+        unitPrice = prod.unitPrice ?? 0.0;
+      }
+
       return ProductLine(
-        product: prod.product,
-        brand: prod.brand,
-        quantity: prod.quantity,
-        supplier: prod.supplier,
-        unitPrice: prod.unitPrice,
+        product: productVal,
+        family: familyVal,
+        subFamily: subVal,
+        // brand: prod.brand,
+        quantity: qty,
+        supplier: prod is Map ? (prod['supplier']?.toString()) : prod.supplier,
+        unitPrice: unitPrice,
       );
     }).toList();
+    // initialize product controller and fetch families
+    productController = Provider.of<ProductController>(context, listen: false);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _fetchProductFamilies());
   }
 
   @override
@@ -84,15 +114,72 @@ class _RequestEditPageState extends State<RequestEditPage> {
     priority = pr.priority?.toString() ?? 'High';
     status = _normalizeStatus(pr.status);
     final products = pr.products ?? [];
-    productLines = products.map<ProductLine>((prod) {
+    productLines = products.map<ProductLine>((dynamic prod) {
+      String? productVal;
+      String? familyVal;
+      String? subVal;
+      int qty = 1;
+      double unitPrice = 0.0;
+      if (prod is Map) {
+        productVal = prod['product']?.toString();
+        familyVal = prod['family']?.toString() ?? prod['family_name']?.toString();
+        subVal = prod['subFamily']?.toString() ?? prod['sub_family']?.toString() ?? prod['subcategory']?.toString();
+        qty = prod['quantity'] is int ? prod['quantity'] : int.tryParse(prod['quantity']?.toString() ?? '') ?? 1;
+        unitPrice = prod['unit_price'] is double ? prod['unit_price'] : double.tryParse(prod['unit_price']?.toString() ?? '') ?? 0.0;
+      } else {
+        productVal = prod.product;
+        familyVal = prod.family?.toString();
+        subVal = prod.subFamily?.toString();
+        qty = prod.quantity ?? 1;
+        unitPrice = prod.unitPrice ?? 0.0;
+      }
       return ProductLine(
-        product: prod.product,
-        brand: prod.brand,
-        quantity: prod.quantity,
-        supplier: prod.supplier,
-        unitPrice: prod.unitPrice,
+        product: productVal,
+        family: familyVal,
+        subFamily: subVal,
+        // brand: prod.brand,
+        quantity: qty,
+        supplier: prod is Map ? (prod['supplier']?.toString()) : prod.supplier,
+        unitPrice: unitPrice,
       );
     }).toList();
+  }
+
+  Future<void> _fetchProductFamilies() async {
+    setState(() {
+      _loadingFamilies = true;
+      _familiesError = null;
+    });
+    try {
+      final categories = await productController.getCategories(null);
+      if (categories is List<dynamic>) {
+        final families = <String, List<String>>{};
+        final allCategories = categories.cast<Map<String, dynamic>>();
+
+        final parentCategories = allCategories.where((cat) => cat['parent_category'] == null).toList();
+        for (final family in parentCategories) {
+          final familyId = family['id'];
+          final familyName = family['name'] as String;
+
+          final subfamilies = allCategories
+              .where((cat) => cat['parent_category'] == familyId)
+              .map((cat) => cat['name'] as String)
+              .toList();
+
+          families[familyName] = subfamilies.isNotEmpty ? subfamilies : [familyName];
+        }
+
+        setState(() {
+          dynamicProductFamilies = families;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _familiesError = e.toString();
+      });
+    } finally {
+      if (mounted) setState(() => _loadingFamilies = false);
+    }
   }
 
   Color? _priorityColor(String value) {
@@ -168,76 +255,160 @@ class _RequestEditPageState extends State<RequestEditPage> {
                 ],
               ),
               const SizedBox(height: 32),
+              // Loading families state
+              if (_loadingFamilies) ...[
+                const SizedBox(height: 8),
+                const LinearProgressIndicator(),
+                const SizedBox(height: 8),
+              ],
+              if (_familiesError != null) ...[
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12.0),
+                  child: Text('Failed loading product families: $_familiesError', style: const TextStyle(color: Colors.red)),
+                ),
+              ],
+
               // Product & Quantity rows dynamiques (refonte)
               ...productLines.asMap().entries.map((entry) {
                 int idx = entry.key;
                 ProductLine prod = entry.value;
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 16),
-                  child: Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        flex: 2,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('Product ${productLines.length > 1 ? idx + 1 : ''}'),
-                            const SizedBox(height: 4),
-                            TextFormField(
-                              initialValue: prod.product,
-                              onChanged: (val) => setState(() => prod.product = val),
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: Colors.white,
-                                enabledBorder: OutlineInputBorder(
-                                  borderSide: const BorderSide(color: Colors.black87),
-                                  borderRadius: BorderRadius.circular(12),
+                      // First row: Family | Subfamily
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Family'),
+                                const SizedBox(height: 4),
+                                DropdownButtonFormField<String>(
+                                  value: prod.family,
+                                  items: dynamicProductFamilies.keys.map((f) => DropdownMenuItem(value: f, child: Text(f))).toList(),
+                                  onChanged: (val) => setState(() {
+                                    prod.family = val;
+                                    prod.subFamily = null;
+                                  }),
+                                  decoration: InputDecoration(
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    enabledBorder: OutlineInputBorder(
+                                      borderSide: const BorderSide(color: Colors.black87),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderSide: const BorderSide(color: Colors.deepPurple),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  ),
                                 ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: const BorderSide(color: Colors.deepPurple),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                              ),
+                              ],
                             ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 24),
-                      Expanded(
-                        flex: 1,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('Quantity'),
-                            const SizedBox(height: 4),
-                            TextFormField(
-                              initialValue: prod.quantity.toString(),
-                              keyboardType: TextInputType.number,
-                              onChanged: (val) => setState(() => prod.quantity = int.tryParse(val) ?? 1),
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: Colors.white,
-                                enabledBorder: OutlineInputBorder(
-                                  borderSide: const BorderSide(color: Colors.black87),
-                                  borderRadius: BorderRadius.circular(12),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Subfamily'),
+                                const SizedBox(height: 4),
+                                DropdownButtonFormField<String>(
+                                  value: prod.subFamily,
+                                  items: (dynamicProductFamilies[prod.family] ?? []).map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+                                  onChanged: (val) => setState(() => prod.subFamily = val),
+                                  decoration: InputDecoration(
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    enabledBorder: OutlineInputBorder(
+                                      borderSide: const BorderSide(color: Colors.black87),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderSide: const BorderSide(color: Colors.deepPurple),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  ),
                                 ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderSide: const BorderSide(color: Colors.deepPurple),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                              ),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                      if (productLines.length > 1)
-                        IconButton(
-                          icon: const Icon(Icons.remove_circle, color: Colors.red),
-                          onPressed: () => _removeProduct(idx),
-                          tooltip: 'Remove product',
-                        ),
+                      const SizedBox(height: 12),
+                      // Second row: Product (wide) | Quantity (small)
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            flex: 4,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Product ${productLines.length > 1 ? idx + 1 : ''}'),
+                                const SizedBox(height: 4),
+                                TextFormField(
+                                  initialValue: prod.product,
+                                  onChanged: (val) => setState(() => prod.product = val),
+                                  decoration: InputDecoration(
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    enabledBorder: OutlineInputBorder(
+                                      borderSide: const BorderSide(color: Colors.black87),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderSide: const BorderSide(color: Colors.deepPurple),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          SizedBox(
+                            width: 120,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Quantity'),
+                                const SizedBox(height: 4),
+                                TextFormField(
+                                  initialValue: prod.quantity.toString(),
+                                  keyboardType: TextInputType.number,
+                                  onChanged: (val) => setState(() => prod.quantity = int.tryParse(val) ?? 1),
+                                  decoration: InputDecoration(
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    enabledBorder: OutlineInputBorder(
+                                      borderSide: const BorderSide(color: Colors.black87),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderSide: const BorderSide(color: Colors.deepPurple),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (productLines.length > 1)
+                            IconButton(
+                              icon: const Icon(Icons.remove_circle, color: Colors.red),
+                              onPressed: () => _removeProduct(idx),
+                              tooltip: 'Remove product',
+                            ),
+                        ],
+                      ),
                     ],
                   ),
                 );
@@ -291,18 +462,31 @@ class _RequestEditPageState extends State<RequestEditPage> {
                         const Text('Priority'),
                         const SizedBox(height: 4),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: Colors.blue.shade100,
+                            color: _priorityColor(priority),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Text(
-                            priority.toLowerCase(),
-                            style: const TextStyle(
-                              color: Colors.blue,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 16,
-                            ),
+                          child: DropdownButtonFormField<String>(
+                            // match saved priority case-insensitively and default to 'High'
+                            value: ['High', 'Medium', 'Low']
+                                .firstWhere((p) => p.toLowerCase() == priority.toLowerCase(), orElse: () => 'High'),
+                            items: ['High', 'Medium', 'Low']
+                                .map((p) => DropdownMenuItem(
+                                      value: p,
+                                      child: Text(
+                                        // display the label in UPPERCASE (e.g. 'HIGH')
+                                        p.toUpperCase(),
+                                        style: TextStyle(
+                                          color: _priorityTextColor(p),
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ))
+                                .toList(),
+                            onChanged: (val) => setState(() => priority = val ?? 'High'),
+                            decoration: const InputDecoration.collapsed(hintText: ''),
+                            dropdownColor: Colors.white,
                           ),
                         ),
                       ],
@@ -334,9 +518,11 @@ class _RequestEditPageState extends State<RequestEditPage> {
               ),
               const SizedBox(height: 24),
               // Status badge
-              const Text('Status'),
-              const SizedBox(height: 4),
-              Container(
+              Row(mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  const Text('Status'),
+                  SizedBox(width: 8),
+                  Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: status.toLowerCase() == 'approved'
@@ -359,6 +545,10 @@ class _RequestEditPageState extends State<RequestEditPage> {
                   ),
                 ),
               ),
+                ],
+              ),
+              // const SizedBox(height: 4),
+              
               const SizedBox(height: 32),
               // Save button (unchanged)
               SizedBox(
@@ -370,9 +560,11 @@ class _RequestEditPageState extends State<RequestEditPage> {
                           setState(() => _isLoading = true);
               final products = productLines
                 .map((prod) => {
-                  'product': prod.product,
-                  'quantity': prod.quantity,
-                  })
+                      'product': prod.product,
+                      'quantity': prod.quantity,
+                      'family': prod.family,
+                      'subFamily': prod.subFamily,
+                    })
                 .toList();
                           final updateData = {
                             'start_date': submittedDateController.text,

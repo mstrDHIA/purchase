@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import '../../l10n/app_localizations.dart';
 import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
 
 class ProductLine {
@@ -57,6 +58,19 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
   int? _approvedBy;      // Now int
   DateTime? _updatedAt;
   List<ProductLine> productLines = [ProductLine()];
+  final TextEditingController supplierDeliveryDateController = TextEditingController();
+  // Multi-currency support
+  String _currency = 'Dollar';
+  final Map<String, String> _currencySymbols = {
+    'Dollar': '\$',
+    'Euro': '€',
+    'Dinar': 'DT',
+  };
+  final Map<String, String> _currencyCodes = {
+    'Dollar': 'USD',
+    'Euro': 'EUR',
+    'Dinar': 'TND',
+  };
   final TextEditingController noteController = TextEditingController();
   final TextEditingController dueDateController = TextEditingController();
   final TextEditingController supplierNameController = TextEditingController();
@@ -124,6 +138,7 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
                     : double.tryParse(p['unit_price']?.toString() ?? '') ?? 0.0,
           );
         }).toList();
+        // product brands kept on productLines; supplier delivery is order-level
       }
     } else {
       dueDateController.text = DateFormat('dd-MM-yyyy').format(DateTime.now());
@@ -142,6 +157,7 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
   _requestedByUser = 1; // Default user ID
   _approvedBy = 2;      // Default approver ID
   _updatedAt = DateTime.now();
+      supplierDeliveryDateController.text = '';
     }
   }
 
@@ -152,6 +168,7 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
 
   @override
   void dispose() {
+    supplierDeliveryDateController.dispose();
     noteController.dispose();
     dueDateController.dispose();
     supplierNameController.dispose();
@@ -198,15 +215,30 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
               ),
               onChanged: (val) => setState(() => supplierName = val),
             ),
-            const SizedBox(height: 24),
-            const Text('Products',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                const Text('Currency', style: TextStyle(fontWeight: FontWeight.w600)),
+                const SizedBox(width: 12),
+                SizedBox(
+                  width: 180,
+                  child: DropdownButtonFormField<String>(
+                    value: _currency,
+                    decoration: const InputDecoration(border: OutlineInputBorder()),
+                    items: _currencySymbols.keys
+                        .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                        .toList(),
+                    onChanged: (val) => setState(() => _currency = val ?? 'Dollar'),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 32),
+            const Text('Products', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            ...productLines.asMap().entries.map((entry) {
-              int index = entry.key;
-              ProductLine product = entry.value;
-              return _buildProductLine(product, index);
-            }),
+            Column(
+              children: productLines.asMap().entries.map((entry) => _buildProductLine(entry.value, entry.key)).toList(),
+            ),
             Align(
               alignment: Alignment.centerRight,
               child: ElevatedButton.icon(
@@ -216,36 +248,62 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
                   backgroundColor: const Color(0xFF8C7AE6),
                   foregroundColor: Colors.white,
                 ),
-                onPressed: () =>
-                    setState(() => productLines.add(ProductLine())),
+                onPressed: () => setState(() => productLines.add(ProductLine())),
               ),
             ),
-            const SizedBox(height: 32),
-            const Text('Details',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: dueDateController,
-              readOnly: true,
-              decoration: const InputDecoration(
-                labelText: 'Due date',
-                border: OutlineInputBorder(),
-                suffixIcon: Icon(Icons.calendar_today),
-              ),
-              onTap: () async {
-                DateTime? pickedDate = await showDatePicker(
-                  context: context,
-                  initialDate: DateTime.now(),
-                  firstDate: DateTime(2000),
-                  lastDate: DateTime(2100),
-                );
-                if (pickedDate != null) {
-                  setState(() {
-                    dueDateController.text =
-                        DateFormat('dd-MM-yyyy').format(pickedDate);
-                  });
-                }
-              },
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: supplierDeliveryDateController,
+                    readOnly: true,
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context)!.supplierDeliveryDate,
+                      border: const OutlineInputBorder(),
+                      suffixIcon: const Icon(Icons.calendar_today),
+                    ),
+                    onTap: () async {
+                      DateTime? pickedDate = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2100),
+                      );
+                      if (pickedDate != null) {
+                        setState(() {
+                          supplierDeliveryDateController.text = DateFormat('dd-MM-yyyy').format(pickedDate);
+                        });
+                      }
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextFormField(
+                    controller: dueDateController,
+                    readOnly: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Due date',
+                      border: OutlineInputBorder(),
+                      suffixIcon: Icon(Icons.calendar_today),
+                    ),
+                    onTap: () async {
+                      DateTime? pickedDate = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2100),
+                      );
+                      if (pickedDate != null) {
+                        setState(() {
+                          dueDateController.text = DateFormat('dd-MM-yyyy').format(pickedDate);
+                        });
+                      }
+                    },
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 24),
             TextField(
@@ -266,7 +324,7 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                'Total: \$${totalPrice.toStringAsFixed(2)}',
+                'Total: ${_currencySymbols[_currency]}${totalPrice.toStringAsFixed(2)}',
                 style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -319,13 +377,33 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
     supplierName = supplierNameController.text;
     if (supplierName == null ||
         supplierName!.isEmpty ||
-        productLines.any((p) => p.brand == null || p.brand!.isEmpty) ||
+        // productLines.any((p) => p.brand == null || p.brand!.isEmpty) ||
         _priority == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill all required fields.')),
       );
       return;
     }
+    // parse supplier delivery date (optional but if provided must be valid)
+    DateTime? parsedSupplierDeliveryDate;
+    if ((supplierDeliveryDateController.text).isNotEmpty) {
+      try {
+        parsedSupplierDeliveryDate = DateFormat('dd-MM-yyyy').parseStrict(supplierDeliveryDateController.text);
+      } catch (_) {
+        try {
+          parsedSupplierDeliveryDate = DateFormat('yyyy-MM-dd').parseStrict(supplierDeliveryDateController.text);
+        } catch (e) {
+          parsedSupplierDeliveryDate = null;
+        }
+      }
+      if (parsedSupplierDeliveryDate == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter a valid supplier delivery date.')),
+        );
+        return;
+      }
+    }
+
     // Correction du parsing de la date de fin
     DateTime? parsedEndDate;
     try {
@@ -348,7 +426,7 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
       // Adapter la structure des produits pour le backend
       final List<Map<String, dynamic>> productsList = productLines.map((p) => {
         'product': p.product ?? '',
-        'brand': p.brand ?? '',
+        // 'brand': p.brand ?? '',
         'quantity': p.quantity,
         'unit_price': p.unitPrice,
         'price': (p.unitPrice * p.quantity),
@@ -364,11 +442,15 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
         'products': productsList,
         'title': 'Purchase Order',
         'description': noteController.text,
-        'status': 'pending', // Always set to pending
+        'statuss': 'pending', // Always set to pending
+        'currency': _currencyCodes[_currency] ?? _currency,
         'created_at': DateFormat('yyyy-MM-dd').format(DateTime.now()),
         'updated_at': DateFormat('yyyy-MM-dd').format(_updatedAt ?? DateTime.now()),
         'priority': _priority,
       };
+        if (parsedSupplierDeliveryDate != null) {
+          jsonBody['supplier_delivery_date'] = DateFormat('yyyy-MM-dd').format(parsedSupplierDeliveryDate);
+        }
       if (widget.initialOrder.isNotEmpty) {
         widget.onSave(jsonBody);
         if (mounted) Navigator.of(context).pop(jsonBody);
@@ -429,13 +511,14 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
                 ),
               ),
               const SizedBox(width: 12),
+              const SizedBox(width: 12),
               Expanded(
                 flex: 3,
                 child: TextFormField(
                   initialValue: product.brand,
-                  decoration: const InputDecoration(
-                    labelText: 'Brand',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)!.brand,
+                    border: const OutlineInputBorder(),
                   ),
                   onChanged: (val) => setState(() => product.brand = val),
                 ),
@@ -443,17 +526,19 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
             ],
           ),
           const SizedBox(height: 12),
+          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
                 flex: 3,
                 child: TextFormField(
-                  initialValue: product.unitPrice.toStringAsFixed(2),
+                //  initialValue: product.unitPrice.toStringAsFixed(2),
                   keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  decoration: const InputDecoration(
-                    labelText: 'Unit Price',
-                    border: OutlineInputBorder(),
+                       TextInputType.numberWithOptions(decimal: true),
+                  decoration: InputDecoration(
+                    hintText: '0.00',
+                    labelText: 'Unit Price (${_currencySymbols[_currency]})',
+                    border: const OutlineInputBorder(),
                   ),
                   onChanged: (val) => setState(() {
                     final parsed = double.tryParse(val);
@@ -474,8 +559,8 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
                     borderRadius: BorderRadius.circular(4),
                     border: Border.all(color: Colors.grey.shade400),
                   ),
-                  child: Text(
-                    '\$${(product.unitPrice * product.quantity).toStringAsFixed(2)}',
+                    child: Text(
+                    '${_currencySymbols[_currency]}${(product.unitPrice * product.quantity).toStringAsFixed(2)}',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,

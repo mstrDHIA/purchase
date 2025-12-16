@@ -35,8 +35,8 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
     'rejected',
   ];
   int _rowsPerPage = PaginatedDataTable.defaultRowsPerPage;
-  int? _sortColumnIndex;
-  bool _sortAscending = true;
+  int? _sortColumnIndex = 0;
+  bool _sortAscending = false; // default: ID column descending
   final bool _isLoading = false;
   final int _page = 0;
   final int _totalRows = 0;
@@ -141,6 +141,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                   ),
                 ),
               ),
+              if(Provider.of<UserController>(context, listen: false).currentUser.role!.id!=4)
               PopupMenuButton<String>(
                 onSelected: (value) { setState(() { _statusFilter = value.isEmpty ? null : value; }); },
                 itemBuilder: (context) => [
@@ -189,7 +190,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
                   padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                 ),
-                child: Text(_selectedDueDate == null ? 'Filter by Due Date' : 'Due: ${_dateFormat.format(_selectedDueDate!)}'),
+                child: Text(_selectedDueDate == null ? ' Delivery due date' : 'Due: ${_dateFormat.format(_selectedDueDate!)}'),
               ),
               OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
@@ -374,9 +375,97 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                         });
                       }
                       final pageDataSource = filteredDataSource;
+                      final selectedIds = pageDataSource.getSelectedIds();
                       // data source prepared for current page
                       return Column(
                         children: [
+                          // Batch actions row
+                          AnimatedBuilder(
+                            animation: pageDataSource,
+                            builder: (context, child) {
+                              final curSelected = pageDataSource.getSelectedIds();
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                child: Row(
+                                  children: [
+                                    Text('${curSelected.length} selected'),
+                                    const SizedBox(width: 16),
+                                    // Archive / Unarchive depending on current view
+                                    ElevatedButton.icon(
+                                      onPressed: curSelected.isEmpty ? null : () async {
+                                        final isUnarchive = _showArchived == true;
+                                        final confirmed = await showDialog<bool>(
+                                          context: context,
+                                          builder: (context) => AlertDialog(
+                                            title: Text(isUnarchive ? 'Unarchive selected' : 'Archive selected'),
+                                            content: Text(isUnarchive
+                                                ? 'Are you sure you want to unarchive ${curSelected.length} requests?'
+                                                : 'Are you sure you want to archive ${curSelected.length} requests?'),
+                                            actions: [
+                                              TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+                                              ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: Text(isUnarchive ? 'Unarchive' : 'Archive')),
+                                            ],
+                                          ),
+                                        );
+                                        if (confirmed != true) return;
+                                        final controller = Provider.of<PurchaseRequestController>(context, listen: false);
+                                        final userCtrl = Provider.of<UserController>(context, listen: false);
+                                        try {
+                                          for (final id in curSelected) {
+                                            if (isUnarchive) {
+                                              await controller.unarchivePurchaseRequest(id);
+                                            } else {
+                                              await controller.archivePurchaseRequest(id);
+                                            }
+                                          }
+                                          await controller.fetchRequests(context, userCtrl.currentUser);
+                                          pageDataSource.clearSelection();
+                                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(isUnarchive ? 'Unarchived ${curSelected.length} requests' : 'Archived ${curSelected.length} requests')));
+                                        } catch (e) {
+                                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: $e')));
+                                        }
+                                      },
+                                      icon: Icon(_showArchived ? Icons.unarchive_outlined : Icons.archive_outlined),
+                                      label: Text(_showArchived ? 'Unarchive Selected' : 'Archive Selected'),
+                                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF7C3AED), foregroundColor: Colors.white),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    ElevatedButton.icon(
+                                      onPressed: curSelected.isEmpty ? null : () async {
+                                        final confirmed = await showDialog<bool>(
+                                          context: context,
+                                          builder: (context) => AlertDialog(
+                                            title: const Text('Delete selected',style: TextStyle(color: Color.fromARGB(255, 240, 239, 241)),),
+                                            content: Text('Are you sure you want to delete ${curSelected.length} requests? This cannot be undone.'),
+                                            actions: [
+                                              TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+                                              ElevatedButton(onPressed: () => Navigator.of(context).pop(true), style: ElevatedButton.styleFrom(backgroundColor: Colors.red), child: const Text('Delete')),
+                                            ],
+                                          ),
+                                        );
+                                        if (confirmed != true) return;
+                                        final controller = Provider.of<PurchaseRequestController>(context, listen: false);
+                                        final userCtrl = Provider.of<UserController>(context, listen: false);
+                                        try {
+                                          for (final id in curSelected) {
+                                            await controller.deleteRequest(id, context);
+                                          }
+                                          await controller.fetchRequests(context, userCtrl.currentUser);
+                                          pageDataSource.clearSelection();
+                                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Deleted ${curSelected.length} requests')));
+                                        } catch (e) {
+                                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to delete: $e')));
+                                        }
+                                      },
+                                      icon: const Icon(Icons.delete_outline),
+                                      label: const Text('Delete Selected'),
+                                      style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
                           Expanded(
                             child: SingleChildScrollView(
                               scrollDirection: Axis.vertical,
@@ -428,7 +517,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                                         },
                                       ),
                                       DataColumn(
-                                        label: const Text('Due date'),
+                                        label: const Text(' Delivery due date'),
                                         onSort: (columnIndex, ascending) {
                                           _sort<String>((req) => req.endDate?.toString() ?? '', columnIndex, ascending);
                                         },
