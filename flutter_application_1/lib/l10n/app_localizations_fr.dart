@@ -319,6 +319,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get addNewBrand => 'Ajouter une nouvelle marque';
 
   @override
+  String get supplierDeliveryDate => 'Date de livraison fournisseur';
+
+  @override
   String get createNewRole => 'Créer un nouveau rôle';
 
   @override

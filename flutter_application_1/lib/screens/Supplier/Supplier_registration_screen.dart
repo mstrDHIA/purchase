@@ -13,6 +13,8 @@ class Supplier {
   final String? phone;
   final String? matricule;
   final String? cin;
+  final String? groupName;
+  final String? contactName;
 
   Supplier({
     required this.id,
@@ -21,6 +23,8 @@ class Supplier {
     this.phone,
     this.matricule,
     this.cin,
+    this.groupName,
+    this.contactName,
   });
 
   factory Supplier.fromJson(Map<String, dynamic> json) => Supplier(
@@ -30,11 +34,15 @@ class Supplier {
         phone: json['phone'] as String? ??
                json['phone_number'] as String? ??
                json['contact_phone'] as String?,
-        matricule: json['matricule'] as String? ??
-                   json['registration_number'] as String?,
+      // Prefer server field 'matricule_fiscale', fallback to older keys
+      matricule: json['matricule_fiscale'] as String? ?? json['matricule'] as String? ?? json['registration_number'] as String?,
         cin: json['cin'] as String? ??
              json['cin_number'] as String? ??
              json['identity_number'] as String?,
+        groupName: json['group_name'] as String? ??
+                   json['groupName'] as String?,
+        contactName: json['contact_name'] as String? ??
+                     json['contactName'] as String?,
       );
 }
 
@@ -92,6 +100,16 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
             ? _safeString(a.cin).toLowerCase().compareTo(_safeString(b.cin).toLowerCase())
             : _safeString(b.cin).toLowerCase().compareTo(_safeString(a.cin).toLowerCase()));
         break;
+      case 6:
+        controller.suppliers.sort((a, b) => asc
+            ? _safeString(a.groupName).toLowerCase().compareTo(_safeString(b.groupName).toLowerCase())
+            : _safeString(b.groupName).toLowerCase().compareTo(_safeString(a.groupName).toLowerCase()));
+        break;
+      case 7:
+        controller.suppliers.sort((a, b) => asc
+            ? _safeString(a.contactName).toLowerCase().compareTo(_safeString(b.contactName).toLowerCase())
+            : _safeString(b.contactName).toLowerCase().compareTo(_safeString(a.contactName).toLowerCase()));
+        break;
     }
     setState(() {
       _sortIndex = columnIndex;
@@ -147,6 +165,8 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
     final matriculeCtrl = TextEditingController();
     final cinCtrl = TextEditingController();
     final addressCtrl = TextEditingController();
+    final groupNameCtrl = TextEditingController();
+    final contactNameCtrl = TextEditingController();
     final formKey = GlobalKey<FormState>();
     bool isSubmitting = false;
     String _selectedCountryCode = '+1'; // default country code
@@ -237,18 +257,42 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                     TextFormField(
                       controller: matriculeCtrl,
                       decoration: const InputDecoration(labelText: 'Matricule'),
+                      validator: (v) {
+                        if ((v == null || v.isEmpty) && (cinCtrl.text.isEmpty)) {
+                          return 'Either Matricule or CIN is required';
+                        }
+                        return null;
+                      },
                       enabled: !isSubmitting,
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: cinCtrl,
                       decoration: const InputDecoration(labelText: 'CIN'),
+                      validator: (v) {
+                        if ((v == null || v.isEmpty) && (matriculeCtrl.text.isEmpty)) {
+                          return 'Either Matricule or CIN is required';
+                        }
+                        return null;
+                      },
                       enabled: !isSubmitting,
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: addressCtrl,
                       decoration: const InputDecoration(labelText: 'Address'),
+                      enabled: !isSubmitting,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: groupNameCtrl,
+                      decoration: const InputDecoration(labelText: 'Group Name'),
+                      enabled: !isSubmitting,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: contactNameCtrl,
+                      decoration: const InputDecoration(labelText: 'Contact Name'),
                       enabled: !isSubmitting,
                     ),
                   ],
@@ -274,6 +318,10 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                             contactEmail: emailCtrl.text,
                             phoneNumber: fullPhoneNumber,
                             address: addressCtrl.text.isNotEmpty ? addressCtrl.text : null,
+                            groupName: groupNameCtrl.text.isNotEmpty ? groupNameCtrl.text : null,
+                            contactName: contactNameCtrl.text.isNotEmpty ? contactNameCtrl.text : null,
+                            matricule: matriculeCtrl.text.isNotEmpty ? matriculeCtrl.text : null,
+                            cin: cinCtrl.text.isNotEmpty ? cinCtrl.text : null,
                           );
 
                           if (mounted) {
@@ -308,6 +356,8 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
     final phoneCtrl = TextEditingController(text: supplier?.phone ?? '');
     final matriculeCtrl = TextEditingController(text: supplier?.matricule ?? '');
     final cinCtrl = TextEditingController(text: supplier?.cin ?? '');
+    final groupNameCtrl = TextEditingController(text: supplier?.groupName ?? '');
+    final contactNameCtrl = TextEditingController(text: supplier?.contactName ?? '');
     bool isSubmitting = false;
     String _selectedCountryCode = '+216'; // Tunisie par défaut
     final controller = context.read<SupplierController>();
@@ -371,6 +421,10 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                   TextField(controller: matriculeCtrl, decoration: const InputDecoration(labelText: 'Matricule')),
                   const SizedBox(height: 12),
                   TextField(controller: cinCtrl, decoration: const InputDecoration(labelText: 'CIN')),
+                  const SizedBox(height: 12),
+                  TextField(controller: groupNameCtrl, decoration: const InputDecoration(labelText: 'Group Name')),
+                  const SizedBox(height: 12),
+                  TextField(controller: contactNameCtrl, decoration: const InputDecoration(labelText: 'Contact Name')),
                 ],
               ),
             ),
@@ -381,6 +435,12 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
               onPressed: isSubmitting
                   ? null
                   : () async {
+                      if (matriculeCtrl.text.isEmpty && cinCtrl.text.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Either Matricule or CIN is required')),
+                        );
+                        return;
+                      }
                       setDialogState(() => isSubmitting = true);
                       try {
                         if (supplier != null && index != null) {
@@ -390,6 +450,10 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                             name: nameCtrl.text,
                             contactEmail: emailCtrl.text,
                             phoneNumber: fullPhoneNumber,
+                                groupName: groupNameCtrl.text.isNotEmpty ? groupNameCtrl.text : null,
+                                contactName: contactNameCtrl.text.isNotEmpty ? contactNameCtrl.text : null,
+                                matricule: matriculeCtrl.text.isNotEmpty ? matriculeCtrl.text : null,
+                                cin: cinCtrl.text.isNotEmpty ? cinCtrl.text : null,
                           );
                           if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Supplier updated')));
                         }
@@ -430,6 +494,10 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                 _buildDetailRow(Icons.badge, 'Matricule', _safeString(supplier.matricule)),
                 const SizedBox(height: 16),
                 _buildDetailRow(Icons.credit_card, 'CIN', _safeString(supplier.cin)),
+                const SizedBox(height: 16),
+                _buildDetailRow(Icons.groups, 'Group Name', _safeString(supplier.groupName)),
+                const SizedBox(height: 16),
+                _buildDetailRow(Icons.person_outline, 'Contact Name', _safeString(supplier.contactName)),
                 const SizedBox(height: 16),
                 _buildDetailRow(Icons.tag, 'ID', supplier.id.toString()),
               ],
@@ -485,7 +553,9 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
       final phone = _safeString(s.phone).toLowerCase();
       final matricule = _safeString(s.matricule).toLowerCase();
       final cin = _safeString(s.cin).toLowerCase();
-      final matchesSearch = name.contains(filter) || email.contains(filter) || phone.contains(filter) || matricule.contains(filter) || cin.contains(filter);
+      final groupName = _safeString(s.groupName).toLowerCase();
+      final contactName = _safeString(s.contactName).toLowerCase();
+      final matchesSearch = name.contains(filter) || email.contains(filter) || phone.contains(filter) || matricule.contains(filter) || cin.contains(filter) || groupName.contains(filter) || contactName.contains(filter);
       return matchesSearch;
     }).toList();
 
@@ -659,6 +729,14 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                                       label: const Text('CIN', style: TextStyle(fontWeight: FontWeight.w600)),
                                       onSort: (i, asc) => _sortByColumn(5, asc),
                                     ),
+                                    DataColumn(
+                                      label: const Text('Group Name', style: TextStyle(fontWeight: FontWeight.w600)),
+                                      onSort: (i, asc) => _sortByColumn(6, asc),
+                                    ),
+                                    DataColumn(
+                                      label: const Text('Contact Name', style: TextStyle(fontWeight: FontWeight.w600)),
+                                      onSort: (i, asc) => _sortByColumn(7, asc),
+                                    ),
                                     const DataColumn(label: Text('')),
                                   ],
                                   rows: paginatedFiltered.map((supplier) {
@@ -671,6 +749,8 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                                         DataCell(Text(_safeString(supplier.phone))),
                                         DataCell(Text(_safeString(supplier.matricule))),
                                         DataCell(Text(_safeString(supplier.cin))),
+                                        DataCell(Text(_safeString(supplier.groupName))),
+                                        DataCell(Text(_safeString(supplier.contactName))),
                                         DataCell(Row(mainAxisSize: MainAxisSize.min, children: [
                                           IconButton(
                                             icon: const Icon(Icons.visibility, color: Colors.blue),

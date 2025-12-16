@@ -5,6 +5,8 @@ import 'package:flutter_application_1/controllers/product_controller.dart';
 import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
 import 'package:flutter_application_1/controllers/purchase_request_controller.dart';
 import 'package:flutter_application_1/controllers/supplier_controller.dart';
+import 'package:flutter_application_1/controllers/reject_reason_controller.dart';
+import 'package:flutter_application_1/controllers/department_controller.dart';
 
 import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter_application_1/controllers/role_controller.dart';
@@ -62,6 +64,8 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (context) => PurchaseRequestController(context)),
         ChangeNotifierProvider(create: (context) => PurchaseOrderController()),
         ChangeNotifierProvider(create: (context) => ProductController()),
+        ChangeNotifierProvider(create: (_) => RejectReasonController()),
+        ChangeNotifierProvider(create: (_) => DepartmentController()),
         // ChangeNotifierProvider(create: (_) => ProductController()),
         ChangeNotifierProvider(create: (_) => LocaleProvider()),
       ],

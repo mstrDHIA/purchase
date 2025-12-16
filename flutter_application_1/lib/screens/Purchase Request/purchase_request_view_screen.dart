@@ -7,13 +7,13 @@ import 'package:flutter_application_1/models/purchase_request.dart';
 import 'package:intl/intl.dart';
 import '../../l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_application_1/controllers/product_controller.dart';
 
 class PurchaseRequestView extends StatefulWidget {
   final PurchaseRequest purchaseRequest;
   const PurchaseRequestView({
     super.key,
-    required this.purchaseRequest, required Map<String, dynamic> order, required Null Function(dynamic newOrder) onSave,
-    // required Null Function(dynamic newpurchaseRequest) onSave,
+    required this.purchaseRequest,
   });
 
   @override
@@ -25,6 +25,11 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
   bool _showActionButtons = true;
   String? _status;
   late UserController userController;
+  late ProductController productController;
+  Map<int, String> _categoryNamesById = {};
+  Map<String, List<String>> _families = {};
+  bool _loadingFamilies = false;
+  String? _familiesError;
   PurchaseOrderController? purchaseOrderController;
   @override
   void initState() {
@@ -32,6 +37,67 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
   _status = widget.purchaseRequest.status?.toString() ?? '';
   userController= Provider.of<UserController>(context, listen: false);
   purchaseOrderController = Provider.of<PurchaseOrderController>(context, listen: false);
+    productController = Provider.of<ProductController>(context, listen: false);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchProductFamilies();
+    });
+  }
+
+  Future<void> _fetchProductFamilies() async {
+    setState(() {
+      _loadingFamilies = true;
+      _familiesError = null;
+    });
+    try {
+      final categories = await productController.getCategories(null);
+      if (categories is List) {
+        final all = categories.cast<Map<String, dynamic>>();
+        final Map<int, String> idToName = {};
+        for (final c in all) {
+          final id = c['id'];
+          final name = c['name']?.toString() ?? '';
+          if (id != null) idToName[id as int] = name;
+        }
+
+        final parents = all.where((cat) => cat['parent_category'] == null).toList();
+        final Map<String, List<String>> fams = {};
+        for (final family in parents) {
+          final familyId = family['id'];
+          final familyName = family['name'] as String? ?? '';
+          final subs = all
+              .where((cat) => cat['parent_category'] == familyId)
+              .map((c) => c['name'] as String)
+              .toList();
+          fams[familyName] = subs.isNotEmpty ? subs : [familyName];
+        }
+
+        setState(() {
+          _categoryNamesById = idToName;
+          _families = fams;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _familiesError = e.toString();
+      });
+    } finally {
+      if (mounted) setState(() => _loadingFamilies = false);
+    }
+  }
+
+  String _resolveCategoryName(dynamic value) {
+    if (value == null) return '';
+    if (value is int) return _categoryNamesById[value] ?? value.toString();
+    if (value is String) {
+      // if it's numeric string, try parse
+      final parsed = int.tryParse(value);
+      if (parsed != null) return _categoryNamesById[parsed] ?? value;
+      return value;
+    }
+    if (value is Map) {
+      return value['name']?.toString() ?? value.toString();
+    }
+    return value.toString();
   }
 
 
@@ -145,19 +211,42 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                       },
                     ),
                   ),
-                  const Center(
-                    child: Text(
-                      'Purchase Request',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
+                  Center(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'Purchase Request',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade200,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
+                          child: Text(
+                            'ID: ${widget.purchaseRequest.id?.toString() ?? '-'}',
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 32),
+              if (_loadingFamilies) const LinearProgressIndicator(minHeight: 3),
+              if (_familiesError != null) ...[
+                const SizedBox(height: 8),
+                Text('Failed to load product families: $_familiesError', style: const TextStyle(color: Colors.red)),
+              ],
               // Products section
               const Text('Products', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
@@ -168,7 +257,32 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                   itemCount: products.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 16),
                   itemBuilder: (context, index) {
-                    final prod = products[index];
+                    final dynamic prod = products[index];
+                    // Normalize product fields whether prod is a ProductLine or a Map
+                    String familyText = '-';
+                    String subfamilyText = '-';
+                    String productText = '-';
+                    String quantityText = '';
+                    try {
+                      if (prod is Map) {
+                        familyText = _resolveCategoryName(prod['family'] ?? prod['family_name'] ?? prod['category']);
+                        subfamilyText = _resolveCategoryName(prod['subFamily'] ?? prod['sub_family'] ?? prod['subcategory']);
+                        productText = _resolveCategoryName(prod['product']);
+                        quantityText = (prod['quantity'] ?? '')?.toString() ?? '';
+                      } else {
+                        // assume ProductLine or similar object with properties
+                        familyText = _resolveCategoryName(prod.family);
+                        subfamilyText = _resolveCategoryName(prod.subFamily);
+                        productText = _resolveCategoryName(prod.product);
+                        quantityText = prod.quantity?.toString() ?? '';
+                      }
+                    } catch (_) {
+                      // fallback to safe defaults
+                      familyText = '';
+                      subfamilyText = '';
+                      productText = prod?.toString() ?? '';
+                    }
+
                     return Card(
                       margin: const EdgeInsets.symmetric(vertical: 0),
                       elevation: 2,
@@ -186,7 +300,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                               children: [
                                 Expanded(
                                   child: TextField(
-                                    controller: TextEditingController(text: prod.family?.toString() ?? '-'),
+                                    controller: TextEditingController(text: familyText),
                                     readOnly: true,
                                     decoration: InputDecoration(
                                       labelText: 'Family',
@@ -207,7 +321,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: TextField(
-                                    controller: TextEditingController(text: prod.subFamily?.toString() ?? '-'),
+                                    controller: TextEditingController(text: subfamilyText),
                                     readOnly: true,
                                     decoration: InputDecoration(
                                       labelText: 'Subfamily',
@@ -233,7 +347,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                 Expanded(
                                   flex: 2,
                                   child: TextField(
-                                    controller: TextEditingController(text: prod.product ?? '-'),
+                                    controller: TextEditingController(text: productText),
                                     readOnly: true,
                                     decoration: InputDecoration(
                                       labelText: 'Product',
@@ -255,7 +369,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                 Expanded(
                                   flex: 1,
                                   child: TextField(
-                                    controller: TextEditingController(text: prod.quantity.toString()),
+                                    controller: TextEditingController(text: quantityText),
                                     readOnly: true,
                                     decoration: InputDecoration(
                                       labelText: 'Quantity',
@@ -377,182 +491,265 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
               ),
               const SizedBox(height: 24),
               // Status & Action buttons
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Status'),
-                        const SizedBox(height: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: (_status?.toLowerCase() == 'pending')
-                                ? Colors.orange.shade100
-                                : (_status?.toLowerCase() == 'approved')
-                                    ? Colors.green.shade100
-                                    : (_status?.toLowerCase() == 'rejected')
-                                        ? Colors.red.shade100
-                                        : Colors.grey.shade200,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            _status ?? '',
-                            style: TextStyle(
-                              color: (_status?.toLowerCase() == 'pending')
-                                  ? Colors.orange.shade800
-                                  : (_status?.toLowerCase() == 'approved')
-                                      ? Colors.green.shade800
-                                      : (_status?.toLowerCase() == 'rejected')
-                                          ? Colors.red.shade800
-                                          : Colors.black,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Spacer(),
-                  if (_showActionButtons && !isApproved && !isRejected && (userController.currentUser.role!.id == 1 || userController.currentUser.role!.id == 3 || userController.currentUser.role!.id == 4))
-                    Row(
-                      children: [
-                        ElevatedButton(
-                          onPressed: () async {
-                            try {
-                              final id = widget.purchaseRequest.id;
-                              if (id == null) throw Exception('ID missing');
-                              final payload = {
-                                'status': 'approved',
-                                'approved_by': userController.currentUser.id,
-                              };
-                              Map<String,dynamic> responseData = await PurchaseRequestNetwork().updatePurchaseRequest(id, payload, method: 'PATCH');
-                              setState(() {
-                                _showActionButtons = false;
-                              });
-                              // Show dialog to ask if a purchase order should be created
-                              final shouldCreate = await showDialog<bool>(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  title: const Text('Create Purchase Order?'),
-                                  content: const Text('Do you want to create a new purchase order from this purchase request?'),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.of(context).pop(false),
-                                      child: const Text('No'),
-                                    ),
-                                    ElevatedButton(
-                                      onPressed: () => Navigator.of(context).pop(true),
-                                      child: const Text('Yes'),
-                                    ),
-                                  ],
-                                ),
-                              );
-                              if (shouldCreate == true) {
-                                widget.purchaseRequest.approvedBy=responseData['approved_by'];
-                                Map<String,dynamic> purchaseOrderData = {
-                                  'id':widget.purchaseRequest.id,
-                                  'title': widget.purchaseRequest.title,
-                                  'description': widget.purchaseRequest.description,
-                                  'requested_by_user': widget.purchaseRequest.approvedBy,
-                                  'status': 'pending',
-                                  'created_at': DateFormat('yyyy-MM-dd').format(DateTime.now()),
-                                  'updated_at': DateFormat('yyyy-MM-dd').format(DateTime.now()),
-                                  // Include both the backend-friendly id field and the explicit
-                                  // 'purchase_request' field expected by some endpoints.
-                                  'purchase_request_id': widget.purchaseRequest.id,
-                                  'purchase_request': widget.purchaseRequest.id,
-                                  'products': widget.purchaseRequest.products?.map((p) => p.toJson()).toList(),
-                                  'priority': widget.purchaseRequest.priority,
-                                  'start_date': DateFormat('yyyy-MM-dd').format(widget.purchaseRequest.startDate!),
-                                  'end_date': DateFormat('yyyy-MM-dd').format(widget.purchaseRequest.endDate!),
-                                };
-                                await purchaseOrderController!.addOrder(purchaseOrderData);
-      
-                                if (mounted) {
-                                  SnackBar snackBar=SnackBar(content: Text('Purchase Order created successfully!'),backgroundColor: Colors.green,);
-                                  ScaffoldMessenger.of(context).showSnackBar(snackBar);
-                                }
-                              } else {
-                                // Just close the dialog and maybe pop the view
-                                if (mounted) Navigator.pop(context, true);
-                              }
-                            } catch (e) {
-                              String errorMsg = e.toString();
-                              if (e is DioException && e.response != null) {
-                                errorMsg = 'Erreur serveur: ${e.response}';
-                              }
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(backgroundColor: const Color.fromARGB(255, 245, 3, 3), content: Text(errorMsg)),
-                              );
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF635BFF),
-                            foregroundColor: Colors.white,
-                            minimumSize: const Size(120, 44),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            elevation: 0,
-                          ),
-                          child: Text(AppLocalizations.of(context)?.approve ?? 'Approve'),
-                        ),
-                        const SizedBox(width: 24),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFF5F5F5),
-                            foregroundColor: Colors.black87,
-                            minimumSize: const Size(120, 44),
-                            side: const BorderSide(color: Color(0xFFE0E0E0)),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          onPressed: () async {
-                            try {
-                              final id = widget.purchaseRequest.id;
-                              if (id == null) throw Exception('ID missing');
-                              final payload = {
-                                'status': 'rejected',
-                                'approved_by': userController.currentUser.id,
-                              };
-                              await PurchaseRequestNetwork().updatePurchaseRequest(id, payload, method: 'PATCH');
-                              setState(() {
-                                _showActionButtons = false;
-                              });
-                              WidgetsBinding.instance.addPostFrameCallback((_) {
-                                if (mounted) {
-                                  Navigator.pop(context, true);
-                                }
-                              });
-                            } catch (e) {
-                              String errorMsg = e.toString();
-                              if (e is DioException && e.response != null) {
-                                errorMsg = 'Erreur serveur: ${e.response}';
-                              }
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(backgroundColor: const Color.fromARGB(255, 245, 3, 3), content: Text(errorMsg)),
-                              );
-                            }
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(backgroundColor: Color.fromARGB(255, 9, 37, 250), content: Text('rejected!')),
-                            );
-                          },
-                          child: Text(AppLocalizations.of(context)?.reject ?? 'Reject'),
-                        ),
-                      ],
-                    ),
-                ],
-              ),
+              
               const SizedBox(height: 30),
             ],
           ),
         ),
+      ),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 36),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        width: double.infinity,
+        height: 50,
+        child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          
+                          const Text('Status'),
+                          const SizedBox(width: 12),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: (_status?.toLowerCase() == 'pending')
+                                  ? Colors.orange.shade100
+                                  : (_status?.toLowerCase() == 'approved')
+                                      ? Colors.green.shade100
+                                      : (_status?.toLowerCase() == 'rejected')
+                                          ? Colors.red.shade100
+                                          : Colors.grey.shade200,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              _status ?? '',
+                              style: TextStyle(
+                                color: (_status?.toLowerCase() == 'pending')
+                                    ? Colors.orange.shade800
+                                    : (_status?.toLowerCase() == 'approved')
+                                        ? Colors.green.shade800
+                                        : (_status?.toLowerCase() == 'rejected')
+                                            ? Colors.red.shade800
+                                            : Colors.black,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Spacer(),
+                    if((userController.currentUser.role!.id==4||userController.currentUser.role!.id==1)&&(_status=='approved'))
+                    ElevatedButton(onPressed: () async {
+                                final shouldCreate = await showDialog<bool>(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: const Text('Create Purchase Order?'),
+                                    content: const Text('Do you want to create a new purchase order from this purchase request?'),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.of(context).pop(false),
+                                        child: const Text('No'),
+                                      ),
+                                      ElevatedButton(
+                                        onPressed: () => Navigator.of(context).pop(true),
+                                        child: const Text('Yes'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                                if (shouldCreate == true) {
+                                  final id = widget.purchaseRequest.id;
+                                if (id == null) throw Exception('ID missing');
+                                final payload = {
+                                  'status': 'transformed',
+                                  'approved_by': userController.currentUser.id,
+                                };
+                                await PurchaseRequestNetwork().updatePurchaseRequest(id, payload, method: 'PATCH');
+                                  widget.purchaseRequest.approvedBy=widget.purchaseRequest.approvedBy;
+                                  Map<String,dynamic> purchaseOrderData = {
+                                    'id':widget.purchaseRequest.id,
+                                    'title': widget.purchaseRequest.title,
+                                    'description': widget.purchaseRequest.description,
+                                    'requested_by_user': widget.purchaseRequest.approvedBy,
+                                    'status': 'pending',
+                                    'created_at': DateFormat('yyyy-MM-dd').format(DateTime.now()),
+                                    'updated_at': DateFormat('yyyy-MM-dd').format(DateTime.now()),
+                                    // Include both the backend-friendly id field and the explicit
+                                    // 'purchase_request' field expected by some endpoints.
+                                    'purchase_request_id': widget.purchaseRequest.id,
+                                    'purchase_request': widget.purchaseRequest.id,
+                                    'products': widget.purchaseRequest.products?.map((p) => p.toJson()).toList(),
+                                    'priority': widget.purchaseRequest.priority,
+                                    'start_date': DateFormat('yyyy-MM-dd').format(widget.purchaseRequest.startDate!),
+                                    'end_date': DateFormat('yyyy-MM-dd').format(widget.purchaseRequest.endDate!),
+                                  };
+                                  await purchaseOrderController!.addOrder(purchaseOrderData);
+        
+                                  if (mounted) {
+                                    SnackBar snackBar=SnackBar(content: Text('Purchase Order created successfully!'),backgroundColor: Colors.green,);
+                                    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                                  }
+                                } else {
+                                  // Just close the dialog and maybe pop the view
+                                  if (mounted){}
+                                   Navigator.pop(context, true);
+                                }
+                    }, child: Text('Create PO'),style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF635BFF),
+                              foregroundColor: Colors.white,
+                              minimumSize: const Size(120, 44),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              elevation: 0,
+                            ),),
+                    if (_showActionButtons && !isApproved && !isRejected && widget.purchaseRequest.status!='transformed' && (userController.currentUser.role!.id == 1 || userController.currentUser.role!.id == 3 || userController.currentUser.role!.id == 4))
+                      Row(
+                        children: [
+                          ElevatedButton(
+                            onPressed: () async {
+                              try {
+                                final id = widget.purchaseRequest.id;
+                                if (id == null) throw Exception('ID missing');
+                                final payload = {
+                                  'status': 'approved',
+                                  'approved_by': userController.currentUser.id,
+                                };
+                                await PurchaseRequestNetwork().updatePurchaseRequest(id, payload, method: 'PATCH');
+                                setState(() {
+                                  _showActionButtons = false;
+                                });
+                                // Show dialog to ask if a purchase order should be created
+                                // final shouldCreate = await showDialog<bool>(
+                                //   context: context,
+                                //   builder: (context) => AlertDialog(
+                                //     title: const Text('Create Purchase Order?'),
+                                //     content: const Text('Do you want to create a new purchase order from this purchase request?'),
+                                //     actions: [
+                                //       TextButton(
+                                //         onPressed: () => Navigator.of(context).pop(false),
+                                //         child: const Text('No'),
+                                //       ),
+                                //       ElevatedButton(
+                                //         onPressed: () => Navigator.of(context).pop(true),
+                                //         child: const Text('Yes'),
+                                //       ),
+                                //     ],
+                                //   ),
+                                // );
+                                // if (shouldCreate == true) {
+                                //   widget.purchaseRequest.approvedBy=responseData['approved_by'];
+                                //   Map<String,dynamic> purchaseOrderData = {
+                                //     'id':widget.purchaseRequest.id,
+                                //     'title': widget.purchaseRequest.title,
+                                //     'description': widget.purchaseRequest.description,
+                                //     'requested_by_user': widget.purchaseRequest.approvedBy,
+                                //     'status': 'pending',
+                                //     'created_at': DateFormat('yyyy-MM-dd').format(DateTime.now()),
+                                //     'updated_at': DateFormat('yyyy-MM-dd').format(DateTime.now()),
+                                //     // Include both the backend-friendly id field and the explicit
+                                //     // 'purchase_request' field expected by some endpoints.
+                                //     'purchase_request_id': widget.purchaseRequest.id,
+                                //     'purchase_request': widget.purchaseRequest.id,
+                                //     'products': widget.purchaseRequest.products?.map((p) => p.toJson()).toList(),
+                                //     'priority': widget.purchaseRequest.priority,
+                                //     'start_date': DateFormat('yyyy-MM-dd').format(widget.purchaseRequest.startDate!),
+                                //     'end_date': DateFormat('yyyy-MM-dd').format(widget.purchaseRequest.endDate!),
+                                //   };
+                                //   await purchaseOrderController!.addOrder(purchaseOrderData);
+        
+                                //   if (mounted) {
+                                //     SnackBar snackBar=SnackBar(content: Text('Purchase Order created successfully!'),backgroundColor: Colors.green,);
+                                //     ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                                //   }
+                                // } else {
+                                //   // Just close the dialog and maybe pop the view
+                                //   if (mounted)
+                                   Navigator.pop(context, true);
+                                // }
+                              } catch (e) {
+                                String errorMsg = e.toString();
+                                if (e is DioException && e.response != null) {
+                                  errorMsg = 'Erreur serveur: ${e.response}';
+                                }
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(backgroundColor: const Color.fromARGB(255, 245, 3, 3), content: Text(errorMsg)),
+                                );
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF635BFF),
+                              foregroundColor: Colors.white,
+                              minimumSize: const Size(120, 44),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: Text(AppLocalizations.of(context)?.approve ?? 'Approve'),
+                          ),
+                          const SizedBox(width: 24),
+                          ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFF5F5F5),
+                              foregroundColor: Colors.black87,
+                              minimumSize: const Size(120, 44),
+                              side: const BorderSide(color: Color(0xFFE0E0E0)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            onPressed: () async {
+                              try {
+                                final id = widget.purchaseRequest.id;
+                                if (id == null) throw Exception('ID missing');
+                                final payload = {
+                                  'status': 'rejected',
+                                  'approved_by': userController.currentUser.id,
+                                };
+                                await PurchaseRequestNetwork().updatePurchaseRequest(id, payload, method: 'PATCH');
+                                setState(() {
+                                  _showActionButtons = false;
+                                });
+                                WidgetsBinding.instance.addPostFrameCallback((_) {
+                                  if (mounted) {
+                                    Navigator.pop(context, true);
+                                  }
+                                });
+                              } catch (e) {
+                                String errorMsg = e.toString();
+                                if (e is DioException && e.response != null) {
+                                  errorMsg = 'Erreur serveur: ${e.response}';
+                                }
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(backgroundColor: const Color.fromARGB(255, 245, 3, 3), content: Text(errorMsg)),
+                                );
+                              }
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(backgroundColor: Color.fromARGB(255, 9, 37, 250), content: Text('rejected!')),
+                              );
+                            },
+                            child: Text(AppLocalizations.of(context)?.reject ?? 'Reject'),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
       ),
     );
   }

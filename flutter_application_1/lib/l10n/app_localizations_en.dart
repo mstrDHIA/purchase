@@ -319,6 +319,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addNewBrand => 'Add New Brand';
 
   @override
+  String get supplierDeliveryDate => 'Supplier Delivery date';
+
+  @override
   String get createNewRole => 'Create new role';
 
   @override

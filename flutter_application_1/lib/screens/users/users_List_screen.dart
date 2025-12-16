@@ -17,13 +17,15 @@ class UserListPage extends StatefulWidget {
 
 class _UserListPageState extends State<UserListPage> {
   late UserController userController;
+  Future<void>? _usersFuture;
 
   @override
   void initState() {
     userController = Provider.of<UserController>(context, listen: false);
-    userController.getUsers();
+    
     super.initState();
   }
+  // We use a FutureBuilder to load users instead of calling getUsers() in init/didChangeDependencies.
 
   @override
   Widget build(BuildContext context) {
@@ -102,38 +104,92 @@ class _UserListPageState extends State<UserListPage> {
             Consumer<UserController>(
               builder: (context, userController, child) {
                 return Expanded(
-                  child: Container(
-                    width: double.infinity,
-                    margin: const EdgeInsets.only(top: 8),
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade200),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.06),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: userController.isLoading
-                        ? const Center(child: CircularProgressIndicator())
-                        : SingleChildScrollView(
-                            scrollDirection: Axis.vertical,
-                            child: ConstrainedBox(
-                              constraints: BoxConstraints(
-                                minWidth: MediaQuery.of(context).size.width,
+                  child: FutureBuilder<void>(
+                    future: _usersFuture ??= userController.getUsers(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Container(
+                          width: double.infinity,
+                          margin: const EdgeInsets.only(top: 8),
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.grey.shade200),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.06),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
                               ),
-                              child: DataTable(
-                                sortColumnIndex: userController.sortColumnIndex,
-                                sortAscending: userController.sortAscending,
-                                columnSpacing: 48,
-                                headingRowColor: WidgetStateProperty.all(const Color(0xFFF5F5F5)),
-                                dataRowHeight: 56,
-                                dividerThickness: 0.6,
-                                columns: [
+                            ],
+                          ),
+                          child: const Center(child: CircularProgressIndicator()),
+                        );
+                      }
+
+                      if (snapshot.hasError) {
+                        return Container(
+                          width: double.infinity,
+                          margin: const EdgeInsets.only(top: 8),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade50,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.red.shade200),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.error_outline, color: Colors.red),
+                              const SizedBox(width: 8),
+                              Expanded(child: Text(snapshot.error.toString(), style: TextStyle(color: Colors.red.shade800),)),
+                              TextButton.icon(
+                                onPressed: () {
+                                  setState(() {
+                                    _usersFuture = userController.getUsers();
+                                  });
+                                },
+                                icon: const Icon(Icons.refresh, color: Color(0xFF6F4DBF)),
+                                label: Text(_getLocalizedText(context, 'retry', 'Retry'), style: const TextStyle(color: Color(0xFF6F4DBF))),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      // Normal finished state (either loaded or controller-managed loading)
+                      return Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.only(top: 8),
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade200),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.06),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: userController.isLoading
+                            ? const Center(child: CircularProgressIndicator())
+                            : SingleChildScrollView(
+                                scrollDirection: Axis.vertical,
+                                child: ConstrainedBox(
+                                  constraints: BoxConstraints(
+                                    minWidth: MediaQuery.of(context).size.width,
+                                  ),
+                                  child: DataTable(
+                                    sortColumnIndex: userController.sortColumnIndex,
+                                    sortAscending: userController.sortAscending,
+                                    columnSpacing: 48,
+                                    headingRowColor: WidgetStateProperty.all(const Color(0xFFF5F5F5)),
+                                    dataRowHeight: 56,
+                                    dividerThickness: 0.6,
+                                    columns: [
                                   DataColumn(
                                     label: Text(_getLocalizedText(context, 'email', 'Email'), style: const TextStyle(fontWeight: FontWeight.bold)),
                                     onSort: (columnIndex, ascending) {
@@ -263,9 +319,11 @@ class _UserListPageState extends State<UserListPage> {
                                   );
                                 }).toList(),
                               ),
+                              ),
                             ),
-                          ),
-                  ),
+                          );
+                      },
+                    ),
                 );
               },
 

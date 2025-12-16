@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/controllers/purchase_request_controller.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
@@ -12,7 +13,7 @@ class PurchaseRequestDataSource extends DataTableSource {
   final List<PurchaseRequest> requests;
   final BuildContext context;
   final String someArgument;
-
+  
   // Keep track of selected request ids
   final Set<int> _selectedIds = {};
 
@@ -21,6 +22,7 @@ class PurchaseRequestDataSource extends DataTableSource {
 
   @override
   DataRow? getRow(int index) {
+    User user=Provider.of<UserController>(context, listen: false).currentUser;
     if (index >= requests.length) return null;
     final request = requests[index];
     return DataRow(
@@ -153,7 +155,7 @@ class PurchaseRequestDataSource extends DataTableSource {
                   context,
                   MaterialPageRoute(
                     builder: (context) => PurchaseRequestView(
-                      purchaseRequest: request, order: {}, onSave: (newOrder) {  },
+                      purchaseRequest: request,
                     ),
                   ),
                 );
@@ -161,11 +163,16 @@ class PurchaseRequestDataSource extends DataTableSource {
               },
               tooltip: 'View',
             ),
+            // if(request.status == 'pending')
             IconButton(
+              color: user.role!.id==4?Colors.grey : request.status == 'pending'||user.role!.id==1? Colors.black : Colors.grey,
               icon: const Icon(Icons.edit_outlined, size: 25),
               padding: const EdgeInsets.all(8),
               constraints: const BoxConstraints(),
               onPressed: () async {
+                print(user.role!.id);
+                if(user.role!.id!=4){
+                if(request.status == 'pending'||user.role!.id==1){
                 // Build a lightweight Map for the edit page to avoid relying on a class method
                 final Map<String, dynamic> requestMap = {
                   'id': request.id,
@@ -186,11 +193,12 @@ class PurchaseRequestDataSource extends DataTableSource {
                       request: requestMap,
                       onSave: (updatedRequest) {},
                       purchaseRequest: request,
-                      order: {},
+                      order: requestMap,
                     ),
                   ),
                 );
                 Provider.of<PurchaseRequestController>(context, listen: false).fetchRequests(context,Provider.of<UserController>(context, listen: false).currentUser);
+              }}
               },
               tooltip: 'Edit',
             ),

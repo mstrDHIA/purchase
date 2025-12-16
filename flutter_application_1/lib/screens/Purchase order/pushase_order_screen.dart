@@ -30,6 +30,7 @@ class _PurchaseOrderPageBody extends StatefulWidget {
 
 class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
   late UserController userController;
+  Future<void>? _usersFuture;
   final DateFormat _dateFormat = DateFormat('MMM dd, yyyy');
   int _rowsPerPage = PaginatedDataTable.defaultRowsPerPage;
   int? _sortColumnIndex = 0; // default to ID column
@@ -48,7 +49,6 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
   void initState() {
     super.initState();
     userController = Provider.of<UserController>(context, listen: false);
-    userController.getUsers();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<PurchaseOrderController>(context, listen: false).fetchOrders();
     });
@@ -101,6 +101,9 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
             actionCreatedBy = userField.toString();
           }
         }
+        // setState(() {
+          
+        // });
       }
       return {
         // keep id as numeric to allow proper numeric sorting (not string lexicographic)
@@ -109,7 +112,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
         'dateSubmitted': parseDate(order.startDate),
         'dueDate': parseDate(order.endDate),
         'priority': order.priority ?? '',
-        'status': order.status ?? '',
+        'statuss': order.status ?? '',
         'original': order,
       };
     }).toList();
@@ -120,7 +123,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
         order['id'].toString().toLowerCase().contains(searchLower) ||
         (order['actionCreatedBy'] ?? '').toString().toLowerCase().contains(searchLower) ||
         (order['priority'] ?? '').toString().toLowerCase().contains(searchLower) ||
-        (order['status'] ?? '').toString().toLowerCase().contains(searchLower)
+        (order['statuss'] ?? '').toString().toLowerCase().contains(searchLower)
       ).toList();
     }
 
@@ -138,7 +141,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
       mapped = mapped.where((order) => order['priority'].toLowerCase() == _priorityFilter!.toLowerCase()).toList();
     }
     if (_statusFilter != null) {
-      mapped = mapped.where((order) => order['status'].toLowerCase() == _statusFilter!.toLowerCase()).toList();
+      mapped = mapped.where((order) => order['statuss'].toLowerCase() == _statusFilter!.toLowerCase()).toList();
     }
     if (_selectedSubmissionDate != null) {
       mapped = mapped.where((order) {
@@ -166,7 +169,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
       } else if (_sortColumnIndex == 4) {
         sortKey = 'priority';
       } else if (_sortColumnIndex == 5) {
-        sortKey = 'status';
+        sortKey = 'statuss';
       }
       mapped.sort((a, b) {
         dynamic aValue = a[sortKey];
@@ -231,9 +234,11 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
         }
         final allOrders = controller.orders;
         final filteredOrders = _filteredAndSortedOrders(allOrders);
+        controller.notify();
         final dataSource = _PurchaseOrderDataSource(
           filteredOrders,
           _dateFormat,
+          context: context,
           onView: viewPurchaseOrder,
           onEdit: editPurchaseOrder,
           onDelete: deletePurchaseOrder,
@@ -265,7 +270,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                                     Text('Date submitted: ${_dateFormat.format(order['dateSubmitted'])}'),
                                     Text('Due date: ${_dateFormat.format(order['dueDate'])}'),
                                     Text('Priority: ${order['priority']}'),
-                                    Text('Status: ${order['status']}'),
+                                    Text('Status: ${order['statuss']}'),
                                   ],
                                 ),
                                 isThreeLine: true,
@@ -472,7 +477,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                                   label: const Text('Priority'),
                                   onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
                               DataColumn(
-                                  label: const Text('Status'),
+                                  label: const Text('statuss'),
                                   onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
                               const DataColumn(label: Text('Actions')),
                             ],
@@ -596,7 +601,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        _statusFilter == null ? 'Status' : 'Status: ${_statusFilter![0].toUpperCase() + _statusFilter!.substring(1)}',
+                        _statusFilter == null ? 'statuss' : 'Status: ${_statusFilter![0].toUpperCase() + _statusFilter!.substring(1)}',
                         style: const TextStyle(
                           color: Colors.deepPurple,
                           fontWeight: FontWeight.w500,
@@ -975,6 +980,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
 
 class _PurchaseOrderDataSource extends DataTableSource {
   final List<Map<String, dynamic>> _data;
+  BuildContext? context;
   final DateFormat _dateFormat;
   final Function(Map<String, dynamic>) onView;
   final Function(Map<String, dynamic>) onEdit;
@@ -990,6 +996,7 @@ class _PurchaseOrderDataSource extends DataTableSource {
     required this.onDelete,
     required this.onArchive,
     required this.onUnarchive,
+    required this.context,
   });
 
   @override
@@ -1027,7 +1034,7 @@ class _PurchaseOrderDataSource extends DataTableSource {
         DataCell(Text(formatDateCell(item['dateSubmitted']))),
         DataCell(Text(formatDateCell(item['dueDate']))),
         DataCell(_buildPriorityChip(item['priority'] ?? '-')),
-        DataCell(_buildStatusChip(item['status'] ?? '-')),
+        DataCell(_buildStatusChip(item['statuss'] ?? '-')),
         DataCell(Row(
           children: [
             IconButton(
@@ -1035,6 +1042,7 @@ class _PurchaseOrderDataSource extends DataTableSource {
               onPressed: () => onView(item),
               tooltip: 'View',
             ),
+            if(Provider.of<UserController>(context!, listen: false).currentUser.role!.id!=6)
             IconButton(
               icon: const Icon(Icons.edit_outlined),
               onPressed: () => onEdit(item),
@@ -1112,6 +1120,7 @@ class _PurchaseOrderDataSource extends DataTableSource {
 
   Widget _buildStatusChip(String status) {
     final v = status.toLowerCase();
+    print(' Status value: $v'); // Debug print
     Color bgColor;
     if (v == 'approved') {
       bgColor = const Color(0xFF4CAF50); // green
@@ -1186,7 +1195,7 @@ class ViewPurchasePage extends StatelessWidget {
             Text('Date submitted: ${formatDateCell(order['dateSubmitted'])}'),
             Text('Due date: ${formatDateCell(order['dueDate'])}'),
             Text('Priority: ${order['priority']}'),
-            Text('Status: ${order['status']}'),
+            Text('Status: ${order['statuss']}'),
             const SizedBox(height: 32),
             ElevatedButton.icon(
               onPressed: () => Navigator.of(context).pop(),

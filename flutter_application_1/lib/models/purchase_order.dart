@@ -4,6 +4,7 @@ class PurchaseOrder {
   int? approvedBy;
   DateTime? startDate;
   DateTime? endDate;
+  DateTime? supplierDeliveryDate;
   List<dynamic>? products;
   String? title;
   String? description;
@@ -38,6 +39,7 @@ class PurchaseOrder {
     approvedBy = json['approved_by'];
     startDate = _parseDate(json['start_date']);
     endDate = _parseDate(json['end_date']);
+    supplierDeliveryDate = _parseDate(json['supplier_delivery_date']);
     purchaseRequestId = json['purchase_request_id'];
     if (json['products'] != null) {
       products = <Products>[];
@@ -47,7 +49,7 @@ class PurchaseOrder {
     }
     title = json['title'];
     description = json['description'];
-    status = json['status'];
+    status = json['statuss'];
     createdAt = _parseDate(json['created_at']);
     updatedAt = _parseDate(json['updated_at']);
     priority = json['priority'];
@@ -75,12 +77,13 @@ class PurchaseOrder {
     data['approved_by'] = approvedBy;
     data['start_date'] = startDate?.toIso8601String();
     data['end_date'] = endDate?.toIso8601String();
+    data['supplier_delivery_date'] = supplierDeliveryDate?.toIso8601String();
     if (products != null) {
       data['products'] = products!.map((v) => v.toJson()).toList();
     }
     data['title'] = title;
     data['description'] = description;
-    data['status'] = status;
+    data['statuss'] = status;
     data['created_at'] = createdAt?.toIso8601String();
     data['updated_at'] = updatedAt?.toIso8601String();
     data['priority'] = priority;

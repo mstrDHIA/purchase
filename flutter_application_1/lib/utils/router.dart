@@ -5,8 +5,10 @@ import 'package:flutter_application_1/screens/Product/family_screen.dart';
 import 'package:flutter_application_1/screens/Purchase Request/purchase_request_list_screen.dart';
 import 'package:flutter_application_1/screens/Purchase order/pushase_order_screen.dart';
 import 'package:flutter_application_1/screens/Supplier/Supplier_registration_screen.dart';
+import 'package:flutter_application_1/screens/Reject reason/reject_reason_list.dart';
 import 'package:flutter_application_1/screens/Supplier/Add_supplier_screen.dart';
 import 'package:flutter_application_1/screens/Supplier/View_supplier_screen.dart';
+import 'package:flutter_application_1/screens/Department/department_list_screen.dart';
 import 'package:flutter_application_1/screens/auth/login_screen.dart';
 import 'package:flutter_application_1/screens/profile/profile_user.dart';
 import 'package:flutter_application_1/screens/users/password_screen.dart';
@@ -15,6 +17,7 @@ import 'package:flutter_application_1/screens/users/permission_screen.dart';
 import 'package:flutter_application_1/screens/users/add_user_screen.dart';
 import 'package:flutter_application_1/screens/users/users_List_screen.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
 
@@ -73,6 +76,20 @@ final GoRouter router = GoRouter(
         ),
 
         GoRoute(
+          path: '/reject_reasons',
+          builder: (context, state) {
+            // Restrict access to admins only
+            final userController = Provider.of<UserController>(context, listen: false);
+            if (userController.currentUser.role_id != 1) {
+              return const Scaffold(
+                body: Center(child: Text('Accès refusé — réservé aux administrateurs')),
+              );
+            }
+            return const RejectReasonListPage();
+          },
+        ),
+
+        GoRoute(
           path: '/add_supplier',
           builder: (context, state) => AddSupplierPage(),
         ),
@@ -100,6 +117,15 @@ final GoRouter router = GoRouter(
         GoRoute(
           path: '/families',
           builder: (context, state) => FamiliesPage(),
+        ),
+
+        GoRoute(
+          path: '/departments',
+          builder: (context, state) => DepartmentListScreen(
+            departments: null,
+            initialId: null,
+            onSelect: (dept) {},
+          ),
         ),
 
         GoRoute(

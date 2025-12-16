@@ -336,7 +336,7 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
                       TextField(
                         controller: productController,
                         decoration: const InputDecoration(
-                          labelText: 'Produit (optionnel)',
+                          labelText: 'Description du produit',
                           border: OutlineInputBorder(),
                           filled: true,
                           fillColor: Colors.white,

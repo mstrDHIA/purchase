@@ -145,6 +145,7 @@ class _AppSidebarState extends State<AppSidebar> {
       {'label': 'PurchaseRequest', 'icon': Icons.note_add},
       {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
       {'label': 'Supplier', 'icon': Icons.store},
+      {'label': 'Reject Reasons', 'icon': Icons.block},
       {'label': 'Product', 'icon': Icons.production_quantity_limits},
       {'label': 'Users', 'icon': Icons.people},
       {'label': 'Roles and access', 'icon': Icons.security},
@@ -152,6 +153,7 @@ class _AppSidebarState extends State<AppSidebar> {
       // {'label': 'Support centre', 'icon': Icons.help},
       
       
+      {'label': 'Department', 'icon': Icons.apartment},
       {'label': 'Settings', 'icon': Icons.settings},
     ]);
     }
@@ -166,6 +168,7 @@ class _AppSidebarState extends State<AppSidebar> {
       
       // {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
       // {'label': 'Support centre', 'icon': Icons.help},
+      // {'label': 'Department', 'icon': Icons.apartment},
       {'label': 'Settings', 'icon': Icons.settings},
     ]);
     }
@@ -180,6 +183,7 @@ class _AppSidebarState extends State<AppSidebar> {
       
       // {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
       // {'label': 'Support centre', 'icon': Icons.help},
+      // {'label': 'Department', 'icon': Icons.apartment},
       {'label': 'Settings', 'icon': Icons.settings},
     ]);
     }
@@ -194,6 +198,7 @@ class _AppSidebarState extends State<AppSidebar> {
       {'label': 'Password', 'icon': Icons.lock},
       
       // {'label': 'Support centre', 'icon': Icons.help},
+      // {'label': 'Department', 'icon': Icons.apartment},
       {'label': 'Settings', 'icon': Icons.settings},
     ]);
     // (userController.currentUser.role_id==4)
@@ -209,6 +214,7 @@ class _AppSidebarState extends State<AppSidebar> {
       // {'label': 'PurchaseRequest', 'icon': Icons.note_add},
       
       // {'label': 'Support centre', 'icon': Icons.help},
+      // {'label': 'Department', 'icon': Icons.apartment},
       {'label': 'Settings', 'icon': Icons.settings},
     ]);
     // (userController.currentUser.role_id==4)
@@ -223,6 +229,7 @@ class _AppSidebarState extends State<AppSidebar> {
       // {'label': 'PurchaseRequest', 'icon': Icons.note_add},
       // {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
       // {'label': 'Support centre', 'icon': Icons.help},
+      // {'label': 'Department', 'icon': Icons.apartment},
       {'label': 'Settings', 'icon': Icons.settings},
     ]);
     }
@@ -236,6 +243,7 @@ class _AppSidebarState extends State<AppSidebar> {
       // {'label': 'PurchaseRequest', 'icon': Icons.note_add},
       // {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
       // {'label': 'Support centre', 'icon': Icons.help},
+      {'label': 'Department', 'icon': Icons.apartment},
       {'label': 'Settings', 'icon': Icons.settings},
     ]);
     }
@@ -252,13 +260,17 @@ class _AppSidebarState extends State<AppSidebar> {
     // conserve le comportement actuel (mise à jour du selected dans le parent)
     widget.onItemSelected(label);
 
+    // Department navigation handled via route mapping below
+
     // mapping labels -> routes (ne modifie pas la façon dont les items sont générés par rôle)
     final Map<String, String> labelToRoute = {
       'Profile': '/Profile',
       'PurchaseRequest': '/purchase_requests',
       'Purchase Order': '/purchase_orders',
       'Supplier': '/supplier_registration',
+      'Reject Reasons': '/reject_reasons',
       'Product': '/families',
+      'Department': '/departments',
       'Users': '/users_list',
       'Roles and access': '/role',
       'Password': '/password',
@@ -269,6 +281,11 @@ class _AppSidebarState extends State<AppSidebar> {
 
     final route = labelToRoute[label];
     if (route != null) {
+      // Prevent navigation to restricted routes for non-admin users
+      if (route == '/reject_reasons' && userController.currentUser.role_id != 1) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Accès refusé — réservé aux administrateurs')));
+        return;
+      }
       // si le sidebar est ouvert en tant que Drawer, le fermer d'abord
       if (Scaffold.maybeOf(context)?.isDrawerOpen ?? false) {
         Navigator.of(context).pop();

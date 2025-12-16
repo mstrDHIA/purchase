@@ -1,18 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_application_1/controllers/product_controller.dart';
 import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
 import 'package:flutter_application_1/controllers/supplier_controller.dart';
+import '../../l10n/app_localizations.dart';
 
 class ProductLine {
   String? product;
-  String? brand;
+  String? family;
+  String? subFamily;
+  // String? brand;
   int quantity;
   double unitPrice;
 
   ProductLine({
     this.product,
-    this.brand,
+    this.family,
+    this.subFamily,
+    // this.brand,
     this.quantity = 1,
     this.unitPrice = 12.33,
   });
@@ -20,7 +26,9 @@ class ProductLine {
   Map<String, dynamic> toJson() {
     return {
       'product': product,
-      'brand': brand,
+      'family': family,
+      'subFamily': subFamily,
+      // 'brand': brand,
       'quantity': quantity,
       'unit_price': unitPrice,
     };
@@ -48,12 +56,36 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
   int? _approvedBy;      // Now int
   DateTime? _updatedAt;
   List<ProductLine> productLines = [ProductLine()];
+  // Order-level Supplier Delivery date
+  final TextEditingController supplierDeliveryDateController = TextEditingController();
+  // Multi-currency support
+  String _currency = 'Dollar';
+  final Map<String, String> _currencySymbols = {
+    'Dollar': '\$',
+    'Euro': '€',
+    'Dinar': 'DT',
+  };
+  final Map<String, String> _currencyCodes = {
+    'Dollar': 'USD',
+    'Euro': 'EUR',
+    'Dinar': 'TND',
+  };
+  final Map<String, String> _codeToCurrency = {
+    'USD': 'Dollar',
+    'EUR': 'Euro',
+    'TND': 'Dinar',
+  };
   final TextEditingController noteController = TextEditingController();
   final TextEditingController dueDateController = TextEditingController();
   final TextEditingController supplierNameController = TextEditingController();
   String? selectedSupplier;
   late List<String> suppliers = [];
   late SupplierController supplierController;
+  // Product families/subfamilies fetched from ProductController
+  late ProductController productController;
+  Map<String, List<String>> dynamicProductFamilies = {};
+  bool _loadingFamilies = false;
+  String? _familiesError;
 
   bool _isSaving = false;
   String? supplierName;
@@ -63,6 +95,9 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
     super.initState();
     supplierController = Provider.of<SupplierController>(context, listen: false);
     _fetchSuppliers();
+    // initialize product controller and fetch families
+    productController = Provider.of<ProductController>(context, listen: false);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _fetchProductFamilies());
     final initial = widget.initialOrder;
     if (initial.isNotEmpty) {
       // Correction : forcer la casse pour correspondre aux DropdownMenuItem
@@ -104,6 +139,13 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
         }
       }
       supplierNameController.text = supplierName ?? '';
+      // initialize currency from initial if present (expects ISO code)
+      if (initial['currency'] != null) {
+        final code = initial['currency']?.toString();
+        if (code != null && _codeToCurrency.containsKey(code)) {
+          _currency = _codeToCurrency[code]!;
+        }
+      }
       if (initial['endDate'] != null) {
         try {
           DateTime endDate;
@@ -119,12 +161,28 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
       } else {
         dueDateController.text = DateFormat('dd-MM-yyyy').format(DateTime.now());
       }
+      // initialize supplier delivery date if provided
+      if (initial['supplier_delivery_date'] != null) {
+        try {
+          DateTime sd;
+          if (initial['supplier_delivery_date'] is DateTime) {
+            sd = initial['supplier_delivery_date'];
+          } else {
+            sd = DateTime.parse(initial['supplier_delivery_date'].toString());
+          }
+          supplierDeliveryDateController.text = DateFormat('dd-MM-yyyy').format(sd);
+        } catch (_) {
+          supplierDeliveryDateController.text = '';
+        }
+      }
       noteController.text = initial['description'] ?? '';
       if (initial['products'] != null && initial['products'] is List) {
         productLines = (initial['products'] as List).map((p) {
           return ProductLine(
             product: p['product']?.toString(),
-            brand: p['brand']?.toString(),
+            family: p['family']?.toString(),
+            subFamily: p['subFamily']?.toString() ?? p['sub_family']?.toString() ?? p['subcategory']?.toString(),
+            // brand: p['brand']?.toString(),
             quantity: (p['quantity'] is int)
                 ? p['quantity']
                 : int.tryParse(p['quantity'].toString()) ?? 1,
@@ -135,10 +193,11 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
                     : double.tryParse(p['unit_price']?.toString() ?? '') ?? 0.0,
           );
         }).toList();
+        // no-op: product brands are kept in productLines; supplier delivery date is order-level
       }
-    } else {
-      dueDateController.text = DateFormat('dd-MM-yyyy').format(DateTime.now());
-      supplierNameController.text = '';
+      } else {
+        dueDateController.text = DateFormat('dd-MM-yyyy').format(DateTime.now());
+        supplierNameController.text = '';
       // Find last id from provider
       final contextController = Provider.of<PurchaseOrderController>(context, listen: false);
       int maxId = 0;
@@ -149,11 +208,23 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
         }
       }
   _id = maxId + 1;
-  _priority = null;
+  // default priority to 'high' for new orders
+  _priority = 'high';
   _requestedByUser = 1; // Default user ID
   _approvedBy = 2;      // Default approver ID
   _updatedAt = DateTime.now();
+      // initialize order-level supplier delivery date to today's date by default
+      supplierDeliveryDateController.text = DateFormat('dd-MM-yyyy').format(DateTime.now());
     }
+  }
+
+  @override
+  void dispose() {
+    supplierDeliveryDateController.dispose();
+    noteController.dispose();
+    dueDateController.dispose();
+    supplierNameController.dispose();
+    super.dispose();
   }
 
   double get totalPrice => productLines.fold(
@@ -179,13 +250,51 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
     }
   }
 
-  @override
-  void dispose() {
-    noteController.dispose();
-    dueDateController.dispose();
-    supplierNameController.dispose();
-    super.dispose();
+  Future<void> _fetchProductFamilies() async {
+    setState(() {
+      _loadingFamilies = true;
+      _familiesError = null;
+    });
+    try {
+      final categories = await productController.getCategories(null);
+      if (categories is List<dynamic>) {
+        final families = <String, List<String>>{};
+        final allCategories = categories.cast<Map<String, dynamic>>();
+
+        final parentCategories = allCategories.where((cat) => cat['parent_category'] == null).toList();
+        for (final family in parentCategories) {
+          final familyId = family['id'];
+          final familyName = family['name'] as String;
+
+          final subfamilies = allCategories
+              .where((cat) => cat['parent_category'] == familyId)
+              .map((cat) => cat['name'] as String)
+              .toList();
+
+          families[familyName] = subfamilies.isNotEmpty ? subfamilies : [familyName];
+        }
+
+        setState(() {
+          dynamicProductFamilies = families;
+          // if product lines have families but no subfamily selected, default to first subfamily
+          for (final p in productLines) {
+            if (p.family != null && (p.subFamily == null || p.subFamily!.isEmpty)) {
+              final subs = dynamicProductFamilies[p.family] ?? [];
+              if (subs.isNotEmpty) p.subFamily = subs.first;
+            }
+          }
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _familiesError = e.toString();
+      });
+    } finally {
+      if (mounted) setState(() => _loadingFamilies = false);
+    }
   }
+
+  
 
   @override
   Widget build(BuildContext context) {
@@ -221,6 +330,7 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
                   ),
                 ],
               ),
+              const SizedBox(height: 32),
               const SizedBox(height: 32),
               // Supplier dropdown always visible
               Row(
@@ -283,6 +393,36 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
                       ],
                     ),
                   ),
+                  const SizedBox(width: 12),
+                  // Currency selector
+                  SizedBox(
+                    width: 180,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Currency'),
+                        const SizedBox(height: 4),
+                        DropdownButtonFormField<String>(
+                          value: _currency,
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Colors.white,
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Colors.black87),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Colors.deepPurple),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          ),
+                          items: _currencySymbols.keys.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                          onChanged: (val) => setState(() => _currency = val ?? 'Dollar'),
+                        ),
+                      ],
+                    ),
+                  ),
                   const SizedBox(width: 24),
                   Expanded(
                     flex: 2,
@@ -291,6 +431,8 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
                       children: [
                         const Text('Priority'),
                         const SizedBox(height: 4),
+                        // Dropdown that shows labels in UPPERCASE, matches saved value case-insensitively,
+                        // and stores the selected value in lowercase for saving
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
@@ -303,19 +445,32 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
                                         : Colors.grey.shade200,
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Text(
-                            (_priority ?? '').toLowerCase(),
-                            style: TextStyle(
-                              color: _priority == 'high'
-                                  ? Colors.red
-                                  : _priority == 'medium'
-                                      ? Colors.orange
-                                      : _priority == 'low'
-                                          ? Colors.green
-                                          : Colors.black,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 16,
-                            ),
+                          child: DropdownButtonFormField<String>(
+                            // match saved priority case-insensitively and default to 'High'
+                            value: ['High', 'Medium', 'Low']
+                                .firstWhere((p) => p.toLowerCase() == (_priority ?? '').toLowerCase(), orElse: () => 'High'),
+                            items: ['High', 'Medium', 'Low']
+                                .map((p) => DropdownMenuItem(
+                                      value: p,
+                                      child: Text(
+                                        // display the label in UPPERCASE (e.g. 'HIGH')
+                                        p.toUpperCase(),
+                                        style: TextStyle(
+                                          color: _priority == p.toLowerCase()
+                                              ? (_priority == 'high'
+                                                  ? Colors.red
+                                                  : _priority == 'medium'
+                                                      ? Colors.orange
+                                                      : Colors.green)
+                                              : Colors.black,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ))
+                                .toList(),
+                            onChanged: (val) => setState(() => _priority = val?.toLowerCase()),
+                            decoration: const InputDecoration.collapsed(hintText: ''),
+                            dropdownColor: Colors.white,
                           ),
                         ),
                       ],
@@ -341,43 +496,90 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
                     backgroundColor: Colors.deepPurple,
                     foregroundColor: Colors.white,
                   ),
-                  onPressed: () => setState(() => productLines.add(ProductLine())),
+                  onPressed: () => setState(() {
+                    productLines.add(ProductLine());
+                  }),
                 ),
               ),
-              const SizedBox(height: 32),
-              // Due Date
-              const Text('Due Date'),
-              const SizedBox(height: 4),
-              TextFormField(
-                controller: dueDateController,
-                readOnly: true,
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: Colors.white,
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: const BorderSide(color: Colors.black87),
-                    borderRadius: BorderRadius.circular(12),
+              const SizedBox(height: 24),
+              // Supplier delivery date and due date displayed side-by-side (under Add Product)
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: supplierDeliveryDateController,
+                      readOnly: true,
+                      decoration: InputDecoration(
+                        labelText: AppLocalizations.of(context)!.supplierDeliveryDate,
+                        filled: true,
+                        fillColor: Colors.white,
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(color: Colors.black87),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(color: Colors.deepPurple),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        suffixIcon: const Icon(Icons.calendar_today),
+                      ),
+                      onTap: () async {
+                        DateTime initialDate = DateTime.now();
+                        try {
+                          final parsed = DateTime.tryParse(supplierDeliveryDateController.text);
+                          if (parsed != null) initialDate = parsed;
+                        } catch (_) {}
+                        DateTime? pickedDate = await showDatePicker(
+                          context: context,
+                          initialDate: initialDate,
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime(2100),
+                        );
+                        if (pickedDate != null) {
+                          setState(() {
+                            supplierDeliveryDateController.text = DateFormat('dd-MM-yyyy').format(pickedDate);
+                          });
+                        }
+                      },
+                    ),
                   ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: const BorderSide(color: Colors.deepPurple),
-                    borderRadius: BorderRadius.circular(12),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: TextFormField(
+                      controller: dueDateController,
+                      readOnly: true,
+                      decoration: InputDecoration(
+                        labelText: 'Due date',
+                        filled: true,
+                        fillColor: Colors.white,
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(color: Colors.black87),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(color: Colors.deepPurple),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        suffixIcon: const Icon(Icons.calendar_today),
+                      ),
+                      onTap: () async {
+                        DateTime? pickedDate = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime.now(),
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime(2100),
+                        );
+                        if (pickedDate != null) {
+                          setState(() {
+                            dueDateController.text = DateFormat('dd-MM-yyyy').format(pickedDate);
+                          });
+                        }
+                      },
+                    ),
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  suffixIcon: const Icon(Icons.calendar_today),
-                ),
-                onTap: () async {
-                  DateTime? pickedDate = await showDatePicker(
-                    context: context,
-                    initialDate: DateTime.now(),
-                    firstDate: DateTime(2000),
-                    lastDate: DateTime(2100),
-                  );
-                  if (pickedDate != null) {
-                    setState(() {
-                      dueDateController.text = DateFormat('dd-MM-yyyy').format(pickedDate);
-                    });
-                  }
-                },
+                ],
               ),
               const SizedBox(height: 24),
               // Note
@@ -408,8 +610,8 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
                   color: Colors.indigo.shade50,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Text(
-                  'Total: \$${totalPrice.toStringAsFixed(2)}',
+                  child: Text(
+                    'Total: ${_currencySymbols[_currency]}${totalPrice.toStringAsFixed(2)}',
                   style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -463,12 +665,30 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
     supplierName = supplierNameController.text;
     if (supplierName == null ||
         supplierName!.isEmpty ||
-        productLines.any((p) => p.brand == null || p.brand!.isEmpty) ||
         _priority == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill all required fields.')),
       );
       return;
+    }
+    // parse supplier delivery date (optional but if provided must be valid)
+    DateTime? parsedSupplierDeliveryDate;
+    if ((supplierDeliveryDateController.text).isNotEmpty) {
+      try {
+        parsedSupplierDeliveryDate = DateFormat('dd-MM-yyyy').parseStrict(supplierDeliveryDateController.text);
+      } catch (_) {
+        try {
+          parsedSupplierDeliveryDate = DateFormat('yyyy-MM-dd').parseStrict(supplierDeliveryDateController.text);
+        } catch (e) {
+          parsedSupplierDeliveryDate = null;
+        }
+      }
+      if (parsedSupplierDeliveryDate == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter a valid supplier delivery date.')),
+        );
+        return;
+      }
     }
     // Correction du parsing de la date de fin
     DateTime? parsedEndDate;
@@ -492,7 +712,8 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
       // Adapter la structure des produits pour le backend
       final List<Map<String, dynamic>> productsList = productLines.map((p) => {
         'product': p.product ?? '',
-        'brand': p.brand ?? '',
+        'family': p.family ?? '',
+        'subFamily': p.subFamily ?? '',
         'quantity': p.quantity,
         'unit_price': p.unitPrice,
         'supplier': supplierName,
@@ -508,9 +729,11 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
         'products': productsList,
         'title': 'Purchase Order',
         'description': noteController.text,
-        'status': 'pending',
+        'statuss': 'edited',
+        'currency': _currencyCodes[_currency] ?? _currency,
         'created_at': DateFormat('yyyy-MM-dd').format(DateTime.now()).toString(),
         'updated_at': DateFormat('yyyy-MM-dd').format(_updatedAt ?? DateTime.now()).toString(),
+        'supplier_delivery_date': parsedSupplierDeliveryDate != null ? DateFormat('yyyy-MM-dd').format(parsedSupplierDeliveryDate) : null,
         'priority': _priority,
       };
       if (widget.initialOrder.isNotEmpty && widget.initialOrder['id'] != null) {
@@ -548,65 +771,189 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Column(
         children: [
+          // First row: Family | Subfamily
           Row(
             children: [
-              // Product ID field removed
               Expanded(
-                flex: 3,
-                child: TextFormField(
-                  initialValue: product.product,
-                  decoration: const InputDecoration(
-                    labelText: 'Product',
-                    border: OutlineInputBorder(),
-                  ),
-                  onChanged: (val) => setState(() => product.product = val),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Family'),
+                    const SizedBox(height: 4),
+                    _loadingFamilies
+                        ? const SizedBox(height: 48, child: Center(child: CircularProgressIndicator()))
+                        : (dynamicProductFamilies.isEmpty)
+                            ? TextFormField(
+                                initialValue: product.family,
+                                decoration: const InputDecoration(
+                                  hintText: 'Family',
+                                  border: OutlineInputBorder(),
+                                ),
+                                onChanged: (val) => setState(() => product.family = val),
+                              )
+                            : DropdownButtonFormField<String>(
+                                // ensure current value is present in the items so it's displayed
+                                value: (product.family != null && dynamicProductFamilies.keys.contains(product.family)) ? product.family : (product.family != null ? product.family : null),
+                                items: () {
+                                  final list = <String>[];
+                                  list.addAll(dynamicProductFamilies.keys);
+                                  if (product.family != null && product.family!.isNotEmpty && !list.contains(product.family)) {
+                                    list.insert(0, product.family!);
+                                  }
+                                  return list.map((f) => DropdownMenuItem(value: f, child: Text(f))).toList();
+                                }(),
+                                onChanged: (val) => setState(() {
+                                  product.family = val;
+                                  // default subFamily to first available when family changes
+                                  final subs = dynamicProductFamilies[val] ?? [];
+                                  product.subFamily = subs.isNotEmpty ? subs.first : null;
+                                }),
+                                decoration: InputDecoration(
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  enabledBorder: OutlineInputBorder(
+                                    borderSide: const BorderSide(color: Colors.black87),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderSide: const BorderSide(color: Colors.deepPurple),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                ),
+                              ),
+                  ],
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                flex: 2,
-                child: TextFormField(
-                  keyboardType: TextInputType.number,
-                  initialValue: product.quantity.toString(),
-                  decoration: const InputDecoration(
-                    labelText: 'Quantity',
-                    border: OutlineInputBorder(),
-                  ),
-                  onChanged: (val) => setState(() {
-                    final parsed = int.tryParse(val);
-                    if (parsed != null && parsed > 0) {
-                      product.quantity = parsed;
-                    }
-                  }),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                flex: 3,
-                child: TextFormField(
-                  initialValue: product.brand,
-                  decoration: const InputDecoration(
-                    labelText: 'Brand',
-                    border: OutlineInputBorder(),
-                  ),
-                  onChanged: (val) => setState(() => product.brand = val),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Subfamily'),
+                    const SizedBox(height: 4),
+                    ((dynamicProductFamilies[product.family] ?? []).isNotEmpty)
+                        ? DropdownButtonFormField<String>(
+                            value: ((dynamicProductFamilies[product.family] ?? []).contains(product.subFamily)) ? product.subFamily : (product.subFamily != null && product.subFamily!.isNotEmpty ? product.subFamily : null),
+                            items: () {
+                              final list = <String>[];
+                              list.addAll(dynamicProductFamilies[product.family] ?? []);
+                              if (product.subFamily != null && product.subFamily!.isNotEmpty && !list.contains(product.subFamily)) {
+                                list.insert(0, product.subFamily!);
+                              }
+                              return list.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList();
+                            }(),
+                            onChanged: (val) => setState(() => product.subFamily = val),
+                            decoration: InputDecoration(
+                              filled: true,
+                              fillColor: Colors.white,
+                              enabledBorder: OutlineInputBorder(
+                                borderSide: const BorderSide(color: Colors.black87),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: const BorderSide(color: Colors.deepPurple),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            ),
+                          )
+                        : TextFormField(
+                            initialValue: product.subFamily,
+                            decoration: const InputDecoration(
+                              hintText: 'Optional subfamily',
+                              border: OutlineInputBorder(),
+                            ),
+                            onChanged: (val) => setState(() => product.subFamily = val),
+                          ),
+                  ],
                 ),
               ),
             ],
           ),
+          const SizedBox(height: 12),
+          // Second row: Product (wide) | Quantity (small)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 4,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Product ${productLines.length > 1 ? index + 1 : ''}'),
+                    const SizedBox(height: 4),
+                    TextFormField(
+                      initialValue: product.product,
+                      onChanged: (val) => setState(() => product.product = val),
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.white,
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(color: Colors.black87),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(color: Colors.deepPurple),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              SizedBox(
+                width: 120,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Quantity'),
+                    const SizedBox(height: 4),
+                    TextFormField(
+                      initialValue: product.quantity.toString(),
+                      keyboardType: TextInputType.number,
+                      onChanged: (val) => setState(() => product.quantity = int.tryParse(val) ?? 1),
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.white,
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(color: Colors.black87),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(color: Colors.deepPurple),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (productLines.length > 1)
+                IconButton(
+                  icon: const Icon(Icons.remove_circle, color: Colors.red),
+                  onPressed: () => setState(() => productLines.removeAt(index)),
+                  tooltip: 'Remove product',
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
           const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
                 flex: 3,
                 child: TextFormField(
-                //  initialValue: product.unitPrice.toStringAsFixed(2),
+                  //  initialValue: product.unitPrice.toStringAsFixed(2),
                   keyboardType:
                       const TextInputType.numberWithOptions(decimal: true),
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText: '0.00',
-                    labelText: 'Unit Price',
-                    border: OutlineInputBorder(),
+                    labelText: 'Unit Price (${_currencySymbols[_currency]})',
+                    border: const OutlineInputBorder(),
                   ),
                   onChanged: (val) => setState(() {
                     final parsed = double.tryParse(val);
@@ -628,7 +975,7 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
                     border: Border.all(color: Colors.grey.shade400),
                   ),
                   child: Text(
-                    '\$${(product.unitPrice * product.quantity).toStringAsFixed(2)}',
+                    '${_currencySymbols[_currency]}${(product.unitPrice * product.quantity).toStringAsFixed(2)}',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,

@@ -88,6 +88,18 @@ class APIS {
   static const String editSupplier = "supplier/supplier/";
   static const String deleteSupplier = "supplier/supplier/";
 
+  // Reject reasons endpoints
+  static const String fetchRejectReasons = "reject_reasons/rejectReasons/";
+  static const String createRejectReason = "reject_reasons/rejectReasons/";
+  static const String editRejectReason = "reject_reasons/rejectReasons/";
+  static const String deleteRejectReason = "reject_reasons/rejectReasons/";
+
+  // Departments endpoints
+  static const String fetchDepartments = "department/departments/";
+  static const String createDepartment = "department/departments/";
+  static const String editDepartment = "department/departments/";
+  static const String deleteDepartment = "department/departments/";
+
   
   // Added endpoint for subfamily creation
 

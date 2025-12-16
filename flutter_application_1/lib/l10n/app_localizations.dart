@@ -709,6 +709,12 @@ abstract class AppLocalizations {
   /// **'Add New Brand'**
   String get addNewBrand;
 
+  /// No description provided for @supplierDeliveryDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Supplier Delivery date'**
+  String get supplierDeliveryDate;
+
   /// No description provided for @createNewRole.
   ///
   /// In en, this message translates to:

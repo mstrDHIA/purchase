@@ -69,6 +69,8 @@ class UserController extends ChangeNotifier {
       
       return matchesSearch && matchesPermission && statusMatches;
     }).toList();
+    isLoading = false;
+    notifyListeners();
 
     if (sortColumnIndex != null) {
       switch (sortColumnIndex) {
@@ -94,10 +96,12 @@ class UserController extends ChangeNotifier {
           break;
       }
     }
+    isLoading = false;
+    notifyListeners();
     return filtered;
   }
 
-  Future<void> getUsers() async {
+   getUsers() async {
     users.clear();
     isLoading = true;
     notifyListeners();
@@ -109,14 +113,19 @@ class UserController extends ChangeNotifier {
       
       if (response.statusCode == 200) {
         if (response.data is List) {
-          users = (response.data as List).map((user) {
+          users  =  (response.data as List).map((user) {
             print('👤 Parsing user: $user');
+            
             return User.fromJson(user);
           }).toList();
+          isLoading = false;
+          notifyListeners();
           print('✅ Successfully loaded ${users.length} users');
         } else if (response.data is Map && response.data['results'] is List) {
           // Handle paginated response
           users = (response.data['results'] as List).map((user) => User.fromJson(user)).toList();
+          isLoading = false;
+          notifyListeners();
           print('✅ Successfully loaded ${users.length} users (paginated)');
         } else {
           print('⚠️ Unexpected data format: ${response.data.runtimeType}');
@@ -204,9 +213,9 @@ class UserController extends ChangeNotifier {
         final int? roleId = currentUser.role?.id;
         WidgetsBinding.instance.addPostFrameCallback((_) {
           final router = GoRouter.of(context);
-          if (roleId == 1 || roleId == 2) {
+          if (roleId == 1 || roleId == 3|| roleId == 2|| roleId == 4) {
             router.go('/purchase_requests'); // ensure this route exists in your GoRouter routes
-          } else if (roleId == 3 || roleId == 4) {
+          } else if ( roleId == 6) {
             router.go('/purchase_orders'); // ensure this route exists in your GoRouter routes
           } else {
             router.go('/main_screen');

@@ -47,7 +47,7 @@ class PurchaseRequest {
         if (item is ProductLine) return item;
         return ProductLine(
           product: item['product'],
-          brand: item['brand'],
+          // brand: item['brand'],
           family: item['family'] ?? item['family_name'] ?? item['category'] ?? null,
           subFamily: item['subFamily'] ?? item['sub_family'] ?? item['subcategory'] ?? null,
           quantity: item['quantity'] is int ? item['quantity'] : int.tryParse(item['quantity']?.toString() ?? '') ?? 1,
@@ -85,7 +85,10 @@ class PurchaseRequest {
 
   // get quantity => null;
 
-  Map<String, dynamic> toJson() {
+  
+}
+
+Map<String, dynamic> toJson() {
   final Map<String, dynamic> data = <String, dynamic>{};
   data['id'] = id;
   data['start_date'] = startDate?.toIso8601String();
@@ -104,6 +107,5 @@ class PurchaseRequest {
   data['priority'] = priority;
   data['is_archived'] = isArchived ?? false;
   return data;
-   }
-}
+  }
 }

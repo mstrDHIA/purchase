@@ -141,6 +141,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                   ),
                 ),
               ),
+              if(Provider.of<UserController>(context, listen: false).currentUser.role!.id!=4)
               PopupMenuButton<String>(
                 onSelected: (value) { setState(() { _statusFilter = value.isEmpty ? null : value; }); },
                 itemBuilder: (context) => [
@@ -189,7 +190,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
                   padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                 ),
-                child: Text(_selectedDueDate == null ? 'Filter by Due Date' : 'Due: ${_dateFormat.format(_selectedDueDate!)}'),
+                child: Text(_selectedDueDate == null ? ' Delivery due date' : 'Due: ${_dateFormat.format(_selectedDueDate!)}'),
               ),
               OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
@@ -516,7 +517,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                                         },
                                       ),
                                       DataColumn(
-                                        label: const Text('Due date'),
+                                        label: const Text(' Delivery due date'),
                                         onSort: (columnIndex, ascending) {
                                           _sort<String>((req) => req.endDate?.toString() ?? '', columnIndex, ascending);
                                         },

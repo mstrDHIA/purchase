@@ -12,6 +12,11 @@ class PurchaseOrderController extends ChangeNotifier {
 	bool get isLoading => _isLoading;
 	String? get error => _error;
 
+
+  notify() {
+    notifyListeners();
+  }
+
 	Future<void> fetchOrders() async {
 		_isLoading = true;
 		_error = null;

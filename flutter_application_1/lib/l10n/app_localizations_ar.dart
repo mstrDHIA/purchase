@@ -319,6 +319,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get addNewBrand => 'إضافة علامة تجارية جديدة';
 
   @override
+  String get supplierDeliveryDate => 'تاريخ تسليم المورد';
+
+  @override
   String get createNewRole => 'إنشاء دور جديد';
 
   @override

@@ -5,6 +5,14 @@ import 'package:provider/provider.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
 import 'package:flutter_application_1/screens/Purchase order/refuse_purchase_screen.dart';
+import 'package:printing/printing.dart';
+import 'package:flutter_application_1/utils/pdf_generator.dart';
+import 'package:flutter_application_1/utils/download_helper.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
+import 'package:open_file/open_file.dart';
+import '../../l10n/app_localizations.dart';
 
 class PurchaseOrderView extends StatefulWidget {
   final PurchaseOrder order;
@@ -41,6 +49,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
     final dateFormat = DateFormat('dd-MM-yyyy');
     // final submittedDate = _order.startDate != null ? dateFormat.format(_order.startDate!) : '-';
     final dueDate = _order.endDate != null ? dateFormat.format(_order.endDate!) : '-';
+    final supplierDeliveryDate = _order.supplierDeliveryDate != null ? dateFormat.format(_order.supplierDeliveryDate!) : '-';
     final status = _order.status ?? '-';
     final priority = _order.priority ?? '-';
     final note = _order.description ?? '';
@@ -70,39 +79,119 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                       tooltip: 'Back',
                     ),
                   ),
-                  const Center(
-                    child: Text(
-                      'Purchase Order',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
+                  Center(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'Purchase Order',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade200,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
+                          child: Text(
+                            'ID: ${_order.id?.toString() ?? '-'}',
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
+                  // button to export pdf
+                  // Align(
+                  //   alignment: Alignment.centerRight,
+                  //   child: IconButton(
+                  //     tooltip: 'Export PDF',
+                  //     icon: const Icon(Icons.picture_as_pdf, color: Colors.black87),
+                  //     onPressed: () async {
+                  //       // Show actions: Share or Save
+                  //       showModalBottomSheet(
+                  //         context: context,
+                  //         builder: (context) {
+                  //           return SafeArea(
+                  //             child: Column(
+                  //               mainAxisSize: MainAxisSize.min,
+                  //               children: [
+                  //                 ListTile(
+                  //                   leading: const Icon(Icons.share),
+                  //                   title: const Text('Share / Download'),
+                  //                   onTap: () async {
+                  //                     Navigator.of(context).pop();
+                  //                     try {
+                  //                       ScaffoldMessenger.of(this.context).showSnackBar(const SnackBar(content: Text('Generating PDF...')));
+                  //                       final bytes = await PdfGenerator.generatePurchaseOrderPdf(_order);
+                  //                       try {
+                  //                         await Printing.sharePdf(bytes: bytes, filename: 'purchase_order_${_order.id ?? 'po'}.pdf');
+                  //                       } catch (_) {
+                  //                         // Fallback to web download if printing is not available
+                  //                         try {
+                  //                           await saveAsFile(bytes, 'purchase_order_${_order.id ?? 'po'}.pdf');
+                  //                         } catch (e) {
+                  //                           if (mounted) ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(content: Text('Error sharing/downloading: $e'), backgroundColor: Colors.red));
+                  //                         }
+                  //                       }
+                  //                     } catch (e) {
+                  //                       if (mounted) ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+                  //                     }
+                  //                   },
+                  //                 ),
+                  //                 ListTile(
+                  //                   leading: const Icon(Icons.save_alt),
+                  //                   title: const Text('Save locally'),
+                  //                   onTap: () async {
+                  //                     Navigator.of(context).pop();
+                  //                     try {
+                  //                       ScaffoldMessenger.of(this.context).showSnackBar(const SnackBar(content: Text('Generating PDF...')));
+                  //                       final bytes = await PdfGenerator.generatePurchaseOrderPdf(_order);
+                  //                       if (kIsWeb) {
+                  //                         // On web, trigger a direct download
+                  //                         await saveAsFile(bytes, 'purchase_order_${_order.id ?? 'po'}.pdf');
+                  //                         return;
+                  //                       }
+                  //                       final dir = await getApplicationDocumentsDirectory();
+                  //                       final file = File('${dir.path}/purchase_order_${_order.id ?? 'po'}.pdf');
+                  //                       await file.writeAsBytes(bytes);
+                  //                       if (mounted) ScaffoldMessenger.of(this.context).showSnackBar(
+                  //                         SnackBar(
+                  //                           content: Text('Saved to ${file.path}'),
+                  //                           action: SnackBarAction(
+                  //                             label: 'Open',
+                  //                             onPressed: () async {
+                  //                               try {
+                  //                                 await OpenFile.open(file.path);
+                  //                               } catch (e) {
+                  //                                 if (mounted) ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(content: Text('Error opening file: $e'), backgroundColor: Colors.red));
+                  //                               }
+                  //                             },
+                  //                           ),
+                  //                         ),
+                  //                       );
+                  //                     } catch (e) {
+                  //                       if (mounted) ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(content: Text('Error saving PDF: $e'), backgroundColor: Colors.red));
+                  //                     }
+                  //                   },
+                  //                 ),
+                  //               ],
+                  //             ),
+                  //           );
+                  //         },
+                  //       );
+                  //     },
+                  //   ),
+                  // ),
                 ],
               ),
               const SizedBox(height: 32),
-              // Display Purchase Order ID
-              const Text('ID'),
-              const SizedBox(height: 4),
-              TextField(
-                controller: TextEditingController(text: _order.id?.toString() ?? '-'),
-                readOnly: true,
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: Colors.white,
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: const BorderSide(color: Colors.black87),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: const BorderSide(color: Colors.deepPurple),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                ),
-              ),
               const SizedBox(height: 24),
               if ((_order.refuseReason ?? '').isNotEmpty) ...[
                 const Text('Refuse Reason'),
@@ -198,27 +287,67 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                 ],
               ),
               const SizedBox(height: 24),
-              // Due Date
-              const Text('Due Date'),
-              const SizedBox(height: 4),
-              TextField(
-                controller: TextEditingController(text: dueDate),
-                readOnly: true,
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: Colors.white,
-                  enabledBorder: OutlineInputBorder(
-                    borderSide: const BorderSide(color: Colors.black87),
-                    borderRadius: BorderRadius.circular(12),
+              // Dates: Due Date and Supplier Delivery Date side by side
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(AppLocalizations.of(context)!.dueDate),
+                        const SizedBox(height: 4),
+                        TextField(
+                          controller: TextEditingController(text: dueDate),
+                          readOnly: true,
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Colors.white,
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Colors.black87),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Colors.deepPurple),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            suffixIcon: const Icon(Icons.calendar_today),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: const BorderSide(color: Colors.deepPurple),
-                    borderRadius: BorderRadius.circular(12),
+                  const SizedBox(width: 24),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(AppLocalizations.of(context)!.supplierDeliveryDate),
+                        const SizedBox(height: 4),
+                        TextField(
+                          controller: TextEditingController(text: supplierDeliveryDate),
+                          readOnly: true,
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: Colors.white,
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Colors.black87),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Colors.deepPurple),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            suffixIcon: const Icon(Icons.calendar_today),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  suffixIcon: const Icon(Icons.calendar_today),
-                ),
+                ],
               ),
+              const SizedBox(height: 24),
               const SizedBox(height: 24),
               // Products section
               const Text('Products', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
@@ -302,28 +431,6 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                                     readOnly: true,
                                     decoration: InputDecoration(
                                       labelText: 'Product',
-                                      filled: true,
-                                      fillColor: Colors.white,
-                                      enabledBorder: OutlineInputBorder(
-                                        borderSide: const BorderSide(color: Colors.black87),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      focusedBorder: OutlineInputBorder(
-                                        borderSide: const BorderSide(color: Colors.deepPurple),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  flex: 1,
-                                  child: TextField(
-                                    controller: TextEditingController(text: (prod.brand ?? '').toString()),
-                                    readOnly: true,
-                                    decoration: InputDecoration(
-                                      labelText: 'Brand',
                                       filled: true,
                                       fillColor: Colors.white,
                                       enabledBorder: OutlineInputBorder(
@@ -436,7 +543,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
               ),
               const SizedBox(height: 24),
               // Status badge
-              const Text('Status'),
+              const Text('statuss'),
               const SizedBox(height: 4),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -463,11 +570,12 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
               ),
               const SizedBox(height: 32),
               // Accept/Refuse buttons (unchanged)
+              // if()
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const Spacer(),
-                  if (!isApproved && !isRejected && (userController.currentUser.role?.id == 1 || userController.currentUser.role?.id == 6)) ...[
+                  if (widget.order.status!.toLowerCase()=='edited' && (userController.currentUser.role?.id == 1 || userController.currentUser.role?.id == 6)) ...[
                     ElevatedButton(
                       onPressed: () async {
                         try {
@@ -475,7 +583,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                             'id': _order.id,
                             'requested_by_user': _order.requestedByUser,
                             'approved_by': userController.currentUser.id,
-                            'status': 'approved',
+                            'statuss': 'approved',
                             'start_date': _order.startDate != null ? DateFormat('yyyy-MM-dd').format(_order.startDate!) : null,
                             'end_date': _order.endDate != null ? DateFormat('yyyy-MM-dd').format(_order.endDate!) : null,
                             'priority': _order.priority,
@@ -532,18 +640,21 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                           context: context,
                           builder: (context) => const RefusePurchaseDialog(),
                         );
-                        if (result != null && result is Map && result['reason'] != null) {
+                        if (result != null && result is Map) {
                           try {
                             final updatedOrderJson = {
                               'id': _order.id,
                               'requested_by_user': _order.requestedByUser,
                               'approved_by': userController.currentUser.id,
-                              'status': 'rejected',
+                              'statuss': 'rejected',
                               'start_date': _order.startDate != null ? DateFormat('yyyy-MM-dd').format(_order.startDate!) : null,
                               'end_date': _order.endDate != null ? DateFormat('yyyy-MM-dd').format(_order.endDate!) : null,
                               'priority': _order.priority,
                               'description': _order.description,
-                              'refuse_reason': result['reason'],
+                              // Use the selected reason id for the backend field 'rejected_reason'
+                              'rejected_reason': result['reason_id'],
+                              // Use the additional comment as 'refuse_reason'
+                              'refuse_reason': result['comment'],
                               'products': (_order.products ?? []).map((p) => p.toJson()).toList(),
                               'title': _order.title ?? '',
                               'created_at': _order.createdAt != null ? DateFormat('yyyy-MM-dd').format(_order.createdAt!) : null,
@@ -565,12 +676,17 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                                   endDate: _order.endDate,
                                   priority: _order.priority,
                                   description: _order.description,
-                                  refuseReason: result['reason'],
+                                  refuseReason: result['comment'],
                                   products: _order.products,
                                   title: _order.title,
                                   createdAt: _order.createdAt,
                                   updatedAt: DateTime.now(),
                                 );
+                                // Try to set a rejectedReason id on the local model if it exists
+                                try {
+                                  // Use dynamic assignment to avoid static analyzer errors if field doesn't exist
+                                  (_order as dynamic).rejectedReason = result['reason_id'];
+                                } catch (_) {}
                               });
                             }
                           } catch (e) {

@@ -41,6 +41,7 @@ class PurchaseRequestController extends ChangeNotifier {
       // Handle DRF paginated response e.g. {count: N, next: url, previous: url, results: [...]}
       var data = response.data;
       List<dynamic> items;
+
       if (data is Map && data.containsKey('results')) {
         items = data['results'] as List<dynamic>;
         totalCount = data['count'] ?? items.length;
@@ -57,6 +58,10 @@ class PurchaseRequestController extends ChangeNotifier {
       }
 
       requests.clear();
+      if(Provider.of<UserController>(context, listen: false).currentUser.role!.id==4){
+        items = items.where((item) => item['status'] == 'approved').toList();
+       
+      }
       requests = items.map<PurchaseRequest>((json) => PurchaseRequest.fromJson(json)).toList();
     // Sort requests by id ascending
       requests.sort((a, b) {
