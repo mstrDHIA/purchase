@@ -4,6 +4,7 @@ import 'package:flutter_application_1/screens/Purchase%20order/view_purchase_scr
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
+import 'package:flutter_application_1/controllers/product_controller.dart';
 import 'package:flutter_application_1/models/user_model.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -40,6 +41,11 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
   bool _showArchived = false;
   DateTime? _selectedSubmissionDate;
   DateTime? _selectedDueDate;
+  // Families (N2) and Subfamilies (N3) filters
+  Map<String, List<String>> dynamicProductFamilies = {};
+  bool _loadingFamilies = false;
+  String? _familyFilter;
+  String? _subFamilyFilter;
   // Search bar controller and value
   final TextEditingController _searchController = TextEditingController();
   String _searchText = '';
@@ -51,6 +57,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
     userController = Provider.of<UserController>(context, listen: false);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<PurchaseOrderController>(context, listen: false).fetchOrders();
+      _fetchProductFamilies();
     });
   }
   List<Map<String, dynamic>> _filteredAndSortedOrders(List orders) {
@@ -155,6 +162,14 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
         return date is DateTime && date.year == _selectedDueDate!.year && date.month == _selectedDueDate!.month && date.day == _selectedDueDate!.day;
       }).toList();
     }
+
+    // Apply family/subfamily filters (N2/N3) — match if any product line in the order has the family/subfamily
+    if (_familyFilter != null) {
+      mapped = mapped.where((order) => (order['original'].products?.any((p) => (p.family?.toString() == _familyFilter)) ?? false)).toList();
+    }
+    if (_subFamilyFilter != null) {
+      mapped = mapped.where((order) => (order['original'].products?.any((p) => (p.subFamily?.toString() == _subFamilyFilter)) ?? false)).toList();
+    }
     // Sorting logic
     if (_sortColumnIndex != null) {
       String sortKey = 'id';
@@ -212,6 +227,45 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
     }
   }
 
+  // Fetch product categories and build a families -> subfamilies map
+  Future<void> _fetchProductFamilies() async {
+    setState(() {
+      _loadingFamilies = true;
+    });
+    try {
+      final productController = Provider.of<ProductController>(context, listen: false);
+      final categories = await productController.getCategories(null);
+      if (categories is List<dynamic>) {
+        final families = <String, List<String>>{};
+        final allCategories = categories.cast<Map<String, dynamic>>();
+        final parentCategories = allCategories.where((cat) => cat['parent_category'] == null).toList();
+        for (final family in parentCategories) {
+          final familyId = family['id'];
+          final familyName = family['name'] as String;
+          final subfamilies = allCategories
+              .where((cat) => cat['parent_category'] == familyId)
+              .map((cat) => cat['name'] as String)
+              .toList();
+          families[familyName] = subfamilies.isNotEmpty ? subfamilies : [familyName];
+        }
+        setState(() => dynamicProductFamilies = families);
+      }
+    } catch (e) {
+      // ignore errors for now
+    } finally {
+      if (mounted) setState(() => _loadingFamilies = false);
+    }
+  }
+
+  bool _canShowFamilyFilters() {
+    final user = Provider.of<UserController>(context, listen: false).currentUser;
+    // Allowed user IDs provided by admin (user.id only mode)
+    const allowedUserIds = {1, 4, 7};
+    final uid = user.id;
+    if (uid == null) return false;
+    return allowedUserIds.contains(uid);
+  }
+
   void _clearFilters() {
     setState(() {
       _priorityFilter = null;
@@ -219,6 +273,8 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
       _showArchived = false;
       _selectedSubmissionDate = null;
       _selectedDueDate = null;
+      _familyFilter = null;
+      _subFamilyFilter = null;
     });
   }
 
@@ -477,7 +533,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                                   label: const Text('Priority'),
                                   onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
                               DataColumn(
-                                  label: const Text('statuss'),
+                                  label: const Text('status'),
                                   onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
                               const DataColumn(label: Text('Actions')),
                             ],
@@ -574,6 +630,94 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                   ),
                 ),
               ),
+
+              if (_canShowFamilyFilters()) ...[
+              // Family (N2) filter
+              PopupMenuButton<String?>(
+                onSelected: (value) {
+                  setState(() {
+                    _familyFilter = (value == null || value.isEmpty) ? null : value;
+                    _subFamilyFilter = null; // reset subfilter when family changes
+                  });
+                },
+                itemBuilder: (context) {
+                  final items = <PopupMenuEntry<String?>>[];
+                  items.add(const PopupMenuItem<String?>(value: '', child: Text('All Families')));
+                  if (_loadingFamilies) {
+                    items.add(const PopupMenuItem<String?>(value: null, child: Text('Loading...')));
+                  } else {
+                    for (final f in dynamicProductFamilies.keys) {
+                      items.add(PopupMenuItem<String?>(value: f, child: Text(f)));
+                    }
+                  }
+                  return items;
+                },
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: const Color(0xFFF7F3FF),
+                    foregroundColor: Colors.deepPurple,
+                    side: BorderSide.none,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                    elevation: 0,
+                  ),
+                  onPressed: null,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _familyFilter == null ? 'Filter by Family' : 'Family: ${_familyFilter!}',
+                        style: const TextStyle(
+                          color: Colors.deepPurple,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const Icon(Icons.arrow_drop_down, color: Colors.deepPurple),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Subfamily (N3) filter — depends on selected family
+              PopupMenuButton<String?>(
+                onSelected: (value) { setState(() { _subFamilyFilter = (value == null || value.isEmpty) ? null : value; }); },
+                itemBuilder: (context) {
+                  final items = <PopupMenuEntry<String?>>[];
+                  items.add(const PopupMenuItem<String?>(value: '', child: Text('All Subfamilies')));
+                  if (_familyFilter == null) {
+                    items.add(const PopupMenuItem<String?>(value: null, child: Text('Select a family first')));
+                  } else {
+                    final subs = dynamicProductFamilies[_familyFilter] ?? [];
+                    for (final s in subs) items.add(PopupMenuItem<String?>(value: s, child: Text(s)));
+                  }
+                  return items;
+                },
+                child: OutlinedButton(
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: const Color(0xFFF7F3FF),
+                    foregroundColor: Colors.deepPurple,
+                    side: BorderSide.none,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                    elevation: 0,
+                  ),
+                  onPressed: null,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _subFamilyFilter == null ? 'Filter by Subfamily' : 'Sub: ${_subFamilyFilter!}',
+                        style: const TextStyle(
+                          color: Colors.deepPurple,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const Icon(Icons.arrow_drop_down, color: Colors.deepPurple),
+                    ],
+                  ),
+                ),
+              ),
+              ],
               // Filter by Status
               PopupMenuButton<String>(
                 onSelected: (value) {

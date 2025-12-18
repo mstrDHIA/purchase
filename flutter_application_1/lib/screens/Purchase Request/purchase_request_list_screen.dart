@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_application_1/l10n/app_localizations.dart';
+import 'package:flutter_application_1/controllers/product_controller.dart';
 import 'package:flutter_application_1/controllers/purchase_request_controller.dart';
 import 'package:flutter_application_1/screens/Purchase%20Request/requestor_form_screen.dart';
 import 'package:flutter_application_1/screens/Purchase%20order/pushase_order_screen.dart' as purchase_order;
@@ -49,6 +50,13 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
   final TextEditingController _searchController = TextEditingController();
   bool _showArchived = false;
 
+  // Families (N2) and Subfamilies (N3) filters
+  Map<String, List<String>> dynamicProductFamilies = {};
+  bool _loadingFamilies = false;
+  String? _familiesError;
+  String? _familyFilter;
+  String? _subFamilyFilter;
+
   void _clearFilters() {
     setState(() {
       _statusFilter = null;
@@ -58,7 +66,49 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
       _searchText = '';
       _searchController.clear();
       _showArchived = false;
+      _familyFilter = null;
+      _subFamilyFilter = null;
     });
+  }
+
+  // Fetch product categories and build a families -> subfamilies map
+  Future<void> _fetchProductFamilies() async {
+    setState(() {
+      _loadingFamilies = true;
+      _familiesError = null;
+    });
+    try {
+      final productController = Provider.of<ProductController>(context, listen: false);
+      final categories = await productController.getCategories(null);
+      if (categories is List<dynamic>) {
+        final families = <String, List<String>>{};
+        final allCategories = categories.cast<Map<String, dynamic>>();
+        final parentCategories = allCategories.where((cat) => cat['parent_category'] == null).toList();
+        for (final family in parentCategories) {
+          final familyId = family['id'];
+          final familyName = family['name'] as String;
+          final subfamilies = allCategories
+              .where((cat) => cat['parent_category'] == familyId)
+              .map((cat) => cat['name'] as String)
+              .toList();
+          families[familyName] = subfamilies.isNotEmpty ? subfamilies : [familyName];
+        }
+        setState(() => dynamicProductFamilies = families);
+      }
+    } catch (e) {
+      setState(() => _familiesError = e.toString());
+    } finally {
+      if (mounted) setState(() => _loadingFamilies = false);
+    }
+  }
+
+  bool _canShowFamilyFilters() {
+    final user = Provider.of<UserController>(context, listen: false).currentUser;
+    // Allowed user IDs provided by admin (user.id only mode)
+    const allowedUserIds = {1, 4, 7};
+    final uid = user.id;
+    if (uid == null) return false;
+    return allowedUserIds.contains(uid);
   }
 
   Future<void> _selectDate(BuildContext context, bool isSubmission) async {
@@ -141,6 +191,88 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                   ),
                 ),
               ),
+
+              if (_canShowFamilyFilters()) ...[
+              // Family (N2) filter
+              PopupMenuButton<String?>(
+                onSelected: (value) {
+                  setState(() {
+                    _familyFilter = (value == null || value.isEmpty) ? null : value;
+                    _subFamilyFilter = null; // reset subfilter when family changes
+                  });
+                },
+                itemBuilder: (context) {
+                  final items = <PopupMenuEntry<String?>>[];
+                  items.add(const PopupMenuItem<String?>(value: '', child: Text('All Families')));
+                  if (_loadingFamilies) {
+                    items.add(const PopupMenuItem<String?>(value: null, child: Text('Loading...')));
+                  } else {
+                    for (final f in dynamicProductFamilies.keys) {
+                      items.add(PopupMenuItem<String?>(value: f, child: Text(f)));
+                    }
+                  }
+                  return items;
+                },
+                child: OutlinedButton(
+                  onPressed: null,
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: const Color(0xFFF7F3FF),
+                    foregroundColor: Colors.deepPurple,
+                    side: BorderSide.none,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _familyFilter == null ? 'Filter by Family' : 'Family: ${_familyFilter!}',
+                        style: const TextStyle(color: Colors.deepPurple, fontWeight: FontWeight.w500),
+                      ),
+                      const SizedBox(width: 6),
+                      const Icon(Icons.arrow_drop_down, color: Colors.deepPurple),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Subfamily (N3) filter — depends on selected family
+              PopupMenuButton<String?>(
+                onSelected: (value) { setState(() { _subFamilyFilter = (value == null || value.isEmpty) ? null : value; }); },
+                itemBuilder: (context) {
+                  final items = <PopupMenuEntry<String?>>[];
+                  items.add(const PopupMenuItem<String?>(value: '', child: Text('All Subfamilies')));
+                  if (_familyFilter == null) {
+                    items.add(const PopupMenuItem<String?>(value: null, child: Text('Select a family first')));
+                  } else {
+                    final subs = dynamicProductFamilies[_familyFilter] ?? [];
+                    for (final s in subs) items.add(PopupMenuItem<String?>(value: s, child: Text(s)));
+                  }
+                  return items;
+                },
+                child: OutlinedButton(
+                  onPressed: null,
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: const Color(0xFFF7F3FF),
+                    foregroundColor: Colors.deepPurple,
+                    side: BorderSide.none,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _subFamilyFilter == null ? 'Filter by Subfamily' : 'Sub: ${_subFamilyFilter!}',
+                        style: const TextStyle(color: Colors.deepPurple, fontWeight: FontWeight.w500),
+                      ),
+                      const SizedBox(width: 6),
+                      const Icon(Icons.arrow_drop_down, color: Colors.deepPurple),
+                    ],
+                  ),
+                ),
+              ),
+              ],
               if(Provider.of<UserController>(context, listen: false).currentUser.role!.id!=4)
               PopupMenuButton<String>(
                 onSelected: (value) { setState(() { _statusFilter = value.isEmpty ? null : value; }); },
@@ -230,6 +362,10 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
     purchaseRequestController = Provider.of<PurchaseRequestController>(context, listen: false);
     // initial paginated fetch
     purchaseRequestController.fetchRequests(context, userController.currentUser, page: 1, pageSizeParam: _rowsPerPageLocal);
+
+    // fetch product families for filters (N2 and N3)
+    _fetchProductFamilies();
+
     super.initState();
   }
 
@@ -247,7 +383,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
   }
 
   Future<void> _openAddRequestForm() async {
-    final newRequest = await Navigator.push<Map<String, dynamic>>(
+    await Navigator.push<Map<String, dynamic>>(
       context,
       MaterialPageRoute(
         builder: (context) => PurchaseRequestorForm(
@@ -338,6 +474,15 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                               || (req.endDate?.toString().toLowerCase().contains(searchLower) ?? false);
                         }).toList();
                       }
+
+                      // Apply family/subfamily filters (N2/N3) — match if any product line in the request has the family/subfamily
+                      if (_familyFilter != null) {
+                        filteredRequests = filteredRequests.where((req) => (req.products?.any((p) => (p.family?.toString() == _familyFilter)) ?? false)).toList();
+                      }
+                      if (_subFamilyFilter != null) {
+                        filteredRequests = filteredRequests.where((req) => (req.products?.any((p) => (p.subFamily?.toString() == _subFamilyFilter)) ?? false)).toList();
+                      }
+
                       final filteredDataSource = PurchaseRequestDataSource(filteredRequests, context, 'filtered');
                       // pagination data available in controller if needed
                       // Sort filteredRequests if a sort column is selected
@@ -375,7 +520,6 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                         });
                       }
                       final pageDataSource = filteredDataSource;
-                      final selectedIds = pageDataSource.getSelectedIds();
                       // data source prepared for current page
                       return Column(
                         children: [
