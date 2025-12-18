@@ -2,6 +2,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/controllers/role_controller.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
+import 'package:flutter_application_1/controllers/department_controller.dart';
+import 'package:flutter_application_1/models/department.dart';
+import 'package:flutter_application_1/network/user_network.dart';
 import 'package:flutter_application_1/models/role.dart';
 import 'package:flutter_application_1/models/user_model.dart';
 import 'package:provider/provider.dart';
@@ -17,6 +20,7 @@ class ModifyUserPage extends StatefulWidget {
 class _ModifyUserPageState extends State<ModifyUserPage> {
   late UserController userController ;
   late RoleController roleController;
+  late DepartmentController departmentController;
   late TextEditingController _firstNameController;
   late TextEditingController _lastNameController;
   late TextEditingController _emailController;
@@ -31,13 +35,16 @@ class _ModifyUserPageState extends State<ModifyUserPage> {
   late Future<User?> _userFuture;
   File? _profileImageFile;
   Role? selectedRole;
+  Department? selectedDepartment;
 
   @override
   void initState() {
     super.initState();
     userController = Provider.of<UserController>(context, listen: false);
     roleController = Provider.of<RoleController>(context, listen: false);
+    departmentController = Provider.of<DepartmentController>(context, listen: false);
     roleController.fetchRoles();
+    departmentController.fetchDepartments();
     _firstNameController = TextEditingController();
     _lastNameController = TextEditingController();
     _emailController = TextEditingController();
@@ -80,6 +87,33 @@ class _ModifyUserPageState extends State<ModifyUserPage> {
         _addressController.text = user.profile?.address ?? '';
         _locationController.text = user.profile?.location ?? '';
         _zipCodeController.text = user.profile?.zipCode?.toString() ?? '';
+
+        // Try obtaining the full user object (which may include dep_id) via viewUser
+        try {
+          final fetchedUser = await UserNetwork().viewUser(widget.user.id!);
+          if (fetchedUser != null) {
+            final int? deptId = fetchedUser.depId;
+            if (deptId != null) {
+              // ensure departments are loaded
+              await departmentController.fetchDepartments();
+              final depts = departmentController.departments;
+              final found = depts.firstWhere((d) => d.id == deptId, orElse: () => depts.isNotEmpty ? depts.first : Department(id: null, name: ''));
+              if (found.id != null) {
+                // Defer state change to avoid calling setState during build
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) {
+                    setState(() {
+                      selectedDepartment = found;
+                    });
+                  }
+                });
+              }
+            }
+          }
+        } catch (e) {
+          // ignore
+        }
+
         return user;
     } catch (e) {
       _error = 'Erreur lors de la récupération: $e';
@@ -124,8 +158,7 @@ class _ModifyUserPageState extends State<ModifyUserPage> {
                        _addressController.text,
                        _locationController.text,
                        int.tryParse(_zipCodeController.text),
-                       selectedRole!,
-                       context
+                       selectedRole!,                       selectedDepartment,                       context
                     );
                   },
                   icon: const Icon(Icons.save, size: 18),
@@ -280,6 +313,32 @@ class _ModifyUserPageState extends State<ModifyUserPage> {
                       },
                       decoration: const InputDecoration(
                         labelText: 'Select Role',
+                        border: OutlineInputBorder(),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+                Consumer<DepartmentController>(
+                  builder: (context, deptCtrl, child) {
+                    return DropdownButtonFormField<Department>(
+                      value: selectedDepartment,
+                      items: deptCtrl.departments.map((d) => DropdownMenuItem<Department>(
+                        value: d,
+                        child: Text(d.name),
+                      )).toList(),
+                      onChanged: (d) {
+                        setState(() {
+                          selectedDepartment = d;
+                        });
+                        // Debug log to verify selection
+                        try {
+                          // ignore: avoid_print
+                          print('ModifyUser: selected department -> id=${d?.id}, name=${d?.name}');
+                        } catch (e) {}
+                      },
+                      decoration: const InputDecoration(
+                        labelText: 'Select Department',
                         border: OutlineInputBorder(),
                       ),
                     );

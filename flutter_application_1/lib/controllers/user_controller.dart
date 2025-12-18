@@ -383,7 +383,7 @@ class UserController extends ChangeNotifier {
 
   }
 
-   Future<String?> updateAllUser(firstName, lastName, email, username, country, state, city, address, location, zipCode,Role role,BuildContext context) async {
+   Future<String?> updateAllUser(firstName, lastName, email, username, country, state, city, address, location, zipCode,Role role, dynamic department, BuildContext context) async {
   
     isLoading = true;
     notifyListeners();
@@ -432,7 +432,74 @@ data['profile'] = profileData;
 if(role.id!=selectedUser.role!.id){
 data['role_id'] = role.id;
 }
-      await userNetwork.updateAllUsers(data, selectedUserId!);
+// Debug: log department info and payload
+try {
+  // ignore: avoid_print
+  print('updateAllUser: department -> id=${department?.id}, name=${department?.name}');
+  // ignore: avoid_print
+  print('updateAllUser: payload before send -> $data');
+} catch (e) {}
+if (department != null) {
+  // API may accept multiple keys; include them all to maximize compatibility
+  data['dep_id'] = department.id;
+  data['department_id'] = department.id;
+  data['department'] = department.id; // some backends accept department as id
+}
+// Debug: show payload that will actually be sent
+try {
+  // ignore: avoid_print
+  print('updateAllUser: sending payload -> $data');
+} catch (e) {}
+      final resp = await userNetwork.updateAllUsers(data, selectedUserId!);
+      // Debug: log response
+      try {
+        // ignore: avoid_print
+        print('updateAllUser: response status=${resp.statusCode}, data=${resp.data}');
+      } catch (e) {}
+
+      // Refresh the detailed user data using the 'viewUser' endpoint which returns full user info including dep_id
+      try {
+        var refreshed = await userNetwork.viewUser(selectedUserId!);
+        if (refreshed != null) {
+          // ignore: avoid_print
+          print('updateAllUser: refreshed selectedUser.depId=${refreshed.depId}');
+          final idx = users.indexWhere((u) => u.id == selectedUserId);
+          if (idx != -1) {
+            users[idx] = refreshed;
+          }
+          selectedUser = refreshed;
+        }
+
+        // If depId still null but we tried to set department, attempt fallback PATCH variants
+        if ((refreshed == null || refreshed.depId == null) && department != null) {
+          final fallbacks = [
+            {'dep_id': department.id},
+            {'department_id': department.id},
+            {'department': department.id},
+            {'department': {'id': department.id}},
+          ];
+          for (final fb in fallbacks) {
+            try {
+              await userNetwork.partialUpdateUser(fb, selectedUserId!);
+              // refresh
+              refreshed = await userNetwork.viewUser(selectedUserId!);
+              // ignore: avoid_print
+              print('updateAllUser: after fallback ${fb.keys.first} -> refreshed.depId=${refreshed?.depId}');
+              if (refreshed != null && refreshed.depId != null) {
+                final idx2 = users.indexWhere((u) => u.id == selectedUserId);
+                if (idx2 != -1) users[idx2] = refreshed;
+                selectedUser = refreshed;
+                break;
+              }
+            } catch (e) {
+              // ignore
+            }
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+
       displaySnackBar = true;
       notifyListeners();
 

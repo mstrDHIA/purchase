@@ -268,7 +268,13 @@ Future<Response?>? getDetailedUser(int userId) async {
   }
 
    Future<Response> updateAllUsers( Map<String,dynamic> data, int id) async {
-  // try {
+  try {
+    // Debug: log request
+    try {
+      // ignore: avoid_print
+      print('UserNetwork.updateAllUsers: PUT ${APIS.baseUrl}${APIS.updateAllUsers}$id/ payload=$data');
+    } catch (e) {}
+
     final response = await api.dio.put(
       '${APIS.baseUrl}${APIS.updateAllUsers}$id/',
       data: data,
@@ -279,18 +285,59 @@ Future<Response?>? getDetailedUser(int userId) async {
         },
       ),
     );
+
+    // Debug: log response
+    try {
+      // ignore: avoid_print
+      print('UserNetwork.updateAllUsers: response status=${response.statusCode}, data=${response.data}');
+    } catch (e) {}
+
     if (response.statusCode == 200 || response.statusCode == 201) {
       return response;
     } else {
       return response;
       // return 'Failed to update all users: ${response.statusMessage}';
     }
-  // } 
-  // catch (e) {
-  //   print('Error updating all users: $e');
-  // }
+  } catch (e) {
+    // ignore: avoid_print
+    print('UserNetwork.updateAllUsers: error -> $e');
+    rethrow;
+  }
 }
   Future<Response> getUserById(int id) async {
   return await api.dio.get('${APIS.baseUrl}user/$id/');
 }
+
+  /// Partially update a user resource (PATCH) at /user/users/<id>/
+  Future<Response> partialUpdateUser(Map<String, dynamic> data, int id) async {
+    try {
+      // Debug
+      try {
+        // ignore: avoid_print
+        print('UserNetwork.partialUpdateUser: PATCH ${APIS.baseUrl}${APIS.userList}$id/ payload=$data');
+      } catch (e) {}
+
+      final response = await api.dio.patch(
+        '${APIS.baseUrl}${APIS.userList}$id/',
+        data: data,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer ${APIS.token}',
+            'ngrok-skip-browser-warning': 'true',
+          },
+        ),
+      );
+
+      try {
+        // ignore: avoid_print
+        print('UserNetwork.partialUpdateUser: response status=${response.statusCode}, data=${response.data}');
+      } catch (e) {}
+
+      return response;
+    } catch (e) {
+      // ignore: avoid_print
+      print('UserNetwork.partialUpdateUser: error -> $e');
+      rethrow;
+    }
+  }
 }

@@ -15,6 +15,7 @@ class User {
   final String? password;
   final int? profileId;
   final int? role_id;
+  final int? depId;
   final Profile? profile;
    Role? role;
    bool? isActive;
@@ -30,6 +31,7 @@ class User {
      this.isSuperuser,
      this.password,
     this.profileId,
+    this.depId,
     this.role,
     this.isActive, 
   });
@@ -48,6 +50,8 @@ class User {
     final profileId = json['profile_id'] ?? (profile?.id);
     final roleId = json['role_id'];
     final isActive = json['is_active'] ?? true; // Default to true if not provided
+    final depId = json['dep_id'] is int ? json['dep_id'] as int : (json['dep_id'] is String ? int.tryParse(json['dep_id']) : null) ??
+        (json['department_id'] is int ? json['department_id'] as int : (json['department_id'] is String ? int.tryParse(json['department_id']) : null));
     return User(
       id: json['id'] ?? 0,
       username: json['username'] ?? '',
@@ -59,6 +63,7 @@ class User {
       profile: profile,
       profileId: profileId,
       role_id: roleId,
+      depId: depId,
       role: role, // If you want to parse role object, add here,
       isActive: isActive,
     );
@@ -89,6 +94,7 @@ class User {
       // 'last_name': lastName,
       // 'is_superuser': isSuperuser,
       if (profileId != null) 'profile_id': profileId,
+      if (depId != null) 'dep_id': depId,
       if (role != null) 'role': role,
     };
     if (password != null && password!.isNotEmpty) {
