@@ -590,7 +590,17 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                                   : Colors.red.shade100,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                       
+                        child: Text(
+                          status.isNotEmpty ? (status[0].toUpperCase() + status.substring(1)) : '-',
+                          style: TextStyle(
+                            color: status.toLowerCase() == 'approved'
+                                ? Colors.green.shade700
+                                : status.toLowerCase() == 'pending'
+                                    ? Colors.orange.shade800
+                                    : Colors.red.shade700,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                     ],
                   ),

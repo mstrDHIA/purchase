@@ -58,9 +58,47 @@ class PurchaseRequestController extends ChangeNotifier {
       }
 
       requests.clear();
-      if(Provider.of<UserController>(context, listen: false).currentUser.role!.id==4){
+      final currentUser = Provider.of<UserController>(context, listen: false).currentUser;
+      // Supervisor (role id 4) sees only approved requests (existing behavior)
+      if (currentUser.role!.id == 4) {
         items = items.where((item) => item['status'] == 'approved').toList();
-       
+      }
+      // Manager (role id 3) should see only requests where the requester is in the same department
+      if (currentUser.role!.id == 3) {
+        final managerDepId = currentUser.depId;
+        if (managerDepId != null) {
+          final usersList = Provider.of<UserController>(context, listen: false).users;
+          items = items.where((item) {
+            final rb = item['requested_by'];
+            int? reqDep;
+
+            // If backend returned a nested user object with department info
+            if (rb is Map) {
+              reqDep = rb['dep_id'] ?? rb['department_id'] ??
+                  (rb['department'] is Map ? rb['department']['id'] : (rb['department'] is int ? rb['department'] : null));
+              // If we still don't have department info but have an id, look up the user
+              if (reqDep == null && rb['id'] != null) {
+                final uid = rb['id'] is int ? rb['id'] : int.tryParse(rb['id'].toString());
+                if (uid != null) {
+                  final idx = usersList.indexWhere((u) => u.id == uid);
+                  if (idx != -1) reqDep = usersList[idx].depId;
+                }
+              }
+            } else {
+              // rb might be an int id or string id
+              final uid = rb is int ? rb : int.tryParse(rb?.toString() ?? '');
+              if (uid != null) {
+                final idx = usersList.indexWhere((u) => u.id == uid);
+                if (idx != -1) reqDep = usersList[idx].depId;
+              }
+            }
+
+            return reqDep != null && reqDep == managerDepId;
+          }).toList();
+        } else {
+          // If manager has no department assigned, show none
+          items = [];
+        }
       }
       requests = items.map<PurchaseRequest>((json) => PurchaseRequest.fromJson(json)).toList();
     // Sort requests by id ascending

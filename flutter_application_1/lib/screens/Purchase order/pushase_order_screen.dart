@@ -200,6 +200,16 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
         return 0;
       });
     }
+
+    // If current user is role N4 (id == 4), restrict visible orders to only approved, rejected, or edited
+    final currentRoleId = Provider.of<UserController>(context, listen: false).currentUser.role?.id;
+    if (currentRoleId == 6) {
+      mapped = mapped.where((order) {
+        final s = (order['statuss'] ?? '').toString().toLowerCase();
+        return s == 'approved' || s == 'rejected' || s == 'edited';
+      }).toList();
+    }
+
     return mapped;
   }
 
@@ -309,6 +319,10 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
           (MediaQuery.of(context).size.width<600)?
                           ListView.builder(itemBuilder:  (context,index){
                             final order = filteredOrders[index];
+                            final currentRoleIdLocal = Provider.of<UserController>(context, listen: false).currentUser.role?.id;
+                            final isSupervisorN3Local = currentRoleIdLocal == 6;
+                            final isRoleN4Local = currentRoleIdLocal == 4;
+                            final itemStatusLocal = (order['statuss'] ?? '').toString().toLowerCase();
                             return Card(
                               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                               shape: RoundedRectangleBorder(
@@ -349,7 +363,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                                   },
                                   itemBuilder: (context) => [
                                     PopupMenuItem(value: 'view', child: Text(AppLocalizations.of(context)!.view)),
-                                    PopupMenuItem(value: 'edit', child: Text(AppLocalizations.of(context)!.edit)),
+                                    if (!isRoleN4Local) PopupMenuItem(value: 'edit', enabled: !(isSupervisorN3Local && itemStatusLocal == 'approved'), child: Text(AppLocalizations.of(context)!.edit)),
                                     PopupMenuItem(value: 'delete', child: Text(AppLocalizations.of(context)!.delete)),
                                   ],
                                 ),
@@ -1206,11 +1220,34 @@ class _PurchaseOrderDataSource extends DataTableSource {
               onPressed: () => onView(item),
               tooltip: AppLocalizations.of(context!)!.view,
             ),
-            if(Provider.of<UserController>(context!, listen: false).currentUser.role!.id!=6)
-            IconButton(
-              icon: const Icon(Icons.edit_outlined),
-              onPressed: () => onEdit(item),
-              tooltip: AppLocalizations.of(context!)!.edit,
+            Builder(
+              builder: (ctx) {
+                final currentRoleId = Provider.of<UserController>(context!, listen: false).currentUser.role?.id;
+                final isRoleN4 = currentRoleId == 6;
+                final isSupervisorN3 = currentRoleId == 4;
+                final itemStatus = (item['statuss'] ?? '').toString().toLowerCase();
+                if (isRoleN4) {
+                  // N4 users should not see the Edit action at all
+                  return const SizedBox.shrink();
+                }
+                // N3 users cannot edit approved orders (show disabled icon)
+                if (isSupervisorN3 && itemStatus == 'approved') {
+                  return Opacity(
+                    opacity: 0.4,
+                    child: IconButton(
+                      icon: const Icon(Icons.edit_outlined),
+                      onPressed: null,
+                      tooltip: AppLocalizations.of(context!)!.edit,
+                    ),
+                  );
+                }
+                // Otherwise show enabled edit
+                return IconButton(
+                  icon: const Icon(Icons.edit_outlined),
+                  onPressed: () => onEdit(item),
+                  tooltip: AppLocalizations.of(context!)!.edit,
+                );
+              },
             ),
             Builder(
               builder: (context) {
