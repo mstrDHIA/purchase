@@ -106,11 +106,11 @@ class PurchaseRequestController extends ChangeNotifier {
     try {
       final result = await _network.updatePurchaseRequest(id, data, method: '');
       PurchaseRequest updatedRequest = PurchaseRequest.fromJson(result);
-      // int index = requests.indexWhere((r) => r.id == id);
-      // if (index != -1) {
-      //   requests[index] = updatedRequest;
-      //   dataSource = PurchaseRequestDataSource(requests, context, 'someArgument');
-      // }
+      int index = requests.indexWhere((r) => r.id == id);
+      if (index != -1) {
+        requests[index] = updatedRequest;
+        dataSource = PurchaseRequestDataSource(requests, context, 'someArgument');
+      }
     } catch (e) {
       print('error: $e');
       _error = e.toString();

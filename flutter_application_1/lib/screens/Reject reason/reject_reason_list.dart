@@ -19,6 +19,14 @@ class _RejectReasonListPageState extends State<RejectReasonListPage> {
 	@override
 	void initState() {
 		super.initState();
+		// Ensure data is loaded once the first frame is rendered
+		WidgetsBinding.instance.addPostFrameCallback((_) => _ensureLoaded());
+	}
+
+	@override
+	void dispose() {
+		_searchCtrl.dispose();
+		super.dispose();
 	}
 
 	Future<void> _ensureLoaded() async {

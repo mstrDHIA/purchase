@@ -535,7 +535,19 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
-                              _status ?? '',
+                              (_status == null || _status!.isEmpty)
+                                  ? ''
+                                  : (_status!.toLowerCase() == 'pending')
+                                      ? AppLocalizations.of(context)!.pending
+                                      : (_status!.toLowerCase() == 'approved')
+                                          ? AppLocalizations.of(context)!.approved
+                                          : (_status!.toLowerCase() == 'rejected')
+                                              ? AppLocalizations.of(context)!.rejected
+                                              : (_status!.toLowerCase() == 'transformed')
+                                                  ? AppLocalizations.of(context)!.transformed
+                                                  : (_status!.toLowerCase() == 'edited')
+                                                      ? AppLocalizations.of(context)!.edited
+                                                      : _status![0].toUpperCase() + _status!.substring(1),
                               style: TextStyle(
                                 color: (_status?.toLowerCase() == 'pending')
                                     ? Colors.orange.shade800
@@ -759,15 +771,22 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
     Color? textColor = Colors.black;
     // Ajout du badge coloré pour Status
     if (label == 'Status') {
-      if (value.toLowerCase() == 'pending') {
+      final lv = value.toLowerCase();
+      if (lv == 'pending') {
         badgeColor = Colors.orange.shade100;
         textColor = Colors.orange.shade800;
-      } else if (value.toLowerCase() == 'approved') {
+      } else if (lv == 'approved') {
         badgeColor = Colors.green.shade100;
         textColor = Colors.green.shade800;
-      } else if (value.toLowerCase() == 'rejected') {
+      } else if (lv == 'rejected') {
         badgeColor = Colors.red.shade100;
         textColor = Colors.red.shade800;
+      } else if (lv == 'transformed') {
+        badgeColor = Colors.blue.shade100;
+        textColor = Colors.blue.shade800;
+      } else if (lv == 'edited') {
+        badgeColor = Colors.grey.shade100;
+        textColor = Colors.grey.shade800;
       }
     }
     // Ajout du badge coloré pour Priority
@@ -782,6 +801,23 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
         badgeColor = Colors.blue.shade100;
         textColor = Colors.blue.shade800;
       }
+    }
+
+    // Localized display value for Status
+    String displayValue = value;
+    if (label == 'Status') {
+      final lv = value.toLowerCase();
+      displayValue = lv == 'pending'
+          ? AppLocalizations.of(context)!.pending
+          : lv == 'approved'
+              ? AppLocalizations.of(context)!.approved
+              : lv == 'rejected'
+                  ? AppLocalizations.of(context)!.rejected
+                  : lv == 'transformed'
+                      ? AppLocalizations.of(context)!.transformed
+                      : lv == 'edited'
+                          ? AppLocalizations.of(context)!.edited
+                          : value[0].toUpperCase() + value.substring(1);
     }
 
     return SizedBox(
@@ -799,7 +835,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                value,
+                displayValue,
                 style: TextStyle(
                   color: textColor,
                   fontWeight: FontWeight.bold,

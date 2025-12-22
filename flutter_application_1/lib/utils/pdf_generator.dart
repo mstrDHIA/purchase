@@ -3,10 +3,11 @@ import 'package:intl/intl.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:pdf/pdf.dart';
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:flutter_application_1/l10n/app_localizations.dart';
 import '../models/purchase_order.dart';
 
 class PdfGenerator {
-  static Future<Uint8List> generatePurchaseOrderPdf(PurchaseOrder order) async {
+  static Future<Uint8List> generatePurchaseOrderPdf(PurchaseOrder order, {AppLocalizations? l10n}) async {
     final pdf = pw.Document();
     final dateFormat = DateFormat('dd-MM-yyyy');
 
@@ -39,16 +40,16 @@ class PdfGenerator {
               pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.center,
                 children: [
-                  pw.Text('Purchase Order', style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
+                  pw.Text(l10n?.purchaseOrderTitle ?? 'Purchase Order', style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
                   pw.SizedBox(height: 6),
-                  pw.Text('ID: ${order.id ?? '-'}'),
+                  pw.Text(l10n != null ? l10n.idLabel((order.id ?? '-').toString()) : 'ID: ${order.id ?? '-'}'),
                 ],
               ),
               pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.end,
                 children: [
-                  pw.Text('Created: ${formatDate(order.createdAt)}'),
-                  pw.Text('Updated: ${formatDate(order.updatedAt)}'),
+                  pw.Text(l10n != null ? l10n.createdLabel(formatDate(order.createdAt)) : 'Created: ${formatDate(order.createdAt)}'),
+                  pw.Text(l10n != null ? l10n.updatedLabel(formatDate(order.updatedAt)) : 'Updated: ${formatDate(order.updatedAt)}'),
                 ],
               ),
             ],
@@ -64,7 +65,7 @@ class PdfGenerator {
                 child: pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
-                    pw.Text('Supplier', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                    pw.Text(l10n?.supplierLabel ?? 'Supplier', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
                     pw.SizedBox(height: 4),
                     pw.Text(order.products != null && order.products!.isNotEmpty ? (order.products![0].supplier ?? '-') : '-'),
                   ],
@@ -75,7 +76,7 @@ class PdfGenerator {
                 child: pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
-                    pw.Text('Due Date', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                    pw.Text(l10n?.dueDate ?? 'Due Date', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
                     pw.SizedBox(height: 4),
                     pw.Text(formatDate(order.endDate)),
                   ],
@@ -86,7 +87,7 @@ class PdfGenerator {
                 child: pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
-                    pw.Text('Supplier Delivery Date', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                    pw.Text(l10n?.supplierDeliveryDate ?? 'Supplier Delivery Date', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
                     pw.SizedBox(height: 4),
                     pw.Text(formatDate(order.supplierDeliveryDate)),
                   ],
@@ -130,7 +131,7 @@ class PdfGenerator {
                 child: pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
-                    pw.Text('Note', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                    pw.Text(l10n?.noteLabel ?? 'Note', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
                     pw.SizedBox(height: 6),
                     pw.Text(order.description ?? '-'),
                   ],
@@ -141,11 +142,11 @@ class PdfGenerator {
                 child: pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
-                    pw.Text('Status', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                    pw.Text(l10n?.statusLabel ?? 'Status', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
                     pw.SizedBox(height: 6),
                     pw.Text(order.status ?? '-'),
                     pw.SizedBox(height: 6),
-                    pw.Text('Priority: ${order.priority ?? '-'}'),
+                    pw.Text(l10n != null ? l10n.priorityLabel(order.priority ?? '-') : 'Priority: ${order.priority ?? '-'}'),
                   ],
                 ),
               ),

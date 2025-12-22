@@ -8,6 +8,7 @@ import 'package:flutter_application_1/controllers/product_controller.dart';
 import 'package:flutter_application_1/models/user_model.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../l10n/app_localizations.dart';
 
 class PurchaseOrderPage extends StatelessWidget {
   
@@ -290,7 +291,6 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
         }
         final allOrders = controller.orders;
         final filteredOrders = _filteredAndSortedOrders(allOrders);
-        controller.notify();
         final dataSource = _PurchaseOrderDataSource(
           filteredOrders,
           _dateFormat,
@@ -303,7 +303,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
         );
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Purchase Orders'),
+            title: Text(AppLocalizations.of(context)!.purchaseOrders),
           ),
           body: 
           (MediaQuery.of(context).size.width<600)?
@@ -317,16 +317,30 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                               ),
                               child: ListTile(
                                 contentPadding: const EdgeInsets.all(16),
-                                title: Text('PO #${order['id']}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                title: Text('${AppLocalizations.of(context)!.purchaseOrder} #${order['id']}', style: const TextStyle(fontWeight: FontWeight.bold)),
                                 subtitle: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     const SizedBox(height: 8),
-                                    Text('Created by: ${order['actionCreatedBy']}'),
-                                    Text('Date submitted: ${_dateFormat.format(order['dateSubmitted'])}'),
-                                    Text('Due date: ${_dateFormat.format(order['dueDate'])}'),
-                                    Text('Priority: ${order['priority']}'),
-                                    Text('Status: ${order['statuss']}'),
+                                    Text('${AppLocalizations.of(context)!.createdBy}: ${order['actionCreatedBy']}'),
+                                    Text('${AppLocalizations.of(context)!.dateSubmitted}: ${_dateFormat.format(order['dateSubmitted'])}'),
+                                    Text('${AppLocalizations.of(context)!.dueDate}: ${_dateFormat.format(order['dueDate'])}'),
+                                    Text(AppLocalizations.of(context)!.priorityLabel(order['priority'] ?? '-')),
+                                    Text('${AppLocalizations.of(context)!.statusLabel}: ${(() {
+                                      final s = (order['statuss'] ?? '').toString();
+                                      final lv = s.toLowerCase();
+                                      return lv == 'pending'
+                                          ? AppLocalizations.of(context)!.pending
+                                          : lv == 'approved'
+                                              ? AppLocalizations.of(context)!.approved
+                                              : lv == 'rejected'
+                                                  ? AppLocalizations.of(context)!.rejected
+                                                  : (lv == 'transformed' || lv == 'converted')
+                                                      ? AppLocalizations.of(context)!.transformed
+                                                      : lv == 'edited'
+                                                          ? AppLocalizations.of(context)!.edited
+                                                          : s[0].toUpperCase() + s.substring(1);
+                                    })()}'),
                                   ],
                                 ),
                                 isThreeLine: true,
@@ -334,9 +348,9 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                                   onSelected: (value) {
                                   },
                                   itemBuilder: (context) => [
-                                    const PopupMenuItem(value: 'view', child: Text('View')),
-                                    const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                                    const PopupMenuItem(value: 'delete', child: Text('Delete')),
+                                    PopupMenuItem(value: 'view', child: Text(AppLocalizations.of(context)!.view)),
+                                    PopupMenuItem(value: 'edit', child: Text(AppLocalizations.of(context)!.edit)),
+                                    PopupMenuItem(value: 'delete', child: Text(AppLocalizations.of(context)!.delete)),
                                   ],
                                 ),
                               ),
@@ -373,13 +387,13 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Text(
-                                          _showArchived ? 'Unarchive Purchase Orders' : 'Archive Purchase Orders',
+                                          _showArchived ? AppLocalizations.of(context)!.unarchivePurchaseOrders : AppLocalizations.of(context)!.archivePurchaseOrders,
                                           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                                           textAlign: TextAlign.center,
                                         ),
                                         const SizedBox(height: 12),
                                         Text(
-                                          'Are you sure you want to ${_showArchived ? 'unarchive' : 'archive'} ${dataSource.selectedRowCount} selected purchase orders?',
+                                          AppLocalizations.of(context)!.confirmArchivePurchaseOrders(_showArchived ? AppLocalizations.of(context)!.unarchive : AppLocalizations.of(context)!.archive, dataSource.selectedRowCount),
                                           style: const TextStyle(fontSize: 14),
                                           textAlign: TextAlign.center,
                                         ),
@@ -389,7 +403,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                                           children: [
                                             TextButton(
                                               onPressed: () => Navigator.pop(context, false),
-                                              child: const Text('Cancel', style: TextStyle(color: Color(0xFF6F4DBF), fontWeight: FontWeight.w500, fontSize: 14)),
+                                              child: Text(AppLocalizations.of(context)!.cancel, style: const TextStyle(color: Color(0xFF6F4DBF), fontWeight: FontWeight.w500, fontSize: 14)),
                                             ),
                                             const SizedBox(width: 16),
                                             ElevatedButton(
@@ -400,7 +414,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                                                 padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                               ),
-                                              child: Text(_showArchived ? 'Unarchive' : 'Archive', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                              child: Text(_showArchived ? AppLocalizations.of(context)!.unarchive : AppLocalizations.of(context)!.archive, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                                             ),
                                           ],
                                         ),
@@ -426,11 +440,11 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                               }
                               await controller.fetchOrders();
                               dataSource.clearSelection();
-                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${_showArchived ? 'Unarchived' : 'Archived'} ${ids.length} purchase orders')));
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(_showArchived ? AppLocalizations.of(context)!.unarchivedPurchaseOrders(ids.length) : AppLocalizations.of(context)!.archivedPurchaseOrders(ids.length))));
                             }
                           },
                           icon: Icon(_showArchived ? Icons.unarchive_outlined : Icons.archive_outlined),
-                          label: Text(_showArchived ? 'Unarchive Selected' : 'Archive Selected'),
+                          label: Text(_showArchived ? AppLocalizations.of(context)!.unarchiveSelected : AppLocalizations.of(context)!.archiveSelected),
                           style: ElevatedButton.styleFrom(backgroundColor: _showArchived ? Colors.green : Colors.blue, foregroundColor: Colors.white),
                         ),
                         const SizedBox(width: 8),
@@ -449,16 +463,16 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                                     child: Column(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        const Text('Delete Purchase Orders', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+                                        Text(AppLocalizations.of(context)!.deletePurchaseOrders, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
                                         const SizedBox(height: 12),
-                                        Text('Are you sure you want to delete ${dataSource.selectedRowCount} selected purchase orders?', style: const TextStyle(fontSize: 14), textAlign: TextAlign.center),
+                                        Text(AppLocalizations.of(context)!.confirmDeletePurchaseOrders(dataSource.selectedRowCount), style: const TextStyle(fontSize: 14), textAlign: TextAlign.center),
                                         const SizedBox(height: 20),
                                         Row(
                                           mainAxisAlignment: MainAxisAlignment.center,
                                           children: [
-                                            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel', style: TextStyle(color: Color(0xFF6F4DBF), fontWeight: FontWeight.w500, fontSize: 14))),
+                                            TextButton(onPressed: () => Navigator.pop(context, false), child: Text(AppLocalizations.of(context)!.cancel, style: const TextStyle(color: Color(0xFF6F4DBF), fontWeight: FontWeight.w500, fontSize: 14))),
                                             const SizedBox(width: 16),
-                                            ElevatedButton(onPressed: () => Navigator.pop(context, true), style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))), child: const Text('Delete', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14))),
+                                            ElevatedButton(onPressed: () => Navigator.pop(context, true), style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))), child: Text(AppLocalizations.of(context)!.delete, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14))),
                                           ],
                                         ),
                                       ],
@@ -479,15 +493,15 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                               }
                               await controller.fetchOrders();
                               dataSource.clearSelection();
-                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Deleted ${ids.length} purchase orders')));
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.deletedPurchaseOrders(ids.length))));
                             }
                           },
                           icon: const Icon(Icons.delete_outline),
-                          label: const Text('Delete Selected'),
+                          label: Text(AppLocalizations.of(context)!.deleteSelected),
                           style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
                         ),
                         const SizedBox(width: 12),
-                        Text('${dataSource.selectedRowCount} selected', style: const TextStyle(fontWeight: FontWeight.w600)),
+                        Text(AppLocalizations.of(context)!.selectedCount(dataSource.selectedRowCount), style: const TextStyle(fontWeight: FontWeight.w600)),
                       ],
                     ),
                   );
@@ -503,7 +517,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                           data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
                           child: 
                           PaginatedDataTable(
-                            header: const Text('Purchase Orders Table'),
+                            header: Text(AppLocalizations.of(context)!.purchaseOrdersTable),
                             rowsPerPage: _rowsPerPage,
                             onRowsPerPageChanged: (r) {
                               if (r != null) {
@@ -518,24 +532,24 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                             horizontalMargin: 16,
                             columns: [
                               DataColumn(
-                                  label: const Text('ID'),
+                                  label: Text(AppLocalizations.of(context)!.idShort),
                                   onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
                               DataColumn(
-                                  label: const Text('Created by'),
+                                  label: Text(AppLocalizations.of(context)!.createdBy),
                                   onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
                               DataColumn(
-                                  label: const Text('Date submitted'),
+                                  label: Text(AppLocalizations.of(context)!.dateSubmitted),
                                   onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
                               DataColumn(
-                                  label: const Text('Due date'),
+                                  label: Text(AppLocalizations.of(context)!.dueDate),
                                   onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
                               DataColumn(
-                                  label: const Text('Priority'),
+                                  label: Text(AppLocalizations.of(context)!.priorityShort),
                                   onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
                               DataColumn(
-                                  label: const Text('status'),
+                                  label: Text(AppLocalizations.of(context)!.statusLabel),
                                   onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
-                              const DataColumn(label: Text('Actions')),
+                              DataColumn(label: Text(AppLocalizations.of(context)!.actions)),
                             ],
                             source: dataSource,
                           ),
@@ -567,7 +581,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
               child: TextField(
                 controller: _searchController,
                 decoration: InputDecoration(
-                  hintText: 'Search...',
+                  hintText: AppLocalizations.of(context)!.search,
                   prefixIcon: const Icon(Icons.search),
                   filled: true,
                   fillColor: const Color(0xFFF7F3FF),
@@ -600,10 +614,10 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                   });
                 },
                 itemBuilder: (context) => [
-                  const PopupMenuItem(value: '', child: Text('All')),
-                  const PopupMenuItem(value: 'high', child: Text('high')),
-                  const PopupMenuItem(value: 'medium', child: Text('medium')),
-                  const PopupMenuItem(value: 'low', child: Text('low')),
+                  PopupMenuItem(value: '', child: Text(AppLocalizations.of(context)!.all)),
+                  PopupMenuItem(value: 'high', child: Text(AppLocalizations.of(context)!.high)),
+                  PopupMenuItem(value: 'medium', child: Text(AppLocalizations.of(context)!.medium)),
+                  PopupMenuItem(value: 'low', child: Text(AppLocalizations.of(context)!.low)),
                 ],
                 child: OutlinedButton(
                   style: OutlinedButton.styleFrom(
@@ -619,7 +633,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        _priorityFilter == null ? 'Priority' : 'Priority: ${_priorityFilter![0].toUpperCase() + _priorityFilter!.substring(1)}',
+                        _priorityFilter == null ? AppLocalizations.of(context)!.filterByPriority : AppLocalizations.of(context)!.priorityLabel(_priorityFilter![0].toUpperCase() + _priorityFilter!.substring(1)),
                         style: const TextStyle(
                           color: Colors.deepPurple,
                           fontWeight: FontWeight.w500,
@@ -642,9 +656,9 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                 },
                 itemBuilder: (context) {
                   final items = <PopupMenuEntry<String?>>[];
-                  items.add(const PopupMenuItem<String?>(value: '', child: Text('All Families')));
+                  items.add(PopupMenuItem<String?>(value: '', child: Text(AppLocalizations.of(context)!.allFamilies)));
                   if (_loadingFamilies) {
-                    items.add(const PopupMenuItem<String?>(value: null, child: Text('Loading...')));
+                    items.add(PopupMenuItem<String?>(value: null, child: Text(AppLocalizations.of(context)!.loading)));
                   } else {
                     for (final f in dynamicProductFamilies.keys) {
                       items.add(PopupMenuItem<String?>(value: f, child: Text(f)));
@@ -666,7 +680,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        _familyFilter == null ? 'Filter by Family' : 'Family: ${_familyFilter!}',
+                        _familyFilter == null ? AppLocalizations.of(context)!.filterByFamily : '${AppLocalizations.of(context)!.familyLabel}: ${_familyFilter!}',
                         style: const TextStyle(
                           color: Colors.deepPurple,
                           fontWeight: FontWeight.w500,
@@ -683,15 +697,16 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                 onSelected: (value) { setState(() { _subFamilyFilter = (value == null || value.isEmpty) ? null : value; }); },
                 itemBuilder: (context) {
                   final items = <PopupMenuEntry<String?>>[];
-                  items.add(const PopupMenuItem<String?>(value: '', child: Text('All Subfamilies')));
+                  items.add(PopupMenuItem<String?>(value: '', child: Text(AppLocalizations.of(context)!.allSubfamilies)));
                   if (_familyFilter == null) {
-                    items.add(const PopupMenuItem<String?>(value: null, child: Text('Select a family first')));
+                    items.add(PopupMenuItem<String?>(value: null, child: Text(AppLocalizations.of(context)!.selectFamilyFirst)));
                   } else {
                     final subs = dynamicProductFamilies[_familyFilter] ?? [];
                     for (final s in subs) items.add(PopupMenuItem<String?>(value: s, child: Text(s)));
                   }
                   return items;
                 },
+
                 child: OutlinedButton(
                   style: OutlinedButton.styleFrom(
                     backgroundColor: const Color(0xFFF7F3FF),
@@ -706,7 +721,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        _subFamilyFilter == null ? 'Filter by Subfamily' : 'Sub: ${_subFamilyFilter!}',
+                        _subFamilyFilter == null ? AppLocalizations.of(context)!.filterBySubfamily : '${AppLocalizations.of(context)!.subfamilyLabel}: ${_subFamilyFilter!}',
                         style: const TextStyle(
                           color: Colors.deepPurple,
                           fontWeight: FontWeight.w500,
@@ -726,10 +741,12 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                   });
                 },
                 itemBuilder: (context) => [
-                  const PopupMenuItem(value: '', child: Text('All')),
-                  const PopupMenuItem(value: 'pending', child: Text('Pending')),
-                  const PopupMenuItem(value: 'approved', child: Text('Approved')),
-                  const PopupMenuItem(value: 'rejected', child: Text('Rejected')),
+                  PopupMenuItem(value: '', child: Text(AppLocalizations.of(context)!.all)),
+                  PopupMenuItem(value: 'pending', child: Text(AppLocalizations.of(context)!.pending)),
+                  PopupMenuItem(value: 'approved', child: Text(AppLocalizations.of(context)!.approved)),
+                  PopupMenuItem(value: 'rejected', child: Text(AppLocalizations.of(context)!.rejected)),
+                  PopupMenuItem(value: 'transformed', child: Text(AppLocalizations.of(context)!.transformed)),
+                  PopupMenuItem(value: 'edited', child: Text(AppLocalizations.of(context)!.edited)),
                 ],
                 child: OutlinedButton(
                   style: OutlinedButton.styleFrom(
@@ -745,7 +762,10 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        _statusFilter == null ? 'statuss' : 'Status: ${_statusFilter![0].toUpperCase() + _statusFilter!.substring(1)}',
+                        _statusFilter == null
+                            ? AppLocalizations.of(context)!.filterStatus
+                            : '${AppLocalizations.of(context)!.status}: '
+                                '${_statusFilter == 'pending' ? AppLocalizations.of(context)!.pending : _statusFilter == 'approved' ? AppLocalizations.of(context)!.approved : _statusFilter == 'rejected' ? AppLocalizations.of(context)!.rejected : _statusFilter == 'transformed' ? AppLocalizations.of(context)!.transformed : _statusFilter == 'edited' ? AppLocalizations.of(context)!.edited : _statusFilter![0].toUpperCase() + _statusFilter!.substring(1)}',
                         style: const TextStyle(
                           color: Colors.deepPurple,
                           fontWeight: FontWeight.w500,
@@ -769,7 +789,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                 onPressed: () => _selectDate(context, true),
                 child: Text(
                   _selectedSubmissionDate == null
-                      ? 'Submission Date'
+                      ? AppLocalizations.of(context)!.filterBySubmissionDate
                       : '${_dateFormat.format(_selectedSubmissionDate!)}',
                   style: const TextStyle(
                     color: Colors.deepPurple,
@@ -790,7 +810,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                 onPressed: () => _selectDate(context, false),
                 child: Text(
                   _selectedDueDate == null
-                      ? 'Due Date'
+                      ? AppLocalizations.of(context)!.filterByDueDate
                       : '${_dateFormat.format(_selectedDueDate!)}',
                   style: const TextStyle(
                     color: Colors.deepPurple,
@@ -815,7 +835,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                 },
                 icon: const Icon(Icons.archive),
                 label: Text(
-                  _showArchived ? 'Hide Archived' : 'Show Archived',
+                  _showArchived ? AppLocalizations.of(context)!.hideArchived : AppLocalizations.of(context)!.showArchived,
                   style: const TextStyle(
                     fontWeight: FontWeight.w500,
                   ),
@@ -824,9 +844,9 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
               // Clear Filters
               TextButton(
                 onPressed: _clearFilters,
-                child: const Text(
-                  'Clear Filters',
-                  style: TextStyle(
+                child: Text(
+                  AppLocalizations.of(context)!.clearFilters,
+                  style: const TextStyle(
                     color: Colors.deepPurple,
                     fontWeight: FontWeight.w500,
                   ),
@@ -891,14 +911,14 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'Delete Purchase Order',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                Text(
+                  AppLocalizations.of(context)!.deletePurchaseOrder,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Are you sure you want to delete ${order['id']}?',
+                  AppLocalizations.of(context)!.confirmDeletePurchaseOrders(1),
                   style: const TextStyle(fontSize: 14),
                   textAlign: TextAlign.center,
                 ),
@@ -908,9 +928,9 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                   children: [
                     TextButton(
                       onPressed: () => Navigator.pop(context, false),
-                      child: const Text(
-                        'Cancel',
-                        style: TextStyle(
+                      child: Text(
+                        AppLocalizations.of(context)!.cancel,
+                        style: const TextStyle(
                           color: Color(0xFF6F4DBF),
                           fontWeight: FontWeight.w500,
                           fontSize: 14,
@@ -928,9 +948,9 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: const Text(
-                        'Delete',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      child: Text(
+                        AppLocalizations.of(context)!.delete,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                       ),
                     ),
                   ],
@@ -947,11 +967,11 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
         await controller.deleteOrder(order['id'].toString());
         await controller.fetchOrders();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Purchase order ${order['id']} deleted')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.purchaseOrderDeleted(order['id']))) ,
         );
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to delete purchase order: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.failedToDeletePurchaseOrder(e.toString()))),
         );
       }
     }
@@ -973,14 +993,14 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'Archive Purchase Order',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                Text(
+                  AppLocalizations.of(context)!.archivePurchaseOrders,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Are you sure you want to archive purchase order ${order['id']}?',
+                  AppLocalizations.of(context)!.confirmArchivePurchaseOrders(AppLocalizations.of(context)!.archive, 1),
                   style: const TextStyle(fontSize: 14),
                   textAlign: TextAlign.center,
                 ),
@@ -990,9 +1010,9 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                   children: [
                     TextButton(
                       onPressed: () => Navigator.pop(context, false),
-                      child: const Text(
-                        'Cancel',
-                        style: TextStyle(
+                      child: Text(
+                        AppLocalizations.of(context)!.cancel,
+                        style: const TextStyle(
                           color: Color(0xFF6F4DBF),
                           fontWeight: FontWeight.w500,
                           fontSize: 14,
@@ -1010,9 +1030,9 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: const Text(
-                        'Archive',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      child: Text(
+                        AppLocalizations.of(context)!.archive,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                       ),
                     ),
                   ],
@@ -1029,11 +1049,11 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
         await controller.archivePurchaseOrder(order['id']);
         await controller.fetchOrders();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Purchase order ${order['id']} archived')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.archivedPurchaseOrder(order['id']))),
         );
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to archive purchase order: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.failedToArchivePurchaseOrder(e.toString()))),
         );
       }
     }
@@ -1055,14 +1075,14 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'Unarchive Purchase Order',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                Text(
+                  AppLocalizations.of(context)!.unarchivePurchaseOrders,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Are you sure you want to unarchive purchase order ${order['id']}?',
+                  AppLocalizations.of(context)!.confirmArchivePurchaseOrders(AppLocalizations.of(context)!.unarchive, 1),
                   style: const TextStyle(fontSize: 14),
                   textAlign: TextAlign.center,
                 ),
@@ -1072,9 +1092,9 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                   children: [
                     TextButton(
                       onPressed: () => Navigator.pop(context, false),
-                      child: const Text(
-                        'Cancel',
-                        style: TextStyle(
+                      child: Text(
+                        AppLocalizations.of(context)!.cancel,
+                        style: const TextStyle(
                           color: Color(0xFF6F4DBF),
                           fontWeight: FontWeight.w500,
                           fontSize: 14,
@@ -1092,9 +1112,9 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: const Text(
-                        'Unarchive',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      child: Text(
+                        AppLocalizations.of(context)!.unarchive,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                       ),
                     ),
                   ],
@@ -1111,11 +1131,11 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
         await controller.unarchivePurchaseOrder(order['id']);
         await controller.fetchOrders();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Purchase order ${order['id']} unarchived')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.unarchivedPurchaseOrder(order['id']))),
         );
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to unarchive purchase order: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.failedToArchivePurchaseOrder(e.toString()))),
         );
       }
     }
@@ -1184,13 +1204,13 @@ class _PurchaseOrderDataSource extends DataTableSource {
             IconButton(
               icon: const Icon(Icons.remove_red_eye_outlined),
               onPressed: () => onView(item),
-              tooltip: 'View',
+              tooltip: AppLocalizations.of(context!)!.view,
             ),
             if(Provider.of<UserController>(context!, listen: false).currentUser.role!.id!=6)
             IconButton(
               icon: const Icon(Icons.edit_outlined),
               onPressed: () => onEdit(item),
-              tooltip: 'Edit',
+              tooltip: AppLocalizations.of(context!)!.edit,
             ),
             Builder(
               builder: (context) {
@@ -1200,20 +1220,20 @@ class _PurchaseOrderDataSource extends DataTableSource {
                   return IconButton(
                     icon: const Icon(Icons.restore_outlined),
                     onPressed: () => onUnarchive(item),
-                    tooltip: 'Unarchive',
+                    tooltip: AppLocalizations.of(this.context!)!.unarchive,
                   );
                 }
                 return IconButton(
                   icon: const Icon(Icons.archive_outlined),
                   onPressed: () => onArchive(item),
-                  tooltip: 'Archive',
+                  tooltip: AppLocalizations.of(this.context!)!.archive,
                 );
               },
             ),
             IconButton(
               icon: const Icon(Icons.delete_outline),
               onPressed: () => onDelete(item),
-              tooltip: 'Delete',
+              tooltip: AppLocalizations.of(this.context!)!.delete,
             ),
           ],
         )),
@@ -1242,6 +1262,7 @@ class _PurchaseOrderDataSource extends DataTableSource {
     } else {
       bgColor = Colors.grey;
     }
+    final label = (v == 'low') ? AppLocalizations.of(this.context!)!.low : (v == 'medium') ? AppLocalizations.of(this.context!)!.medium : (v == 'high') ? AppLocalizations.of(this.context!)!.high : v;
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Container(
@@ -1254,7 +1275,7 @@ class _PurchaseOrderDataSource extends DataTableSource {
         ),
         alignment: Alignment.center,
         child: Text(
-          v,
+          label,
           textAlign: TextAlign.center,
           style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.2),
         ),
@@ -1264,7 +1285,7 @@ class _PurchaseOrderDataSource extends DataTableSource {
 
   Widget _buildStatusChip(String status) {
     final v = status.toLowerCase();
-    print(' Status value: $v'); // Debug print
+    // status value: $v
     Color bgColor;
     if (v == 'approved') {
       bgColor = const Color(0xFF4CAF50); // green
@@ -1272,9 +1293,12 @@ class _PurchaseOrderDataSource extends DataTableSource {
       bgColor = const Color(0xFFFFB74D); // orange
     } else if (v == 'rejected') {
       bgColor = const Color(0xFFEF5350); // red
+    } else if (v == 'transformed' || v == 'converted') {
+      bgColor = const Color(0xFF42A5F5); // blue
     } else {
       bgColor = Colors.grey;
     }
+    final label = (v == 'approved') ? AppLocalizations.of(this.context!)!.approved : (v == 'pending') ? AppLocalizations.of(this.context!)!.pending : (v == 'rejected') ? AppLocalizations.of(this.context!)!.rejected : (v == 'transformed' || v == 'converted') ? AppLocalizations.of(this.context!)!.transformed : v;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Container(
@@ -1287,7 +1311,7 @@ class _PurchaseOrderDataSource extends DataTableSource {
         ),
         alignment: Alignment.center,
         child: Text(
-          v,
+          label,
           textAlign: TextAlign.center,
           style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.2),
         ),
@@ -1327,24 +1351,39 @@ class ViewPurchasePage extends StatelessWidget {
       return dt != null ? dateFormat.format(dt) : '-';
     }
     return Scaffold(
-      appBar: AppBar(title: Text('View Purchase Order ${order['id']}')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.viewPurchaseOrder(order['id']))),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('ID: ${order['id']}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context)!.idLabel(order['id']?.toString() ?? '-'), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+
             const SizedBox(height: 12),
-            Text('Created by: ${order['actionCreatedBy']}'),
-            Text('Date submitted: ${formatDateCell(order['dateSubmitted'])}'),
-            Text('Due date: ${formatDateCell(order['dueDate'])}'),
-            Text('Priority: ${order['priority']}'),
-            Text('Status: ${order['statuss']}'),
+            Text('${AppLocalizations.of(context)!.createdBy}: ${order['actionCreatedBy']}'),
+            Text('${AppLocalizations.of(context)!.dateSubmitted}: ${formatDateCell(order['dateSubmitted'])}'),
+            Text('${AppLocalizations.of(context)!.dueDate}: ${formatDateCell(order['dueDate'])}'),
+            Text(AppLocalizations.of(context)!.priorityLabel(order['priority'] ?? '-')),
+            Text('${AppLocalizations.of(context)!.statusLabel}: ${(() {
+                  final s = (order['statuss'] ?? '').toString();
+                  final lv = s.toLowerCase();
+                  return lv == 'pending'
+                      ? AppLocalizations.of(context)!.pending
+                      : lv == 'approved'
+                          ? AppLocalizations.of(context)!.approved
+                          : lv == 'rejected'
+                              ? AppLocalizations.of(context)!.rejected
+                              : (lv == 'transformed' || lv == 'converted')
+                                  ? AppLocalizations.of(context)!.transformed
+                                  : lv == 'edited'
+                                      ? AppLocalizations.of(context)!.edited
+                                      : s[0].toUpperCase() + s.substring(1);
+                })()}'),
             const SizedBox(height: 32),
             ElevatedButton.icon(
               onPressed: () => Navigator.of(context).pop(),
               icon: const Icon(Icons.arrow_back),
-              label: const Text('Back'),
+              label: Text(AppLocalizations.of(context)!.back),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.deepPurple,
                 foregroundColor: Colors.white,

@@ -5,13 +5,6 @@ import 'package:provider/provider.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
 import 'package:flutter_application_1/screens/Purchase order/refuse_purchase_screen.dart';
-import 'package:printing/printing.dart';
-import 'package:flutter_application_1/utils/pdf_generator.dart';
-import 'package:flutter_application_1/utils/download_helper.dart';
-import 'package:path_provider/path_provider.dart';
-import 'dart:io';
-import 'package:flutter/foundation.dart';
-import 'package:open_file/open_file.dart';
 import '../../l10n/app_localizations.dart';
 
 class PurchaseOrderView extends StatefulWidget {
@@ -56,14 +49,33 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
     final products = _order.products ?? [];
     final userController = Provider.of<UserController>(context, listen: false);
     final purchaseOrderController = Provider.of<PurchaseOrderController>(context, listen: false);
-    final isApproved = status.toLowerCase() == 'approved';
-    final isRejected = status.toLowerCase() == 'rejected';
+    // compute total and currency symbol
+    final double totalAmount = (products).fold<double>(0.0, (sum, p) => sum + ((p.unitPrice ?? 0.0) * (p.quantity ?? 0)));
+    String currencySymbol = '\$';
+    final currencyRaw = _order.currency?.toString();
+    if (currencyRaw != null && currencyRaw.isNotEmpty) {
+      final code = currencyRaw.toUpperCase();
+      final Map<String, String> codeToSymbol = {'USD': '\$', 'EUR': '€', 'TND': 'DT'};
+      if (codeToSymbol.containsKey(code)) {
+        currencySymbol = codeToSymbol[code]!;
+      } else if (currencyRaw.toLowerCase().contains('dinar')) {
+        currencySymbol = 'DT';
+      } else if (currencyRaw.toLowerCase().contains('dollar')) {
+        currencySymbol = '\$';
+      } else if (currencyRaw.toLowerCase().contains('euro')) {
+        currencySymbol = '€';
+      } else {
+        // fallback: show code itself if it's short
+        currencySymbol = currencyRaw.length <= 4 ? currencyRaw : '\$';
+      }
+    }
+
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F6FF),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+          padding: const EdgeInsets.fromLTRB(32, 24, 32, 160),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -76,16 +88,16 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                     child: IconButton(
                       icon: const Icon(Icons.arrow_back, color: Colors.black87),
                       onPressed: () => Navigator.of(context).pop(),
-                      tooltip: 'Back',
+                      tooltip: AppLocalizations.of(context)!.back,
                     ),
                   ),
                   Center(
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text(
-                          'Purchase Order',
-                          style: TextStyle(
+                        Text(
+                          AppLocalizations.of(context)!.purchaseOrderTitle,
+                          style: const TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
                             color: Colors.black87,
@@ -100,7 +112,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                             border: Border.all(color: Colors.grey.shade300),
                           ),
                           child: Text(
-                            'ID: ${_order.id?.toString() ?? '-'}',
+                            AppLocalizations.of(context)!.idLabel(_order.id?.toString() ?? '-'),
                             style: const TextStyle(fontWeight: FontWeight.w600),
                           ),
                         ),
@@ -194,7 +206,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
               const SizedBox(height: 32),
               const SizedBox(height: 24),
               if ((_order.refuseReason ?? '').isNotEmpty) ...[
-                const Text('Refuse Reason'),
+                Text(AppLocalizations.of(context)!.refuseReasonLabel),
                 const SizedBox(height: 4),
                 TextField(
                   controller: TextEditingController(text: _order.refuseReason ?? ''),
@@ -216,43 +228,14 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                 ),
                 const SizedBox(height: 24),
               ],
-              // Supplier name & Priority row (harmonized)
+              // Priority row (supplier header removed)
               Row(
                 children: [
                   Expanded(
-                    flex: 3,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Supplier name'),
-                        const SizedBox(height: 4),
-                        TextField(
-                          controller: TextEditingController(text: products.isNotEmpty ? (products[0].supplier ?? '-') : '-'),
-                          readOnly: true,
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: Colors.white,
-                            enabledBorder: OutlineInputBorder(
-                              borderSide: const BorderSide(color: Colors.black87),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: const BorderSide(color: Colors.deepPurple),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 24),
-                  Expanded(
-                    flex: 2,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('Priority'),
+                        Text(AppLocalizations.of(context)!.priority),
                         const SizedBox(height: 4),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -294,7 +277,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(AppLocalizations.of(context)!.dueDate),
+                        Text(AppLocalizations.of(context)!.dueDate, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.black54),),
                         const SizedBox(height: 4),
                         TextField(
                           controller: TextEditingController(text: dueDate),
@@ -322,7 +305,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(AppLocalizations.of(context)!.supplierDeliveryDate),
+                        Text(AppLocalizations.of(context)!.supplierDeliveryDate, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.black54),),
                         const SizedBox(height: 4),
                         TextField(
                           controller: TextEditingController(text: supplierDeliveryDate),
@@ -350,7 +333,8 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
               const SizedBox(height: 24),
               const SizedBox(height: 24),
               // Products section
-              const Text('Products', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text(AppLocalizations.of(context)!.products, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+
               const SizedBox(height: 8),
               if (products.isNotEmpty)
                 ListView.separated(
@@ -383,7 +367,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                                     controller: TextEditingController(text: prod.family?.toString() ?? '-'),
                                     readOnly: true,
                                     decoration: InputDecoration(
-                                      labelText: 'Family',
+                                      labelText: AppLocalizations.of(context)!.familyLabel,
                                       filled: true,
                                       fillColor: Colors.white,
                                       enabledBorder: OutlineInputBorder(
@@ -404,7 +388,33 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                                     controller: TextEditingController(text: prod.subFamily?.toString() ?? '-'),
                                     readOnly: true,
                                     decoration: InputDecoration(
-                                      labelText: 'Subfamily',
+                                      labelText: AppLocalizations.of(context)!.subfamilyLabel,
+                                      filled: true,
+                                      fillColor: Colors.white,
+                                      enabledBorder: OutlineInputBorder(
+                                        borderSide: const BorderSide(color: Colors.black87),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderSide: const BorderSide(color: Colors.deepPurple),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            // Supplier shown per product (read-only)
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    controller: TextEditingController(text: prod.supplier ?? '-'),
+                                    readOnly: true,
+                                    decoration: InputDecoration(
+                                      labelText: AppLocalizations.of(context)!.supplierLabel,
                                       filled: true,
                                       fillColor: Colors.white,
                                       enabledBorder: OutlineInputBorder(
@@ -430,7 +440,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                                     controller: TextEditingController(text: prod.product ?? '-'),
                                     readOnly: true,
                                     decoration: InputDecoration(
-                                      labelText: 'Product',
+                                      labelText: AppLocalizations.of(context)!.product,
                                       filled: true,
                                       fillColor: Colors.white,
                                       enabledBorder: OutlineInputBorder(
@@ -452,7 +462,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                                     controller: TextEditingController(text: quantity.toString()),
                                     readOnly: true,
                                     decoration: InputDecoration(
-                                      labelText: 'Quantity',
+                                      labelText: AppLocalizations.of(context)!.quantity,
                                       filled: true,
                                       fillColor: Colors.white,
                                       enabledBorder: OutlineInputBorder(
@@ -474,7 +484,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                                     controller: TextEditingController(text: unitPrice.toStringAsFixed(2)),
                                     readOnly: true,
                                     decoration: InputDecoration(
-                                      labelText: 'Unit Price',
+                                      labelText: AppLocalizations.of(context)!.unitPrice,
                                       filled: true,
                                       fillColor: Colors.white,
                                       enabledBorder: OutlineInputBorder(
@@ -496,7 +506,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                                     controller: TextEditingController(text: totalPrice.toStringAsFixed(2)),
                                     readOnly: true,
                                     decoration: InputDecoration(
-                                      labelText: 'Total Price',
+                                      labelText: AppLocalizations.of(context)!.totalPrice,
                                       filled: true,
                                       fillColor: Colors.white,
                                       enabledBorder: OutlineInputBorder(
@@ -521,7 +531,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                 ),
               const SizedBox(height: 24),
               // Note
-              const Text('Note'),
+              Text(AppLocalizations.of(context)!.noteLabel),
               const SizedBox(height: 4),
               TextField(
                 controller: TextEditingController(text: note),
@@ -542,37 +552,54 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                 ),
               ),
               const SizedBox(height: 24),
-              // Status badge
-              const Text('statuss'),
-              const SizedBox(height: 4),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: status.toLowerCase() == 'approved'
-                      ? Colors.green.shade100
-                      : status.toLowerCase() == 'pending'
-                          ? Colors.orange.shade100
-                          : Colors.red.shade100,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  status.toLowerCase(),
-                  style: TextStyle(
-                    color: status.toLowerCase() == 'approved'
-                        ? Colors.green
-                        : status.toLowerCase() == 'pending'
-                            ? Colors.orange
-                            : Colors.red,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 32),
-              // Accept/Refuse buttons (unchanged)
-              // if()
+              // Status, total, and action buttons moved to the fixed bottom bar
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: Colors.grey.shade300)),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        child: SafeArea(
+          top: false,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
               Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                       Text(
+                    AppLocalizations.of(context)!.totalLabel('${currencySymbol}${totalAmount.toStringAsFixed(2)}'),
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  ),
+                      Text(AppLocalizations.of(context)!.statusLabel, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.black54)),
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: status.toLowerCase() == 'approved'
+                              ? Colors.green.shade100
+                              : status.toLowerCase() == 'pending'
+                                  ? Colors.orange.shade100
+                                  : Colors.red.shade100,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                       
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                 
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
                 children: [
                   const Spacer(),
                   if (widget.order.status!.toLowerCase()=='edited' && (userController.currentUser.role?.id == 1 || userController.currentUser.role?.id == 6)) ...[
@@ -597,7 +624,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                           await purchaseOrderController.fetchOrders();
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Order approved!'), backgroundColor: Colors.green),
+                              SnackBar(content: Text(AppLocalizations.of(context)!.purchaseOrderApproved), backgroundColor: Colors.green),
                             );
                             setState(() {
                               _order = PurchaseOrder(
@@ -619,7 +646,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                         } catch (e) {
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+                              SnackBar(content: Text(AppLocalizations.of(context)!.failedWithError(e.toString())), backgroundColor: Colors.red),
                             );
                           }
                         }
@@ -631,7 +658,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         elevation: 0,
                       ),
-                      child: const Text('Approve'),
+                      child: Text(AppLocalizations.of(context)!.approve),
                     ),
                     const SizedBox(width: 24),
                     ElevatedButton(
@@ -664,7 +691,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                             await purchaseOrderController.fetchOrders();
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Order rejected!'), backgroundColor: Colors.red),
+                              SnackBar(content: Text(AppLocalizations.of(context)!.purchaseOrderRejected), backgroundColor: Colors.red),
                               );
                               setState(() {
                                 _order = PurchaseOrder(
@@ -692,7 +719,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                           } catch (e) {
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+                                SnackBar(content: Text(AppLocalizations.of(context)!.failedWithError(e.toString())), backgroundColor: Colors.red),
                               );
                             }
                           }
@@ -705,12 +732,11 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                         side: const BorderSide(color: Color(0xFFE0E0E0)),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
-                      child: const Text('Reject'),
+                      child: Text(AppLocalizations.of(context)!.reject),
                     ),
                   ],
                 ],
               ),
-              const SizedBox(height: 24),
             ],
           ),
         ),

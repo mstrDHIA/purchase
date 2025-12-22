@@ -391,6 +391,24 @@ abstract class AppLocalizations {
   /// **'Purchase Request'**
   String get purchaseRequest;
 
+  /// No description provided for @editPurchaseRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Purchase Request'**
+  String get editPurchaseRequest;
+
+  /// No description provided for @editPurchaseOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Purchase Order'**
+  String get editPurchaseOrder;
+
+  /// No description provided for @confirmCancelUnsavedChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to cancel? Unsaved changes will be lost.'**
+  String get confirmCancelUnsavedChanges;
+
   /// No description provided for @purchaseOrder.
   ///
   /// In en, this message translates to:
@@ -709,12 +727,6 @@ abstract class AppLocalizations {
   /// **'Add New Brand'**
   String get addNewBrand;
 
-  /// No description provided for @supplierDeliveryDate.
-  ///
-  /// In en, this message translates to:
-  /// **'Supplier Delivery date'**
-  String get supplierDeliveryDate;
-
   /// No description provided for @createNewRole.
   ///
   /// In en, this message translates to:
@@ -942,6 +954,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Rejected'**
   String get rejected;
+
+  /// No description provided for @transformed.
+  ///
+  /// In en, this message translates to:
+  /// **'Transformed'**
+  String get transformed;
+
+  /// No description provided for @edited.
+  ///
+  /// In en, this message translates to:
+  /// **'Edited'**
+  String get edited; 
 
   /// No description provided for @searchProduct.
   ///
@@ -1246,7 +1270,7 @@ abstract class AppLocalizations {
   /// No description provided for @supplierName.
   ///
   /// In en, this message translates to:
-  /// **'Supplier Name'**
+  /// **'Supplier name'**
   String get supplierName;
 
   /// No description provided for @supplierEmail.
@@ -1542,6 +1566,462 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Update password'**
   String get updatePasswordBtn;
+
+  /// No description provided for @failedToLoadFamilies.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load families: {error}'**
+  String failedToLoadFamilies(Object error);
+
+  /// No description provided for @pickDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick date'**
+  String get pickDate;
+
+  /// No description provided for @saving.
+  ///
+  /// In en, this message translates to:
+  /// **'Saving...'**
+  String get saving;
+
+  /// No description provided for @failedToCreateFamily.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to create family: {error}'**
+  String failedToCreateFamily(Object error);
+
+  /// No description provided for @failedToUpdateFamily.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to update family: {error}'**
+  String failedToUpdateFamily(Object error);
+
+  /// No description provided for @confirmDeleteFamily.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {name} and all its subfamilies?'**
+  String confirmDeleteFamily(Object name);
+
+  /// No description provided for @failedToDeleteFamily.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to delete family: {error}'**
+  String failedToDeleteFamily(Object error);
+
+  /// No description provided for @reset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get reset;
+
+  /// No description provided for @familyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Family'**
+  String get familyLabel;
+
+  /// No description provided for @pageOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Page {current} of {total}'**
+  String pageOf(Object current, Object total);
+
+  /// No description provided for @allFamilies.
+  ///
+  /// In en, this message translates to:
+  /// **'All Families'**
+  String get allFamilies;
+
+  /// No description provided for @allSubfamilies.
+  ///
+  /// In en, this message translates to:
+  /// **'All Subfamilies'**
+  String get allSubfamilies;
+
+  /// No description provided for @selectFamilyFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Select a family first'**
+  String get selectFamilyFirst;
+
+  /// No description provided for @selectedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String selectedCount(Object count);
+
+  /// No description provided for @failedWithError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed: {error}'**
+  String failedWithError(Object error);
+
+  /// No description provided for @deleteSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Selected'**
+  String get deleteSelected;
+
+  /// No description provided for @confirmDeleteSelectedRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete {count} requests? This cannot be undone.'**
+  String confirmDeleteSelectedRequests(Object count);
+
+  /// No description provided for @deletedRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted {count} requests'**
+  String deletedRequests(Object count);
+
+  /// No description provided for @failedToDeleteRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to delete: {error}'**
+  String failedToDeleteRequests(Object error);
+
+  /// No description provided for @accessDeniedAdmin.
+  ///
+  /// In en, this message translates to:
+  /// **'Access denied — admins only'**
+  String get accessDeniedAdmin;
+
+  /// No description provided for @appVersionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {version}'**
+  String appVersionLabel(Object version);
+
+  /// No description provided for @purchaseOrderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchase Order'**
+  String get purchaseOrderTitle;
+
+  /// No description provided for @idLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'ID: {id}'**
+  String idLabel(Object id);
+
+  /// No description provided for @createdLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Created: {date}'**
+  String createdLabel(Object date);
+
+  /// No description provided for @updatedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated: {date}'**
+  String updatedLabel(Object date);
+
+  /// No description provided for @supplierLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Supplier'**
+  String get supplierLabel;
+
+  /// No description provided for @supplierDeliveryDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Supplier Delivery Date'**
+  String get supplierDeliveryDate;
+
+  /// No description provided for @noteLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Note'**
+  String get noteLabel;
+
+  /// No description provided for @statusLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get statusLabel;
+
+  /// No description provided for @priorityLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Priority: {priority}'**
+  String priorityLabel(Object priority);
+
+  /// No description provided for @archivedRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'Archived {count} requests'**
+  String archivedRequests(Object count);
+
+  /// No description provided for @unarchivedRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'Unarchived {count} requests'**
+  String unarchivedRequests(Object count);
+
+  /// No description provided for @archiveSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive Selected'**
+  String get archiveSelected;
+
+  /// No description provided for @unarchiveSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Unarchive Selected'**
+  String get unarchiveSelected;
+
+  /// No description provided for @archive.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive'**
+  String get archive;
+
+  /// No description provided for @unarchive.
+  ///
+  /// In en, this message translates to:
+  /// **'Unarchive'**
+  String get unarchive;
+
+  /// No description provided for @createdBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Created by'**
+  String get createdBy;
+
+  /// No description provided for @validatedBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Validated by'**
+  String get validatedBy;
+
+  /// No description provided for @filterByFamily.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter by Family'**
+  String get filterByFamily;
+
+  /// No description provided for @filterBySubfamily.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter by Subfamily'**
+  String get filterBySubfamily;
+
+  /// No description provided for @purchaseOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchase Orders'**
+  String get purchaseOrders;
+
+  /// No description provided for @archivePurchaseOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive Purchase Orders'**
+  String get archivePurchaseOrders;
+
+  /// No description provided for @unarchivePurchaseOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Unarchive Purchase Orders'**
+  String get unarchivePurchaseOrders;
+
+  /// No description provided for @confirmArchivePurchaseOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to {action} {count} selected purchase orders?'**
+  String confirmArchivePurchaseOrders(Object action, Object count);
+
+  /// No description provided for @archivedPurchaseOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} purchase orders archived'**
+  String archivedPurchaseOrders(Object count);
+
+  /// No description provided for @unarchivedPurchaseOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} purchase orders unarchived'**
+  String unarchivedPurchaseOrders(Object count);
+
+  /// No description provided for @deletePurchaseOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Purchase Orders'**
+  String get deletePurchaseOrders;
+
+  /// No description provided for @confirmDeletePurchaseOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete {count} selected purchase orders? This cannot be undone.'**
+  String confirmDeletePurchaseOrders(Object count);
+
+  /// No description provided for @deletedPurchaseOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} purchase orders deleted'**
+  String deletedPurchaseOrders(Object count);
+
+  /// No description provided for @failedToDeletePurchaseOrders.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to delete: {error}'**
+  String failedToDeletePurchaseOrders(Object error);
+
+  /// No description provided for @back.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get back;
+
+  /// No description provided for @deletePurchaseOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Purchase Order'**
+  String get deletePurchaseOrder;
+
+  /// No description provided for @purchaseOrderDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchase order {id} deleted'**
+  String purchaseOrderDeleted(Object id);
+
+  /// No description provided for @failedToDeletePurchaseOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to delete purchase order: {error}'**
+  String failedToDeletePurchaseOrder(Object error);
+
+  /// No description provided for @archivedPurchaseOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchase order {id} archived'**
+  String archivedPurchaseOrder(Object id);
+
+  /// No description provided for @unarchivedPurchaseOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchase order {id} unarchived'**
+  String unarchivedPurchaseOrder(Object id);
+
+  /// No description provided for @failedToArchivePurchaseOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to archive purchase order: {error}'**
+  String failedToArchivePurchaseOrder(Object error);
+
+  /// No description provided for @viewPurchaseOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'View Purchase Order {id}'**
+  String viewPurchaseOrder(Object id);
+
+  /// No description provided for @purchaseOrdersTable.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchase Orders Table'**
+  String get purchaseOrdersTable;
+
+  /// No description provided for @idShort.
+  ///
+  /// In en, this message translates to:
+  /// **'ID'**
+  String get idShort;
+
+  /// No description provided for @priorityShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Priority'**
+  String get priorityShort;
+
+  /// No description provided for @invalidSupplierDeliveryDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid supplier delivery date.'**
+  String get invalidSupplierDeliveryDate;
+
+  /// No description provided for @refuseReasonLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Refuse Reason'**
+  String get refuseReasonLabel;
+
+  /// No description provided for @products.
+  ///
+  /// In en, this message translates to:
+  /// **'Products'**
+  String get products;
+
+  /// No description provided for @subfamilyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Subfamily'**
+  String get subfamilyLabel;
+
+  /// No description provided for @unitPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit Price'**
+  String get unitPrice;
+
+  /// No description provided for @totalPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Price'**
+  String get totalPrice;
+
+  /// No description provided for @purchaseOrderApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Order approved!'**
+  String get purchaseOrderApproved;
+
+  /// No description provided for @purchaseOrderRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Order rejected!'**
+  String get purchaseOrderRejected;
+
+  /// No description provided for @currency.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get currency;
+
+  /// No description provided for @addProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Product'**
+  String get addProduct;
+
+  /// No description provided for @invalidDueDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid due date.'**
+  String get invalidDueDate;
+
+  /// No description provided for @removeProductLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove product line'**
+  String get removeProductLine;
+
+  /// No description provided for @totalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Total: {amount}'**
+  String totalLabel(Object amount);
+
+  /// No description provided for @pleaseFillAllRequiredFields.
+  ///
+  /// In en, this message translates to:
+  /// **'Please fill all required fields.'**
+  String get pleaseFillAllRequiredFields;
+
+  /// No description provided for @purchaseOrderSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchase order saved!'**
+  String get purchaseOrderSaved;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

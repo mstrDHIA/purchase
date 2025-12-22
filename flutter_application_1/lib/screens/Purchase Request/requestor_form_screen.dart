@@ -4,6 +4,7 @@ import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter_application_1/controllers/product_controller.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_application_1/l10n/app_localizations.dart';
 
 class PurchaseRequestorForm extends StatefulWidget {
   const PurchaseRequestorForm({super.key, required this.onSave, required this.initialOrder});
@@ -488,7 +489,7 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
                                   context: context,
                                   builder: (context) => AlertDialog(
                                     title: const Text('Cancel Request'),
-                                    content: const Text('Are you sure you want to cancel? Unsaved changes will be lost.'),
+                                    content: Text(AppLocalizations.of(context)!.confirmCancelUnsavedChanges),
                                     actions: [
                                       TextButton(
                                         onPressed: () => Navigator.of(context).pop(false),

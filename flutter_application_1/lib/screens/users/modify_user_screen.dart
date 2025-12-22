@@ -132,13 +132,9 @@ class _ModifyUserPageState extends State<ModifyUserPage> {
         actions: [
           Consumer<UserController>(
             builder: (context, userController, child) {
-              if(userController.isLoading) {
-                return const Center(child: CircularProgressIndicator(
-                  color: Colors.white,
-                ));
-              }
-              else {
-                return Padding(
+              final loading = userController.isLoading;
+              final canSave = !loading && selectedRole != null;
+              return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8.0),
                 child: ElevatedButton.icon(
                   style: ElevatedButton.styleFrom(
@@ -146,26 +142,34 @@ class _ModifyUserPageState extends State<ModifyUserPage> {
                     foregroundColor: const Color(0xFF6F4DBF),
                     elevation: 0,
                   ),
-                  onPressed: () async {
-                    await userController.updateAllUser( 
-                       _firstNameController.text,
-                       _lastNameController.text,
-                       _emailController.text,
-                       _usernameController.text,
-                       _countryController.text,
-                       _stateController.text,
-                       _cityController.text,
-                       _addressController.text,
-                       _locationController.text,
-                       int.tryParse(_zipCodeController.text),
-                       selectedRole!,                       selectedDepartment,                       context
+                  onPressed: canSave ? () async {
+                    final error = await userController.updateAllUser(
+                      _firstNameController.text,
+                      _lastNameController.text,
+                      _emailController.text,
+                      _usernameController.text,
+                      _countryController.text,
+                      _stateController.text,
+                      _cityController.text,
+                      _addressController.text,
+                      _locationController.text,
+                      int.tryParse(_zipCodeController.text),
+                      selectedRole!,
+                      selectedDepartment,
+                      context,
                     );
-                  },
-                  icon: const Icon(Icons.save, size: 18),
-                  label: const Text('Save'),
+                    if (error != null) {
+                      try {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+                      } catch (e) {}
+                    }
+                  } : null,
+                  icon: loading
+                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Color(0xFF6F4DBF), strokeWidth: 2))
+                    : const Icon(Icons.save, size: 18),
+                  label: Text(loading ? 'Saving...' : 'Save'),
                 ),
               );
-              }
             }
           ),
         ],

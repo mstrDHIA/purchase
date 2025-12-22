@@ -6,6 +6,7 @@ import 'package:flutter_application_1/screens/Purchase order/purchase_form_scree
 import 'package:intl/intl.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_application_1/controllers/product_controller.dart';
+import 'package:flutter_application_1/l10n/app_localizations.dart';
 
 class RequestEditPage extends StatefulWidget {
   final PurchaseRequest purchaseRequest;
@@ -85,8 +86,9 @@ class _RequestEditPageState extends State<RequestEditPage> {
         subFamily: subVal,
         // brand: prod.brand,
         quantity: qty,
-        supplier: prod is Map ? (prod['supplier']?.toString()) : prod.supplier,
+        // supplier: prod is Map ? (prod['supplier'] is Map ? (prod['supplier']['name']?.toString()) : (prod['supplier']?.toString())) : prod.supplier,
         unitPrice: unitPrice,
+        // supplier: prod is Map ? (prod['supplier'] is Map ? (prod['supplier']['name']?.toString()) : (prod['supplier']?.toString())) : prod.supplier,
       );
     }).toList();
     // initialize product controller and fetch families
@@ -139,7 +141,7 @@ class _RequestEditPageState extends State<RequestEditPage> {
         subFamily: subVal,
         // brand: prod.brand,
         quantity: qty,
-        supplier: prod is Map ? (prod['supplier']?.toString()) : prod.supplier,
+        supplier: prod is Map ? (prod['supplier'] is Map ? (prod['supplier']['name']?.toString()) : (prod['supplier']?.toString())) : prod.supplier,
         unitPrice: unitPrice,
       );
     }).toList();
@@ -239,17 +241,36 @@ class _RequestEditPageState extends State<RequestEditPage> {
                     child: IconButton(
                       icon: const Icon(Icons.arrow_back, color: Colors.black87),
                       onPressed: () => Navigator.of(context).pop(),
-                      tooltip: 'Cancel',
+                      tooltip: AppLocalizations.of(context)!.cancel,
                     ),
                   ),
-                  const Center(
-                    child: Text(
-                      'Edit Purchase Request',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
+                  Center(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          AppLocalizations.of(context)!.purchaseRequest,
+                          style: const TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        if (widget.purchaseRequest.id != null) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF3F2F5),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              'ID: ${widget.purchaseRequest.id}',
+                              style: const TextStyle(fontSize: 12, color: Colors.black87),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                 ],
@@ -264,7 +285,7 @@ class _RequestEditPageState extends State<RequestEditPage> {
               if (_familiesError != null) ...[
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12.0),
-                  child: Text('Failed loading product families: $_familiesError', style: const TextStyle(color: Colors.red)),
+                  child: Text(AppLocalizations.of(context)!.failedToLoadFamilies(_familiesError ?? ''), style: const TextStyle(color: Colors.red)),
                 ),
               ],
 
@@ -573,6 +594,7 @@ class _RequestEditPageState extends State<RequestEditPage> {
                             'description': noteController.text,
                             'title': 'Demande d\'achat',
                             'status': status.toLowerCase(),
+                            'priority': priority.toLowerCase(),
                             'products': products,
                           };
                           try {

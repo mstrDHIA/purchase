@@ -58,7 +58,7 @@ class _FamiliesPageState extends State<FamiliesPage> {
       print('dddd');
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load families: $e')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.failedToLoadFamilies(e.toString()))),
       );
       print('Error fetching families: $e');
     } finally {
@@ -172,7 +172,7 @@ class _FamiliesPageState extends State<FamiliesPage> {
                               );
                               if (picked != null) setState(() => selectedDate = picked);
                             },
-                            child: const Text('Pick date'),
+                            child: Text(AppLocalizations.of(context)!.pickDate),
                           ),
                         ],
                       ),
@@ -183,7 +183,7 @@ class _FamiliesPageState extends State<FamiliesPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+                    TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(AppLocalizations.of(context)!.cancel)),
                     const SizedBox(width: 8),
                     ElevatedButton(
                       onPressed: _isSaving
@@ -215,10 +215,11 @@ class _FamiliesPageState extends State<FamiliesPage> {
                                 }
                                 Navigator.of(context).pop();
                                 ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(
-                                    content: Text(family != null ? 'Family updated successfully!' : 'Family created successfully!')));
+                                    content: Text(family != null ? AppLocalizations.of(this.context)!.familyUpdatedSuccessfully : AppLocalizations.of(this.context)!.familyCreatedSuccessfully)));
+
                               } catch (e) {
                                 ScaffoldMessenger.of(this.context)
-                                    .showSnackBar(SnackBar(content: Text('Failed to ${family != null ? 'update' : 'create'} family: $e')));
+                                    .showSnackBar(SnackBar(content: Text(family != null ? AppLocalizations.of(this.context)!.failedToUpdateFamily(e.toString()) : AppLocalizations.of(this.context)!.failedToCreateFamily(e.toString()))));
                               } finally {
                                 try {
                                   setState(() => _isSaving = false);
@@ -231,10 +232,10 @@ class _FamiliesPageState extends State<FamiliesPage> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
                       ),
                       child: _isSaving
-                          ? Row(mainAxisSize: MainAxisSize.min, children: const [
-                              SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
-                              SizedBox(width: 10),
-                              Text('Saving...'),
+                              ? Row(mainAxisSize: MainAxisSize.min, children: [
+                              const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)),
+                              const SizedBox(width: 10),
+                              Text(AppLocalizations.of(context)!.saving),
                             ])
                           : Text(family != null ? 'Save' : 'Create'),
                     ),
@@ -252,14 +253,14 @@ class _FamiliesPageState extends State<FamiliesPage> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Family'),
-        content: Text('Delete "${families[index]['name']}" and all its subfamilies?'),
+        title: Text(AppLocalizations.of(context)!.deleteFamily),
+        content: Text(AppLocalizations.of(context)!.confirmDeleteFamily(families[index]['name'])),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(AppLocalizations.of(context)!.cancel)),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete'),
+            child: Text(AppLocalizations.of(context)!.delete),
           ),
         ],
       ),
@@ -270,10 +271,10 @@ class _FamiliesPageState extends State<FamiliesPage> {
         print('Deleting family with ID: ${families[index]['id']}');
         // await productController.deleteCategory(families[index]['id'].toString());
         setState(() => families.removeAt(index));
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Family deleted successfully')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.familyDeletedSuccessfully)));
       } catch (e) {
         print('Error occurred while deleting family: $e');
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to delete family: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.failedToDeleteFamily(e.toString()))));
       }
     }
   }
@@ -306,9 +307,9 @@ class _FamiliesPageState extends State<FamiliesPage> {
             child: Row(
               children: [
                 // ...existing code...
-                const Expanded(
+                Expanded(
                   child: Center(
-                    child: Text('Product Families', style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
+                    child: Text(AppLocalizations.of(context)!.productFamilies, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
                   ),
                 ),
                 const SizedBox(width: 48),
@@ -363,12 +364,12 @@ class _FamiliesPageState extends State<FamiliesPage> {
                     setState(() {});
                   },
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.grey.shade200, foregroundColor: Colors.black87),
-                  child: const Row(children: [Icon(Icons.refresh), SizedBox(width: 6), Text('Reset')]),
+                  child: Row(children: [const Icon(Icons.refresh), const SizedBox(width: 6), Text(AppLocalizations.of(context)!.reset)]),
                 ),
                 const SizedBox(width: 12),
                 ElevatedButton.icon(
                   icon: const Icon(Icons.add),
-                  label: const Text('Add Family'),
+                  label: Text(AppLocalizations.of(context)!.addFamily),
                   onPressed: () => _showEditDialog(),
                   style: ElevatedButton.styleFrom(backgroundColor: Colors.deepPurple, foregroundColor: Colors.white),
                 ),
@@ -394,16 +395,16 @@ class _FamiliesPageState extends State<FamiliesPage> {
                         sortAscending: _sortAsc,
                         columns: [
                           DataColumn(
-                            label: const Text('ID'),
+                            label: Text(AppLocalizations.of(context)!.id),
                             onSort: (i, asc) => _sortById(asc),
                           ),
                           DataColumn(
-                            label: const Text('Family'),
+                            label: Text(AppLocalizations.of(context)!.familyLabel),
                             onSort: (i, asc) => _sortByName(asc),
                           ),
-                          const DataColumn(label: Text('Description')),
-                          const DataColumn(label: Text('Created')),
-                          const DataColumn(label: Text('Subfamilies')),
+                          DataColumn(label: Text(AppLocalizations.of(context)!.description)),
+                          DataColumn(label: Text(AppLocalizations.of(context)!.createdAt)),
+                          DataColumn(label: Text(AppLocalizations.of(context)!.subfamilies)),
                           const DataColumn(label: Text('')),
                         ],
                         rows: displayed.asMap().entries.map((entry) {
@@ -453,7 +454,7 @@ class _FamiliesPageState extends State<FamiliesPage> {
                                         ? () => setState(() => _currentPage--)
                                         : null,
                                   ),
-                                  Text('Page $_currentPage of $totalPages'),
+                                  Text(AppLocalizations.of(context)!.pageOf(_currentPage.toString(), totalPages.toString())),
                                   IconButton(
                                     icon: const Icon(Icons.chevron_right),
                                     onPressed: _currentPage < totalPages

@@ -22,7 +22,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  String selected = 'Home';
+  String selected = 'PurchaseRequest';
   bool showSidebar = false; 
   
   @override
@@ -63,10 +63,24 @@ class _MyHomePageState extends State<MyHomePage> {
                     );
                   }
                   return Center(
-                    child: Text(
-                      '📄 Page: $selected',
-                      style: const TextStyle(fontSize: 24),
-                    ),
+                    child: Builder(builder: (context) {
+                      final l10n = AppLocalizations.of(context)!;
+                      final localizedSelected = {
+                        'PurchaseRequest': l10n.purchaseRequest,
+                        'Purchase Order': l10n.purchaseOrder,
+                        'Supplier': l10n.supplier,
+                        'Product': l10n.product,
+                        'Profile': l10n.profile,
+                        'Department': l10n.page,
+                        'Users': l10n.users,
+                        'Settings': l10n.settings,
+                        'Password': l10n.password,
+                      }[selected] ?? selected;
+                      return Text(
+                        '${l10n.page}: $localizedSelected',
+                        style: const TextStyle(fontSize: 24),
+                      );
+                    }),
                   );
                 }),
                 // Bouton flottant pour ouvrir le sidebar
@@ -283,7 +297,7 @@ class _AppSidebarState extends State<AppSidebar> {
     if (route != null) {
       // Prevent navigation to restricted routes for non-admin users
       if (route == '/reject_reasons' && userController.currentUser.role_id != 1) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Accès refusé — réservé aux administrateurs')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.accessDeniedAdmin)));
         return;
       }
       // si le sidebar est ouvert en tant que Drawer, le fermer d'abord
@@ -345,9 +359,9 @@ class _AppSidebarState extends State<AppSidebar> {
               padding: const EdgeInsets.only(bottom: 4),
               child: Column(
                 children: [
-                  const Text(
-                    "My App",
-                    style: TextStyle(
+                  Text(
+                    l10n.mainPage,
+                    style: const TextStyle(
                       color: Colors.deepPurple,
                       fontWeight: FontWeight.bold,
                       fontSize: 18,
@@ -473,9 +487,9 @@ class _AppSidebarState extends State<AppSidebar> {
                     ],
                   ),
           ),
-          const Padding(
-            padding: EdgeInsets.all(12.0),
-            child: Text("v1.0.0", style: TextStyle(fontSize: 10, color: Colors.grey)),
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Text(AppLocalizations.of(context)!.appVersionLabel('1.0.0'), style: const TextStyle(fontSize: 10, color: Colors.grey)),
           ),
         ],
       ),

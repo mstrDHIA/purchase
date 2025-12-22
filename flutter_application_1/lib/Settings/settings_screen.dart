@@ -48,6 +48,62 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() => _selectedLanguage = lang);
   }
 
+  Future<void> _showLanguageDialog() async {
+    final loc = AppLocalizations.of(context)!;
+    final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
+    String temp = _selectedLanguage;
+
+    await showDialog<void>(
+      context: context,
+      builder: (context) => StatefulBuilder(builder: (context, setDialogState) {
+        return AlertDialog(
+          title: Text(loc.language),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              RadioListTile<String>(
+                value: 'English',
+                groupValue: temp,
+                title: Text(loc.english),
+                onChanged: (v) => setDialogState(() => temp = v ?? temp),
+              ),
+              RadioListTile<String>(
+                value: 'Français',
+                groupValue: temp,
+                title: Text(loc.french),
+                onChanged: (v) => setDialogState(() => temp = v ?? temp),
+              ),
+              RadioListTile<String>(
+                value: 'العربية',
+                groupValue: temp,
+                title: Text(loc.arabic),
+                onChanged: (v) => setDialogState(() => temp = v ?? temp),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(loc.cancel)),
+            ElevatedButton(
+              onPressed: () {
+                _saveLanguagePreference(temp);
+                if (temp == 'English') {
+                  localeProvider.setLocale(const Locale('en'));
+                } else if (temp == 'Français') {
+                  localeProvider.setLocale(const Locale('fr'));
+                } else {
+                  localeProvider.setLocale(const Locale('ar'));
+                }
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(loc.languageChanged(temp))));
+              },
+              child: Text(loc.saveBtn),
+            ),
+          ],
+        );
+      }),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
   final themeProvider = Provider.of<ThemeProvider>(context);
@@ -76,7 +132,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Settings'),
+        title: Text(loc.settings),
         centerTitle: true,
         elevation: 0,
       ),
@@ -115,7 +171,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 24),
 
           // ==== ACCOUNT SETTINGS ====
-          _buildSectionTitle("Account Settings"),
+          _buildSectionTitle(loc.accountSettings),
           Card(
             elevation: 1,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -123,14 +179,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 ListTile(
                   leading: const Icon(Icons.person),
-                  title: const Text('Edit Profile'),
+                  title: Text(loc.editProfile),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () {},
                 ),
                 const Divider(height: 1),
                 ListTile(
                   leading: const Icon(Icons.lock),
-                  title: const Text('Change Password'),
+                  title: Text(loc.changePassword),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () {
                     Navigator.push(
@@ -147,7 +203,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 16),
 
           // ==== APP SETTINGS ====
-          _buildSectionTitle("App Preferences"),
+          _buildSectionTitle(loc.appPreferences),
           Card(
             elevation: 1,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -156,16 +212,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 // ==== NOTIFICATIONS ====
                 SwitchListTile(
                   secondary: const Icon(Icons.notifications),
-                  title: const Text('Notifications'),
-                  subtitle: Text(_notificationsEnabled ? "Enabled" : "Disabled"),
+                  title: Text(loc.notifications),
+                  subtitle: Text(_notificationsEnabled ? loc.notificationsEnabled : loc.notificationsDisabled),
                   value: _notificationsEnabled,
                   onChanged: (val) {
                     setState(() => _notificationsEnabled = val);
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(val
-                            ? "Notifications enabled"
-                            : "Notifications disabled"),
+                            ? loc.notificationsEnabled
+                            : loc.notificationsDisabled),
                         duration: const Duration(seconds: 1),
                       ),
                     );
@@ -177,53 +233,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ListTile(
                   leading: const Icon(Icons.language),
                   title: Text(loc.language),
-                  trailing: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
-                    child: DropdownButton<String>(
-                      key: ValueKey(_selectedLanguage),
-                      value: _selectedLanguage,
-                      items: [
-                        DropdownMenuItem(
-                          value: "Français",
-                          child: Row(
-                            children: [
-                              Icon(Icons.check, color: Colors.blue, size: 18),
-                              SizedBox(width: 6),
-                              Text(loc.french),
-                            ],
-                          ),
-                        ),
-                        DropdownMenuItem(
-                          value: "English",
-                          child: Text(loc.english),
-                        ),
-                        DropdownMenuItem(
-                          value: "العربية",
-                          child: Text(loc.arabic),
-                        ),
-                      ],
-                      onChanged: (String? lang) {
-                        if (lang != null) {
-                          _saveLanguagePreference(lang);
-                          // Changement dynamique de la langue
-                          final localeProvider = Provider.of<LocaleProvider>(context, listen: false);
-                          if (lang == "English") {
-                            localeProvider.setLocale(const Locale('en'));
-                          } else if (lang == "Français") {
-                            localeProvider.setLocale(const Locale('fr'));
-                          } else if (lang == "العربية") {
-                            localeProvider.setLocale(const Locale('ar'));
-                          }
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(loc.languageChanged(lang)),
-                              duration: const Duration(seconds: 1),
-                            ),
-                          );
-                        }
-                      },
-                    ),
+                  trailing: TextButton.icon(
+                    onPressed: _showLanguageDialog,
+                    icon: const Icon(Icons.language),
+                    label: Text(_selectedLanguage),
                   ),
+                  onTap: _showLanguageDialog,
                 ),
               ],
             ),
@@ -287,27 +302,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const Divider(height: 1),
                 ListTile(
                   leading: const Icon(Icons.logout, color: Colors.red),
-                  title: const Text(
-                    'Logout',
-                    style: TextStyle(color: Colors.red),
+                  title: Text(
+                    loc.logout,
+                    style: const TextStyle(color: Colors.red),
                   ),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.red),
                   onTap: () {
                     showDialog(
                       context: context,
                       builder: (context) => AlertDialog(
-                        title: const Text("Confirm"),
-                        content: const Text("Do you really want to logout?"),
+                        title: Text(loc.confirm),
+                        content: Text(loc.doYouReallyWantToLogout),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(context),
-                            child: const Text("Cancel"),
+                            child: Text(loc.cancel),
                           ),
                           TextButton(
                             onPressed: () {
                               userController.logout(context);
                             },
-                            child: const Text("Logout"),
+                            child: Text(loc.logout),
                           ),
                         ],
                       ),

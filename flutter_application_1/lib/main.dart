@@ -99,13 +99,6 @@ class HomeScreen extends StatefulWidget{
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  late LocaleProvider localeProvider;
-  @override
-  void initState() {
-     localeProvider = Provider.of<LocaleProvider>(context,listen: false);
-    super.initState();
-  }
-  
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
@@ -123,7 +116,7 @@ class _HomeScreenState extends State<HomeScreen> {
         Locale('fr'),
         Locale('ar'),
       ],
-      locale: localeProvider.locale,
+      locale: Provider.of<LocaleProvider>(context).locale,
       routerConfig: router, // <-- Utilisation du ShellRoute
     );
   }

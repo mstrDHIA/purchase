@@ -12,6 +12,7 @@ class PurchaseOrder {
   DateTime? createdAt;
   DateTime? updatedAt;
   String? priority;
+  String? currency; // ISO code or currency label (e.g. 'USD', 'EUR' or 'Dollar')
   int? purchaseRequestId;
   String? refuseReason;
   bool? isArchived;
@@ -53,6 +54,8 @@ class PurchaseOrder {
     createdAt = _parseDate(json['created_at']);
     updatedAt = _parseDate(json['updated_at']);
     priority = json['priority'];
+    // Accept either 'currency' (ISO code) or older names
+    currency = json['currency']?.toString() ?? json['currency_code']?.toString();
     refuseReason = json['refuse_reason'];
     isArchived = json['is_archived'] ?? false;
   }
@@ -87,6 +90,7 @@ class PurchaseOrder {
     data['created_at'] = createdAt?.toIso8601String();
     data['updated_at'] = updatedAt?.toIso8601String();
     data['priority'] = priority;
+    data['currency'] = currency;
     data['refuse_reason'] = refuseReason;
     data['is_archived'] = isArchived ?? false;
     purchaseRequestId != null ? data['purchase_request_id'] = purchaseRequestId : null;
@@ -110,7 +114,12 @@ class Products {
     product = json['product'];
     quantity = json['quantity'];
     brand = json['brand'];
-    supplier = json['supplier'];
+    final sup = json['supplier'];
+    if (sup is Map) {
+      supplier = sup['name']?.toString() ?? sup['supplier']?.toString();
+    } else {
+      supplier = sup?.toString();
+    }
     family = json['family'] ?? json['family_name'] ?? json['category'] ?? null;
     subFamily = json['subFamily'] ?? json['sub_family'] ?? json['subcategory'] ?? null;
     price = (json['price'] is int)

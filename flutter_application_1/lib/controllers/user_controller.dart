@@ -384,72 +384,78 @@ class UserController extends ChangeNotifier {
   }
 
    Future<String?> updateAllUser(firstName, lastName, email, username, country, state, city, address, location, zipCode,Role role, dynamic department, BuildContext context) async {
-  
+    // Log start
+    try {
+      // ignore: avoid_print
+      print('updateAllUser: start for selectedUserId=$selectedUserId');
+    } catch (e) {}
+
     isLoading = true;
     notifyListeners();
-    try {
-      final Map<String, dynamic> data ={
-      
-};
-Map<String,dynamic> profileData={};
-if(username!=selectedUser.username){
-  data['username'] = username;
-}
-if(email!=selectedUser.email){
-  data['email'] = email;
-}
-if(firstName!=selectedUser.profile?.firstName||lastName!=selectedUser.profile?.lastName||country!=selectedUser.profile?.country||
-    state!=selectedUser.profile?.state||city!=selectedUser.profile?.city||
-    address!=selectedUser.profile?.address||location!=selectedUser.profile?.location||
-    zipCode!=selectedUser.profile?.zipCode){
- if(firstName!=selectedUser.profile?.firstName){
-  profileData['first_name'] = firstName;
-}
-if(lastName!=selectedUser.profile?.lastName){
-  profileData['last_name'] = lastName;
-}
-if(country!=selectedUser.profile?.country){
-  profileData['country'] = country;
-}
-if(state!=selectedUser.profile?.state){
-  profileData['state'] = state;
-}
-if(city!=selectedUser.profile?.city){
-  profileData['city'] = city;
-}
-if(address!=selectedUser.profile?.address){
-  profileData['address'] = address;
-}
-if(location!=selectedUser.profile?.location){
-  profileData['location'] = location;
-}
-if(zipCode!=selectedUser.profile?.zipCode){
-  profileData['zip_code'] = zipCode;
-}
-data['profile'] = profileData;
-}
 
-if(role.id!=selectedUser.role!.id){
-data['role_id'] = role.id;
-}
-// Debug: log department info and payload
-try {
-  // ignore: avoid_print
-  print('updateAllUser: department -> id=${department?.id}, name=${department?.name}');
-  // ignore: avoid_print
-  print('updateAllUser: payload before send -> $data');
-} catch (e) {}
-if (department != null) {
-  // API may accept multiple keys; include them all to maximize compatibility
-  data['dep_id'] = department.id;
-  data['department_id'] = department.id;
-  data['department'] = department.id; // some backends accept department as id
-}
-// Debug: show payload that will actually be sent
-try {
-  // ignore: avoid_print
-  print('updateAllUser: sending payload -> $data');
-} catch (e) {}
+    try {
+      final Map<String, dynamic> data ={};
+      Map<String,dynamic> profileData={};
+
+      if(username!=selectedUser.username){
+        data['username'] = username;
+      }
+      if(email!=selectedUser.email){
+        data['email'] = email;
+      }
+      if(firstName!=selectedUser.profile?.firstName||lastName!=selectedUser.profile?.lastName||country!=selectedUser.profile?.country||
+          state!=selectedUser.profile?.state||city!=selectedUser.profile?.city||
+          address!=selectedUser.profile?.address||location!=selectedUser.profile?.location||
+          zipCode!=selectedUser.profile?.zipCode){
+       if(firstName!=selectedUser.profile?.firstName){
+        profileData['first_name'] = firstName;
+      }
+      if(lastName!=selectedUser.profile?.lastName){
+        profileData['last_name'] = lastName;
+      }
+      if(country!=selectedUser.profile?.country){
+        profileData['country'] = country;
+      }
+      if(state!=selectedUser.profile?.state){
+        profileData['state'] = state;
+      }
+      if(city!=selectedUser.profile?.city){
+        profileData['city'] = city;
+      }
+      if(address!=selectedUser.profile?.address){
+        profileData['address'] = address;
+      }
+      if(location!=selectedUser.profile?.location){
+        profileData['location'] = location;
+      }
+      if(zipCode!=selectedUser.profile?.zipCode){
+        profileData['zip_code'] = zipCode;
+      }
+      data['profile'] = profileData;
+      }
+
+      if(role.id!=selectedUser.role!.id){
+      data['role_id'] = role.id;
+      }
+      // Debug: log department info and payload
+      try {
+        // ignore: avoid_print
+        print('updateAllUser: department -> id=${department?.id}, name=${department?.name}');
+        // ignore: avoid_print
+        print('updateAllUser: payload before send -> $data');
+      } catch (e) {}
+      if (department != null) {
+        // API may accept multiple keys; include them all to maximize compatibility
+        data['dep_id'] = department.id;
+        data['department_id'] = department.id;
+        data['department'] = department.id; // some backends accept department as id
+      }
+      // Debug: show payload that will actually be sent
+      try {
+        // ignore: avoid_print
+        print('updateAllUser: sending payload -> $data');
+      } catch (e) {}
+
       final resp = await userNetwork.updateAllUsers(data, selectedUserId!);
       // Debug: log response
       try {
@@ -501,15 +507,34 @@ try {
       }
 
       displaySnackBar = true;
-      notifyListeners();
 
-      context.pop();
+      try {
+        context.pop();
+      } catch (e) {
+        // ignore: avoid_print
+        print('updateAllUser: pop failed: $e');
+      }
+
       return null;
     } catch (e) {
-      print('problem $e');
+      try {
+        // ignore: avoid_print
+        print('updateAllUser: error -> $e');
+      } catch (e) {}
+      try {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Erreur lors de la mise à jour')),
+        );
+      } catch (e) {}
+      return 'Error updating user: $e';
+    } finally {
+      // Ensure loading flag is always cleared
       isLoading = false;
       notifyListeners();
-      return 'Error updating user: $e';
+      try {
+        // ignore: avoid_print
+        print('updateAllUser: finished for selectedUserId=$selectedUserId');
+      } catch (e) {}
     }
   }
 

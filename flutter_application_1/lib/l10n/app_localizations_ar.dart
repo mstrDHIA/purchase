@@ -51,7 +51,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get status => 'الحالة';
 
   @override
-  String get actions => 'الإجراءات';
+  String get actions => 'إجراءات';
 
   @override
   String get previous => 'السابق';
@@ -158,6 +158,15 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get purchaseRequest => 'طلب الشراء';
+
+  @override
+  String get editPurchaseRequest => 'تحرير طلب الشراء';
+
+  @override
+  String get editPurchaseOrder => 'تحرير أمر الشراء';
+
+  @override
+  String get confirmCancelUnsavedChanges => 'هل أنت متأكد أنك تريد الإلغاء؟ سيتم فقدان التغييرات غير المحفوظة.';
 
   @override
   String get purchaseOrder => 'أمر الشراء';
@@ -319,9 +328,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get addNewBrand => 'إضافة علامة تجارية جديدة';
 
   @override
-  String get supplierDeliveryDate => 'تاريخ تسليم المورد';
-
-  @override
   String get createNewRole => 'إنشاء دور جديد';
 
   @override
@@ -434,6 +440,12 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get rejected => 'مرفوض';
+
+  @override
+  String get transformed => 'تم تحويله';
+
+  @override
+  String get edited => 'مُعدّل';
 
   @override
   String get searchProduct => 'البحث باسم المنتج...';
@@ -734,4 +746,294 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get updatePasswordBtn => 'تحديث كلمة المرور';
+
+  @override
+  String failedToLoadFamilies(Object error) {
+    return 'فشل في تحميل العائلات: $error';
+  }
+
+  @override
+  String get pickDate => 'اختر التاريخ';
+
+  @override
+  String get saving => 'جاري الحفظ...';
+
+  @override
+  String failedToCreateFamily(Object error) {
+    return 'فشل إنشاء العائلة: $error';
+  }
+
+  @override
+  String failedToUpdateFamily(Object error) {
+    return 'فشل تحديث العائلة: $error';
+  }
+
+  @override
+  String confirmDeleteFamily(Object name) {
+    return 'حذف $name وجميع الفئات الفرعية الخاصة بها؟';
+  }
+
+  @override
+  String failedToDeleteFamily(Object error) {
+    return 'فشل حذف العائلة: $error';
+  }
+
+  @override
+  String get reset => 'إعادة ضبط';
+
+  @override
+  String get familyLabel => 'العائلة';
+
+  @override
+  String pageOf(Object current, Object total) {
+    return 'الصفحة $current من $total';
+  }
+
+  @override
+  String get allFamilies => 'كل العائلات';
+
+  @override
+  String get allSubfamilies => 'كل الفئات الفرعية';
+
+  @override
+  String get selectFamilyFirst => 'اختر عائلة أولاً';
+
+  @override
+  String selectedCount(Object count) {
+    return '$count محدد';
+  }
+
+  @override
+  String failedWithError(Object error) {
+    return 'فشل: $error';
+  }
+
+  @override
+  String get deleteSelected => 'حذف المحدد';
+
+  @override
+  String confirmDeleteSelectedRequests(Object count) {
+    return 'هل أنت متأكد من حذف $count طلبًا؟ لا يمكن التراجع عن ذلك.';
+  }
+
+  @override
+  String deletedRequests(Object count) {
+    return 'تم حذف $count طلبًا';
+  }
+
+  @override
+  String failedToDeleteRequests(Object error) {
+    return 'فشل الحذف: $error';
+  }
+
+  @override
+  String get accessDeniedAdmin => 'تم الرفض — مخصص للمسؤولين فقط';
+
+  @override
+  String appVersionLabel(Object version) {
+    return 'الإصدار $version';
+  }
+
+  @override
+  String get purchaseOrderTitle => 'أمر الشراء';
+
+  @override
+  String idLabel(Object id) {
+    return 'المعرف: $id';
+  }
+
+  @override
+  String createdLabel(Object date) {
+    return 'أنشئ في: $date';
+  }
+
+  @override
+  String updatedLabel(Object date) {
+    return 'تم التحديث في: $date';
+  }
+
+  @override
+  String get supplierLabel => 'المورد';
+
+  @override
+  String get supplierDeliveryDate => 'تاريخ تسليم المورد';
+
+  @override
+  String get noteLabel => 'ملاحظة';
+
+  @override
+  String get statusLabel => 'الحالة';
+
+  @override
+  String priorityLabel(Object priority) {
+    return 'الأولوية: $priority';
+  }
+
+  @override
+  String archivedRequests(Object count) {
+    return 'تم أرشفة $count طلبًا';
+  }
+
+  @override
+  String unarchivedRequests(Object count) {
+    return 'تم إلغاء أرشفة $count طلبًا';
+  }
+
+  @override
+  String get archiveSelected => 'أرشفة المحدد';
+
+  @override
+  String get unarchiveSelected => 'إلغاء أرشفة المحدد';
+
+  @override
+  String get archive => 'أرشفة';
+
+  @override
+  String get unarchive => 'إلغاء الأرشفة';
+
+  @override
+  String get createdBy => 'أنشأه';
+
+  @override
+  String get validatedBy => 'تمت الموافقة من قبل';
+
+  @override
+  String get filterByFamily => 'تصفية حسب العائلة';
+
+  @override
+  String get filterBySubfamily => 'تصفية حسب الفئة الفرعية';
+
+  @override
+  String get purchaseOrders => 'أوامر الشراء';
+
+  @override
+  String get archivePurchaseOrders => 'أرشفة أوامر الشراء';
+
+  @override
+  String get unarchivePurchaseOrders => 'إلغاء أرشفة أوامر الشراء';
+
+  @override
+  String confirmArchivePurchaseOrders(Object action, Object count) {
+    return 'هل أنت متأكد أنك تريد $action $count أوامر شراء محددة؟';
+  }
+
+  @override
+  String archivedPurchaseOrders(Object count) {
+    return 'تم أرشفة $count أوامر شراء';
+  }
+
+  @override
+  String unarchivedPurchaseOrders(Object count) {
+    return 'تم إلغاء أرشفة $count أوامر شراء';
+  }
+
+  @override
+  String get deletePurchaseOrders => 'حذف أوامر الشراء';
+
+  @override
+  String confirmDeletePurchaseOrders(Object count) {
+    return 'هل أنت متأكد من حذف $count أوامر شراء محددة؟ لا يمكن التراجع عن ذلك.';
+  }
+
+  @override
+  String deletedPurchaseOrders(Object count) {
+    return 'تم حذف $count أوامر شراء';
+  }
+
+  @override
+  String failedToDeletePurchaseOrders(Object error) {
+    return 'فشل الحذف: $error';
+  }
+
+  @override
+  String get back => 'رجوع';
+
+  @override
+  String get deletePurchaseOrder => 'حذف أمر الشراء';
+
+  @override
+  String purchaseOrderDeleted(Object id) {
+    return 'تم حذف أمر الشراء $id';
+  }
+
+  @override
+  String failedToDeletePurchaseOrder(Object error) {
+    return 'فشل حذف أمر الشراء: $error';
+  }
+
+  @override
+  String archivedPurchaseOrder(Object id) {
+    return 'تم أرشفة أمر الشراء $id';
+  }
+
+  @override
+  String unarchivedPurchaseOrder(Object id) {
+    return 'تم إلغاء أرشفة أمر الشراء $id';
+  }
+
+  @override
+  String failedToArchivePurchaseOrder(Object error) {
+    return 'فشل أرشفة أمر الشراء: $error';
+  }
+
+  @override
+  String viewPurchaseOrder(Object id) {
+    return 'عرض أمر الشراء $id';
+  }
+
+  @override
+  String get purchaseOrdersTable => 'جدول أوامر الشراء';
+
+  @override
+  String get idShort => 'المعرف';
+
+  @override
+  String get priorityShort => 'الأولوية';
+
+  @override
+  String get invalidSupplierDeliveryDate => 'الرجاء إدخال تاريخ تسليم مورد صالح.';
+
+  @override
+  String get refuseReasonLabel => 'سبب الرفض';
+
+  @override
+  String get products => 'المنتجات';
+
+  @override
+  String get subfamilyLabel => 'الفئة الفرعية';
+
+  @override
+  String get unitPrice => 'سعر الوحدة';
+
+  @override
+  String get totalPrice => 'السعر الإجمالي';
+
+  @override
+  String get purchaseOrderApproved => 'تمت الموافقة على الطلب!';
+
+  @override
+  String get purchaseOrderRejected => 'تم رفض الطلب!';
+
+  @override
+  String get currency => 'العملة';
+
+  @override
+  String get addProduct => 'إضافة منتج';
+
+  @override
+  String get invalidDueDate => 'الرجاء إدخال تاريخ استحقاق صالح.';
+
+  @override
+  String get removeProductLine => 'حذف سطر المنتج';
+
+  @override
+  String totalLabel(Object amount) {
+    return 'المجموع: $amount';
+  }
+
+  @override
+  String get pleaseFillAllRequiredFields => 'الرجاء ملء جميع الحقول المطلوبة.';
+
+  @override
+  String get purchaseOrderSaved => 'تم حفظ أمر الشراء!';
 }

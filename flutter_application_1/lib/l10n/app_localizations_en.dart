@@ -160,6 +160,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get purchaseRequest => 'Purchase Request';
 
   @override
+  String get editPurchaseRequest => 'Edit Purchase Request';
+
+  @override
+  String get editPurchaseOrder => 'Edit Purchase Order';
+
+  @override
+  String get confirmCancelUnsavedChanges => 'Are you sure you want to cancel? Unsaved changes will be lost.';
+
+  @override
   String get purchaseOrder => 'Purchase Order';
 
   @override
@@ -319,9 +328,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addNewBrand => 'Add New Brand';
 
   @override
-  String get supplierDeliveryDate => 'Supplier Delivery date';
-
-  @override
   String get createNewRole => 'Create new role';
 
   @override
@@ -434,6 +440,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rejected => 'Rejected';
+
+  @override
+  String get transformed => 'Converted';
+
+  @override
+  String get edited => 'Edited';
 
   @override
   String get searchProduct => 'Search Product name...';
@@ -586,7 +598,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get editSupplier => 'Edit Supplier';
 
   @override
-  String get supplierName => 'Supplier Name';
+  String get supplierName => 'Supplier name';
 
   @override
   String get supplierEmail => 'Supplier Email';
@@ -734,4 +746,294 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get updatePasswordBtn => 'Update password';
+
+  @override
+  String failedToLoadFamilies(Object error) {
+    return 'Failed to load families: $error';
+  }
+
+  @override
+  String get pickDate => 'Pick date';
+
+  @override
+  String get saving => 'Saving...';
+
+  @override
+  String failedToCreateFamily(Object error) {
+    return 'Failed to create family: $error';
+  }
+
+  @override
+  String failedToUpdateFamily(Object error) {
+    return 'Failed to update family: $error';
+  }
+
+  @override
+  String confirmDeleteFamily(Object name) {
+    return 'Delete $name and all its subfamilies?';
+  }
+
+  @override
+  String failedToDeleteFamily(Object error) {
+    return 'Failed to delete family: $error';
+  }
+
+  @override
+  String get reset => 'Reset';
+
+  @override
+  String get familyLabel => 'Family';
+
+  @override
+  String pageOf(Object current, Object total) {
+    return 'Page $current of $total';
+  }
+
+  @override
+  String get allFamilies => 'All Families';
+
+  @override
+  String get allSubfamilies => 'All Subfamilies';
+
+  @override
+  String get selectFamilyFirst => 'Select a family first';
+
+  @override
+  String selectedCount(Object count) {
+    return '$count selected';
+  }
+
+  @override
+  String failedWithError(Object error) {
+    return 'Failed: $error';
+  }
+
+  @override
+  String get deleteSelected => 'Delete Selected';
+
+  @override
+  String confirmDeleteSelectedRequests(Object count) {
+    return 'Are you sure you want to delete $count requests? This cannot be undone.';
+  }
+
+  @override
+  String deletedRequests(Object count) {
+    return 'Deleted $count requests';
+  }
+
+  @override
+  String failedToDeleteRequests(Object error) {
+    return 'Failed to delete: $error';
+  }
+
+  @override
+  String get accessDeniedAdmin => 'Access denied — admins only';
+
+  @override
+  String appVersionLabel(Object version) {
+    return 'Version $version';
+  }
+
+  @override
+  String get purchaseOrderTitle => 'Purchase Order';
+
+  @override
+  String idLabel(Object id) {
+    return 'ID: $id';
+  }
+
+  @override
+  String createdLabel(Object date) {
+    return 'Created: $date';
+  }
+
+  @override
+  String updatedLabel(Object date) {
+    return 'Updated: $date';
+  }
+
+  @override
+  String get supplierLabel => 'Supplier';
+
+  @override
+  String get supplierDeliveryDate => 'Supplier Delivery Date';
+
+  @override
+  String get noteLabel => 'Note';
+
+  @override
+  String get statusLabel => 'Status';
+
+  @override
+  String priorityLabel(Object priority) {
+    return 'Priority: $priority';
+  }
+
+  @override
+  String archivedRequests(Object count) {
+    return 'Archived $count requests';
+  }
+
+  @override
+  String unarchivedRequests(Object count) {
+    return 'Unarchived $count requests';
+  }
+
+  @override
+  String get archiveSelected => 'Archive Selected';
+
+  @override
+  String get unarchiveSelected => 'Unarchive Selected';
+
+  @override
+  String get archive => 'Archive';
+
+  @override
+  String get unarchive => 'Unarchive';
+
+  @override
+  String get createdBy => 'Created by';
+
+  @override
+  String get validatedBy => 'Validated by';
+
+  @override
+  String get filterByFamily => 'Filter by Family';
+
+  @override
+  String get filterBySubfamily => 'Filter by Subfamily';
+
+  @override
+  String get purchaseOrders => 'Purchase Orders';
+
+  @override
+  String get archivePurchaseOrders => 'Archive Purchase Orders';
+
+  @override
+  String get unarchivePurchaseOrders => 'Unarchive Purchase Orders';
+
+  @override
+  String confirmArchivePurchaseOrders(Object action, Object count) {
+    return 'Are you sure you want to $action $count selected purchase orders?';
+  }
+
+  @override
+  String archivedPurchaseOrders(Object count) {
+    return '$count purchase orders archived';
+  }
+
+  @override
+  String unarchivedPurchaseOrders(Object count) {
+    return '$count purchase orders unarchived';
+  }
+
+  @override
+  String get deletePurchaseOrders => 'Delete Purchase Orders';
+
+  @override
+  String confirmDeletePurchaseOrders(Object count) {
+    return 'Are you sure you want to delete $count selected purchase orders? This cannot be undone.';
+  }
+
+  @override
+  String deletedPurchaseOrders(Object count) {
+    return '$count purchase orders deleted';
+  }
+
+  @override
+  String failedToDeletePurchaseOrders(Object error) {
+    return 'Failed to delete: $error';
+  }
+
+  @override
+  String get back => 'Back';
+
+  @override
+  String get deletePurchaseOrder => 'Delete Purchase Order';
+
+  @override
+  String purchaseOrderDeleted(Object id) {
+    return 'Purchase order $id deleted';
+  }
+
+  @override
+  String failedToDeletePurchaseOrder(Object error) {
+    return 'Failed to delete purchase order: $error';
+  }
+
+  @override
+  String archivedPurchaseOrder(Object id) {
+    return 'Purchase order $id archived';
+  }
+
+  @override
+  String unarchivedPurchaseOrder(Object id) {
+    return 'Purchase order $id unarchived';
+  }
+
+  @override
+  String failedToArchivePurchaseOrder(Object error) {
+    return 'Failed to archive purchase order: $error';
+  }
+
+  @override
+  String viewPurchaseOrder(Object id) {
+    return 'View Purchase Order $id';
+  }
+
+  @override
+  String get purchaseOrdersTable => 'Purchase Orders Table';
+
+  @override
+  String get idShort => 'ID';
+
+  @override
+  String get priorityShort => 'Priority';
+
+  @override
+  String get invalidSupplierDeliveryDate => 'Please enter a valid supplier delivery date.';
+
+  @override
+  String get refuseReasonLabel => 'Refuse Reason';
+
+  @override
+  String get products => 'Products';
+
+  @override
+  String get subfamilyLabel => 'Subfamily';
+
+  @override
+  String get unitPrice => 'Unit Price';
+
+  @override
+  String get totalPrice => 'Total Price';
+
+  @override
+  String get purchaseOrderApproved => 'Order approved!';
+
+  @override
+  String get purchaseOrderRejected => 'Order rejected!';
+
+  @override
+  String get currency => 'Currency';
+
+  @override
+  String get addProduct => 'Add Product';
+
+  @override
+  String get invalidDueDate => 'Please enter a valid due date.';
+
+  @override
+  String get removeProductLine => 'Remove product line';
+
+  @override
+  String totalLabel(Object amount) {
+    return 'Total: $amount';
+  }
+
+  @override
+  String get pleaseFillAllRequiredFields => 'Please fill all required fields.';
+
+  @override
+  String get purchaseOrderSaved => 'Purchase order saved!';
 }

@@ -8,6 +8,7 @@ import 'package:flutter_application_1/screens/Purchase%20Request/Request_Edit_sc
 import 'package:flutter_application_1/screens/Purchase%20Request/purchase_request_view_screen.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_application_1/l10n/app_localizations.dart';
 
 class PurchaseRequestDataSource extends DataTableSource {
   final List<PurchaseRequest> requests;
@@ -67,6 +68,10 @@ class PurchaseRequestDataSource extends DataTableSource {
 
           // Listen to UserController so this cell rebuilds when users load
           final userController = Provider.of<UserController>(cellContext, listen: true);
+          // If user list is not yet loaded, show a localized loading placeholder instead of the raw id
+          if (userController.users.isEmpty) {
+            return Text(AppLocalizations.of(cellContext)!.loading);
+          }
           final found = userController.users.firstWhere((u) => u.id == userId, orElse: () => User(id: userId, username: userId.toString()));
           final displayName = (found.firstName != null && (found.firstName ?? '').isNotEmpty)
               ? '${found.firstName} ${found.lastName ?? ''}'.trim()
@@ -132,14 +137,46 @@ class PurchaseRequestDataSource extends DataTableSource {
             ),
             child: Padding(
               padding: const EdgeInsets.all(4.0),
-              child: Center(
-                child: Text(
-                  request.status ?? 'pending',
-                  style: TextStyle(
-                    color: Colors.white
+              child: Builder(builder: (cellContext) {
+                final s = (request.status ?? 'pending').toString();
+                final lv = s.toLowerCase();
+                final Color cellColor = lv == 'approved'
+                    ? Colors.green
+                    : lv == 'rejected'
+                        ? Colors.red
+                        : (lv == 'transformed' || lv == 'converted')
+                            ? Colors.blue
+                            : Colors.orange;
+                final String display = lv == 'pending'
+                    ? AppLocalizations.of(cellContext)!.pending
+                    : lv == 'approved'
+                        ? AppLocalizations.of(cellContext)!.approved
+                        : lv == 'rejected'
+                            ? AppLocalizations.of(cellContext)!.rejected
+                            : (lv == 'transformed' || lv == 'converted')
+                                ? AppLocalizations.of(cellContext)!.transformed
+                                : lv == 'edited'
+                                    ? AppLocalizations.of(cellContext)!.edited
+                                    : s;
+                return Container(
+                  width: 80,
+                  decoration: BoxDecoration(
+                    color: cellColor,
+                    borderRadius: BorderRadius.circular(4),
                   ),
-                ),
-              ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(4.0),
+                    child: Center(
+                      child: Text(
+                        display,
+                        style: const TextStyle(
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }),
             ),
           ),
         )),

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../l10n/app_localizations.dart';
 import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
+import 'package:flutter_application_1/controllers/supplier_controller.dart';
 
 class ProductLine {
 
@@ -31,6 +32,7 @@ class ProductLine {
       'brand': brand,
       'family': family,
       'subFamily': subFamily,
+      'supplier': supplier,
       'quantity': quantity,
       'unit_price': unitPrice,
     };
@@ -78,9 +80,14 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
   bool _isSaving = false;
   String? supplierName;
 
+  late SupplierController supplierController;
+  late List<String> suppliers = [];
+
   @override
   void initState() {
     super.initState();
+    supplierController = Provider.of<SupplierController>(context, listen: false);
+    _fetchSuppliers();
     final initial = widget.initialOrder;
     if (initial.isNotEmpty) {
       _priority = initial['priority']?.toString();
@@ -99,7 +106,8 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
       supplierName = initial['supplierName'] ?? initial['supplier'] ?? initial['Supplier'];
       if ((supplierName == null || (supplierName?.isEmpty ?? true)) && initial['products'] != null && initial['products'] is List) {
         for (final p in (initial['products'] as List)) {
-          final s = p['supplier']?.toString() ?? p['Supplier']?.toString();
+          final supplierField = p['supplier'] ?? p['Supplier'];
+          final s = supplierField is Map ? (supplierField['name']?.toString() ?? supplierField['supplier']?.toString()) : (supplierField?.toString());
           if (s != null && s.isNotEmpty) {
             supplierName = s;
             break;
@@ -135,8 +143,7 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
                 ? p['unit_price']
                 : (p['unit_price'] is int)
                     ? (p['unit_price'] as int).toDouble()
-                    : double.tryParse(p['unit_price']?.toString() ?? '') ?? 0.0,
-          );
+                    : double.tryParse(p['unit_price']?.toString() ?? '') ?? 0.0,            supplier: p['supplier'] is Map ? (p['supplier']['name']?.toString()) : (p['supplier']?.toString()),          );
         }).toList();
         // product brands kept on productLines; supplier delivery is order-level
       }
@@ -161,6 +168,18 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
     }
   }
 
+  Future<void> _fetchSuppliers() async {
+    try {
+      await supplierController.fetchSuppliers();
+      setState(() {
+        suppliers = supplierController.suppliers.map((s) => s.name ?? '').toList();
+        suppliers.add('Autre');
+      });
+    } catch (_) {
+      // ignore
+    }
+  }
+
   double get totalPrice => productLines.fold(
         0,
         (sum, p) => sum + (p.unitPrice * p.quantity.toDouble()),
@@ -177,6 +196,7 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
@@ -189,8 +209,8 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
                 Expanded(
                   child: DropdownButtonFormField<String>(
                     initialValue: _priority,
-                    decoration: const InputDecoration(
-                      labelText: 'Priority',
+                    decoration: InputDecoration(
+                      labelText: AppLocalizations.of(context)!.priority,
                       border: OutlineInputBorder(),
                     ),
                     items: const [
@@ -204,27 +224,26 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
               ],
             ),
             const SizedBox(height: 24),
-            const Text('Supplier Information',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context)!.supplierLabel, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             TextFormField(
               controller: supplierNameController,
-              decoration: const InputDecoration(
-                labelText: 'Supplier name',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context)!.supplierName,
+                border: const OutlineInputBorder(),
               ),
               onChanged: (val) => setState(() => supplierName = val),
             ),
             const SizedBox(height: 12),
             Row(
               children: [
-                const Text('Currency', style: TextStyle(fontWeight: FontWeight.w600)),
+                Text(loc.currency, style: const TextStyle(fontWeight: FontWeight.w600)),
                 const SizedBox(width: 12),
                 SizedBox(
                   width: 180,
                   child: DropdownButtonFormField<String>(
                     value: _currency,
-                    decoration: const InputDecoration(border: OutlineInputBorder()),
+                    decoration: InputDecoration(border: OutlineInputBorder()),
                     items: _currencySymbols.keys
                         .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                         .toList(),
@@ -234,7 +253,8 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
               ],
             ),
             const SizedBox(height: 32),
-            const Text('Products', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(AppLocalizations.of(context)!.products, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+
             const SizedBox(height: 8),
             Column(
               children: productLines.asMap().entries.map((entry) => _buildProductLine(entry.value, entry.key)).toList(),
@@ -243,7 +263,7 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
               alignment: Alignment.centerRight,
               child: ElevatedButton.icon(
                 icon: const Icon(Icons.add),
-                label: const Text('Add Product'),
+                label: Text(loc.addProduct),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF8C7AE6),
                   foregroundColor: Colors.white,
@@ -251,69 +271,102 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
                 onPressed: () => setState(() => productLines.add(ProductLine())),
               ),
             ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    controller: supplierDeliveryDateController,
-                    readOnly: true,
-                    decoration: InputDecoration(
-                      labelText: AppLocalizations.of(context)!.supplierDeliveryDate,
-                      border: const OutlineInputBorder(),
-                      suffixIcon: const Icon(Icons.calendar_today),
-                    ),
-                    onTap: () async {
-                      DateTime? pickedDate = await showDatePicker(
-                        context: context,
-                        initialDate: DateTime.now(),
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2100),
-                      );
-                      if (pickedDate != null) {
-                        setState(() {
-                          supplierDeliveryDateController.text = DateFormat('dd-MM-yyyy').format(pickedDate);
-                        });
-                      }
-                    },
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextFormField(
-                    controller: dueDateController,
-                    readOnly: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Due date',
-                      border: OutlineInputBorder(),
-                      suffixIcon: Icon(Icons.calendar_today),
-                    ),
-                    onTap: () async {
-                      DateTime? pickedDate = await showDatePicker(
-                        context: context,
-                        initialDate: DateTime.now(),
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime(2100),
-                      );
-                      if (pickedDate != null) {
-                        setState(() {
-                          dueDateController.text = DateFormat('dd-MM-yyyy').format(pickedDate);
-                        });
-                      }
-                    },
-                  ),
-                ),
-              ],
+const SizedBox(height: 24),
+Row(
+  children: [
+    // 🔹 Supplier Delivery Date
+    Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            AppLocalizations.of(context)!.supplierDeliveryDate,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: Colors.black54,
             ),
+          ),
+          const SizedBox(height: 6),
+          TextFormField(
+            controller: supplierDeliveryDateController,
+            readOnly: true,
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(),
+              suffixIcon: Icon(Icons.calendar_today),
+            ),
+            onTap: () async {
+              DateTime? pickedDate = await showDatePicker(
+                context: context,
+                initialDate: DateTime.now(),
+                firstDate: DateTime(2000),
+                lastDate: DateTime(2100),
+              );
+              if (pickedDate != null) {
+                setState(() {
+                  supplierDeliveryDateController.text =
+                      DateFormat('dd-MM-yyyy').format(pickedDate);
+                });
+              }
+            },
+          ),
+        ],
+      ),
+    ),
+
+    const SizedBox(width: 12),
+
+    // 🔹 Due Date
+    Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            loc.dueDate,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: Colors.black54,
+            ),
+          ),
+          const SizedBox(height: 6),
+          TextFormField(
+            controller: dueDateController,
+            readOnly: true,
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(),
+              suffixIcon: Icon(Icons.calendar_today),
+            ),
+            onTap: () async {
+              DateTime? pickedDate = await showDatePicker(
+                context: context,
+                initialDate: DateTime.now(),
+                firstDate: DateTime(2000),
+                lastDate: DateTime(2100),
+              );
+              if (pickedDate != null) {
+                setState(() {
+                  dueDateController.text =
+                      DateFormat('dd-MM-yyyy').format(pickedDate);
+                });
+              }
+            },
+          ),
+        ],
+      ),
+    ),
+  ],
+),
+
             const SizedBox(height: 24),
             TextField(
               controller: noteController,
               maxLines: 4,
-              decoration: const InputDecoration(
-                labelText: 'Note',
+              decoration: InputDecoration(
+                labelText: loc.noteLabel,
                 filled: true,
-                fillColor: Color(0xFFF0F0F0),
-                border: OutlineInputBorder(),
+                fillColor: const Color(0xFFF0F0F0),
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 32),
@@ -324,7 +377,7 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                'Total: ${_currencySymbols[_currency]}${totalPrice.toStringAsFixed(2)}',
+                loc.totalLabel('${_currencySymbols[_currency]}${totalPrice.toStringAsFixed(2)}'),
                 style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -351,8 +404,8 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
                               color: Colors.white,
                             ),
                           )
-                        : const Text('Save',
-                            style: TextStyle(color: Colors.white)),
+                        : Text(loc.saveBtn,
+                            style: const TextStyle(color: Colors.white)),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -362,7 +415,7 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
-                    child: const Text('Cancel'),
+                    child: Text(loc.cancel),
                   ),
                 ),
               ],
@@ -380,7 +433,7 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
         // productLines.any((p) => p.brand == null || p.brand!.isEmpty) ||
         _priority == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill all required fields.')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.pleaseFillAllRequiredFields)),
       );
       return;
     }
@@ -398,7 +451,7 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
       }
       if (parsedSupplierDeliveryDate == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter a valid supplier delivery date.')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.invalidSupplierDeliveryDate)),
         );
         return;
       }
@@ -417,20 +470,39 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
     }
     if (parsedEndDate == null || parsedEndDate.year < 2000 || parsedEndDate.year > 2100) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a valid due date.')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.invalidDueDate)),
       );
       return;
     }
     setState(() => _isSaving = true);
     try {
-      // Adapter la structure des produits pour le backend
-      final List<Map<String, dynamic>> productsList = productLines.map((p) => {
-        'product': p.product ?? '',
-        // 'brand': p.brand ?? '',
-        'quantity': p.quantity,
-        'unit_price': p.unitPrice,
-        'price': (p.unitPrice * p.quantity),
-        'supplier': supplierName,
+      // Adapter la structure des produits pour le backend (supplier per product)
+      final supplierControllerLocal = Provider.of<SupplierController>(context, listen: false);
+      final supplierNameLocal = supplierName ?? supplierNameController.text;
+
+      final List<Map<String, dynamic>> productsList = productLines.map((p) {
+        final prodSupplierName = (p.supplier != null && p.supplier!.isNotEmpty) ? p.supplier : supplierNameLocal;
+        final prodSupplierObj = (() {
+          if (prodSupplierName == null || prodSupplierName.isEmpty) return null;
+          try {
+            final s = supplierControllerLocal.suppliers.firstWhere((sup) => sup.name == prodSupplierName);
+            return {
+              'id': s.id,
+              'name': s.name,
+              if (s.email != null) 'email': s.email,
+            };
+          } catch (_) {
+            return {'name': prodSupplierName};
+          }
+        })();
+        return {
+          'product': p.product ?? '',
+          // 'brand': p.brand ?? '',
+          'quantity': p.quantity,
+          'unit_price': p.unitPrice,
+          'price': (p.unitPrice * p.quantity),
+          'supplier': prodSupplierObj,
+        };
       }).toList();
       // Construction du body attendu par le backend
       final jsonBody = {
@@ -459,14 +531,14 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
             .addOrder(jsonBody); // <-- à adapter côté controller si besoin
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Purchase order saved!')),
+            SnackBar(content: Text(AppLocalizations.of(context)!.purchaseOrderSaved)),
           );
           Navigator.of(context).pop();
         }
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to save: $e')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.failedWithError(e.toString()))),
       );
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -485,9 +557,9 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
                 flex: 3,
                 child: TextFormField(
                   initialValue: product.product,
-                  decoration: const InputDecoration(
-                    labelText: 'Product',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)!.product,
+                    border: const OutlineInputBorder(),
                   ),
                   onChanged: (val) => setState(() => product.product = val),
                 ),
@@ -498,9 +570,9 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
                 child: TextFormField(
                   keyboardType: TextInputType.number,
                   initialValue: product.quantity.toString(),
-                  decoration: const InputDecoration(
-                    labelText: 'Quantity',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)!.quantity,
+                    border: const OutlineInputBorder(),
                   ),
                   onChanged: (val) => setState(() {
                     final parsed = int.tryParse(val);
@@ -526,7 +598,37 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
             ],
           ),
           const SizedBox(height: 12),
-          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                flex: 3,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(AppLocalizations.of(context)!.supplierLabel),
+                    const SizedBox(height: 4),
+                    DropdownButtonFormField<String>(
+                      value: suppliers.contains(product.supplier) ? product.supplier : (product.supplier != null && product.supplier!.isNotEmpty ? 'Autre' : null),
+                      items: suppliers.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+                      onChanged: (val) => setState(() {
+                        if (val == 'Autre') {
+                          product.supplier = '';
+                        } else {
+                          product.supplier = val;
+                        }
+                      }),
+                    ),
+                    if (product.supplier != null && product.supplier!.isNotEmpty && !suppliers.contains(product.supplier))
+                      TextFormField(
+                        initialValue: product.supplier,
+                        onChanged: (v) => setState(() => product.supplier = v),
+                        decoration: InputDecoration(hintText: AppLocalizations.of(context)!.supplierLabel),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
           Row(
             children: [
               Expanded(
@@ -537,7 +639,7 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
                        TextInputType.numberWithOptions(decimal: true),
                   decoration: InputDecoration(
                     hintText: '0.00',
-                    labelText: 'Unit Price (${_currencySymbols[_currency]})',
+                    labelText: '${AppLocalizations.of(context)!.unitPrice} (${_currencySymbols[_currency]})',
                     border: const OutlineInputBorder(),
                   ),
                   onChanged: (val) => setState(() {
@@ -572,7 +674,7 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
               const SizedBox(width: 12),
               IconButton(
                 icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
-                tooltip: 'Remove product line',
+                tooltip: AppLocalizations.of(context)!.removeProductLine,
                 onPressed: () {
                   if (productLines.length > 1) {
                     setState(() {

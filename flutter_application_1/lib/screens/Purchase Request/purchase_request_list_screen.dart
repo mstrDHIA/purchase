@@ -166,7 +166,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
               PopupMenuButton<String>(
                 onSelected: (value) { setState(() { _priorityFilter = value.isEmpty ? null : value; }); },
                 itemBuilder: (context) => [
-                  const PopupMenuItem(value: '', child: Text('All')),
+                  PopupMenuItem(value: '', child: Text(AppLocalizations.of(context)!.all)),
                   ..._priorityOptions.map((p) => PopupMenuItem(value: p, child: Text(p[0].toUpperCase() + p.substring(1)))),
                 ],
                 child: OutlinedButton(
@@ -182,7 +182,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        _priorityFilter == null ? 'Filter by Priority' : 'Priority: ${_priorityFilter![0].toUpperCase() + _priorityFilter!.substring(1)}',
+                        _priorityFilter == null ? AppLocalizations.of(context)!.filterByPriority : AppLocalizations.of(context)!.priorityLabel(_priorityFilter![0].toUpperCase() + _priorityFilter!.substring(1)),
                         style: const TextStyle(color: Colors.deepPurple, fontWeight: FontWeight.w500),
                       ),
                       const SizedBox(width: 6),
@@ -203,9 +203,9 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                 },
                 itemBuilder: (context) {
                   final items = <PopupMenuEntry<String?>>[];
-                  items.add(const PopupMenuItem<String?>(value: '', child: Text('All Families')));
+                  items.add(PopupMenuItem<String?>(value: '', child: Text(AppLocalizations.of(context)!.allFamilies)));
                   if (_loadingFamilies) {
-                    items.add(const PopupMenuItem<String?>(value: null, child: Text('Loading...')));
+                    items.add(PopupMenuItem<String?>(value: null, child: Text(AppLocalizations.of(context)!.loading)));
                   } else {
                     for (final f in dynamicProductFamilies.keys) {
                       items.add(PopupMenuItem<String?>(value: f, child: Text(f)));
@@ -226,7 +226,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        _familyFilter == null ? 'Filter by Family' : 'Family: ${_familyFilter!}',
+                        _familyFilter == null ? AppLocalizations.of(context)!.filterByFamily : 'Family: ${_familyFilter!}',
                         style: const TextStyle(color: Colors.deepPurple, fontWeight: FontWeight.w500),
                       ),
                       const SizedBox(width: 6),
@@ -241,9 +241,9 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                 onSelected: (value) { setState(() { _subFamilyFilter = (value == null || value.isEmpty) ? null : value; }); },
                 itemBuilder: (context) {
                   final items = <PopupMenuEntry<String?>>[];
-                  items.add(const PopupMenuItem<String?>(value: '', child: Text('All Subfamilies')));
+                  items.add(PopupMenuItem<String?>(value: '', child: Text(AppLocalizations.of(context)!.allSubfamilies)));
                   if (_familyFilter == null) {
-                    items.add(const PopupMenuItem<String?>(value: null, child: Text('Select a family first')));
+                    items.add(PopupMenuItem<String?>(value: null, child: Text(AppLocalizations.of(context)!.selectFamilyFirst)));
                   } else {
                     final subs = dynamicProductFamilies[_familyFilter] ?? [];
                     for (final s in subs) items.add(PopupMenuItem<String?>(value: s, child: Text(s)));
@@ -263,7 +263,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        _subFamilyFilter == null ? 'Filter by Subfamily' : 'Sub: ${_subFamilyFilter!}',
+                        _subFamilyFilter == null ? AppLocalizations.of(context)!.filterBySubfamily : 'Sub: ${_subFamilyFilter!}',
                         style: const TextStyle(color: Colors.deepPurple, fontWeight: FontWeight.w500),
                       ),
                       const SizedBox(width: 6),
@@ -293,7 +293,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        _statusFilter == null ? 'Filter by Status' : 'Status: ${_statusFilter![0].toUpperCase() + _statusFilter!.substring(1)}',
+                        _statusFilter == null ? AppLocalizations.of(context)!.filterStatus : 'Status: ${_statusFilter![0].toUpperCase() + _statusFilter!.substring(1)}',
                         style: const TextStyle(color: Colors.deepPurple, fontWeight: FontWeight.w500),
                       ),
                       const SizedBox(width: 6),
@@ -311,7 +311,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
                   padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                 ),
-                child: Text(_selectedSubmissionDate == null ? 'Filter by Submission Date' : 'Submission: ${_dateFormat.format(_selectedSubmissionDate!)}'),
+                child: Text(_selectedSubmissionDate == null ? AppLocalizations.of(context)!.filterBySubmissionDate : 'Submission: ${_dateFormat.format(_selectedSubmissionDate!)}'),
               ),
               OutlinedButton(
                 onPressed: () => _selectDate(context, false),
@@ -322,7 +322,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
                   padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                 ),
-                child: Text(_selectedDueDate == null ? ' Delivery due date' : 'Due: ${_dateFormat.format(_selectedDueDate!)}'),
+                child: Text(_selectedDueDate == null ? AppLocalizations.of(context)!.dueDate : 'Due: ${_dateFormat.format(_selectedDueDate!)}'),
               ),
               OutlinedButton.icon(
                 style: OutlinedButton.styleFrom(
@@ -339,13 +339,13 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                 },
                 icon: const Icon(Icons.archive),
                 label: Text(
-                  _showArchived ? 'Hide Archived' : 'Show Archived',
+                  _showArchived ? AppLocalizations.of(context)!.hideArchived : AppLocalizations.of(context)!.showArchived,
                   style: const TextStyle(fontWeight: FontWeight.w500),
                 ),
               ),
               TextButton(
                 onPressed: _clearFilters,
-                child: const Text('Clear Filters', style: TextStyle(color: Colors.deepPurple, fontWeight: FontWeight.w500)),
+                child: Text(AppLocalizations.of(context)!.clearFilters, style: const TextStyle(color: Colors.deepPurple, fontWeight: FontWeight.w500)),
               ),
             ],
           ),
@@ -356,12 +356,14 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
   late UserController userController;
   @override
   void initState() {
-    userController= Provider.of<UserController>(context, listen: false);
+    userController = Provider.of<UserController>(context, listen: false);
     // ensure users are loaded so we can display names instead of ids
-    userController.getUsers();
     purchaseRequestController = Provider.of<PurchaseRequestController>(context, listen: false);
-    // initial paginated fetch
-    purchaseRequestController.fetchRequests(context, userController.currentUser, page: 1, pageSizeParam: _rowsPerPageLocal);
+
+    // Fetch users first, then fetch requests so we can resolve ids to names immediately
+    userController.getUsers().whenComplete(() {
+      purchaseRequestController.fetchRequests(context, userController.currentUser, page: 1, pageSizeParam: _rowsPerPageLocal);
+    });
 
     // fetch product families for filters (N2 and N3)
     _fetchProductFamilies();
@@ -421,286 +423,286 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
           const SizedBox(width: 16),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                const SizedBox(height: 16),
-                // --- Filter Bar + Search ---
-                // Use the consolidated filters row builder (search on left, filters on right)
-                _buildFiltersRow(),
-                const SizedBox(height: 8),
-                // --- End Filter Bar ---
-                Expanded(
-                  child: Consumer<PurchaseRequestController>(
-                    builder: (context, purchaseRequestController, child) {
-                      final allRequests = purchaseRequestController.requests;
-                      var filteredRequests = allRequests;
-                      // Filter archived requests
-                      if (_showArchived) {
-                        // Show ONLY archived requests
-                        filteredRequests = filteredRequests.where((req) => (req.isArchived ?? false)).toList();
-                      } else {
-                        // Show ONLY non-archived requests
-                        filteredRequests = filteredRequests.where((req) => !(req.isArchived ?? false)).toList();
-                      }
-                      if (_statusFilter != null) {
-                        filteredRequests = filteredRequests.where((req) => req.status == _statusFilter).toList();
-                      }
-                      if (_priorityFilter != null) {
-                        filteredRequests = filteredRequests.where((req) => req.priority == _priorityFilter).toList();
-                      }
-                      if (_selectedSubmissionDate != null) {
-                        filteredRequests = filteredRequests.where((req) => req.startDate != null &&
-                          req.startDate!.year == _selectedSubmissionDate!.year &&
-                          req.startDate!.month == _selectedSubmissionDate!.month &&
-                          req.startDate!.day == _selectedSubmissionDate!.day).toList();
-                      }
-                      if (_selectedDueDate != null) {
-                        filteredRequests = filteredRequests.where((req) => req.endDate != null &&
-                          req.endDate!.year == _selectedDueDate!.year &&
-                          req.endDate!.month == _selectedDueDate!.month &&
-                          req.endDate!.day == _selectedDueDate!.day).toList();
-                      }
-                      // Apply search filter
-                      if (_searchText.isNotEmpty) {
-                        final searchLower = _searchText.toLowerCase();
-                        filteredRequests = filteredRequests.where((req) {
-                          return (req.id?.toString().toLowerCase().contains(searchLower) ?? false)
-                              || (req.requestedBy?.toString().toLowerCase().contains(searchLower) ?? false)
-                              || (req.status?.toString().toLowerCase().contains(searchLower) ?? false)
-                              || (req.priority?.toString().toLowerCase().contains(searchLower) ?? false)
-                              || (req.startDate?.toString().toLowerCase().contains(searchLower) ?? false)
-                              || (req.endDate?.toString().toLowerCase().contains(searchLower) ?? false);
-                        }).toList();
-                      }
+      body: Consumer<PurchaseRequestController>(
+        builder: (context, purchaseRequestController, child) {
+          if (purchaseRequestController.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-                      // Apply family/subfamily filters (N2/N3) — match if any product line in the request has the family/subfamily
-                      if (_familyFilter != null) {
-                        filteredRequests = filteredRequests.where((req) => (req.products?.any((p) => (p.family?.toString() == _familyFilter)) ?? false)).toList();
-                      }
-                      if (_subFamilyFilter != null) {
-                        filteredRequests = filteredRequests.where((req) => (req.products?.any((p) => (p.subFamily?.toString() == _subFamilyFilter)) ?? false)).toList();
-                      }
+          // Use the controller data after loading to avoid showing stale cached requests
+          final allRequests = purchaseRequestController.requests;
+          var filteredRequests = allRequests;
+          // Filter archived requests
+          if (_showArchived) {
+            filteredRequests = filteredRequests.where((req) => (req.isArchived ?? false)).toList();
+          } else {
+            filteredRequests = filteredRequests.where((req) => !(req.isArchived ?? false)).toList();
+          }
+          if (_statusFilter != null) {
+            filteredRequests = filteredRequests.where((req) => req.status == _statusFilter).toList();
+          }
+          if (_priorityFilter != null) {
+            filteredRequests = filteredRequests.where((req) => req.priority == _priorityFilter).toList();
+          }
+          if (_selectedSubmissionDate != null) {
+            filteredRequests = filteredRequests.where((req) => req.startDate != null &&
+              req.startDate!.year == _selectedSubmissionDate!.year &&
+              req.startDate!.month == _selectedSubmissionDate!.month &&
+              req.startDate!.day == _selectedSubmissionDate!.day).toList();
+          }
+          if (_selectedDueDate != null) {
+            filteredRequests = filteredRequests.where((req) => req.endDate != null &&
+              req.endDate!.year == _selectedDueDate!.year &&
+              req.endDate!.month == _selectedDueDate!.month &&
+              req.endDate!.day == _selectedDueDate!.day).toList();
+          }
+          // Apply search filter
+          if (_searchText.isNotEmpty) {
+            final searchLower = _searchText.toLowerCase();
+            filteredRequests = filteredRequests.where((req) {
+              return (req.id?.toString().toLowerCase().contains(searchLower) ?? false)
+                  || (req.requestedBy?.toString().toLowerCase().contains(searchLower) ?? false)
+                  || (req.status?.toString().toLowerCase().contains(searchLower) ?? false)
+                  || (req.priority?.toString().toLowerCase().contains(searchLower) ?? false)
+                  || (req.startDate?.toString().toLowerCase().contains(searchLower) ?? false)
+                  || (req.endDate?.toString().toLowerCase().contains(searchLower) ?? false);
+            }).toList();
+          }
 
-                      final filteredDataSource = PurchaseRequestDataSource(filteredRequests, context, 'filtered');
-                      // pagination data available in controller if needed
-                      // Sort filteredRequests if a sort column is selected
-                      if (_sortColumnIndex != null) {
-                        Function(dynamic req) getField;
-                        switch (_sortColumnIndex) {
-                          case 0:
-                            getField = (req) => req.id ?? 0;
-                            break;
-                          case 1:
-                            getField = (req) => req.requestedBy?.toString() ?? '';
-                            break;
-                          case 2:
-                            getField = (req) => req.startDate?.toString() ?? '';
-                            break;
-                          case 3:
-                            getField = (req) => req.endDate?.toString() ?? '';
-                            break;
-                          case 4:
-                            getField = (req) => req.priority?.toString() ?? '';
-                            break;
-                          case 5:
-                            getField = (req) => req.status?.toString() ?? '';
-                            break;
-                          default:
-                            getField = (req) => req.id ?? 0;
-                        }
-                        filteredRequests.sort((a, b) {
-                          final aValue = getField(a);
-                          final bValue = getField(b);
-                          if (aValue is Comparable && bValue is Comparable) {
-                            return _sortAscending ? Comparable.compare(aValue, bValue) : Comparable.compare(bValue, aValue);
-                          }
-                          return 0;
-                        });
-                      }
-                      final pageDataSource = filteredDataSource;
-                      // data source prepared for current page
-                      return Column(
-                        children: [
-                          // Batch actions row
-                          AnimatedBuilder(
-                            animation: pageDataSource,
-                            builder: (context, child) {
-                              final curSelected = pageDataSource.getSelectedIds();
-                              return Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                child: Row(
-                                  children: [
-                                    Text('${curSelected.length} selected'),
-                                    const SizedBox(width: 16),
-                                    // Archive / Unarchive depending on current view
-                                    ElevatedButton.icon(
-                                      onPressed: curSelected.isEmpty ? null : () async {
-                                        final isUnarchive = _showArchived == true;
-                                        final confirmed = await showDialog<bool>(
-                                          context: context,
-                                          builder: (context) => AlertDialog(
-                                            title: Text(isUnarchive ? 'Unarchive selected' : 'Archive selected'),
-                                            content: Text(isUnarchive
-                                                ? 'Are you sure you want to unarchive ${curSelected.length} requests?'
-                                                : 'Are you sure you want to archive ${curSelected.length} requests?'),
-                                            actions: [
-                                              TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
-                                              ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: Text(isUnarchive ? 'Unarchive' : 'Archive')),
-                                            ],
-                                          ),
-                                        );
-                                        if (confirmed != true) return;
-                                        final controller = Provider.of<PurchaseRequestController>(context, listen: false);
-                                        final userCtrl = Provider.of<UserController>(context, listen: false);
-                                        try {
-                                          for (final id in curSelected) {
-                                            if (isUnarchive) {
-                                              await controller.unarchivePurchaseRequest(id);
-                                            } else {
-                                              await controller.archivePurchaseRequest(id);
-                                            }
-                                          }
-                                          await controller.fetchRequests(context, userCtrl.currentUser);
-                                          pageDataSource.clearSelection();
-                                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(isUnarchive ? 'Unarchived ${curSelected.length} requests' : 'Archived ${curSelected.length} requests')));
-                                        } catch (e) {
-                                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: $e')));
-                                        }
-                                      },
-                                      icon: Icon(_showArchived ? Icons.unarchive_outlined : Icons.archive_outlined),
-                                      label: Text(_showArchived ? 'Unarchive Selected' : 'Archive Selected'),
-                                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF7C3AED), foregroundColor: Colors.white),
+          // Apply family/subfamily filters (N2/N3) — match if any product line in the request has the family/subfamily
+          if (_familyFilter != null) {
+            filteredRequests = filteredRequests.where((req) => (req.products?.any((p) => (p.family?.toString() == _familyFilter)) ?? false)).toList();
+          }
+          if (_subFamilyFilter != null) {
+            filteredRequests = filteredRequests.where((req) => (req.products?.any((p) => (p.subFamily?.toString() == _subFamilyFilter)) ?? false)).toList();
+          }
+
+          final filteredDataSource = PurchaseRequestDataSource(filteredRequests, context, 'filtered');
+          // pagination data available in controller if needed
+          // Sort filteredRequests if a sort column is selected
+          if (_sortColumnIndex != null) {
+            Function(dynamic req) getField;
+            switch (_sortColumnIndex) {
+              case 0:
+                getField = (req) => req.id ?? 0;
+                break;
+              case 1:
+                getField = (req) => req.requestedBy?.toString() ?? '';
+                break;
+              case 2:
+                getField = (req) => req.startDate?.toString() ?? '';
+                break;
+              case 3:
+                getField = (req) => req.endDate?.toString() ?? '';
+                break;
+              case 4:
+                getField = (req) => req.priority?.toString() ?? '';
+                break;
+              case 5:
+                getField = (req) => req.status?.toString() ?? '';
+                break;
+              default:
+                getField = (req) => req.id ?? 0;
+            }
+            filteredRequests.sort((a, b) {
+              final aValue = getField(a);
+              final bValue = getField(b);
+              if (aValue is Comparable && bValue is Comparable) {
+                return _sortAscending ? Comparable.compare(aValue, bValue) : Comparable.compare(bValue, aValue);
+              }
+              return 0;
+            });
+          }
+          final pageDataSource = filteredDataSource;
+
+          return Column(
+            children: [
+              const SizedBox(height: 16),
+              // --- Filter Bar + Search ---
+              // Use the consolidated filters row builder (search on left, filters on right)
+              _buildFiltersRow(),
+              const SizedBox(height: 8),
+              // --- End Filter Bar ---
+              Expanded(
+                child: Column(
+                  children: [
+                    // Batch actions row
+                    AnimatedBuilder(
+                      animation: pageDataSource,
+                      builder: (context, child) {
+                        final curSelected = pageDataSource.getSelectedIds();
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          child: Row(
+                            children: [
+                              Text(AppLocalizations.of(context)!.selectedCount(curSelected.length.toString())),
+                              const SizedBox(width: 16),
+                              // Archive / Unarchive depending on current view
+                              ElevatedButton.icon(
+                                onPressed: curSelected.isEmpty ? null : () async {
+                                  final isUnarchive = _showArchived == true;
+                                  final confirmed = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: Text(isUnarchive ? AppLocalizations.of(context)!.unarchiveSelected : AppLocalizations.of(context)!.archiveSelected),
+                                      content: Text(isUnarchive
+                                          ? AppLocalizations.of(context)!.unarchivedRequests(curSelected.length.toString())
+                                          : AppLocalizations.of(context)!.archivedRequests(curSelected.length.toString())),
+                                      actions: [
+                                        TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(AppLocalizations.of(context)!.cancel)),
+                                        ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: Text(isUnarchive ? AppLocalizations.of(context)!.unarchive : AppLocalizations.of(context)!.archive)),
+                                      ],
                                     ),
-                                    const SizedBox(width: 12),
-                                    ElevatedButton.icon(
-                                      onPressed: curSelected.isEmpty ? null : () async {
-                                        final confirmed = await showDialog<bool>(
-                                          context: context,
-                                          builder: (context) => AlertDialog(
-                                            title: const Text('Delete selected',style: TextStyle(color: Color.fromARGB(255, 240, 239, 241)),),
-                                            content: Text('Are you sure you want to delete ${curSelected.length} requests? This cannot be undone.'),
-                                            actions: [
-                                              TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
-                                              ElevatedButton(onPressed: () => Navigator.of(context).pop(true), style: ElevatedButton.styleFrom(backgroundColor: Colors.red), child: const Text('Delete')),
-                                            ],
-                                          ),
-                                        );
-                                        if (confirmed != true) return;
-                                        final controller = Provider.of<PurchaseRequestController>(context, listen: false);
-                                        final userCtrl = Provider.of<UserController>(context, listen: false);
-                                        try {
-                                          for (final id in curSelected) {
-                                            await controller.deleteRequest(id, context);
-                                          }
-                                          await controller.fetchRequests(context, userCtrl.currentUser);
-                                          pageDataSource.clearSelection();
-                                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Deleted ${curSelected.length} requests')));
-                                        } catch (e) {
-                                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to delete: $e')));
-                                        }
-                                      },
-                                      icon: const Icon(Icons.delete_outline),
-                                      label: const Text('Delete Selected'),
-                                      style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
-                          Expanded(
-                            child: SingleChildScrollView(
-                              scrollDirection: Axis.vertical,
-                              child: Theme(
-                                data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-                                child: Container(
-                                  width: MediaQuery.of(context).size.width,
-                                  child: PaginatedDataTable(
-                                    
-                                    header: Text(AppLocalizations.of(context)!.purchaseRequestsTable),
-                                    rowsPerPage: _rowsPerPageLocal,
-                                    availableRowsPerPage: const [5, 10, 20, 50, 100],
-                                    onRowsPerPageChanged: (r) {
-                                      if (r != null) {
-                                        setState(() {
-                                          _rowsPerPageLocal = r;
-                                          _rowsPerPage = r;
-                                          // refetch with new page size and reset to first page
-                                          purchaseRequestController.fetchRequests(context, userController.currentUser, page: 1, pageSizeParam: _rowsPerPageLocal);
-                                        });
+                                  );
+                                  if (confirmed != true) return;
+                                  final controller = Provider.of<PurchaseRequestController>(context, listen: false);
+                                  final userCtrl = Provider.of<UserController>(context, listen: false);
+                                  try {
+                                    for (final id in curSelected) {
+                                      if (isUnarchive) {
+                                        await controller.unarchivePurchaseRequest(id);
+                                      } else {
+                                        await controller.archivePurchaseRequest(id);
                                       }
-                                    },
-                                    sortColumnIndex: _sortColumnIndex,
-                                    sortAscending: _sortAscending,
-                                    // columnSpacing: 190,
-                                    columnSpacing: MediaQuery.of(context).size.width * 0.05,
-                                    horizontalMargin: 16,
-                                    columns: [
-                                      DataColumn(
-                                        label: const Text('ID'),
-                                        onSort: (columnIndex, ascending) {
-                                          _sort<num>((req) => req.id ?? 0, columnIndex, ascending);
-                                        },
-                                      ),
-                                      DataColumn(
-                                        label: Text(
-                                          userController.currentUser.role!.id != 2
-                                              ? 'Created by'
-                                              : 'Validated by',
-                                        ),
-                                        onSort: (columnIndex, ascending) {
-                                          _sort<String>((req) => req.requestedBy?.toString() ?? '', columnIndex, ascending);
-                                        },
-                                      ),
-                                      DataColumn(
-                                        label: const Text('Date submitted'),
-                                        onSort: (columnIndex, ascending) {
-                                          _sort<String>((req) => req.startDate?.toString() ?? '', columnIndex, ascending);
-                                        },
-                                      ),
-                                      DataColumn(
-                                        label: const Text(' Delivery due date'),
-                                        onSort: (columnIndex, ascending) {
-                                          _sort<String>((req) => req.endDate?.toString() ?? '', columnIndex, ascending);
-                                        },
-                                      ),
-                                      DataColumn(
-                                        label: const Text('Priority'),
-                                        onSort: (columnIndex, ascending) {
-                                          _sort<String>((req) => req.priority?.toString() ?? '', columnIndex, ascending);
-                                        },
-                                      ),
-                                      DataColumn(
-                                        label: const Text('Status'),
-                                        onSort: (columnIndex, ascending) {
-                                          _sort<String>((req) => req.status?.toString() ?? '', columnIndex, ascending);
-                                        },
-                                      ),
-                                      DataColumn(
-                                        label: SizedBox(
-                                          width: 100,
-                                          child: const Center(child: Text('Actions')),
-                                        ),
-                                      ),
-                                    ],
-                                    source: pageDataSource,
-                                    showFirstLastButtons: false,
+                                    }
+                                    await controller.fetchRequests(context, userCtrl.currentUser);
+                                    pageDataSource.clearSelection();
+                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(isUnarchive ? AppLocalizations.of(context)!.unarchivedRequests(curSelected.length.toString()) : AppLocalizations.of(context)!.archivedRequests(curSelected.length.toString()))));
+                                  } catch (e) {
+                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.failedWithError(e.toString()))));
+                                  }
+                                },
+                                icon: Icon(_showArchived ? Icons.unarchive_outlined : Icons.archive_outlined),
+                                label: Text(_showArchived ? AppLocalizations.of(context)!.unarchiveSelected : AppLocalizations.of(context)!.archiveSelected),
+                                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF7C3AED), foregroundColor: Colors.white),
+                              ),
+                              const SizedBox(width: 12),
+                              ElevatedButton.icon(
+                                onPressed: curSelected.isEmpty ? null : () async {
+                                  final confirmed = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: Text(AppLocalizations.of(context)!.deleteSelected,style: const TextStyle(color: Color.fromARGB(255, 240, 239, 241)),),
+                                      content: Text(AppLocalizations.of(context)!.confirmDeleteSelectedRequests(curSelected.length.toString())),
+                                      actions: [
+                                        TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(AppLocalizations.of(context)!.cancel)),
+                                        ElevatedButton(onPressed: () => Navigator.of(context).pop(true), style: ElevatedButton.styleFrom(backgroundColor: Colors.red), child: Text(AppLocalizations.of(context)!.delete)),
+                                      ],
+                                    ),
+                                  );
+                                  if (confirmed != true) return;
+                                  final controller = Provider.of<PurchaseRequestController>(context, listen: false);
+                                  final userCtrl = Provider.of<UserController>(context, listen: false);
+                                  try {
+                                    for (final id in curSelected) {
+                                      await controller.deleteRequest(id, context);
+                                    }
+                                    await controller.fetchRequests(context, userCtrl.currentUser);
+                                    pageDataSource.clearSelection();
+                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.deletedRequests(curSelected.length.toString()))));
+                                  } catch (e) {
+                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.failedToDeleteRequests(e.toString()))));
+                                  }
+                                },
+                                icon: const Icon(Icons.delete_outline),
+                                label: Text(AppLocalizations.of(context)!.deleteSelected),
+                                style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.vertical,
+                        child: Theme(
+                          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+                          child: Container(
+                            width: MediaQuery.of(context).size.width,
+                            child: PaginatedDataTable(
+                              
+                              header: Text(AppLocalizations.of(context)!.purchaseRequestsTable),
+                              rowsPerPage: _rowsPerPageLocal,
+                              availableRowsPerPage: const [5, 10, 20, 50, 100],
+                              onRowsPerPageChanged: (r) {
+                                if (r != null) {
+                                  setState(() {
+                                    _rowsPerPageLocal = r;
+                                    _rowsPerPage = r;
+                                    // refetch with new page size and reset to first page
+                                    purchaseRequestController.fetchRequests(context, userController.currentUser, page: 1, pageSizeParam: _rowsPerPageLocal);
+                                  });
+                                }
+                              },
+                              sortColumnIndex: _sortColumnIndex,
+                              sortAscending: _sortAscending,
+                              // columnSpacing: 190,
+                              columnSpacing: MediaQuery.of(context).size.width * 0.05,
+                              horizontalMargin: 16,
+                              columns: [
+                                DataColumn(
+                                  label: Text(AppLocalizations.of(context)!.id),
+                                  onSort: (columnIndex, ascending) {
+                                    _sort<num>((req) => req.id ?? 0, columnIndex, ascending);
+                                  },
+                                ),
+                                DataColumn(
+                                  label: Text(
+                                    userController.currentUser.role!.id != 2
+                                        ? AppLocalizations.of(context)!.createdBy
+                                        : AppLocalizations.of(context)!.validatedBy,
+                                  ),
+                                  onSort: (columnIndex, ascending) {
+                                    _sort<String>((req) => req.requestedBy?.toString() ?? '', columnIndex, ascending);
+                                  },
+                                ),
+                                DataColumn(
+                                  label: Text(AppLocalizations.of(context)!.dateSubmitted),
+                                  onSort: (columnIndex, ascending) {
+                                    _sort<String>((req) => req.startDate?.toString() ?? '', columnIndex, ascending);
+                                  },
+                                ),
+                                DataColumn(
+                                  label: Text(AppLocalizations.of(context)!.dueDate),
+                                  onSort: (columnIndex, ascending) {
+                                    _sort<String>((req) => req.endDate?.toString() ?? '', columnIndex, ascending);
+                                  },
+                                ),
+                                DataColumn(
+                                  label: Text(AppLocalizations.of(context)!.priority),
+                                  onSort: (columnIndex, ascending) {
+                                    _sort<String>((req) => req.priority?.toString() ?? '', columnIndex, ascending);
+                                  },
+                                ),
+                                DataColumn(
+                                  label: Text(AppLocalizations.of(context)!.status),
+                                  onSort: (columnIndex, ascending) {
+                                    _sort<String>((req) => req.status?.toString() ?? '', columnIndex, ascending);
+                                  },
+                                ),
+                                DataColumn(
+                                  label: SizedBox(
+                                    width: 100,
+                                    child: Center(child: Text(AppLocalizations.of(context)!.actions)),
                                   ),
                                 ),
-                              ),
+                              ],
+                              source: pageDataSource,
+                              showFirstLastButtons: false,
                             ),
                           ),
-                          // Pagination controls removed (per request)
-                          const SizedBox(height: 8),
-                        ],
-                      );
-                    },
-                  ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 8),
+            ],
+          );
+        },
+      ),
     );
   }
 }

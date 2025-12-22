@@ -474,10 +474,10 @@ class _DepartmentListScreenState extends State<DepartmentListScreen>
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showEditDialog(DepartmentItem(id: null, name: '')),
-        child: const Icon(Icons.add),
-      ),
+      // floatingActionButton: FloatingActionButton(
+      //   onPressed: () => _showEditDialog(DepartmentItem(id: null, name: '')),
+      //   child: const Icon(Icons.add),
+      // ),
       // appBar: AppBar(
       //   title: Text(
       //     widget.title,

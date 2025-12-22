@@ -160,6 +160,15 @@ class AppLocalizationsFr extends AppLocalizations {
   String get purchaseRequest => 'Demande d\'achat';
 
   @override
+  String get editPurchaseRequest => 'Modifier la demande d\'achat';
+
+  @override
+  String get editPurchaseOrder => 'Modifier le bon de commande';
+
+  @override
+  String get confirmCancelUnsavedChanges => 'Êtes-vous sûr de vouloir annuler ? Les modifications non enregistrées seront perdues.';
+
+  @override
   String get purchaseOrder => 'Commande d\'achat';
 
   @override
@@ -319,9 +328,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get addNewBrand => 'Ajouter une nouvelle marque';
 
   @override
-  String get supplierDeliveryDate => 'Date de livraison fournisseur';
-
-  @override
   String get createNewRole => 'Créer un nouveau rôle';
 
   @override
@@ -434,6 +440,12 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get rejected => 'Rejeté';
+
+  @override
+  String get transformed => 'Converti';
+
+  @override
+  String get edited => 'Modifié';
 
   @override
   String get searchProduct => 'Rechercher par nom de produit...';
@@ -734,4 +746,294 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get updatePasswordBtn => 'Mettre à jour le mot de passe';
+
+  @override
+  String failedToLoadFamilies(Object error) {
+    return 'Échec du chargement des familles : $error';
+  }
+
+  @override
+  String get pickDate => 'Choisir une date';
+
+  @override
+  String get saving => 'Enregistrement...';
+
+  @override
+  String failedToCreateFamily(Object error) {
+    return 'Échec de la création de la famille : $error';
+  }
+
+  @override
+  String failedToUpdateFamily(Object error) {
+    return 'Échec de la mise à jour de la famille : $error';
+  }
+
+  @override
+  String confirmDeleteFamily(Object name) {
+    return 'Supprimer $name et toutes ses sous-familles ?';
+  }
+
+  @override
+  String failedToDeleteFamily(Object error) {
+    return 'Échec de la suppression de la famille : $error';
+  }
+
+  @override
+  String get reset => 'Réinitialiser';
+
+  @override
+  String get familyLabel => 'Famille';
+
+  @override
+  String pageOf(Object current, Object total) {
+    return 'Page $current sur $total';
+  }
+
+  @override
+  String get allFamilies => 'Toutes les familles';
+
+  @override
+  String get allSubfamilies => 'Toutes les sous-familles';
+
+  @override
+  String get selectFamilyFirst => 'Sélectionnez d\'abord une famille';
+
+  @override
+  String selectedCount(Object count) {
+    return '$count sélectionnés';
+  }
+
+  @override
+  String failedWithError(Object error) {
+    return 'Échoué : $error';
+  }
+
+  @override
+  String get deleteSelected => 'Supprimer la sélection';
+
+  @override
+  String confirmDeleteSelectedRequests(Object count) {
+    return 'Êtes-vous sûr de vouloir supprimer $count demandes ? Cela ne peut pas être annulé.';
+  }
+
+  @override
+  String deletedRequests(Object count) {
+    return '$count demandes supprimées';
+  }
+
+  @override
+  String failedToDeleteRequests(Object error) {
+    return 'Échec de la suppression : $error';
+  }
+
+  @override
+  String get accessDeniedAdmin => 'Accès refusé — réservé aux administrateurs';
+
+  @override
+  String appVersionLabel(Object version) {
+    return 'Version $version';
+  }
+
+  @override
+  String get purchaseOrderTitle => 'Bon de commande';
+
+  @override
+  String idLabel(Object id) {
+    return 'ID : $id';
+  }
+
+  @override
+  String createdLabel(Object date) {
+    return 'Créé : $date';
+  }
+
+  @override
+  String updatedLabel(Object date) {
+    return 'Mis à jour : $date';
+  }
+
+  @override
+  String get supplierLabel => 'Fournisseur';
+
+  @override
+  String get supplierDeliveryDate => 'Date de livraison fournisseur';
+
+  @override
+  String get noteLabel => 'Note';
+
+  @override
+  String get statusLabel => 'Statut';
+
+  @override
+  String priorityLabel(Object priority) {
+    return 'Priorité : $priority';
+  }
+
+  @override
+  String archivedRequests(Object count) {
+    return 'Archivé $count demandes';
+  }
+
+  @override
+  String unarchivedRequests(Object count) {
+    return 'Désarchivé $count demandes';
+  }
+
+  @override
+  String get archiveSelected => 'Archiver la sélection';
+
+  @override
+  String get unarchiveSelected => 'Désarchiver la sélection';
+
+  @override
+  String get archive => 'Archiver';
+
+  @override
+  String get unarchive => 'Désarchiver';
+
+  @override
+  String get createdBy => 'Créé par';
+
+  @override
+  String get validatedBy => 'Validé par';
+
+  @override
+  String get filterByFamily => 'Filtrer par famille';
+
+  @override
+  String get filterBySubfamily => 'Filtrer par sous-famille';
+
+  @override
+  String get purchaseOrders => 'Bons de commande';
+
+  @override
+  String get archivePurchaseOrders => 'Archiver les bons de commande';
+
+  @override
+  String get unarchivePurchaseOrders => 'Désarchiver les bons de commande';
+
+  @override
+  String confirmArchivePurchaseOrders(Object action, Object count) {
+    return 'Êtes-vous sûr de vouloir $action $count bons de commande sélectionnés ?';
+  }
+
+  @override
+  String archivedPurchaseOrders(Object count) {
+    return '$count bons de commande archivés';
+  }
+
+  @override
+  String unarchivedPurchaseOrders(Object count) {
+    return '$count bons de commande désarchivés';
+  }
+
+  @override
+  String get deletePurchaseOrders => 'Supprimer les bons de commande';
+
+  @override
+  String confirmDeletePurchaseOrders(Object count) {
+    return 'Êtes-vous sûr de vouloir supprimer $count bons de commande sélectionnés ? Ceci est irréversible.';
+  }
+
+  @override
+  String deletedPurchaseOrders(Object count) {
+    return '$count bons de commande supprimés';
+  }
+
+  @override
+  String failedToDeletePurchaseOrders(Object error) {
+    return 'Échec de la suppression : $error';
+  }
+
+  @override
+  String get back => 'Retour';
+
+  @override
+  String get deletePurchaseOrder => 'Supprimer le bon de commande';
+
+  @override
+  String purchaseOrderDeleted(Object id) {
+    return 'Bon de commande $id supprimé';
+  }
+
+  @override
+  String failedToDeletePurchaseOrder(Object error) {
+    return 'Échec de la suppression du bon de commande : $error';
+  }
+
+  @override
+  String archivedPurchaseOrder(Object id) {
+    return 'Bon de commande $id archivé';
+  }
+
+  @override
+  String unarchivedPurchaseOrder(Object id) {
+    return 'Bon de commande $id désarchivé';
+  }
+
+  @override
+  String failedToArchivePurchaseOrder(Object error) {
+    return 'Échec de l\'archivage du bon de commande : $error';
+  }
+
+  @override
+  String viewPurchaseOrder(Object id) {
+    return 'Voir le bon de commande $id';
+  }
+
+  @override
+  String get purchaseOrdersTable => 'Table des bons de commande';
+
+  @override
+  String get idShort => 'ID';
+
+  @override
+  String get priorityShort => 'Priorité';
+
+  @override
+  String get invalidSupplierDeliveryDate => 'Veuillez saisir une date de livraison fournisseur valide.';
+
+  @override
+  String get refuseReasonLabel => 'Motif de refus';
+
+  @override
+  String get products => 'Produits';
+
+  @override
+  String get subfamilyLabel => 'Sous-famille';
+
+  @override
+  String get unitPrice => 'Prix Unitaire';
+
+  @override
+  String get totalPrice => 'Prix Total';
+
+  @override
+  String get purchaseOrderApproved => 'Bon approuvé !';
+
+  @override
+  String get purchaseOrderRejected => 'Bon rejeté !';
+
+  @override
+  String get currency => 'Devise';
+
+  @override
+  String get addProduct => 'Ajouter un produit';
+
+  @override
+  String get invalidDueDate => 'Veuillez saisir une date d\'échéance valide.';
+
+  @override
+  String get removeProductLine => 'Supprimer la ligne de produit';
+
+  @override
+  String totalLabel(Object amount) {
+    return 'Total : $amount';
+  }
+
+  @override
+  String get pleaseFillAllRequiredFields => 'Veuillez remplir tous les champs requis.';
+
+  @override
+  String get purchaseOrderSaved => 'Bon de commande enregistré !';
 }
