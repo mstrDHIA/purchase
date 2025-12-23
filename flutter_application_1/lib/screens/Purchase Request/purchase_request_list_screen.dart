@@ -34,6 +34,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
     'pending',
     'approved',
     'rejected',
+    'converted',
   ];
   int _rowsPerPage = PaginatedDataTable.defaultRowsPerPage;
   int? _sortColumnIndex = 0;
@@ -277,8 +278,17 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
               PopupMenuButton<String>(
                 onSelected: (value) { setState(() { _statusFilter = value.isEmpty ? null : value; }); },
                 itemBuilder: (context) => [
-                  const PopupMenuItem(value: '', child: Text('All')),
-                  ..._statusOptions.map((s) => PopupMenuItem(value: s, child: Text(s[0].toUpperCase() + s.substring(1)))),
+                  PopupMenuItem(value: '', child: Text(AppLocalizations.of(context)!.all)),
+                  ..._statusOptions.map((s) => PopupMenuItem(
+                        value: s,
+                        child: Text(
+                          s == 'pending' ? AppLocalizations.of(context)!.pending
+                            : s == 'approved' ? AppLocalizations.of(context)!.approved
+                            : s == 'rejected' ? AppLocalizations.of(context)!.rejected
+                            : s == 'converted' ? AppLocalizations.of(context)!.transformed
+                            : s[0].toUpperCase() + s.substring(1),
+                        ),
+                      )),
                 ],
                 child: OutlinedButton(
                   onPressed: null,
@@ -289,17 +299,22 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        _statusFilter == null ? AppLocalizations.of(context)!.filterStatus : 'Status: ${_statusFilter![0].toUpperCase() + _statusFilter!.substring(1)}',
-                        style: const TextStyle(color: Colors.deepPurple, fontWeight: FontWeight.w500),
-                      ),
-                      const SizedBox(width: 6),
-                      const Icon(Icons.arrow_drop_down, color: Colors.deepPurple),
-                    ],
-                  ),
+                  child: Builder(builder: (context) {
+                    final statusLabel = _statusFilter == null ? AppLocalizations.of(context)!.filterStatus
+                      : (_statusFilter == 'pending' ? AppLocalizations.of(context)!.pending
+                        : _statusFilter == 'approved' ? AppLocalizations.of(context)!.approved
+                          : _statusFilter == 'rejected' ? AppLocalizations.of(context)!.rejected
+                            : _statusFilter == 'converted' ? AppLocalizations.of(context)!.transformed
+                              : _statusFilter![0].toUpperCase() + _statusFilter!.substring(1));
+                    return Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(statusLabel, style: const TextStyle(color: Colors.deepPurple, fontWeight: FontWeight.w500)),
+                        const SizedBox(width: 6),
+                        const Icon(Icons.arrow_drop_down, color: Colors.deepPurple),
+                      ],
+                    );
+                  }),
                 ),
               ),
               OutlinedButton(
@@ -439,7 +454,23 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
             filteredRequests = filteredRequests.where((req) => !(req.isArchived ?? false)).toList();
           }
           if (_statusFilter != null) {
-            filteredRequests = filteredRequests.where((req) => req.status == _statusFilter).toList();
+            final statusLower = _statusFilter!.toLowerCase().trim();
+            final stem = statusLower.replaceAll(RegExp(r'(ed|e|ed_to_po|to_po)\$'), '').trim();
+            filteredRequests = filteredRequests.where((req) {
+              final s = (req.status?.toString().toLowerCase().trim() ?? '');
+              if (s.isEmpty) return false;
+              // direct or substring match
+              if (s == statusLower || s.contains(statusLower) || statusLower.contains(s)) return true;
+              // synonyms: converted <-> transformed
+              if (statusLower == 'converted' && (s.contains('convert') || s.contains('transf'))) return true;
+              if (statusLower == 'transformed' && (s.contains('convert') || s.contains('transf'))) return true;
+              // stem/prefix match (catch small spelling/case differences, accents removed earlier)
+              final minLen = 4;
+              final sPrefix = s.length >= minLen ? s.substring(0, minLen) : s;
+              final stemPrefix = stem.length >= minLen ? stem.substring(0, minLen) : stem;
+              if (sPrefix == stemPrefix && stemPrefix.isNotEmpty) return true;
+              return false;
+            }).toList();
           }
           if (_priorityFilter != null) {
             filteredRequests = filteredRequests.where((req) => req.priority == _priorityFilter).toList();

@@ -96,8 +96,8 @@ class PurchaseRequestController extends ChangeNotifier {
             return reqDep != null && reqDep == managerDepId;
           }).toList();
         } else {
-          // If manager has no department assigned, show none
-          items = [];
+          // If manager has no department assigned, do not filter — show all requests
+          // (leave `items` unchanged)
         }
       }
       requests = items.map<PurchaseRequest>((json) => PurchaseRequest.fromJson(json)).toList();

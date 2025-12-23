@@ -24,6 +24,7 @@ class PurchaseRequestView extends StatefulWidget {
 class _PurchaseRequestViewState extends State<PurchaseRequestView> {
 
   bool _showActionButtons = true;
+  bool _poCreated = false;
   String? _status;
   late UserController userController;
   late ProductController productController;
@@ -566,7 +567,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                       ),
                     ),
                     const Spacer(),
-                    if((userController.currentUser.role!.id==4||userController.currentUser.role!.id==1)&&(_status=='approved'))
+                    if((userController.currentUser.role!.id==4||userController.currentUser.role!.id==1)&&(_status=='approved') && !_poCreated)
                     ElevatedButton(onPressed: () async {
                                 final shouldCreate = await showDialog<bool>(
                                   context: context,
@@ -614,6 +615,11 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                   await purchaseOrderController!.addOrder(purchaseOrderData);
         
                                   if (mounted) {
+                                    setState(() {
+                                      _showActionButtons = false;
+                                      _poCreated = true;
+                                      _status = 'transformed';
+                                    });
                                     SnackBar snackBar=SnackBar(content: Text('Purchase Order created successfully!'),backgroundColor: Colors.green,);
                                     ScaffoldMessenger.of(context).showSnackBar(snackBar);
                                   }
