@@ -37,6 +37,52 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
     _order = widget.order;
   }
 
+  // Shows a polished dialog allowing the coordinator to choose how to reject
+  Future<String?> _showRejectTypeDialog() async {
+    String? _selected;
+    return showDialog<String>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            title: Row(children: [const Icon(Icons.error_outline, color: Colors.red), const SizedBox(width: 8), Text(AppLocalizations.of(context)!.reject)]),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                RadioListTile<String>(
+                  value: 'total',
+                  groupValue: _selected,
+                  title: const Text('Reject completely'),
+                  subtitle: const Text('Close the request and record a refusal reason.'),
+                  secondary: const Icon(Icons.block, color: Colors.red),
+                  onChanged: (v) => setState(() => _selected = v),
+                ),
+                const SizedBox(height: 8),
+                RadioListTile<String>(
+                  value: 'modify',
+                  groupValue: _selected,
+                  title: const Text('Reject for modification'),
+                  subtitle: const Text('Return the request to the requester to edit and resubmit.'),
+                  secondary: const Icon(Icons.edit, color: Colors.orange),
+                  onChanged: (v) => setState(() => _selected = v),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(AppLocalizations.of(context)!.cancel)),
+              ElevatedButton(
+                onPressed: _selected == null ? null : () => Navigator.of(context).pop(_selected),
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF635BFF)),
+                child: const Text('Continue'),
+              ),
+            ],
+          );
+        });
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('dd-MM-yyyy');
@@ -673,12 +719,78 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                     const SizedBox(width: 24),
                     ElevatedButton(
                       onPressed: () async {
-                        final result = await showDialog(
-                          context: context,
-                          builder: (context) => const RefusePurchaseDialog(),
-                        );
-                        if (result != null && result is Map) {
-                          try {
+                        try {
+                          final id = _order.id;
+                          if (id == null) throw Exception('ID missing');
+
+                          // Coordinator (role id 6): ask for reject type first
+                          if (userController.currentUser.role!.id == 6) {
+                            final choice = await _showRejectTypeDialog();
+                            if (choice == null) return;
+
+                            // Show reason dialog
+                            final result = await showDialog<Map<String, dynamic>>(
+                              context: context,
+                              builder: (context) => const RefusePurchaseDialog(),
+                            );
+                            if (result == null) return;
+
+                            final updatedOrderJson = {
+                              'id': _order.id,
+                              'requested_by_user': _order.requestedByUser,
+                              'approved_by': userController.currentUser.id,
+                              'statuss': choice == 'total' ? 'rejected' : 'edited',
+                              if (choice == 'modify') 'for_modification': true,
+                              'start_date': _order.startDate != null ? DateFormat('yyyy-MM-dd').format(_order.startDate!) : null,
+                              'end_date': _order.endDate != null ? DateFormat('yyyy-MM-dd').format(_order.endDate!) : null,
+                              'priority': _order.priority,
+                              'description': _order.description,
+                              if (result['reason_id'] != null) 'rejected_reason': result['reason_id'],
+                              'refuse_reason': result['reason_text'] ?? result['comment'] ?? '',
+                              'products': (_order.products ?? []).map((p) => p.toJson()).toList(),
+                              'title': _order.title ?? '',
+                              'created_at': _order.createdAt != null ? DateFormat('yyyy-MM-dd').format(_order.createdAt!) : null,
+                              'updated_at': DateFormat('yyyy-MM-dd').format(DateTime.now()),
+                            };
+
+                            await purchaseOrderController.updateOrder(updatedOrderJson);
+                            await purchaseOrderController.fetchOrders();
+
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(choice == 'total' ? AppLocalizations.of(context)!.purchaseOrderRejected : '${AppLocalizations.of(context)!.rejected} (for modification)'), backgroundColor: choice == 'total' ? Colors.red : Colors.orange),
+                              );
+                              setState(() {
+                                _order = PurchaseOrder(
+                                  id: _order.id,
+                                  requestedByUser: _order.requestedByUser,
+                                  approvedBy: userController.currentUser.id,
+                                  status: choice == 'total' ? 'Rejected' : 'Edited',
+                                  startDate: _order.startDate,
+                                  endDate: _order.endDate,
+                                  priority: _order.priority,
+                                  description: _order.description,
+                                  refuseReason: result['comment'] ?? result['reason_text'] ?? '',
+                                  products: _order.products,
+                                  title: _order.title,
+                                  createdAt: _order.createdAt,
+                                  updatedAt: DateTime.now(),
+                                );
+                                try {
+                                  (_order as dynamic).rejectedReason = result['reason_id'];
+                                } catch (_) {}
+                              });
+                            }
+
+                            return;
+                          }
+
+                          // Default behavior for other roles: immediate reject as before
+                          final result = await showDialog(
+                            context: context,
+                            builder: (context) => const RefusePurchaseDialog(),
+                          );
+                          if (result != null && result is Map) {
                             final updatedOrderJson = {
                               'id': _order.id,
                               'requested_by_user': _order.requestedByUser,
@@ -701,7 +813,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                             await purchaseOrderController.fetchOrders();
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(AppLocalizations.of(context)!.purchaseOrderRejected), backgroundColor: Colors.red),
+                                SnackBar(content: Text(AppLocalizations.of(context)!.purchaseOrderRejected), backgroundColor: Colors.red),
                               );
                               setState(() {
                                 _order = PurchaseOrder(
@@ -726,12 +838,12 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                                 } catch (_) {}
                               });
                             }
-                          } catch (e) {
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(AppLocalizations.of(context)!.failedWithError(e.toString())), backgroundColor: Colors.red),
-                              );
-                            }
+                          }
+                        } catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(AppLocalizations.of(context)!.failedWithError(e.toString())), backgroundColor: Colors.red),
+                            );
                           }
                         }
                       },
