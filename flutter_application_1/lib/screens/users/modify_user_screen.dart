@@ -143,6 +143,13 @@ class _ModifyUserPageState extends State<ModifyUserPage> {
                     elevation: 0,
                   ),
                   onPressed: canSave ? () async {
+                    // Debug: show what will be sent
+                    try {
+                      // ignore: avoid_print
+                      print('ModifyUser: sending -> role=${selectedRole?.id}, dep=${selectedDepartment?.id}');
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Envoi: role=${selectedRole?.id}, dep=${selectedDepartment?.id}')));
+                    } catch (e) {}
+
                     final error = await userController.updateAllUser(
                       _firstNameController.text,
                       _lastNameController.text,
@@ -312,6 +319,7 @@ class _ModifyUserPageState extends State<ModifyUserPage> {
                         if (role != null) {
                           setState(() {
                             widget.user.role = role;
+                            selectedRole = role;
                           });
                         }
                       },

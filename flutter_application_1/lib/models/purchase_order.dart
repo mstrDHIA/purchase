@@ -121,7 +121,7 @@ class Products {
       supplier = sup?.toString();
     }
     family = json['family'] ?? json['family_name'] ?? json['category'] ?? null;
-    subFamily = json['subFamily'] ?? json['sub_family'] ?? json['subcategory'] ?? null;
+    subFamily = json['subFamily'] ?? json['sub_family'] ?? json['subfamily'] ?? json['subcategory'] ?? null;
     price = (json['price'] is int)
         ? (json['price'] as int).toDouble()
         : (json['price'] is double)

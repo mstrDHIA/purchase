@@ -263,7 +263,20 @@ class _UserListPageState extends State<UserListPage> {
                                                   builder: (context) => ModifyUserPage(user: user),
                                                 ),
                                               ).then((value) {
-                                                if(userController.displaySnackBar) {
+                                                // If ModifyUserPage returned the refreshed user, update it in the local list
+                                                if (value != null && value is User) {
+                                                  final idx = userController.users.indexWhere((u) => u.id == value.id);
+                                                  if (idx != -1) {
+                                                    userController.users[idx] = value;
+                                                    userController.notify();
+                                                  }
+                                                  // show immediate snack
+                                                  SnackBar snackBar = SnackBar(
+                                                    backgroundColor: Colors.green,
+                                                    content: Text(_getLocalizedText(context, 'user_updated', 'User updated successfully.')),
+                                                  );
+                                                  ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                                                } else if(userController.displaySnackBar) {
                                                   userController.displaySnackBar = false; // Reset the flag
                                                 SnackBar snackBar = SnackBar(
                                                   backgroundColor: Colors.green,

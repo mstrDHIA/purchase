@@ -51,7 +51,8 @@ class User {
     final roleId = json['role_id'];
     final isActive = json['is_active'] ?? true; // Default to true if not provided
     final depId = json['dep_id'] is int ? json['dep_id'] as int : (json['dep_id'] is String ? int.tryParse(json['dep_id']) : null) ??
-        (json['department_id'] is int ? json['department_id'] as int : (json['department_id'] is String ? int.tryParse(json['department_id']) : null));
+        (json['department_id'] is int ? json['department_id'] as int : (json['department_id'] is String ? int.tryParse(json['department_id']) : null)) ??
+        (json['department'] is Map ? (json['department']['id'] is int ? json['department']['id'] : (json['department']['id'] is String ? int.tryParse(json['department']['id']) : null)) : null);
     return User(
       id: json['id'] ?? 0,
       username: json['username'] ?? '',

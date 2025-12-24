@@ -567,62 +567,48 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
                 ),
               ),
               const SizedBox(height: 32),
-              // Total
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.indigo.shade50,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                  child: Text(
-                    'Total: ${_currencySymbols[_currency]}${totalPrice.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.indigo,
-                  ),
-                ),
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(top: BorderSide(color: Colors.grey.shade300)),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        child: SafeArea(
+          top: false,
+          child: Row(
+            children: [
+              Text(
+                'Total: ${_currencySymbols[_currency]}${totalPrice.toStringAsFixed(2)}',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.indigo),
               ),
-              const SizedBox(height: 32),
-              // Save/Cancel buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: _isSaving ? null : _saveOrder,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.deepPurple,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                      child: _isSaving
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text('Save', style: TextStyle(color: Colors.white)),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                      ),
-                      child: const Text('Cancel'),
-                    ),
-                  ),
-                ],
+              const Spacer(),
+              ElevatedButton(
+                onPressed: _isSaving ? null : _saveOrder,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.deepPurple,
+                  minimumSize: const Size(120, 44),
+                ),
+                child: _isSaving
+                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : const Text('Save', style: TextStyle(color: Colors.white)),
+              ),
+              const SizedBox(width: 12),
+              OutlinedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(120, 44),
+                ),
+                child: const Text('Cancel'),
               ),
             ],
           ),
         ),
       ),
-    );
+      );
   }
 
   Future<void> _saveOrder() async {
@@ -1059,7 +1045,7 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
               const SizedBox(width: 12),
               IconButton(
                 icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
-                tooltip: 'Remove product line',
+                tooltip: 'Remove line',
                 onPressed: () {
                   if (productLines.length > 1) {
                     setState(() {

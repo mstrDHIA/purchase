@@ -1,3 +1,4 @@
+// ignore_for_file: dead_code, unused_local_variable
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/controllers/product_controller.dart';
 import 'package:flutter_application_1/models/category.dart';

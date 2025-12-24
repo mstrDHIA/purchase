@@ -1,3 +1,4 @@
+// ignore_for_file: unused_field, dead_code, unused_local_variable, unused_element
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:intl/intl.dart';
@@ -8,6 +9,7 @@ import 'package:flutter_application_1/screens/Purchase%20Request/requestor_form_
 import 'package:flutter_application_1/screens/Purchase%20order/pushase_order_screen.dart' as purchase_order;
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/models/datasources/purchase_request_datasource.dart';
+import 'package:flutter_application_1/models/user_model.dart';
 
 class PurchaseRequestPage extends StatefulWidget {
   const PurchaseRequestPage({super.key});
@@ -506,6 +508,44 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
           }
           if (_subFamilyFilter != null) {
             filteredRequests = filteredRequests.where((req) => (req.products?.any((p) => (p.subFamily?.toString() == _subFamilyFilter)) ?? false)).toList();
+          }
+
+          // Manager department restriction: detect manager either by role id (3)
+          // or by role name containing 'manager' (some deployments use different ids).
+          // Only show requests whose requester is in the same department. If the
+          // manager has no department assigned (depId == null), do not filter.
+          final _currentUser = Provider.of<UserController>(context, listen: false).currentUser;
+          // Detect manager using role id only
+          final isManagerRole = _currentUser.role?.id == 3;
+          if (isManagerRole) {
+            final managerDepId = _currentUser.depId;
+            if (managerDepId != null) {
+              final usersList = Provider.of<UserController>(context, listen: false).users;
+              filteredRequests = filteredRequests.where((req) {
+                // Try to resolve requester by id first, then by display name / email / username
+                User? matched;
+                final uid = req.requestedBy;
+                if (uid != null) {
+                  try {
+                    matched = usersList.firstWhere((u) => u.id == uid);
+                  } catch (e) {
+                    matched = null;
+                  }
+                }
+                if (matched == null) {
+                  final name = (req.requestedByName ?? '').toLowerCase();
+                  if (name.isNotEmpty) {
+                    try {
+                      matched = usersList.firstWhere((u) => (u.email ?? '').toLowerCase() == name || (u.username ?? '').toLowerCase() == name || ('${u.firstName ?? ''} ${u.lastName ?? ''}').toLowerCase() == name);
+                    } catch (e) {
+                      matched = null;
+                    }
+                  }
+                }
+
+                return matched != null && matched.depId != null && matched.depId == managerDepId;
+              }).toList();
+            }
           }
 
           final filteredDataSource = PurchaseRequestDataSource(filteredRequests, context, 'filtered');

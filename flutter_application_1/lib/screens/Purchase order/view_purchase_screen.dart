@@ -1,6 +1,14 @@
+import 'dart:io';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/models/purchase_order.dart';
+import 'package:flutter_application_1/utils/download_helper_stub.dart';
+import 'package:flutter_application_1/utils/pdf_generator.dart';
 import 'package:intl/intl.dart';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
@@ -166,87 +174,87 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                     ),
                   ),
                   // button to export pdf
-                  // Align(
-                  //   alignment: Alignment.centerRight,
-                  //   child: IconButton(
-                  //     tooltip: 'Export PDF',
-                  //     icon: const Icon(Icons.picture_as_pdf, color: Colors.black87),
-                  //     onPressed: () async {
-                  //       // Show actions: Share or Save
-                  //       showModalBottomSheet(
-                  //         context: context,
-                  //         builder: (context) {
-                  //           return SafeArea(
-                  //             child: Column(
-                  //               mainAxisSize: MainAxisSize.min,
-                  //               children: [
-                  //                 ListTile(
-                  //                   leading: const Icon(Icons.share),
-                  //                   title: const Text('Share / Download'),
-                  //                   onTap: () async {
-                  //                     Navigator.of(context).pop();
-                  //                     try {
-                  //                       ScaffoldMessenger.of(this.context).showSnackBar(const SnackBar(content: Text('Generating PDF...')));
-                  //                       final bytes = await PdfGenerator.generatePurchaseOrderPdf(_order);
-                  //                       try {
-                  //                         await Printing.sharePdf(bytes: bytes, filename: 'purchase_order_${_order.id ?? 'po'}.pdf');
-                  //                       } catch (_) {
-                  //                         // Fallback to web download if printing is not available
-                  //                         try {
-                  //                           await saveAsFile(bytes, 'purchase_order_${_order.id ?? 'po'}.pdf');
-                  //                         } catch (e) {
-                  //                           if (mounted) ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(content: Text('Error sharing/downloading: $e'), backgroundColor: Colors.red));
-                  //                         }
-                  //                       }
-                  //                     } catch (e) {
-                  //                       if (mounted) ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
-                  //                     }
-                  //                   },
-                  //                 ),
-                  //                 ListTile(
-                  //                   leading: const Icon(Icons.save_alt),
-                  //                   title: const Text('Save locally'),
-                  //                   onTap: () async {
-                  //                     Navigator.of(context).pop();
-                  //                     try {
-                  //                       ScaffoldMessenger.of(this.context).showSnackBar(const SnackBar(content: Text('Generating PDF...')));
-                  //                       final bytes = await PdfGenerator.generatePurchaseOrderPdf(_order);
-                  //                       if (kIsWeb) {
-                  //                         // On web, trigger a direct download
-                  //                         await saveAsFile(bytes, 'purchase_order_${_order.id ?? 'po'}.pdf');
-                  //                         return;
-                  //                       }
-                  //                       final dir = await getApplicationDocumentsDirectory();
-                  //                       final file = File('${dir.path}/purchase_order_${_order.id ?? 'po'}.pdf');
-                  //                       await file.writeAsBytes(bytes);
-                  //                       if (mounted) ScaffoldMessenger.of(this.context).showSnackBar(
-                  //                         SnackBar(
-                  //                           content: Text('Saved to ${file.path}'),
-                  //                           action: SnackBarAction(
-                  //                             label: 'Open',
-                  //                             onPressed: () async {
-                  //                               try {
-                  //                                 await OpenFile.open(file.path);
-                  //                               } catch (e) {
-                  //                                 if (mounted) ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(content: Text('Error opening file: $e'), backgroundColor: Colors.red));
-                  //                               }
-                  //                             },
-                  //                           ),
-                  //                         ),
-                  //                       );
-                  //                     } catch (e) {
-                  //                       if (mounted) ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(content: Text('Error saving PDF: $e'), backgroundColor: Colors.red));
-                  //                     }
-                  //                   },
-                  //                 ),
-                  //               ],
-                  //             ),
-                  //           );
-                  //         },
-                  //       );
-                  //     },
-                  //   ),
-                  // ),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: IconButton(
+                      tooltip: 'Export PDF',
+                      icon: const Icon(Icons.picture_as_pdf, color: Colors.black87),
+                      onPressed: () async {
+                        // Show actions: Share or Save
+                        showModalBottomSheet(
+                          context: context,
+                          builder: (context) {
+                            return SafeArea(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  ListTile(
+                                    leading: const Icon(Icons.share),
+                                    title: const Text('Share / Download'),
+                                    onTap: () async {
+                                      Navigator.of(context).pop();
+                                      try {
+                                        ScaffoldMessenger.of(this.context).showSnackBar(const SnackBar(content: Text('Generating PDF...')));
+                                        final bytes = await PdfGenerator.generatePurchaseOrderPdf(_order);
+                                        try {
+                                          await Printing.sharePdf(bytes: bytes, filename: 'purchase_order_${_order.id ?? 'po'}.pdf');
+                                        } catch (_) {
+                                          // Fallback to web download if printing is not available
+                                          try {
+                                            await saveAsFile(bytes, 'purchase_order_${_order.id ?? 'po'}.pdf');
+                                          } catch (e) {
+                                            if (mounted) ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(content: Text('Error sharing/downloading: $e'), backgroundColor: Colors.red));
+                                          }
+                                        }
+                                      } catch (e) {
+                                        if (mounted) ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+                                      }
+                                    },
+                                  ),
+                                  ListTile(
+                                    leading: const Icon(Icons.save_alt),
+                                    title: const Text('Save locally'),
+                                    onTap: () async {
+                                      Navigator.of(context).pop();
+                                      try {
+                                        ScaffoldMessenger.of(this.context).showSnackBar(const SnackBar(content: Text('Generating PDF...')));
+                                        final bytes = await PdfGenerator.generatePurchaseOrderPdf(_order);
+                                        if (kIsWeb) {
+                                          // On web, trigger a direct download
+                                          await saveAsFile(bytes, 'purchase_order_${_order.id ?? 'po'}.pdf');
+                                          return;
+                                        }
+                                        final dir = await getApplicationDocumentsDirectory();
+                                        final file = File('${dir.path}/purchase_order_${_order.id ?? 'po'}.pdf');
+                                        await file.writeAsBytes(bytes);
+                                        if (mounted) ScaffoldMessenger.of(this.context).showSnackBar(
+                                          SnackBar(
+                                            content: Text('Saved to ${file.path}'),
+                                            action: SnackBarAction(
+                                              label: 'Open',
+                                              onPressed: () async {
+                                                try {
+                                                  await OpenFile.open(file.path);
+                                                } catch (e) {
+                                                  if (mounted) ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(content: Text('Error opening file: $e'), backgroundColor: Colors.red));
+                                                }
+                                              },
+                                            ),
+                                          ),
+                                        );
+                                      } catch (e) {
+                                        if (mounted) ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(content: Text('Error saving PDF: $e'), backgroundColor: Colors.red));
+                                      }
+                                    },
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 32),
@@ -609,55 +617,50 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
           color: Colors.white,
           border: Border(top: BorderSide(color: Colors.grey.shade300)),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         child: SafeArea(
           top: false,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Row(
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                       Text(
-                    AppLocalizations.of(context)!.totalLabel('${currencySymbol}${totalAmount.toStringAsFixed(2)}'),
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                  ),
-                      Text(AppLocalizations.of(context)!.statusLabel, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.black54)),
-                      const SizedBox(height: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: status.toLowerCase() == 'approved'
-                              ? Colors.green.shade100
-                              : status.toLowerCase() == 'pending'
-                                  ? Colors.orange.shade100
-                                  : Colors.red.shade100,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          status.isNotEmpty ? (status[0].toUpperCase() + status.substring(1)) : '-',
-                          style: TextStyle(
-                            color: status.toLowerCase() == 'approved'
-                                ? Colors.green.shade700
-                                : status.toLowerCase() == 'pending'
-                                    ? Colors.orange.shade800
-                                    : Colors.red.shade700,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Spacer(),
-                 
-                ],
+              Text(
+                AppLocalizations.of(context)!.totalLabel('${currencySymbol}${totalAmount.toStringAsFixed(2)}'),
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
               ),
-              const SizedBox(height: 8),
+              const Spacer(),
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Spacer(),
+                  Text(AppLocalizations.of(context)!.statusLabel + ':', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: Colors.black54)),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: status.toLowerCase() == 'approved'
+                          ? Colors.green.shade100
+                          : status.toLowerCase() == 'pending'
+                              ? Colors.orange.shade100
+                              : status.toLowerCase() == 'edited'
+                                  ? Colors.pink.shade100
+                                  : Colors.red.shade100,
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: Text(
+                      status.isNotEmpty ? (status[0].toUpperCase() + status.substring(1)) : '-',
+                      style: TextStyle(
+                        color: status.toLowerCase() == 'approved'
+                            ? Colors.green.shade700
+                            : status.toLowerCase() == 'pending'
+                                ? Colors.orange.shade800
+                                : status.toLowerCase() == 'edited'
+                                    ? Colors.red.shade700
+                                    : Colors.red.shade700,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
                   if (widget.order.status!.toLowerCase()=='edited' && (userController.currentUser.role?.id == 1 || userController.currentUser.role?.id == 6)) ...[
                     ElevatedButton(
                       onPressed: () async {
@@ -716,7 +719,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                       ),
                       child: Text(AppLocalizations.of(context)!.approve),
                     ),
-                    const SizedBox(width: 24),
+                    const SizedBox(width: 12),
                     ElevatedButton(
                       onPressed: () async {
                         try {

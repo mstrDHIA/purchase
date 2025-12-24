@@ -1,3 +1,4 @@
+// ignore_for_file: unused_element
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter_application_1/screens/auth/login_screen.dart';
@@ -250,75 +251,22 @@ class _SignUpPageState extends State<SignUpPage> {
                             return SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
-                              onPressed: () {
+                              onPressed: () async {
+                                // Validate form
                                 // _validateForm();
-                                // if (_passwordError == null &&
-                                //     _confirmPasswordError == null &&
-                                //     _agreeToTerms) {
-                                userController.register(
-                                   _emailController.text,
-                                   _passwordController.text,
-                                   context,
-                                  //  _formKey
-                                );
-                              // }
-                                // _validateForm();
-                                // Only navigate if the form is valid
-                                // if (_passwordError == null &&
-                                //     _confirmPasswordError == null &&
-                                //     _agreeToTerms) {
-                                //   // Appel API d'inscription ici
-                                //   // print()
-                                //   UserNetwork()
-                                //       .register(
-                                //         password: _passwordController.text,
-                                //         username: _emailController.text,
-                                //       )
-                                //       .then((result) async {
-                                //         print('Résultat inscription: $result');
-                                //         int? userId;
-                                //         try {
-                                //           if (result is Map) {
-                                //             print('Réponse Map: $result');
-                                //             final map = result as Map<String, dynamic>;
-                                //             if (map.containsKey('id')) {
-                                //               userId = int.tryParse(map['id'].toString());
-                                //             } else {
-                                //               print('Clé "id" non trouvée dans la Map. Clés disponibles: \\${map.keys}');
-                                //             }
-                                //           } else {
-                                //             print('Réponse String: $result');
-                                //             final map = jsonDecode(result);
-                                //             if (map is Map && map.containsKey('id')) {
-                                //               userId = int.tryParse(map['id'].toString());
-                                //             } else {
-                                //               print('Clé "id" non trouvée dans la String. Clés disponibles: \\${map.keys}');
-                                //             }
-                                //           }
-                                //         } catch (e) {
-                                //           print('Erreur parsing ID: $e');
-                                //         }
-                                //         if (userId == null) {
-                                //           ScaffoldMessenger.of(context).showSnackBar(
-                                //             const SnackBar(content: Text("Erreur lors de la création de l'utilisateur. Impossible de récupérer l'ID. Regarde la console pour le debug.")),
-                                //           );
-                                //           return;
-                                //         }
-                                //         ScaffoldMessenger.of(context).showSnackBar(
-                                //           const SnackBar(content: Text('Inscription réussie.')),
-                                //         );
-                                //         Navigator.of(context).push(
-                                //           MaterialPageRoute(
-                                //             builder: (context) => AddUserPage(email: _emailController.text, userId: userId),
-                                //           ),
-                                //         );
-                                //       }).catchError((error) {
-                                //         print(error);
-                                //         ScaffoldMessenger.of(context).showSnackBar(
-                                //           SnackBar(content: Text('Registration failed: $error')),
-                                //         );
-                                //       });
+                                // if (_passwordError != null || _confirmPasswordError != null) return;
+                                // if (!_agreeToTerms) {
+                                //   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please accept the Terms and services')));
+                                //   return;
                                 // }
+                                final success = await userController.register(_emailController.text, _passwordController.text, context, autoLogin: false);
+                                if (success) {
+                                  // After successful registration, navigate to Sign In page
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(builder: (context) => const SignInPage()),
+                                  );
+                                }
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF6A5ACD),

@@ -1,3 +1,4 @@
+// ignore_for_file: unused_local_variable
 import 'dart:typed_data';
 import 'package:intl/intl.dart';
 import 'package:pdf/widgets.dart' as pw;

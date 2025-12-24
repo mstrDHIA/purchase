@@ -69,8 +69,6 @@ class UserController extends ChangeNotifier {
       
       return matchesSearch && matchesPermission && statusMatches;
     }).toList();
-    isLoading = false;
-    notifyListeners();
 
     if (sortColumnIndex != null) {
       switch (sortColumnIndex) {
@@ -96,15 +94,13 @@ class UserController extends ChangeNotifier {
           break;
       }
     }
-    isLoading = false;
-    notifyListeners();
     return filtered;
   }
 
    getUsers() async {
     users.clear();
     isLoading = true;
-    notifyListeners();
+    safeNotify();
     try {
       print('🔄 Fetching users from server...');
       Response response = await userNetwork.uesresList();
@@ -119,13 +115,13 @@ class UserController extends ChangeNotifier {
             return User.fromJson(user);
           }).toList();
           isLoading = false;
-          notifyListeners();
+          safeNotify();
           print('✅ Successfully loaded ${users.length} users');
         } else if (response.data is Map && response.data['results'] is List) {
           // Handle paginated response
           users = (response.data['results'] as List).map((user) => User.fromJson(user)).toList();
           isLoading = false;
-          notifyListeners();
+          safeNotify();
           print('✅ Successfully loaded ${users.length} users (paginated)');
         } else {
           print('⚠️ Unexpected data format: ${response.data.runtimeType}');
@@ -134,12 +130,12 @@ class UserController extends ChangeNotifier {
         notifyListeners();
       } else {
         isLoading = false;
-        notifyListeners();
+        safeNotify();
         throw Exception('Failed to load users: Status ${response.statusCode}');
       }
     } on DioException catch (e) {
       isLoading = false;
-      notifyListeners();
+      safeNotify();
       print('❌ Dio Error: ${e.message}');
       print('❌ Error type: ${e.type}');
       print('❌ Response status: ${e.response?.statusCode}');
@@ -147,7 +143,7 @@ class UserController extends ChangeNotifier {
       print('❌ Error detail: ${e.error}');
     } catch (e) {
       isLoading = false;
-      notifyListeners();
+      safeNotify();
       print('❌ Unexpected error while fetching users: $e');
     }
   }
@@ -262,37 +258,44 @@ class UserController extends ChangeNotifier {
     }
   }
 
-  Future<void> register(String email, String password,BuildContext context) async {
-    try{
+  Future<bool> register(String email, String password, BuildContext context, {bool autoLogin = true}) async {
+    try {
       isLoading = true;
-    notifyListeners();
-    Response response = await userNetwork.register(username: email, password: password);
-    if (response.statusCode == 201) {
-      login(email, password, context,null);
-
-    } 
-   
-    else {
-      isLoading = false;
       notifyListeners();
-      SnackBar snackBar = SnackBar(
-        backgroundColor: Colors.red,
-        content: Text('An error occurred during register. Please try again.'),
-      );
-      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      Response response = await userNetwork.register(username: email, password: password);
+      if (response.statusCode == 201) {
+        isLoading = false;
+        notifyListeners();
+        if (autoLogin) {
+          await login(email, password, context, null);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Registration successful. Please sign in.'), backgroundColor: Colors.green),
+          );
+        }
+        return true;
+      } else {
+        isLoading = false;
+        notifyListeners();
+        SnackBar snackBar = SnackBar(
+          backgroundColor: Colors.red,
+          content: Text('An error occurred during register. Please try again.'),
+        );
+        ScaffoldMessenger.of(context).showSnackBar(snackBar);
+        return false;
       }
     } catch (e) {
       isLoading = false;
       notifyListeners();
       print(e);
       SnackBar snackBar = SnackBar(
-
         backgroundColor: Colors.red,
         content: Text('An error occurred during register'),
       );
       ScaffoldMessenger.of(context).showSnackBar(snackBar);
-    }  
+      return false;
     }
+  }
 
     Future<void> addUser(String email, String password,BuildContext context) async {
     try{
@@ -434,9 +437,11 @@ class UserController extends ChangeNotifier {
       data['profile'] = profileData;
       }
 
-      if(role.id!=selectedUser.role!.id){
-      data['role_id'] = role.id;
-      }
+      // Always include role_id when a role is provided (server expects a PK)
+      try {
+        if (role.id != null) data['role_id'] = role.id;
+      } catch (e) {}
+
       // Debug: log department info and payload
       try {
         // ignore: avoid_print
@@ -445,10 +450,9 @@ class UserController extends ChangeNotifier {
         print('updateAllUser: payload before send -> $data');
       } catch (e) {}
       if (department != null) {
-        // API may accept multiple keys; include them all to maximize compatibility
+        // API expects primary key values for department
         data['dep_id'] = department.id;
         data['department_id'] = department.id;
-        data['department'] = department.id; // some backends accept department as id
       }
       // Debug: show payload that will actually be sent
       try {
@@ -462,13 +466,21 @@ class UserController extends ChangeNotifier {
         // ignore: avoid_print
         print('updateAllUser: response status=${resp.statusCode}, data=${resp.data}');
       } catch (e) {}
+      // If server returned non-success, show message and abort further processing
+      if (!(resp.statusCode == 200 || resp.statusCode == 201)) {
+        try {
+          final errorMsg = resp.data?.toString() ?? 'Failed to update user';
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur serveur: $errorMsg'), backgroundColor: Colors.red));
+        } catch (e) {}
+        return 'Erreur serveur: ${resp.statusCode}';
+      }
 
       // Refresh the detailed user data using the 'viewUser' endpoint which returns full user info including dep_id
       try {
         var refreshed = await userNetwork.viewUser(selectedUserId!);
         if (refreshed != null) {
           // ignore: avoid_print
-          print('updateAllUser: refreshed selectedUser.depId=${refreshed.depId}');
+          print('updateAllUser: refreshed selectedUser.depId=${refreshed.depId}, role=${refreshed.role?.id}');
           final idx = users.indexWhere((u) => u.id == selectedUserId);
           if (idx != -1) {
             users[idx] = refreshed;
@@ -476,32 +488,73 @@ class UserController extends ChangeNotifier {
           selectedUser = refreshed;
         }
 
-        // If depId still null but we tried to set department, attempt fallback PATCH variants
-        if ((refreshed == null || refreshed.depId == null) && department != null) {
+        // If we requested a department change but the refreshed user doesn't match, try fallback PATCH variants
+        if (department != null && (refreshed == null || refreshed.depId == null || refreshed.depId != department.id)) {
+          // Inform user we're attempting a fallback update for department
+          try {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Tentative de mise à jour du département...'), backgroundColor: Colors.orange),
+            );
+          } catch (e) {}
+
           final fallbacks = [
             {'dep_id': department.id},
             {'department_id': department.id},
             {'department': department.id},
             {'department': {'id': department.id}},
           ];
+
+          bool patched = false;
           for (final fb in fallbacks) {
             try {
+              // ignore: avoid_print
+              print('updateAllUser: trying fallback patch -> ${fb.keys.first} = ${fb.values.first}');
               await userNetwork.partialUpdateUser(fb, selectedUserId!);
-              // refresh
+              // After patch, refresh
               refreshed = await userNetwork.viewUser(selectedUserId!);
               // ignore: avoid_print
               print('updateAllUser: after fallback ${fb.keys.first} -> refreshed.depId=${refreshed?.depId}');
-              if (refreshed != null && refreshed.depId != null) {
+              if (refreshed != null && refreshed.depId == department.id) {
                 final idx2 = users.indexWhere((u) => u.id == selectedUserId);
                 if (idx2 != -1) users[idx2] = refreshed;
                 selectedUser = refreshed;
+                patched = true;
                 break;
               }
             } catch (e) {
               // ignore
             }
           }
+
+          // Notify user about fallback result
+          try {
+            if (patched) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Le département a été mis à jour.'), backgroundColor: Colors.green),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Le serveur n\'a pas appliqué le changement de département.'), backgroundColor: Colors.red),
+              );
+            }
+          } catch (e) {}
         }
+
+        // Ensure the users list is refreshed globally so UI shows updated department
+        try {
+          await getUsers();
+        } catch (e) {
+          // ignore
+        }
+
+        // Show a success SnackBar so the user sees the update result with returned values
+        try {
+          final msg = 'Mise à jour OK: dep=${selectedUser.depId ?? 'n/a'}, role=${selectedUser.role?.id ?? 'n/a'}';
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.green));
+        } catch (e) {
+          // ignore
+        }
+
       } catch (e) {
         // ignore
       }
@@ -509,10 +562,17 @@ class UserController extends ChangeNotifier {
       displaySnackBar = true;
 
       try {
-        context.pop();
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          try {
+            context.pop(selectedUser);
+          } catch (e) {
+            // ignore: avoid_print
+            print('updateAllUser: pop failed in post-frame: $e');
+          }
+        });
       } catch (e) {
         // ignore: avoid_print
-        print('updateAllUser: pop failed: $e');
+        print('updateAllUser: scheduling pop failed: $e');
       }
 
       return null;
@@ -530,7 +590,7 @@ class UserController extends ChangeNotifier {
     } finally {
       // Ensure loading flag is always cleared
       isLoading = false;
-      notifyListeners();
+      safeNotify();
       try {
         // ignore: avoid_print
         print('updateAllUser: finished for selectedUserId=$selectedUserId');
@@ -538,9 +598,12 @@ class UserController extends ChangeNotifier {
     }
   }
 
-  void notify(){
-    notifyListeners();
+  /// Defer notifications to avoid calling listeners during widget build
+  void safeNotify(){
+    Future.microtask(() => notifyListeners());
   }
+
+  void notify() {}
 }
 
 
