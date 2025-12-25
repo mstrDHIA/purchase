@@ -1,9 +1,10 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/models/purchase_order.dart';
-import 'package:flutter_application_1/utils/download_helper_stub.dart';
+import 'package:flutter_application_1/utils/download_helper.dart';
 import 'package:flutter_application_1/utils/pdf_generator.dart';
 import 'package:intl/intl.dart';
 import 'package:open_file/open_file.dart';
@@ -199,9 +200,9 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                                         try {
                                           await Printing.sharePdf(bytes: bytes, filename: 'purchase_order_${_order.id ?? 'po'}.pdf');
                                         } catch (_) {
-                                          // Fallback to web download if printing is not available
+                                          // Printing not available — fall back depending on platform
                                           try {
-                                            await saveAsFile(bytes, 'purchase_order_${_order.id ?? 'po'}.pdf');
+                                            await _saveOrDownload(bytes, 'purchase_order_${_order.id ?? 'po'}.pdf');
                                           } catch (e) {
                                             if (mounted) ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(content: Text('Error sharing/downloading: $e'), backgroundColor: Colors.red));
                                           }
@@ -221,7 +222,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                                         final bytes = await PdfGenerator.generatePurchaseOrderPdf(_order);
                                         if (kIsWeb) {
                                           // On web, trigger a direct download
-                                          await saveAsFile(bytes, 'purchase_order_${_order.id ?? 'po'}.pdf');
+                                          await _saveOrDownload(bytes, 'purchase_order_${_order.id ?? 'po'}.pdf', preferAppDocs: true);
                                           return;
                                         }
                                         final dir = await getApplicationDocumentsDirectory();
@@ -815,6 +816,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                             await purchaseOrderController.updateOrder(updatedOrderJson);
                             await purchaseOrderController.fetchOrders();
                             if (mounted) {
+                              // ignore: use_build_context_synchronously
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(content: Text(AppLocalizations.of(context)!.purchaseOrderRejected), backgroundColor: Colors.red),
                               );
@@ -867,5 +869,45 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
         ),
       ),
     );
+  }
+
+  Future<void> _saveOrDownload(Uint8List bytes, String filename, {bool preferAppDocs = false}) async {
+    try {
+      if (kIsWeb) {
+        try {
+          await saveAsFile(bytes, filename);
+          if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Downloaded $filename')));
+        } on UnsupportedError catch (e) {
+          if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Download not supported in this web context: $e'), backgroundColor: Colors.red));
+        } catch (e) {
+          if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Download failed: $e'), backgroundColor: Colors.red));
+        }
+        return;
+      }
+
+      final dir = preferAppDocs ? await getApplicationDocumentsDirectory() : await getTemporaryDirectory();
+      final path = '${dir.path}/$filename';
+      final file = File(path);
+      await file.writeAsBytes(bytes);
+      if (mounted) {
+        ScaffoldMessenger.of(this.context).showSnackBar(
+        SnackBar(
+          content: Text('Saved to $path'),
+          action: SnackBarAction(
+            label: 'Open',
+            onPressed: () async {
+              try {
+                await OpenFile.open(path);
+              } catch (e) {
+                if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error opening file: $e'), backgroundColor: Colors.red));
+              }
+            },
+          ),
+        ),
+      );
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error sharing/downloading: $e'), backgroundColor: Colors.red));
+    }
   }
 }

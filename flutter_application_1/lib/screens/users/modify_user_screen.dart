@@ -146,8 +146,8 @@ class _ModifyUserPageState extends State<ModifyUserPage> {
                     // Debug: show what will be sent
                     try {
                       // ignore: avoid_print
-                      print('ModifyUser: sending -> role=${selectedRole?.id}, dep=${selectedDepartment?.id}');
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Envoi: role=${selectedRole?.id}, dep=${selectedDepartment?.id}')));
+                      // print('ModifyUser: sending -> role=${selectedRole?.id}, dep=${selectedDepartment?.id}');
+                      // ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Envoi: role=${selectedRole?.id}, dep=${selectedDepartment?.id}')));
                     } catch (e) {}
 
                     final error = await userController.updateAllUser(
