@@ -9,7 +9,6 @@ import 'package:flutter_application_1/utils/pdf_generator.dart';
 import 'package:intl/intl.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
@@ -181,78 +180,19 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                       tooltip: 'Export PDF',
                       icon: const Icon(Icons.picture_as_pdf, color: Colors.black87),
                       onPressed: () async {
-                        // Show actions: Share or Save
-                        showModalBottomSheet(
-                          context: context,
-                          builder: (context) {
-                            return SafeArea(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  ListTile(
-                                    leading: const Icon(Icons.share),
-                                    title: const Text('Share / Download'),
-                                    onTap: () async {
-                                      Navigator.of(context).pop();
-                                      try {
-                                        ScaffoldMessenger.of(this.context).showSnackBar(const SnackBar(content: Text('Generating PDF...')));
-                                        final bytes = await PdfGenerator.generatePurchaseOrderPdf(_order);
-                                        try {
-                                          await Printing.sharePdf(bytes: bytes, filename: 'purchase_order_${_order.id ?? 'po'}.pdf');
-                                        } catch (_) {
-                                          // Printing not available — fall back depending on platform
-                                          try {
-                                            await _saveOrDownload(bytes, 'purchase_order_${_order.id ?? 'po'}.pdf');
-                                          } catch (e) {
-                                            if (mounted) ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(content: Text('Error sharing/downloading: $e'), backgroundColor: Colors.red));
-                                          }
-                                        }
-                                      } catch (e) {
-                                        if (mounted) ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
-                                      }
-                                    },
-                                  ),
-                                  ListTile(
-                                    leading: const Icon(Icons.save_alt),
-                                    title: const Text('Save locally'),
-                                    onTap: () async {
-                                      Navigator.of(context).pop();
-                                      try {
-                                        ScaffoldMessenger.of(this.context).showSnackBar(const SnackBar(content: Text('Generating PDF...')));
-                                        final bytes = await PdfGenerator.generatePurchaseOrderPdf(_order);
-                                        if (kIsWeb) {
-                                          // On web, trigger a direct download
-                                          await _saveOrDownload(bytes, 'purchase_order_${_order.id ?? 'po'}.pdf', preferAppDocs: true);
-                                          return;
-                                        }
-                                        final dir = await getApplicationDocumentsDirectory();
-                                        final file = File('${dir.path}/purchase_order_${_order.id ?? 'po'}.pdf');
-                                        await file.writeAsBytes(bytes);
-                                        if (mounted) ScaffoldMessenger.of(this.context).showSnackBar(
-                                          SnackBar(
-                                            content: Text('Saved to ${file.path}'),
-                                            action: SnackBarAction(
-                                              label: 'Open',
-                                              onPressed: () async {
-                                                try {
-                                                  await OpenFile.open(file.path);
-                                                } catch (e) {
-                                                  if (mounted) ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(content: Text('Error opening file: $e'), backgroundColor: Colors.red));
-                                                }
-                                              },
-                                            ),
-                                          ),
-                                        );
-                                      } catch (e) {
-                                        if (mounted) ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(content: Text('Error saving PDF: $e'), backgroundColor: Colors.red));
-                                      }
-                                    },
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        );
+                        try {
+                          ScaffoldMessenger.of(this.context).showSnackBar(const SnackBar(content: Text('Generating PDF...')));
+                          final requesterUser = userController.users.firstWhere((u) => u.id == _order.requestedByUser, orElse: () => userController.currentUser);
+                          final approverUser = userController.users.firstWhere((u) => u.id == _order.approvedBy, orElse: () => userController.currentUser);
+                          final bytes = await PdfGenerator.generatePurchaseOrderPdf(
+                            _order,
+                            requesterUsername: requesterUser.username ?? requesterUser.id?.toString(),
+                            approverUsername: approverUser.username ?? approverUser.id?.toString(),
+                          );
+                          await _saveOrDownload(bytes, 'purchase_order_${_order.id ?? 'po'}.pdf', preferAppDocs: true);
+                        } catch (e) {
+                          if (mounted) ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(content: Text('Error generating PDF: $e'), backgroundColor: Colors.red));
+                        }
                       },
                     ),
                   ),

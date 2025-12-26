@@ -14,6 +14,8 @@ class PurchaseRequest {
   int? requestedBy;
   String? approvedByName;
   String? requestedByName;
+  String? approvedByUsername;
+  String? requestedByUsername;
   String? priority;
 
   bool? isArchived;
@@ -69,12 +71,15 @@ class PurchaseRequest {
       requestedBy = json['requested_by']['id'];
       // try to capture a display name if backend provides it
       requestedByName = (json['requested_by']['first_name'] ?? json['requested_by']['username'] ?? json['requested_by']['name'])?.toString();
+      // explicitly capture username when available
+      requestedByUsername = json['requested_by']['username']?.toString();
     } else {
       requestedBy = json['requested_by'];
     }
     if (json['approved_by'] is Map) {
       approvedBy = json['approved_by']['id'];
       approvedByName = (json['approved_by']['first_name'] ?? json['approved_by']['username'] ?? json['approved_by']['name'])?.toString();
+      approvedByUsername = json['approved_by']['username']?.toString();
     } else {
       approvedBy = json['approved_by'];
     }
@@ -87,6 +92,8 @@ class PurchaseRequest {
 
   
 }
+
+  DateTime? get dueDate => endDate;
 
 Map<String, dynamic> toJson() {
   final Map<String, dynamic> data = <String, dynamic>{};
@@ -104,6 +111,8 @@ Map<String, dynamic> toJson() {
   data['requested_by'] = requestedBy;
   data['approved_by_name'] = approvedByName;
   data['requested_by_name'] = requestedByName;
+  data['approved_by_username'] = approvedByUsername;
+  data['requested_by_username'] = requestedByUsername;
   data['priority'] = priority;
   data['is_archived'] = isArchived ?? false;
   return data;

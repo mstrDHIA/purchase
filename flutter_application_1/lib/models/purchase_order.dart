@@ -103,12 +103,14 @@ class Products {
   int? quantity;
   String? brand;
   String? supplier;
+  int? supplierId;
   double? price;
   double? unitPrice;
+  String? unit; // unit of measure (e.g., pcs)
   String? family;
   String? subFamily;
 
-  Products({this.product, this.quantity, this.brand, this.supplier, this.price, this.unitPrice, this.family, this.subFamily});
+  Products({this.product, this.quantity, this.brand, this.supplier, this.supplierId, this.price, this.unitPrice, this.unit, this.family, this.subFamily});
 
   Products.fromJson(Map<String, dynamic> json) {
     product = json['product'];
@@ -117,6 +119,8 @@ class Products {
     final sup = json['supplier'];
     if (sup is Map) {
       supplier = sup['name']?.toString() ?? sup['supplier']?.toString();
+      // try to capture supplier id if present
+      supplierId = sup['id'] is int ? sup['id'] as int : (sup['id'] != null ? int.tryParse(sup['id'].toString()) : null);
     } else {
       supplier = sup?.toString();
     }
@@ -132,6 +136,8 @@ class Products {
         : (json['unit_price'] is double)
             ? json['unit_price']
             : double.tryParse(json['unit_price']?.toString() ?? '');
+    // unit may be provided under different keys
+    unit = json['unit']?.toString() ?? json['unit_name']?.toString() ?? json['unit_label']?.toString();
   }
 
   Map<String, dynamic> toJson() {
@@ -140,10 +146,12 @@ class Products {
     data['quantity'] = quantity;
     data['brand'] = brand;
     data['supplier'] = supplier;
+    if (supplierId != null) data['supplier_id'] = supplierId;
     data['family'] = family;
     data['subfamily'] = subFamily;
     data['price'] = price;
     data['unit_price'] = unitPrice;
+    data['unit'] = unit;
     return data;
   }
 }

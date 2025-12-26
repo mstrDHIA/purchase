@@ -9,6 +9,14 @@ import 'package:intl/intl.dart';
 import '../../l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/controllers/product_controller.dart';
+import '../../utils/purchase_request_pdf.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/services.dart' show MissingPluginException;
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:open_file/open_file.dart';
+import 'package:flutter_application_1/utils/download_helper.dart';
+import 'package:printing/printing.dart';
 import 'package:flutter_application_1/screens/Purchase order/refuse_purchase_screen.dart';
 
 class PurchaseRequestView extends StatefulWidget {
@@ -240,6 +248,89 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                  // PDF export icon (top-right) — small square with border and shadow
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 4.0),
+                      child: Visibility(
+                        visible: userController.currentUser.role!.id == 4 || userController.currentUser.role!.id == 1,
+                        child: GestureDetector(
+                          onTap: () async {
+                            try {
+                              // Prefer explicit usernames from the users cache when available
+                              final requesterUser = userController.users.firstWhere(
+                                (u) => u.id == widget.purchaseRequest.requestedBy,
+                                orElse: () => userController.currentUser,
+                              );
+                              final approverUser = userController.users.firstWhere(
+                                (u) => u.id == widget.purchaseRequest.approvedBy,
+                                orElse: () => userController.currentUser,
+                              );
+
+                              final bytes = await PurchaseRequestPdf.generatePurchaseRequestPdf(
+                                widget.purchaseRequest,
+                                l10n: AppLocalizations.of(context),
+                                requesterUsername: requesterUser.username ?? requesterUser.id?.toString(),
+                                approverUsername: approverUser.username ?? approverUser.id?.toString(),
+                              );
+                              final filename = 'purchase_request_${widget.purchaseRequest.id ?? 'request'}.pdf';
+                              if (kIsWeb) {
+                                try {
+                                  await saveAsFile(bytes, filename);
+                                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Downloaded $filename')));
+                                } on UnsupportedError catch (e) {
+                                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Download not supported in this web context: $e'), backgroundColor: Colors.red));
+                                } catch (e) {
+                                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Download failed: $e'), backgroundColor: Colors.red));
+                                }
+                              } else {
+                                try {
+                                  await Printing.sharePdf(bytes: bytes, filename: filename);
+                                } on MissingPluginException catch (_) {
+                                  // Fallback: save file locally and offer to open it
+                                  try {
+                                    final dir = await getTemporaryDirectory();
+                                    final path = '${dir.path}/$filename';
+                                    final file = File(path);
+                                    await file.writeAsBytes(bytes);
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Saved to $path'),
+                                          action: SnackBarAction(label: 'Open', onPressed: () => OpenFile.open(path)),
+                                        ),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error saving file: $e'), backgroundColor: Colors.red));
+                                  }
+                                } catch (e) {
+                                  if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to share PDF: $e'), backgroundColor: Colors.red));
+                                }
+                              }
+                            } catch (e) {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to generate PDF: ' + e.toString())));
+                              }
+                            }
+                          },
+
+                          child: Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.grey.shade300),
+                              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 6)],
+                            ),
+                            child: const Icon(Icons.picture_as_pdf, size: 20, color: Colors.black87),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -567,6 +658,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                         ],
                       ),
                     ),
+                    const SizedBox(width: 12),
                     const Spacer(),
                     if((userController.currentUser.role!.id==4||userController.currentUser.role!.id==1)&&(_status=='approved') && !_poCreated)
                     ElevatedButton(onPressed: () async {

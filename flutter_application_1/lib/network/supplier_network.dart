@@ -204,4 +204,32 @@ class SupplierNetwork {
       rethrow;
     }
   }
+
+  /// Fetch a single supplier by ID
+  Future<Map<String, dynamic>?> fetchSupplierById(int id) async {
+    try {
+      final Response response = await api.dio.get(
+        '${APIS.baseUrl}${APIS.fetchSuppliers}$id/',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer ${APIS.token}',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        if (response.data is Map<String, dynamic>) {
+          return response.data as Map<String, dynamic>;
+        }
+        return null;
+      } else {
+        print('Failed to fetch supplier by id: ${response.data}');
+        return null;
+      }
+    } catch (e) {
+      print('Error fetching supplier by id: $e');
+      return null;
+    }
+  }
 }
