@@ -582,7 +582,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                           : status.toLowerCase() == 'pending'
                               ? Colors.orange.shade100
                               : status.toLowerCase() == 'edited'
-                                  ? Colors.pink.shade100
+                                  ? const Color.fromARGB(255, 110, 110, 110)
                                   : Colors.red.shade100,
                       borderRadius: BorderRadius.circular(18),
                     ),
@@ -594,8 +594,8 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                             : status.toLowerCase() == 'pending'
                                 ? Colors.orange.shade800
                                 : status.toLowerCase() == 'edited'
-                                    ? Colors.red.shade700
-                                    : Colors.red.shade700,
+                                    ? const Color.fromARGB(255, 250, 243, 243)
+                                    : const Color.fromARGB(255, 48, 47, 47),
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
                       ),

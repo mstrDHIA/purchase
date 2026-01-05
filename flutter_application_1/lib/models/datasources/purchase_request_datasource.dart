@@ -136,7 +136,7 @@ class PurchaseRequestDataSource extends DataTableSource {
               borderRadius: BorderRadius.circular(4),
             ),
             child: Padding(
-              padding: const EdgeInsets.all(4.0),
+              padding: const EdgeInsets.all(2.0),
               child: Builder(builder: (cellContext) {
                 final s = (request.status ?? 'pending').toString();
                 final lv = s.toLowerCase();

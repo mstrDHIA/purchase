@@ -137,20 +137,25 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
           _currency = _codeToCurrency[code]!;
         }
       }
-      if (initial['endDate'] != null) {
+      // Prefer API-provided end date (check both camelCase and snake_case).
+      final endDateRaw = initial['endDate'] ?? initial['end_date'];
+      if (endDateRaw != null && endDateRaw.toString().isNotEmpty) {
         try {
           DateTime endDate;
-          if (initial['endDate'] is DateTime) {
-            endDate = initial['endDate'];
+          if (endDateRaw is DateTime) {
+            endDate = endDateRaw;
           } else {
-            endDate = DateTime.parse(initial['endDate'].toString());
+            // Try parsing ISO / yyyy-MM-dd first, then dd-MM-yyyy format
+            endDate = DateTime.tryParse(endDateRaw.toString()) ?? DateFormat('dd-MM-yyyy').parseStrict(endDateRaw.toString());
           }
           dueDateController.text = DateFormat('dd-MM-yyyy').format(endDate);
         } catch (_) {
+          // If parsing fails, leave the field empty (don't default to today)
           dueDateController.text = '';
         }
       } else {
-        dueDateController.text = DateFormat('dd-MM-yyyy').format(DateTime.now());
+        // Editing an existing order with no due date: leave it blank
+        dueDateController.text = '';
       }
       // initialize supplier delivery date if provided
       if (initial['supplier_delivery_date'] != null) {

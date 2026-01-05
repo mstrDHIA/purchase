@@ -377,16 +377,59 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
                             itemCount: products.length,
                             itemBuilder: (context, index) {
                               final item = products[index];
-                              return ListTile(
-                                title: Text(item['product']),
-                                subtitle: Text('Quantity: ${item['quantity']}'),
-                                trailing: IconButton(
-                                  icon: const Icon(Icons.delete, color: Colors.red),
-                                  onPressed: () {
-                                    setState(() {
-                                      products.removeAt(index);
-                                    });
-                                  },
+                              return Container(
+                                margin: const EdgeInsets.symmetric(vertical: 6),
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[50],
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.grey.shade200),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            item['product'] ?? item['subFamily'] ?? '',
+                                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                          ),
+                                          const SizedBox(height: 6),
+                                          Text(
+                                            'Famille: ${item['family'] ?? ''} • Sous-famille: ${item['subFamily'] ?? ''}',
+                                            style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                                          ),
+                                          if ((item['product'] ?? '') != (item['subFamily'] ?? '')) ...[
+                                            const SizedBox(height: 6),
+                                            Text(item['product'] ?? '', style: const TextStyle(fontSize: 13)),
+                                          ],
+                                        ],
+                                      ),
+                                    ),
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.end,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: Colors.blue[50],
+                                            borderRadius: BorderRadius.circular(16),
+                                          ),
+                                          child: Text('Quantité: ${item['quantity'] ?? ''}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        IconButton(
+                                          icon: const Icon(Icons.delete, color: Colors.red),
+                                          onPressed: () {
+                                            setState(() {
+                                              products.removeAt(index);
+                                            });
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
                               );
                             },
