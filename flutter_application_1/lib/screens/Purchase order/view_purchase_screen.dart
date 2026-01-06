@@ -103,6 +103,15 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
     final products = _order.products ?? [];
     final userController = Provider.of<UserController>(context, listen: false);
     final purchaseOrderController = Provider.of<PurchaseOrderController>(context, listen: false);
+
+    // Role-aware display: show 'pending' to role 6 when backend status is 'edited'
+    final roleId = userController.currentUser.role?.id;
+    final displayStatus = (roleId == 6 && status.toLowerCase() == 'edited') ? 'pending' : status;
+    final displayStatusLower = displayStatus.toLowerCase();
+    final underlyingStatusLower = status.toLowerCase();
+
+    // Determine whether action buttons should be visible for current user
+    final canShowActions = ((underlyingStatusLower == 'edited') && (roleId == 1 || roleId == 4 || roleId == 6)) || (roleId == 6 && underlyingStatusLower == 'pending');
     // compute total and currency symbol
     final double totalAmount = (products).fold<double>(0.0, (sum, p) => sum + ((p.unitPrice ?? 0.0) * (p.quantity ?? 0)));
     String currencySymbol = '\$';
@@ -577,17 +586,17 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: status.toLowerCase() == 'approved'
+                      color: displayStatus.toLowerCase() == 'approved'
                           ? Colors.green.shade100
-                          : status.toLowerCase() == 'pending'
-                              ? Colors.orange.shade100
-                              : status.toLowerCase() == 'edited'
+                          : displayStatus.toLowerCase() == 'pending'
+                              ? const Color.fromARGB(255, 243, 147, 3)
+                              : displayStatus.toLowerCase() == 'edited'
                                   ? const Color.fromARGB(255, 110, 110, 110)
                                   : Colors.red.shade100,
                       borderRadius: BorderRadius.circular(18),
                     ),
                     child: Text(
-                      status.isNotEmpty ? (status[0].toUpperCase() + status.substring(1)) : '-',
+                      displayStatus.isNotEmpty ? (displayStatus[0].toUpperCase() + displayStatus.substring(1)) : '-',
                       style: TextStyle(
                         color: status.toLowerCase() == 'approved'
                             ? Colors.green.shade700
@@ -602,7 +611,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  if (widget.order.status!.toLowerCase()=='edited' && (userController.currentUser.role?.id == 1 || userController.currentUser.role?.id == 6)) ...[
+                  if (canShowActions) ...[
                     ElevatedButton(
                       onPressed: () async {
                         try {
@@ -683,7 +692,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                               'id': _order.id,
                               'requested_by_user': _order.requestedByUser,
                               'approved_by': userController.currentUser.id,
-                              'statuss': choice == 'total' ? 'rejected' : 'edited',
+                              'statuss': 'rejected',
                               if (choice == 'modify') 'for_modification': true,
                               'start_date': _order.startDate != null ? DateFormat('yyyy-MM-dd').format(_order.startDate!) : null,
                               'end_date': _order.endDate != null ? DateFormat('yyyy-MM-dd').format(_order.endDate!) : null,
@@ -702,14 +711,14 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
 
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(choice == 'total' ? AppLocalizations.of(context)!.purchaseOrderRejected : '${AppLocalizations.of(context)!.rejected} (for modification)'), backgroundColor: choice == 'total' ? Colors.red : Colors.orange),
+                                SnackBar(content: Text(AppLocalizations.of(context)!.purchaseOrderRejected), backgroundColor: Colors.red),
                               );
                               setState(() {
                                 _order = PurchaseOrder(
                                   id: _order.id,
                                   requestedByUser: _order.requestedByUser,
                                   approvedBy: userController.currentUser.id,
-                                  status: choice == 'total' ? 'Rejected' : 'Edited',
+                                  status: 'Rejected',
                                   startDate: _order.startDate,
                                   endDate: _order.endDate,
                                   priority: _order.priority,

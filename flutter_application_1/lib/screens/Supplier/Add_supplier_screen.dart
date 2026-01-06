@@ -14,6 +14,7 @@ class _AddSupplierPageState extends State<AddSupplierPage> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
   final TextEditingController addressController = TextEditingController();
+  final TextEditingController codeController = TextEditingController();
 
   @override
   void initState() {
@@ -49,6 +50,8 @@ class _AddSupplierPageState extends State<AddSupplierPage> {
                   const SizedBox(height: 16),
                   _buildTextField(phoneController, 'Phone Number'),
                   const SizedBox(height: 16),
+                  _buildTextField(codeController, 'Code fournisseur'),
+                  const SizedBox(height: 16),
                   _buildTextField(addressController, 'Address'),
                   const SizedBox(height: 24),
                   Row(
@@ -71,6 +74,7 @@ class _AddSupplierPageState extends State<AddSupplierPage> {
                               'name': nameController.text,
                               'contact_email': emailController.text,
                               'phone_number': phoneController.text.isEmpty ? null : phoneController.text,
+                              'code_fournisseur': codeController.text.isEmpty ? null : codeController.text,
                               'address': addressController.text.isEmpty ? null : addressController.text,
                             };
                             Navigator.of(context).pop(supplierData);
@@ -113,5 +117,15 @@ class _AddSupplierPageState extends State<AddSupplierPage> {
   String? _notEmptyValidator(String? value) {
     if (value == null || value.isEmpty) return 'This field is required';
     return null;
+  }
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    emailController.dispose();
+    phoneController.dispose();
+    addressController.dispose();
+    codeController.dispose();
+    super.dispose();
   }
 }

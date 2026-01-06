@@ -4,47 +4,11 @@ import 'package:provider/provider.dart';
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter_application_1/controllers/supplier_controller.dart';
 
-/// A small local Supplier model used by the screen. The project's real
-/// Supplier model may differ; this mirrors the fields used in the UI.
-class Supplier {
-  final int id;
-  final String? email;
-  final String? name;
-  final String? phone;
-  final String? matricule;
-  final String? cin;
-  final String? groupName;
-  final String? contactName;
+import 'package:flutter_application_1/models/supplier.dart';
 
-  Supplier({
-    required this.id,
-    this.email,
-    this.name,
-    this.phone,
-    this.matricule,
-    this.cin,
-    this.groupName,
-    this.contactName,
-  });
-
-  factory Supplier.fromJson(Map<String, dynamic> json) => Supplier(
-        id: json['id'] as int? ?? 0,
-        email: json['contact_email'] as String?,
-        name: json['name'] as String?,
-        phone: json['phone'] as String? ??
-               json['phone_number'] as String? ??
-               json['contact_phone'] as String?,
-      // Prefer server field 'matricule_fiscale', fallback to older keys
-      matricule: json['matricule_fiscale'] as String? ?? json['matricule'] as String? ?? json['registration_number'] as String?,
-        cin: json['cin'] as String? ??
-             json['cin_number'] as String? ??
-             json['identity_number'] as String?,
-        groupName: json['group_name'] as String? ??
-                   json['groupName'] as String?,
-        contactName: json['contact_name'] as String? ??
-                     json['contactName'] as String?,
-      );
-}
+// Note: this screen now uses the shared `Supplier` model from lib/models/supplier.dart
+// which contains fields like `contactEmail`, `phoneNumber`, `matricule`, `cin`, `codeFournisseur`, etc.
+// }
 
 class SupplierRegistrationPage extends StatefulWidget {
   const SupplierRegistrationPage({super.key});
@@ -69,16 +33,31 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
 
   String _safeString(String? value) => value ?? '';
 
+  // Safely extract supplier code from different possible representations
+  String _getSupplierCode(dynamic s) {
+    if (s == null) return '';
+    try {
+      if (s is Supplier) return s.codeFournisseur ?? '';
+      if (s is Map<String, dynamic>) return (s['code_fournisseur'] ?? s['code'] ?? s['codeFournisseur'])?.toString() ?? '';
+      // Fallback to dynamic access guarded by try/catch
+      final dyn = s as dynamic;
+      final val = dyn.codeFournisseur;
+      return val?.toString() ?? '';
+    } catch (_) {
+      return '';
+    }
+  }
+
   void _sortByColumn(int columnIndex, bool asc) {
     final controller = context.read<SupplierController>();
     switch (columnIndex) {
       case 0:
-        controller.suppliers.sort((a, b) => asc ? a.id.compareTo(b.id) : b.id.compareTo(a.id));
+        controller.suppliers.sort((a, b) => asc ? (a.id ?? 0).compareTo(b.id ?? 0) : (b.id ?? 0).compareTo(a.id ?? 0));
         break;
       case 1:
         controller.suppliers.sort((a, b) => asc
-            ? _safeString(a.email).toLowerCase().compareTo(_safeString(b.email).toLowerCase())
-            : _safeString(b.email).toLowerCase().compareTo(_safeString(a.email).toLowerCase()));
+            ? _safeString(a.contactEmail).toLowerCase().compareTo(_safeString(b.contactEmail).toLowerCase())
+            : _safeString(b.contactEmail).toLowerCase().compareTo(_safeString(a.contactEmail).toLowerCase()));
         break;
       case 2:
         controller.suppliers.sort((a, b) => asc
@@ -87,8 +66,8 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
         break;
       case 3:
         controller.suppliers.sort((a, b) => asc
-            ? _safeString(a.phone).toLowerCase().compareTo(_safeString(b.phone).toLowerCase())
-            : _safeString(b.phone).toLowerCase().compareTo(_safeString(a.phone).toLowerCase()));
+            ? _safeString(a.phoneNumber?.toString()).toLowerCase().compareTo(_safeString(b.phoneNumber?.toString()).toLowerCase())
+            : _safeString(b.phoneNumber?.toString()).toLowerCase().compareTo(_safeString(a.phoneNumber?.toString()).toLowerCase()));
         break;
       case 4:
         controller.suppliers.sort((a, b) => asc
@@ -142,7 +121,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
 
     if (ok == true) {
       try {
-        await controller.deleteSupplier(supplier.id);
+        await controller.deleteSupplier(supplier.id!);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Supplier deleted successfully')),
@@ -165,12 +144,14 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
     final matriculeCtrl = TextEditingController();
     final cinCtrl = TextEditingController();
     final addressCtrl = TextEditingController();
+    final codeCtrl = TextEditingController();
     final groupNameCtrl = TextEditingController();
     final contactNameCtrl = TextEditingController();
     final formKey = GlobalKey<FormState>();
     bool isSubmitting = false;
-    String _selectedCountryCode = '+1'; // default country code
+    String _selectedCountryCode = '+216'; // default country code
     final controller = context.read<SupplierController>();
+    Map<String, String?> fieldErrors = {};
 
     await showDialog<void>(
       context: context,
@@ -189,14 +170,14 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                   children: [
                     TextFormField(
                       controller: nameCtrl,
-                      decoration: const InputDecoration(labelText: 'Name'),
+                      decoration: InputDecoration(labelText: 'Name', errorText: fieldErrors['name']),
                       validator: (v) => v == null || v.isEmpty ? 'Name is required' : null,
                       enabled: !isSubmitting,
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: emailCtrl,
-                      decoration: const InputDecoration(labelText: 'Contact Email'),
+                      decoration: InputDecoration(labelText: 'Contact Email', errorText: fieldErrors['contact_email']),
                       validator: (v) {
                         if (v == null || v.isEmpty) return 'Email is required';
                         if (!v.contains('@')) return 'Enter a valid email';
@@ -280,7 +261,13 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: addressCtrl,
-                      decoration: const InputDecoration(labelText: 'Address'),
+                      decoration: InputDecoration(labelText: 'Address', errorText: fieldErrors['address']),
+                      enabled: !isSubmitting,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: codeCtrl,
+                      decoration: InputDecoration(labelText: 'Code fournisseur', errorText: fieldErrors['code_fournisseur']),
                       enabled: !isSubmitting,
                     ),
                     const SizedBox(height: 12),
@@ -310,7 +297,10 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                   ? null
                   : () async {
                       if (formKey.currentState!.validate()) {
-                        setDialogState(() => isSubmitting = true);
+                        setDialogState(() {
+                          isSubmitting = true;
+                          fieldErrors = {};
+                        });
                         try {
                           final fullPhoneNumber = _selectedCountryCode + phoneCtrl.text;
                           await controller.createSupplier(
@@ -318,6 +308,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                             contactEmail: emailCtrl.text,
                             phoneNumber: fullPhoneNumber,
                             address: addressCtrl.text.isNotEmpty ? addressCtrl.text : null,
+                            codeFournisseur: codeCtrl.text.isNotEmpty ? codeCtrl.text : null,
                             groupName: groupNameCtrl.text.isNotEmpty ? groupNameCtrl.text : null,
                             contactName: contactNameCtrl.text.isNotEmpty ? contactNameCtrl.text : null,
                             matricule: matriculeCtrl.text.isNotEmpty ? matriculeCtrl.text : null,
@@ -325,6 +316,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                           );
 
                           if (mounted) {
+                            setDialogState(() { isSubmitting = false; });
                             Navigator.of(context).pop();
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(content: Text('Supplier created successfully!')),
@@ -332,10 +324,31 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                           }
                         } catch (e) {
                           if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Error: ${e.toString()}')),
-                            );
-                            setDialogState(() => isSubmitting = false);
+                            // Parse server validation errors if present
+                            final msg = e.toString();
+                            const prefix = 'Server validation error:';
+                            if (msg.contains(prefix)) {
+                              final body = msg.split(prefix).last.trim();
+                              final parts = body.split(';').map((s) => s.trim()).where((s) => s.isNotEmpty);
+                              final Map<String, String?> newErrors = {};
+                              for (final part in parts) {
+                                final idx = part.indexOf(':');
+                                if (idx > 0) {
+                                  final key = part.substring(0, idx).trim();
+                                  final val = part.substring(idx + 1).trim();
+                                  newErrors[key] = val;
+                                }
+                              }
+                              setDialogState(() {
+                                fieldErrors = newErrors;
+                                isSubmitting = false;
+                              });
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Error: ${e.toString()}')),
+                              );
+                              setDialogState(() => isSubmitting = false);
+                            }
                           }
                         }
                       }
@@ -352,15 +365,21 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
 
   Future<void> _showEditDialog({Supplier? supplier, int? index}) async {
     final nameCtrl = TextEditingController(text: supplier?.name ?? '');
-    final emailCtrl = TextEditingController(text: supplier?.email ?? '');
-    final phoneCtrl = TextEditingController(text: supplier?.phone ?? '');
+    final emailCtrl = TextEditingController(text: supplier?.contactEmail ?? '');
+    final phoneCtrl = TextEditingController(text: supplier?.phoneNumber?.toString() ?? '');
     final matriculeCtrl = TextEditingController(text: supplier?.matricule ?? '');
     final cinCtrl = TextEditingController(text: supplier?.cin ?? '');
+
     final groupNameCtrl = TextEditingController(text: supplier?.groupName ?? '');
     final contactNameCtrl = TextEditingController(text: supplier?.contactName ?? '');
     bool isSubmitting = false;
     String _selectedCountryCode = '+216'; // Tunisie par défaut
     final controller = context.read<SupplierController>();
+    // Try to retrieve the detailed model for additional fields like codeFournisseur
+    final matches = controller.suppliers.where((s) => (s as dynamic).id == supplier?.id).toList();
+    final modelMatch = matches.isNotEmpty ? matches.first : null;
+    final codeInitial = _getSupplierCode(modelMatch);
+    final codeCtrl = TextEditingController(text: codeInitial);
 
     await showDialog<void>(
       context: context,
@@ -422,6 +441,8 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                   const SizedBox(height: 12),
                   TextField(controller: cinCtrl, decoration: const InputDecoration(labelText: 'CIN')),
                   const SizedBox(height: 12),
+                  TextField(controller: codeCtrl, decoration: const InputDecoration(labelText: 'Code fournisseur')),
+                  const SizedBox(height: 12),
                   TextField(controller: groupNameCtrl, decoration: const InputDecoration(labelText: 'Group Name')),
                   const SizedBox(height: 12),
                   TextField(controller: contactNameCtrl, decoration: const InputDecoration(labelText: 'Contact Name')),
@@ -446,10 +467,11 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                         if (supplier != null && index != null) {
                           final fullPhoneNumber = _selectedCountryCode + phoneCtrl.text;
                           await controller.editSupplier(
-                            id: supplier.id,
+                            id: supplier.id!,
                             name: nameCtrl.text,
                             contactEmail: emailCtrl.text,
                             phoneNumber: fullPhoneNumber,
+                                codeFournisseur: codeCtrl.text.isNotEmpty ? codeCtrl.text : null,
                                 groupName: groupNameCtrl.text.isNotEmpty ? groupNameCtrl.text : null,
                                 contactName: contactNameCtrl.text.isNotEmpty ? contactNameCtrl.text : null,
                                 matricule: matriculeCtrl.text.isNotEmpty ? matriculeCtrl.text : null,
@@ -485,11 +507,12 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildDetailRow(Icons.mail, 'Email', _safeString(supplier.email)),
+                _buildDetailRow(Icons.mail, 'Email', _safeString(supplier.contactEmail)),
+                const SizedBox(height: 16),
                 const SizedBox(height: 16),
                 _buildDetailRow(Icons.person, 'Name', _safeString(supplier.name)),
                 const SizedBox(height: 16),
-                _buildDetailRow(Icons.phone, 'Phone', _safeString(supplier.phone)),
+                _buildDetailRow(Icons.phone, 'Phone', _safeString(supplier.phoneNumber?.toString())),
                 const SizedBox(height: 16),
                 _buildDetailRow(Icons.badge, 'Matricule', _safeString(supplier.matricule)),
                 const SizedBox(height: 16),
@@ -499,7 +522,24 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                 const SizedBox(height: 16),
                 _buildDetailRow(Icons.person_outline, 'Contact Name', _safeString(supplier.contactName)),
                 const SizedBox(height: 16),
-                _buildDetailRow(Icons.tag, 'ID', supplier.id.toString()),
+                // Try to find the full model to show additional fields like Code Fournisseur
+                Builder(
+                  builder: (context) {
+                    final matches = context.read<SupplierController>().suppliers.where((s) => (s as dynamic).id == supplier.id).toList();
+                    final model = matches.isNotEmpty ? matches.first : null;
+                    final code = _getSupplierCode(model);
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (code.isNotEmpty) ...[
+                          _buildDetailRow(Icons.tag, 'Code fournisseur', code),
+                          const SizedBox(height: 16),
+                        ],
+                        _buildDetailRow(Icons.tag, 'ID', supplier.id.toString()),
+                      ],
+                    );
+                  },
+                ),
               ],
             ),
           ),
@@ -549,8 +589,8 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
 
     final filtered = suppliers.where((s) {
       final name = _safeString(s.name).toLowerCase();
-      final email = _safeString(s.email).toLowerCase();
-      final phone = _safeString(s.phone).toLowerCase();
+      final email = _safeString(s.contactEmail).toLowerCase();
+      final phone = _safeString(s.phoneNumber?.toString()).toLowerCase();
       final matricule = _safeString(s.matricule).toLowerCase();
       final cin = _safeString(s.cin).toLowerCase();
       final groupName = _safeString(s.groupName).toLowerCase();
@@ -744,9 +784,9 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                                     return DataRow(
                                       cells: [
                                         DataCell(Text(supplier.id.toString())),
-                                        DataCell(Text(_safeString(supplier.email))),
+                                        DataCell(Text(_safeString(supplier.contactEmail))),
                                         DataCell(Text(_safeString(supplier.name))),
-                                        DataCell(Text(_safeString(supplier.phone))),
+                                        DataCell(Text(_safeString(supplier.phoneNumber?.toString()))),
                                         DataCell(Text(_safeString(supplier.matricule))),
                                         DataCell(Text(_safeString(supplier.cin))),
                                         DataCell(Text(_safeString(supplier.groupName))),

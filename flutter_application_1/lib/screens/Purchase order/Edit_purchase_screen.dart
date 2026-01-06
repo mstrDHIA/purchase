@@ -683,7 +683,7 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
             return {
               'id': s.id,
               'name': s.name,
-              if (s.email != null) 'email': s.email,
+              if (s.contactEmail != null) 'email': s.contactEmail,
             };
           } catch (_) {
             return {'name': prodSupplierName};

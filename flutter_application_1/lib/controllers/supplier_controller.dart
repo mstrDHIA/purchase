@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../network/supplier_network.dart';
-import '../screens/Supplier/Supplier_registration_screen.dart';
+import '../models/supplier.dart';
 
 class SupplierController extends ChangeNotifier {
   final SupplierNetwork _network = SupplierNetwork();
@@ -17,10 +17,22 @@ class SupplierController extends ChangeNotifier {
       notifyListeners();
 
       final data = await _network.fetchSuppliers();
-      // Convert List<dynamic> to List<Supplier>
-      suppliers = List<Supplier>.from(
-        data.map((item) => Supplier.fromJson(item as Map<String, dynamic>))
-      );
+      // Convert List<dynamic>/Iterable to List<Supplier> defensively and ensure native Dart list/items
+      suppliers = List<Supplier>.from(data.map<Supplier>((item) {
+        // If the item is already a Supplier (e.g., JS proxy or mixed), rebuild it from json
+        if (item is Supplier) {
+          try {
+            return Supplier.fromJson(Map<String, dynamic>.from(item.toJson()));
+          } catch (_) {
+            // If toJson isn't available or fails, return the item as-is
+            return item;
+          }
+        }
+        if (item is Map<String, dynamic>) return Supplier.fromJson(item);
+        if (item is Map) return Supplier.fromJson(Map<String, dynamic>.from(item));
+        // fallback: attempt dynamic cast (may throw if not a map)
+        return Supplier.fromJson(item as Map<String, dynamic>);
+      }));
       isLoading = false;
       notifyListeners();
       return suppliers;
@@ -42,6 +54,7 @@ class SupplierController extends ChangeNotifier {
     String? contactName,
     String? matricule,
     String? cin,
+    String? codeFournisseur,
   }) async {
     try {
       final response = await _network.createSupplier(
@@ -53,10 +66,15 @@ class SupplierController extends ChangeNotifier {
         contactName: contactName,
         matricule: matricule,
         cin: cin,
+        codeFournisseur: codeFournisseur,
       );
       
       // Convert response to Supplier and add to list
       final supplier = Supplier.fromJson(response);
+      // Client-side fallback: if server omitted code_fournisseur, preserve the one we sent
+      if ((supplier.codeFournisseur == null || supplier.codeFournisseur!.isEmpty) && codeFournisseur != null && codeFournisseur.isNotEmpty) {
+        supplier.codeFournisseur = codeFournisseur;
+      }
       suppliers.add(supplier);
       notifyListeners();
       return supplier;
@@ -78,6 +96,7 @@ class SupplierController extends ChangeNotifier {
     String? contactName,
     String? matricule,
     String? cin,
+    String? codeFournisseur,
   }) async {
     try {
       final response = await _network.editSupplier(
@@ -90,10 +109,15 @@ class SupplierController extends ChangeNotifier {
         contactName: contactName,
         matricule: matricule,
         cin: cin,
+        codeFournisseur: codeFournisseur,
       );
       
       // Convert response to Supplier and update in list
       final supplier = Supplier.fromJson(response);
+      // Client-side fallback: if server omitted code_fournisseur, preserve the one we sent
+      if ((supplier.codeFournisseur == null || supplier.codeFournisseur!.isEmpty) && codeFournisseur != null && codeFournisseur.isNotEmpty) {
+        supplier.codeFournisseur = codeFournisseur;
+      }
       final index = suppliers.indexWhere((s) => s.id == id);
       if (index != -1) {
         suppliers[index] = supplier;

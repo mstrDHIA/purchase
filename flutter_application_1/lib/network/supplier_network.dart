@@ -24,13 +24,14 @@ class SupplierNetwork {
 
       if (response.statusCode == 200) {
         print('Suppliers fetched successfully');
-        // Assume the API returns a list or a response with a 'results' field
-        if (response.data is List) {
-          return response.data as List<dynamic>;
-        } else if (response.data is Map && response.data.containsKey('results')) {
-          return response.data['results'] as List<dynamic>;
+        // Normalize the response into a Dart List to handle web JSArray or other Iterable types
+        final body = response.data;
+        if (body is Iterable) {
+          return List<dynamic>.from(body);
+        } else if (body is Map && body['results'] is Iterable) {
+          return List<dynamic>.from(body['results']);
         } else {
-          return [];
+          return <dynamic>[];
         }
       } else {
         print('Failed to fetch suppliers: ${response.data}');
@@ -52,15 +53,14 @@ class SupplierNetwork {
     String? contactName,
     String? matricule,
     String? cin,
+    String? codeFournisseur,
   }) async {
     try {
-      print('Creating supplier with data: name=$name, email=$contactEmail');
-      
       final Map<String, dynamic> payload = {
         'name': name,
         'contact_email': contactEmail,
       };
-      
+
       // Add optional fields if provided
       if (phoneNumber != null && phoneNumber.isNotEmpty) {
         payload['phone_number'] = phoneNumber;
@@ -80,6 +80,12 @@ class SupplierNetwork {
       if (cin != null && cin.isNotEmpty) {
         payload['cin'] = cin;
       }
+      if (codeFournisseur != null && codeFournisseur.isNotEmpty) {
+        payload['code_fournisseur'] = codeFournisseur;
+      }
+
+      // Log payload for debugging
+      print('Creating supplier - payload: $payload');
 
       final Response response = await api.dio.post(
         APIS.baseUrl + APIS.createSupplier,
@@ -99,10 +105,22 @@ class SupplierNetwork {
         print('Supplier created successfully');
         return response.data as Map<String, dynamic>;
       } else {
-        print('Failed to create supplier: ${response.data}');
-        throw Exception('Failed to create supplier');
+        // This branch is less likely because Dio will throw on non-2xx statuses
+        final body = response.data;
+        print('Failed to create supplier - body: $body');
+        throw Exception('Failed to create supplier: $body');
       }
     } catch (e) {
+      // If DioException with response, extract validation details to a friendly message
+      if (e is DioException) {
+        final resp = e.response?.data;
+        print('DioException while creating supplier - status: ${e.response?.statusCode} data: $resp');
+        if (resp is Map) {
+          final msg = resp.entries.map((ent) => '${ent.key}: ${ent.value}').join('; ');
+          throw Exception('Server validation error: $msg');
+        }
+        throw Exception('Server validation error: ${resp ?? e.message}');
+      }
       print('Error creating supplier: $e');
       rethrow;
     }
@@ -119,15 +137,14 @@ class SupplierNetwork {
     String? contactName,
     String? matricule,
     String? cin,
+    String? codeFournisseur,
   }) async {
     try {
-      print('Updating supplier with id=$id');
-      
       final Map<String, dynamic> payload = {
         'name': name,
         'contact_email': contactEmail,
       };
-      
+
       // Add optional fields if provided
       if (phoneNumber != null && phoneNumber.isNotEmpty) {
         payload['phone_number'] = phoneNumber;
@@ -147,6 +164,12 @@ class SupplierNetwork {
       if (cin != null && cin.isNotEmpty) {
         payload['cin'] = cin;
       }
+      if (codeFournisseur != null && codeFournisseur.isNotEmpty) {
+        payload['code_fournisseur'] = codeFournisseur;
+      }
+
+      // Log payload for debugging
+      print('Updating supplier (id=$id) - payload: $payload');
 
       final Response response = await api.dio.put(
         '${APIS.baseUrl}${APIS.editSupplier}$id/',
@@ -166,10 +189,20 @@ class SupplierNetwork {
         print('Supplier updated successfully');
         return response.data as Map<String, dynamic>;
       } else {
-        print('Failed to update supplier: ${response.data}');
-        throw Exception('Failed to update supplier');
+        final body = response.data;
+        print('Failed to update supplier - body: $body');
+        throw Exception('Failed to update supplier: $body');
       }
     } catch (e) {
+      if (e is DioException) {
+        final resp = e.response?.data;
+        print('DioException while updating supplier - status: ${e.response?.statusCode} data: $resp');
+        if (resp is Map) {
+          final msg = resp.entries.map((ent) => '${ent.key}: ${ent.value}').join('; ');
+          throw Exception('Server validation error: $msg');
+        }
+        throw Exception('Server validation error: ${resp ?? e.message}');
+      }
       print('Error updating supplier: $e');
       rethrow;
     }

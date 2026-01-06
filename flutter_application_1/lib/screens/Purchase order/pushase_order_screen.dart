@@ -114,6 +114,8 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
           
         // });
       }
+      final rawStatus = (order.status ?? '').toString();
+      final displayStatus = (Provider.of<UserController>(context, listen: false).currentUser.role?.id == 6 && rawStatus.toLowerCase() == 'edited') ? 'pending' : rawStatus;
       return {
         // keep id as numeric to allow proper numeric sorting (not string lexicographic)
         'id': order.id ?? 0,
@@ -121,7 +123,8 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
         'dateSubmitted': parseDate(order.startDate),
         'dueDate': parseDate(order.endDate),
         'priority': order.priority ?? '',
-        'statuss': order.status ?? '',
+        'statuss': rawStatus,
+        'displayStatus': displayStatus,
         'original': order,
       };
     }).toList();
@@ -132,7 +135,8 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
         order['id'].toString().toLowerCase().contains(searchLower) ||
         (order['actionCreatedBy'] ?? '').toString().toLowerCase().contains(searchLower) ||
         (order['priority'] ?? '').toString().toLowerCase().contains(searchLower) ||
-        (order['statuss'] ?? '').toString().toLowerCase().contains(searchLower)
+        (order['statuss'] ?? '').toString().toLowerCase().contains(searchLower) ||
+        (order['displayStatus'] ?? '').toString().toLowerCase().contains(searchLower)
       ).toList();
     }
 
@@ -150,7 +154,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
       mapped = mapped.where((order) => order['priority'].toLowerCase() == _priorityFilter!.toLowerCase()).toList();
     }
     if (_statusFilter != null) {
-      mapped = mapped.where((order) => order['statuss'].toLowerCase() == _statusFilter!.toLowerCase()).toList();
+      mapped = mapped.where((order) => ((order['displayStatus'] ?? order['statuss'])?.toString() ?? '').toLowerCase() == _statusFilter!.toLowerCase()).toList();
     }
     if (_selectedSubmissionDate != null) {
       mapped = mapped.where((order) {
@@ -202,12 +206,11 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
       });
     }
 
-    // If current user is role N4 (id == 4), restrict visible orders to only approved, rejected, or edited
-    final currentRoleId = Provider.of<UserController>(context, listen: false).currentUser.role?.id;
-    if (currentRoleId == 6) {
+    // If current user is role 6 (accountant), restrict visible orders to key statuses (including edited which will be shown as pending)
+    if (Provider.of<UserController>(context, listen: false).currentUser.role?.id == 6) {
       mapped = mapped.where((order) {
         final s = (order['statuss'] ?? '').toString().toLowerCase();
-        return s == 'approved' || s == 'rejected' || s == 'edited';
+        return s == 'approved' || s == 'rejected' || s == 'edited' || s == 'pending';
       }).toList();
     }
 
@@ -1213,7 +1216,7 @@ class _PurchaseOrderDataSource extends DataTableSource {
         DataCell(Text(formatDateCell(item['dateSubmitted']))),
         DataCell(Text(formatDateCell(item['dueDate']))),
         DataCell(_buildPriorityChip(item['priority'] ?? '-')),
-        DataCell(_buildStatusChip(item['statuss'] ?? '-')),
+        DataCell(_buildStatusChip(item['displayStatus'] ?? item['statuss'] ?? '-')),
         DataCell(Row(
           children: [
             IconButton(
