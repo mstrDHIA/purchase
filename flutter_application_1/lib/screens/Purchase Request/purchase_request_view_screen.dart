@@ -18,6 +18,8 @@ import 'package:open_file/open_file.dart';
 import 'package:flutter_application_1/utils/download_helper.dart';
 import 'package:printing/printing.dart';
 import 'package:flutter_application_1/screens/Purchase order/refuse_purchase_screen.dart';
+import 'package:flutter_application_1/screens/Purchase order/pushase_order_screen.dart';
+import 'package:flutter_application_1/screens/Purchase order/Edit_purchase_screen.dart';
 
 class PurchaseRequestView extends StatefulWidget {
   final PurchaseRequest purchaseRequest;
@@ -681,45 +683,73 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                 );
                                 if (shouldCreate == true) {
                                   final id = widget.purchaseRequest.id;
-                                if (id == null) throw Exception('ID missing');
-                                final payload = {
-                                  'status': 'transformed',
-                                  'approved_by': userController.currentUser.id,
-                                };
-                                await PurchaseRequestNetwork().updatePurchaseRequest(id, payload, method: 'PATCH');
-                                  widget.purchaseRequest.approvedBy=widget.purchaseRequest.approvedBy;
-                                  Map<String,dynamic> purchaseOrderData = {
-                                    'id':widget.purchaseRequest.id,
+                                  if (id == null) throw Exception('ID missing');
+                                  final payload = {
+                                    'status': 'transformed',
+                                    'approved_by': userController.currentUser.id,
+                                  };
+                                  await PurchaseRequestNetwork().updatePurchaseRequest(id, payload, method: 'PATCH');
+                                  widget.purchaseRequest.approvedBy = widget.purchaseRequest.approvedBy;
+
+                                  // Build initial PO data to prefill the editor (do NOT set 'id' here — leave null so editor treats it as new)
+                                  Map<String, dynamic> purchaseOrderData = {
                                     'title': widget.purchaseRequest.title,
                                     'description': widget.purchaseRequest.description,
                                     'requested_by_user': widget.purchaseRequest.approvedBy,
-                                    'status': 'pending',
+                                    // Ensure both legacy and canonical status keys are set to 'edited' so the created PO appears as edited
+                                    'status': 'edited',
+                                    'statuss': 'edited',
                                     'created_at': DateFormat('yyyy-MM-dd').format(DateTime.now()),
                                     'updated_at': DateFormat('yyyy-MM-dd').format(DateTime.now()),
-                                    // Include both the backend-friendly id field and the explicit
-                                    // 'purchase_request' field expected by some endpoints.
                                     'purchase_request_id': widget.purchaseRequest.id,
                                     'purchase_request': widget.purchaseRequest.id,
                                     'products': widget.purchaseRequest.products?.map((p) => p.toJson()).toList(),
                                     'priority': widget.purchaseRequest.priority,
-                                    'start_date': DateFormat('yyyy-MM-dd').format(widget.purchaseRequest.startDate!),
-                                    'end_date': DateFormat('yyyy-MM-dd').format(widget.purchaseRequest.endDate!),
+                                    'start_date': widget.purchaseRequest.startDate != null ? DateFormat('yyyy-MM-dd').format(widget.purchaseRequest.startDate!) : null,
+                                    'end_date': widget.purchaseRequest.endDate != null ? DateFormat('yyyy-MM-dd').format(widget.purchaseRequest.endDate!) : null,
                                   };
-                                  await purchaseOrderController!.addOrder(purchaseOrderData);
-        
-                                  if (mounted) {
-                                    setState(() {
-                                      _showActionButtons = false;
-                                      _poCreated = true;
-                                      _status = 'transformed';
-                                    });
-                                    SnackBar snackBar=SnackBar(content: Text('Purchase Order created successfully!'),backgroundColor: Colors.green,);
-                                    ScaffoldMessenger.of(context).showSnackBar(snackBar);
-                                  }
+
+                                  // Open the EditPurchaseOrder editor in a dialog so user can review/edit before saving
+                                  await showDialog<void>(
+                                    context: context,
+                                    barrierDismissible: false,
+                                    builder: (ctx) => Dialog(
+                                      child: SizedBox(
+                                        width: 900,
+                                        child: EditPurchaseOrder(
+                                          initialOrder: purchaseOrderData,
+                                          onSave: (newOrder) async {
+                                            try {
+                                              await purchaseOrderController!.addOrder(newOrder);
+                                              if (mounted) {
+                                                setState(() {
+                                                  _showActionButtons = false;
+                                                  _poCreated = true;
+                                                  _status = 'transformed';
+                                                });
+                                                Navigator.of(ctx).pop(); // close editor dialog
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  const SnackBar(content: Text('Purchase Order created successfully!'), backgroundColor: Colors.green),
+                                                );
+                                                // Navigate to Purchase Orders page and reuse the existing controller so the new PO is visible immediately
+                                                Navigator.of(context).push(MaterialPageRoute(builder: (_) => PurchaseOrderPage(controller: purchaseOrderController)));
+                                              }
+                                            } catch (e) {
+                                              if (mounted) {
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  SnackBar(content: Text('Failed to create Purchase Order: $e'), backgroundColor: Colors.red),
+                                                );
+                                              }
+                                            }
+                                          },
+                                        ),
+                                      ),
+                                    ),
+                                  );
                                 } else {
                                   // Just close the dialog and maybe pop the view
-                                  if (mounted){}
-                                   Navigator.pop(context, true);
+                                  if (mounted) {}
+                                  Navigator.pop(context, true);
                                 }
                     }, child: Text('Create PO'),style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF635BFF),

@@ -35,9 +35,10 @@ class PurchaseOrderController extends ChangeNotifier {
 			await _network.createPurchaseOrder(orderOrJson);
 			await fetchOrders();
 		} catch (e) {
-      print('error in addOrder in controller: $e');
+			print('error in addOrder in controller: $e');
 			_error = e.toString();
 			notifyListeners();
+			rethrow;
 		}
 	}
 
@@ -48,6 +49,7 @@ class PurchaseOrderController extends ChangeNotifier {
 		} catch (e) {
 			_error = e.toString();
 			notifyListeners();
+			rethrow;
 		}
 	}
 

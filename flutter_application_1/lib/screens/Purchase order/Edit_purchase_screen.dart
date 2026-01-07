@@ -699,8 +699,12 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
         };
       }).toList();
       // Construction du body attendu par le backend
+      // If this editor was opened from a Purchase Request, prefer to create the PO with 'edited' status
+      final prId = widget.initialOrder['purchase_request_id'] ?? widget.initialOrder['purchase_request'];
+      final defaultStatus = 'edited';
+      final statusToUse = widget.initialOrder['statuss'] ?? widget.initialOrder['status'] ?? defaultStatus;
+
       final jsonBody = {
-        'id': _id,
         'requested_by_user': _requestedByUser ?? 1,
         'approved_by': _approvedBy ?? 2,
         // Forcer l'envoi des dates comme String au format 'yyyy-MM-dd'
@@ -709,7 +713,9 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
         'products': productsList,
         'title': 'Purchase Order',
         'description': noteController.text,
-        'statuss': 'edited',
+        // Set both keys to maximize backend compatibility
+        'statuss': statusToUse,
+        'status': statusToUse,
         'currency': _currencyCodes[_currency] ?? _currency,
         'created_at': DateFormat('yyyy-MM-dd').format(DateTime.now()).toString(),
         'updated_at': DateFormat('yyyy-MM-dd').format(_updatedAt ?? DateTime.now()).toString(),
@@ -717,7 +723,8 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
         'priority': _priority,
       };
       if (widget.initialOrder.isNotEmpty && widget.initialOrder['id'] != null) {
-        // Mode édition : appel update, on envoie le JSON directement
+        // Mode édition : include id then call update
+        jsonBody['id'] = _id;
         await Provider.of<PurchaseOrderController>(context, listen: false)
             .updateOrder(jsonBody);
         if (mounted) {
@@ -728,6 +735,19 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
         }
       } else {
         // Mode création
+        // Link the new PO to the originating purchase request (do NOT set the resource 'id' to the request id).
+        // Instead include explicit relation fields the backend expects. Also ensure the status is pending when created from a request.
+        if (prId != null) {
+          // Some backends require an explicit 'id' on create tied to the purchase request.
+          // Include it when creating from a Purchase Request to satisfy those APIs.
+          jsonBody['id'] = prId;
+          jsonBody['purchase_request'] = prId;
+          jsonBody['purchase_request_id'] = prId;
+          // When creating a PO from a Purchase Request, use 'edited' as requested
+          jsonBody['statuss'] = 'edited';
+          jsonBody['status'] = 'edited';
+        }
+
         await Provider.of<PurchaseOrderController>(context, listen: false)
             .addOrder(jsonBody);
         if (mounted) {

@@ -12,11 +12,20 @@ import 'package:intl/intl.dart';
 import '../../l10n/app_localizations.dart';
 
 class PurchaseOrderPage extends StatelessWidget {
-  
-  const PurchaseOrderPage({super.key});
+  final PurchaseOrderController? controller;
+
+  const PurchaseOrderPage({super.key, this.controller});
 
   @override
   Widget build(BuildContext context) {
+    if (controller != null) {
+      // Reuse an existing controller instance (useful when navigating after creating an order)
+      return ChangeNotifierProvider.value(
+        value: controller!,
+        child: const _PurchaseOrderPageBody(),
+      );
+    }
+
     return ChangeNotifierProvider(
       create: (_) => PurchaseOrderController(),
       child: const _PurchaseOrderPageBody(),
