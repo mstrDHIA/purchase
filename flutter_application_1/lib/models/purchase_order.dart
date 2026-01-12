@@ -38,10 +38,11 @@ class PurchaseOrder {
     id = json['id'];
     requestedByUser = json['requested_by_user'];
     approvedBy = json['approved_by'];
-    startDate = _parseDate(json['start_date']);
-    endDate = _parseDate(json['end_date']);
-    supplierDeliveryDate = _parseDate(json['supplier_delivery_date']);
-    purchaseRequestId = json['purchase_request_id'];
+    startDate = _parseDate(json['start_date'] ?? json['startDate']);
+    endDate = _parseDate(json['end_date'] ?? json['endDate']);
+    // Accept both snake_case and camelCase keys from different backends
+    supplierDeliveryDate = _parseDate(json['supplier_delivery_date'] ?? json['supplierDeliveryDate']);
+    purchaseRequestId = json['purchase_request_id'] ?? json['purchaseRequestId'];
     if (json['products'] != null) {
       products = <Products>[];
       json['products'].forEach((v) {
@@ -50,7 +51,8 @@ class PurchaseOrder {
     }
     title = json['title'];
     description = json['description'];
-    status = json['statuss'];
+    // Accept status from either 'statuss' (existing) or 'status' (some backends)
+    status = (json['statuss'] ?? json['status'])?.toString();
     createdAt = _parseDate(json['created_at']);
     updatedAt = _parseDate(json['updated_at']);
     priority = json['priority'];
@@ -81,12 +83,16 @@ class PurchaseOrder {
     data['start_date'] = startDate?.toIso8601String();
     data['end_date'] = endDate?.toIso8601String();
     data['supplier_delivery_date'] = supplierDeliveryDate?.toIso8601String();
+    // Also provide camelCase key for compatibility
+    data['supplierDeliveryDate'] = supplierDeliveryDate?.toIso8601String();
     if (products != null) {
       data['products'] = products!.map((v) => v.toJson()).toList();
     }
     data['title'] = title;
     data['description'] = description;
+    // Write both fields to maximize backend compatibility
     data['statuss'] = status;
+    data['status'] = status;
     data['created_at'] = createdAt?.toIso8601String();
     data['updated_at'] = updatedAt?.toIso8601String();
     data['priority'] = priority;

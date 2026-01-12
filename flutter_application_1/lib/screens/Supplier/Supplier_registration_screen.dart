@@ -81,10 +81,15 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
         break;
       case 6:
         controller.suppliers.sort((a, b) => asc
+            ? _getSupplierCode(a).toLowerCase().compareTo(_getSupplierCode(b).toLowerCase())
+            : _getSupplierCode(b).toLowerCase().compareTo(_getSupplierCode(a).toLowerCase()));
+        break;
+      case 7:
+        controller.suppliers.sort((a, b) => asc
             ? _safeString(a.groupName).toLowerCase().compareTo(_safeString(b.groupName).toLowerCase())
             : _safeString(b.groupName).toLowerCase().compareTo(_safeString(a.groupName).toLowerCase()));
         break;
-      case 7:
+      case 8:
         controller.suppliers.sort((a, b) => asc
             ? _safeString(a.contactName).toLowerCase().compareTo(_safeString(b.contactName).toLowerCase())
             : _safeString(b.contactName).toLowerCase().compareTo(_safeString(a.contactName).toLowerCase()));
@@ -770,15 +775,20 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                                       onSort: (i, asc) => _sortByColumn(5, asc),
                                     ),
                                     DataColumn(
-                                      label: const Text('Group Name', style: TextStyle(fontWeight: FontWeight.w600)),
+                                      label: const Text('Code fournisseur', style: TextStyle(fontWeight: FontWeight.w600)),
                                       onSort: (i, asc) => _sortByColumn(6, asc),
                                     ),
                                     DataColumn(
-                                      label: const Text('Contact Name', style: TextStyle(fontWeight: FontWeight.w600)),
+                                      label: const Text('Group Name', style: TextStyle(fontWeight: FontWeight.w600)),
                                       onSort: (i, asc) => _sortByColumn(7, asc),
+                                    ),
+                                    DataColumn(
+                                      label: const Text('Contact Name', style: TextStyle(fontWeight: FontWeight.w600)),
+                                      onSort: (i, asc) => _sortByColumn(8, asc),
                                     ),
                                     const DataColumn(label: Text('')),
                                   ],
+
                                   rows: paginatedFiltered.map((supplier) {
                                     final index = suppliers.indexOf(supplier);
                                     return DataRow(
@@ -789,6 +799,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                                         DataCell(Text(_safeString(supplier.phoneNumber?.toString()))),
                                         DataCell(Text(_safeString(supplier.matricule))),
                                         DataCell(Text(_safeString(supplier.cin))),
+                                        DataCell(Text(_getSupplierCode(supplier))),
                                         DataCell(Text(_safeString(supplier.groupName))),
                                         DataCell(Text(_safeString(supplier.contactName))),
                                         DataCell(Row(mainAxisSize: MainAxisSize.min, children: [
@@ -808,6 +819,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                                             onPressed: () => _confirmDelete(index),
                                           ),
                                         ])),
+
                                       ],
                                     );
                                   }).toList(),

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_application_1/controllers/product_controller.dart';
 import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
 import 'package:flutter_application_1/controllers/supplier_controller.dart';
+import 'package:flutter_application_1/controllers/user_controller.dart';
 import '../../l10n/app_localizations.dart';
 
 class ProductLine {
@@ -119,9 +120,11 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
       }
       _id = initial['id'] is int ? initial['id'] : int.tryParse(initial['id']?.toString() ?? '');
       // Use int for user IDs, fallback to 1 if not present
+      final userController = Provider.of<UserController>(context, listen: false);
+      final int currentUserId = userController.currentUser.id ?? 1;
       _requestedByUser = initial['requestedByUser'] is int
           ? initial['requestedByUser']
-          : int.tryParse(initial['requestedByUser']?.toString() ?? '') ?? 1;
+          : int.tryParse(initial['requestedByUser']?.toString() ?? '') ?? currentUserId;
       _approvedBy = initial['approvedBy'] is int
           ? initial['approvedBy']
           : int.tryParse(initial['approvedBy']?.toString() ?? '') ?? 2;
@@ -158,13 +161,14 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
         dueDateController.text = '';
       }
       // initialize supplier delivery date if provided
-      if (initial['supplier_delivery_date'] != null) {
+      final supplierDeliveryRaw = initial['supplier_delivery_date'] ?? initial['supplierDeliveryDate'];
+      if (supplierDeliveryRaw != null) {
         try {
           DateTime sd;
-          if (initial['supplier_delivery_date'] is DateTime) {
-            sd = initial['supplier_delivery_date'];
+          if (supplierDeliveryRaw is DateTime) {
+            sd = supplierDeliveryRaw;
           } else {
-            sd = DateTime.parse(initial['supplier_delivery_date'].toString());
+            sd = DateTime.parse(supplierDeliveryRaw.toString());
           }
           supplierDeliveryDateController.text = DateFormat('dd-MM-yyyy').format(sd);
         } catch (_) {
@@ -209,7 +213,9 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
   _id = maxId + 1;
   // default priority to 'high' for new orders
   _priority = 'high';
-  _requestedByUser = 1; // Default user ID
+  final userController = Provider.of<UserController>(context, listen: false);
+  final int currentUserId = userController.currentUser.id ?? 1;
+  _requestedByUser = currentUserId; // Default to current user ID
   _approvedBy = 2;      // Default approver ID
   _updatedAt = DateTime.now();
       // initialize order-level supplier delivery date to today's date by default

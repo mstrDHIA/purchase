@@ -12,6 +12,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
+import 'package:flutter_application_1/controllers/purchase_request_controller.dart';
 import 'package:flutter_application_1/screens/Purchase order/refuse_purchase_screen.dart';
 import '../../l10n/app_localizations.dart';
 
@@ -82,7 +83,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
               ElevatedButton(
                 onPressed: _selected == null ? null : () => Navigator.of(context).pop(_selected),
                 style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF635BFF)),
-                child: const Text('Continue'),
+                child: const Text('Continue', style: TextStyle(color: Colors.white)),
               ),
             ],
           );
@@ -96,22 +97,31 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
     final dateFormat = DateFormat('dd-MM-yyyy');
     // final submittedDate = _order.startDate != null ? dateFormat.format(_order.startDate!) : '-';
     final dueDate = _order.endDate != null ? dateFormat.format(_order.endDate!) : '-';
-    final supplierDeliveryDate = _order.supplierDeliveryDate != null ? dateFormat.format(_order.supplierDeliveryDate!) : '-';
-    final status = _order.status ?? '-';
+    // Fallback: if supplierDeliveryDate is not set, show the PO due date instead (more useful to users)
+    final supplierDeliveryDate = (_order.supplierDeliveryDate ?? _order.endDate) != null ? dateFormat.format((_order.supplierDeliveryDate ?? _order.endDate)!) : '-';
     final priority = _order.priority ?? '-';
     final note = _order.description ?? '';
     final products = _order.products ?? [];
     final userController = Provider.of<UserController>(context, listen: false);
     final purchaseOrderController = Provider.of<PurchaseOrderController>(context, listen: false);
 
-    // Role-aware display: show 'pending' to role 6 when backend status is 'edited'
-    final roleId = userController.currentUser.role?.id;
-    final displayStatus = (roleId == 6 && status.toLowerCase() == 'edited') ? 'pending' : status;
-    final displayStatusLower = displayStatus.toLowerCase();
-    final underlyingStatusLower = status.toLowerCase();
+    // Robust role-aware display: prefer 'pending' for role 6 when backend status is 'edited'
+    final dynamic roleIdRaw = userController.currentUser.role?.id;
+    final int roleIdInt = roleIdRaw is int ? roleIdRaw : int.tryParse(roleIdRaw?.toString() ?? '') ?? -1;
+    final String statusStr = (_order.status ?? '').toString().toLowerCase().trim();
+    final String displayStatus = (roleIdInt == 6 && statusStr == 'edited') ? 'pending' : statusStr;
+    final String displayStatusLower = displayStatus.toLowerCase();
+    final String underlyingStatusLower = statusStr;
 
     // Determine whether action buttons should be visible for current user
-    final canShowActions = ((underlyingStatusLower == 'edited') && (roleId == 1 || roleId == 4 || roleId == 6)) || (roleId == 6 && underlyingStatusLower == 'pending');
+    // Allow supervisors (role id 4), admins (1) and accountants (6) to act when order is 'pending'.
+    // Do not show actions when status is 'edited'.
+    final canShowActions = ((underlyingStatusLower == 'pending' || displayStatusLower == 'pending') && (roleIdInt == 1 || roleIdInt == 4 || roleIdInt == 6));
+
+    // Debug short log to help trace role 6 visibility issues (safe to remove later)
+    if (roleIdInt == 6 && !canShowActions) {
+      print('PurchaseOrderView: role=6 but actions hidden (status="$statusStr", display="$displayStatusLower")');
+    }
     // compute total and currency symbol
     final double totalAmount = (products).fold<double>(0.0, (sum, p) => sum + ((p.unitPrice ?? 0.0) * (p.quantity ?? 0)));
     String currencySymbol = '\$';
@@ -193,10 +203,49 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                           ScaffoldMessenger.of(this.context).showSnackBar(const SnackBar(content: Text('Generating PDF...')));
                           final requesterUser = userController.users.firstWhere((u) => u.id == _order.requestedByUser, orElse: () => userController.currentUser);
                           final approverUser = userController.users.firstWhere((u) => u.id == _order.approvedBy, orElse: () => userController.currentUser);
+
+                          // Try to find the originating Purchase Request (if any) to get its approver and approval date
+                          String? prApproverUsername;
+                          DateTime? prApprovalDate;
+                          if (_order.purchaseRequestId != null) {
+                            try {
+                              final prController = Provider.of<PurchaseRequestController>(context, listen: false);
+                              final pr = prController.requests.firstWhere((r) => r.id == _order.purchaseRequestId);
+                              prApproverUsername = pr.approvedByUsername ?? pr.approvedByName ?? (pr.approvedBy != null ? userController.users.firstWhere((u) => u.id == pr.approvedBy, orElse: () => userController.currentUser).username : null);
+                              prApprovalDate = pr.updatedAt;
+                            } catch (_) {}
+                          }
+
+                          // Creator (Administration) -> best-effort: lookup by requestedByUser
+                          String? creatorUsername;
+                          if (_order.requestedByUser != null) {
+                            try {
+                              final creator = userController.users.firstWhere((u) => u.id == _order.requestedByUser);
+                              creatorUsername = creator.username;
+                            } catch (_) {}
+                          }
+                          DateTime? creatorDate = _order.createdAt;
+
+                          // Service Achat -> if PO approver has role id 6, treat as accountant approval
+                          String? accountantUsername;
+                          DateTime? accountantApprovalDate;
+                          try {
+                            if (approverUser.role != null && approverUser.role!.id == 6) {
+                              accountantUsername = approverUser.username;
+                              accountantApprovalDate = _order.updatedAt;
+                            }
+                          } catch (_) {}
+
                           final bytes = await PdfGenerator.generatePurchaseOrderPdf(
                             _order,
                             requesterUsername: requesterUser.username ?? requesterUser.id?.toString(),
                             approverUsername: approverUser.username ?? approverUser.id?.toString(),
+                            prApproverUsername: prApproverUsername,
+                            prApprovalDate: prApprovalDate,
+                            creatorUsername: creatorUsername,
+                            creatorDate: creatorDate,
+                            accountantUsername: accountantUsername,
+                            accountantApprovalDate: accountantApprovalDate,
                           );
                           await _saveOrDownload(bytes, 'purchase_order_${_order.id ?? 'po'}.pdf', preferAppDocs: true);
                         } catch (e) {
@@ -598,11 +647,11 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                     child: Text(
                       displayStatus.isNotEmpty ? (displayStatus[0].toUpperCase() + displayStatus.substring(1)) : '-',
                       style: TextStyle(
-                        color: status.toLowerCase() == 'approved'
+                        color: underlyingStatusLower == 'approved'
                             ? Colors.green.shade700
-                            : status.toLowerCase() == 'pending'
+                            : underlyingStatusLower == 'pending'
                                 ? Colors.orange.shade800
-                                : status.toLowerCase() == 'edited'
+                                : underlyingStatusLower == 'edited'
                                     ? const Color.fromARGB(255, 250, 243, 243)
                                     : const Color.fromARGB(255, 48, 47, 47),
                         fontWeight: FontWeight.w600,

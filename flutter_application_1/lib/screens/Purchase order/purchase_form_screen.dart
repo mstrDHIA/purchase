@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../l10n/app_localizations.dart';
 import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
 import 'package:flutter_application_1/controllers/supplier_controller.dart';
+import 'package:flutter_application_1/controllers/user_controller.dart';
 
 class ProductLine {
 
@@ -92,9 +93,11 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
     if (initial.isNotEmpty) {
       _priority = initial['priority']?.toString();
       _id = initial['id'] is int ? initial['id'] : int.tryParse(initial['id']?.toString() ?? '');
+      final userController = Provider.of<UserController>(context, listen: false);
+      final int currentUserId = userController.currentUser.id ?? 1;
       _requestedByUser = initial['requestedByUser'] is int
           ? initial['requestedByUser']
-          : int.tryParse(initial['requestedByUser']?.toString() ?? '') ?? 1;
+          : int.tryParse(initial['requestedByUser']?.toString() ?? '') ?? currentUserId;
       _approvedBy = initial['approvedBy'] is int
           ? initial['approvedBy']
           : int.tryParse(initial['approvedBy']?.toString() ?? '') ?? 2;
@@ -161,7 +164,9 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
       }
   _id = maxId + 1;
   _priority = null;
-  _requestedByUser = 1; // Default user ID
+  final userController = Provider.of<UserController>(context, listen: false);
+  final int currentUserId = userController.currentUser.id ?? 1;
+  _requestedByUser = currentUserId; // Default to current user ID
   _approvedBy = 2;      // Default approver ID
   _updatedAt = DateTime.now();
       supplierDeliveryDateController.text = '';

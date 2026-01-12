@@ -13,7 +13,15 @@ class PurchaseRequestPdf {
     final dateFormat = DateFormat('dd-MM-yyyy');
     String formatDate(DateTime? dt) => dt != null ? dateFormat.format(dt) : '-';
 
-
+    // Helper to display users as "Full Name (username)" when available
+    String displayUser({String? name, String? username, String? fallbackId}) {
+      final n = (name ?? '').trim();
+      final u = (username ?? '').trim();
+      if (n.isNotEmpty && u.isNotEmpty) return '$n ($u)';
+      if (u.isNotEmpty) return u;
+      if (n.isNotEmpty) return n;
+      return fallbackId ?? '-';
+    }
 
 
     pdf.addPage(
@@ -212,8 +220,8 @@ class PurchaseRequestPdf {
               pw.TableRow(
                 children: [
                   pw.Padding(padding: pw.EdgeInsets.all(6), child: pw.Text('Nom', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9))),
-                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(req.requestedByUsername ?? req.requestedByName ?? requesterUsername ?? (req.requestedBy?.toString() ?? '-'), style: pw.TextStyle(fontSize: 9))),
-                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text((req.status?.toLowerCase() == 'approved') ? (req.approvedByUsername ?? req.approvedByName ?? approverUsername ?? (req.approvedBy?.toString() ?? '-')) : '-', style: pw.TextStyle(fontSize: 9))),
+                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(displayUser(name: req.requestedByName, username: req.requestedByUsername, fallbackId: requesterUsername ?? (req.requestedBy?.toString() ?? '-')), style: pw.TextStyle(fontSize: 9))),
+                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(displayUser(name: req.approvedByName, username: req.approvedByUsername, fallbackId: approverUsername ?? (req.approvedBy?.toString() ?? '-')), style: pw.TextStyle(fontSize: 9))),
                   pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text('', style: pw.TextStyle(fontSize: 9))),
                   pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text('', style: pw.TextStyle(fontSize: 9))),
                   pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text('', style: pw.TextStyle(fontSize: 9))),
@@ -225,7 +233,7 @@ class PurchaseRequestPdf {
                 children: [
                   pw.Padding(padding: pw.EdgeInsets.all(6), child: pw.Text('Date', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9))),
                   pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(formatDate(req.createdAt), style: pw.TextStyle(fontSize: 9))),
-                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text((req.status?.toLowerCase() == 'approved') ? formatDate(req.updatedAt) : '', style: pw.TextStyle(fontSize: 9))),
+                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(req.updatedAt != null ? formatDate(req.updatedAt) : '', style: pw.TextStyle(fontSize: 9))),
                   pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text('', style: pw.TextStyle(fontSize: 9))),
                   pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text('', style: pw.TextStyle(fontSize: 9))),
                   pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text('', style: pw.TextStyle(fontSize: 9))),

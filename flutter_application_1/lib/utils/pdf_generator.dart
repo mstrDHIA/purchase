@@ -10,11 +10,34 @@ import '../network/supplier_network.dart';
 
 
 class PdfGenerator {
-  static Future<Uint8List> generatePurchaseOrderPdf(PurchaseOrder order, {AppLocalizations? l10n, String? requesterUsername, String? approverUsername}) async {
+  static Future<Uint8List> generatePurchaseOrderPdf(
+    PurchaseOrder order, {
+    AppLocalizations? l10n,
+    String? requesterUsername,
+    String? approverUsername,
+    String? prApproverUsername,
+    DateTime? prApprovalDate,
+    String? creatorUsername,
+    DateTime? creatorDate,
+    String? accountantUsername,
+    DateTime? accountantApprovalDate,
+  }) 
+  
+  async {
     final pdf = pw.Document();
     final dateFormat = DateFormat('dd-MM-yyyy');
 
     String formatDate(DateTime? dt) => dt != null ? dateFormat.format(dt) : '-';
+
+    // Helper to display users as "Full Name (username)" when available
+    String displayUser({String? name, String? username, String? fallbackId}) {
+      final n = (name ?? '').trim();
+      final u = (username ?? '').trim();
+      if (n.isNotEmpty && u.isNotEmpty) return '$n ($u)';
+      if (u.isNotEmpty) return u;
+      if (n.isNotEmpty) return n;
+      return fallbackId ?? '-';
+    }
 
     // Try to load a logo from assets/images/logo.png (optional)
     Uint8List? logoBytes;
@@ -386,11 +409,19 @@ class PdfGenerator {
               pw.TableRow(
                 children: [
                   pw.Padding(padding: pw.EdgeInsets.all(6), child: pw.Text('Nom', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9))),
-                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(requesterUsername ?? (order.requestedByUser?.toString() ?? '-'), style: pw.TextStyle(fontSize: 9))),
+                  // Emetteur (requester)
+                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(displayUser(name: null, username: requesterUsername, fallbackId: order.requestedByUser?.toString()), style: pw.TextStyle(fontSize: 9))),
+                  // Resp. Technique (prefer PR approver username when provided)
+                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(displayUser(name: null, username: prApproverUsername ?? approverUsername, fallbackId: order.approvedBy?.toString()), style: pw.TextStyle(fontSize: 9))),
+                  // pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(requesterUsername ?? (order.requestedByUser?.toString() ?? '-'), style: pw.TextStyle(fontSize: 9))),
+                  // Resp. Technique -> prefer PR approver when available
+                  // pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(prApproverUsername ?? '-', style: pw.TextStyle(fontSize: 9))),
+                  // Directeur Production -> PO approver (if approved)
                   pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text((order.status?.toLowerCase() == 'approved') ? (approverUsername ?? (order.approvedBy?.toString() ?? '-')) : '-', style: pw.TextStyle(fontSize: 9))),
-                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text('', style: pw.TextStyle(fontSize: 9))),
-                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text('', style: pw.TextStyle(fontSize: 9))),
-                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text('', style: pw.TextStyle(fontSize: 9))),
+                  // Administration -> user who created the PO (supervisor)
+                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(creatorUsername ?? '-', style: pw.TextStyle(fontSize: 9))),
+                  // Service Achat -> accountant username (role id 6) if known
+                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(accountantUsername ?? '-', style: pw.TextStyle(fontSize: 9))),
                 ],
               ),
 
@@ -398,11 +429,16 @@ class PdfGenerator {
               pw.TableRow(
                 children: [
                   pw.Padding(padding: pw.EdgeInsets.all(6), child: pw.Text('Date', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9))),
+                  // Emetteur date (PO creation date)
                   pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(formatDate(order.createdAt), style: pw.TextStyle(fontSize: 9))),
-                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text((order.status?.toLowerCase() == 'approved') ? formatDate(order.updatedAt) : '', style: pw.TextStyle(fontSize: 9))),
-                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text('', style: pw.TextStyle(fontSize: 9))),
-                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text('', style: pw.TextStyle(fontSize: 9))),
-                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text('', style: pw.TextStyle(fontSize: 9))),
+                  // PR approval date (Resp. Technique)
+                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(prApprovalDate != null ? formatDate(prApprovalDate) : '-', style: pw.TextStyle(fontSize: 9))),
+                  // Directeur Production approval date (PO approval date)
+                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text((order.status?.toLowerCase() == 'approved') ? formatDate(order.updatedAt) : '-', style: pw.TextStyle(fontSize: 9))),
+                  // Administration date (PO creation date or provided creatorDate)
+                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(creatorDate != null ? formatDate(creatorDate) : formatDate(order.createdAt), style: pw.TextStyle(fontSize: 9))),
+                  // Service Achat approval date
+                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(accountantApprovalDate != null ? formatDate(accountantApprovalDate) : '-', style: pw.TextStyle(fontSize: 9))),
                 ],
               ),
             ],
