@@ -220,8 +220,10 @@ class PurchaseRequestPdf {
               pw.TableRow(
                 children: [
                   pw.Padding(padding: pw.EdgeInsets.all(6), child: pw.Text('Nom', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9))),
-                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(displayUser(name: req.requestedByName, username: req.requestedByUsername, fallbackId: requesterUsername ?? (req.requestedBy?.toString() ?? '-')), style: pw.TextStyle(fontSize: 9))),
-                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(displayUser(name: req.approvedByName, username: req.approvedByUsername, fallbackId: approverUsername ?? (req.approvedBy?.toString() ?? '-')), style: pw.TextStyle(fontSize: 9))),
+                  // Emetteur: use requesterUsername only when provided (no substitution); otherwise show '-'
+                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(displayUser(name: null, username: requesterUsername, fallbackId: null), style: pw.TextStyle(fontSize: 9))),
+                  // Resp. Technique: use approverUsername only when provided (no substitution); otherwise show '-'
+                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(displayUser(name: null, username: approverUsername, fallbackId: null), style: pw.TextStyle(fontSize: 9))),
                   pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text('', style: pw.TextStyle(fontSize: 9))),
                   pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text('', style: pw.TextStyle(fontSize: 9))),
                   pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text('', style: pw.TextStyle(fontSize: 9))),

@@ -42,7 +42,7 @@ class PurchaseOrder {
     endDate = _parseDate(json['end_date'] ?? json['endDate']);
     // Accept both snake_case and camelCase keys from different backends
     supplierDeliveryDate = _parseDate(json['supplier_delivery_date'] ?? json['supplierDeliveryDate']);
-    purchaseRequestId = json['purchase_request_id'] ?? json['purchaseRequestId'];
+    purchaseRequestId = json['purchase_request_id'] ?? json['purchaseRequestId'] ?? json['purchase_request'];
     if (json['products'] != null) {
       products = <Products>[];
       json['products'].forEach((v) {

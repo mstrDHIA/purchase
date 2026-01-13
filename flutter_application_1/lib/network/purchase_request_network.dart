@@ -114,6 +114,25 @@ class PurchaseRequestNetwork {
     }
   }
 
+  // Fetch a single purchase request by id
+  Future<Response> fetchPurchaseRequestById(int id) async {
+    final url = '${APIS.baseUrl}/purchase_request/purchaseRequests/$id/';
+    final response = await api.dio.get(
+      url,
+      options: Options(
+        headers: {
+          'Authorization': 'Bearer ${APIS.token}',
+          'ngrok-skip-browser-warning': 'true',
+        },
+      ),
+    );
+    if (response.statusCode == 200) {
+      return response;
+    } else {
+      throw Exception('Failed to fetch purchase request: id=$id, status=${response.statusCode}');
+    }
+  }
+
   // Archive a purchase request
   Future<void> archivePurchaseRequest(int id) async {
     final response = await api.dio.patch('${APIS.baseUrl}/purchase_request/purchaseRequests/$id/',

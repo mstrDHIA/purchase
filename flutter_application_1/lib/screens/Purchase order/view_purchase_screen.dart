@@ -13,6 +13,8 @@ import 'package:provider/provider.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
 import 'package:flutter_application_1/controllers/purchase_request_controller.dart';
+import 'package:flutter_application_1/network/purchase_request_network.dart';
+import 'package:flutter_application_1/models/purchase_request.dart';
 import 'package:flutter_application_1/screens/Purchase order/refuse_purchase_screen.dart';
 import '../../l10n/app_localizations.dart';
 
@@ -201,51 +203,124 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                       onPressed: () async {
                         try {
                           ScaffoldMessenger.of(this.context).showSnackBar(const SnackBar(content: Text('Generating PDF...')));
-                          final requesterUser = userController.users.firstWhere((u) => u.id == _order.requestedByUser, orElse: () => userController.currentUser);
-                          final approverUser = userController.users.firstWhere((u) => u.id == _order.approvedBy, orElse: () => userController.currentUser);
+                          String? requesterUsername;
+                          String? approverUsername;
+                          dynamic approverUserObj;
+                          try {
+                            final reqUser = userController.users.firstWhere((u) => u.id == _order.requestedByUser);
+                            // Only use the username when present; do not fall back to ID
+                            requesterUsername = reqUser.username;
+                          } catch (_) {
+                            requesterUsername = null; // do not substitute
+                          }
+                          try {
+                            approverUserObj = userController.users.firstWhere((u) => u.id == _order.approvedBy);
+                            approverUsername = approverUserObj.username;
+                          } catch (_) {
+                            approverUsername = null;
+                            approverUserObj = null;
+                          }
 
-                          // Try to find the originating Purchase Request (if any) to get its approver and approval date
+                          // Try to find the originating Purchase Request (if any) to get its requester/approver username and approval date
                           String? prApproverUsername;
+                          String? prRequesterUsername;
                           DateTime? prApprovalDate;
                           if (_order.purchaseRequestId != null) {
+                            final prId = _order.purchaseRequestId!;
                             try {
                               final prController = Provider.of<PurchaseRequestController>(context, listen: false);
-                              final pr = prController.requests.firstWhere((r) => r.id == _order.purchaseRequestId);
-                              prApproverUsername = pr.approvedByUsername ?? pr.approvedByName ?? (pr.approvedBy != null ? userController.users.firstWhere((u) => u.id == pr.approvedBy, orElse: () => userController.currentUser).username : null);
-                              prApprovalDate = pr.updatedAt;
+                              PurchaseRequest? pr;
+                              // First try to find PR in controller cache
+                              try {
+                                pr = prController.requests.firstWhere((r) => r.id == prId);
+                              } catch (_) {
+                                pr = null;
+                              }
+
+                              // If not in cache, fetch from network
+                              if (pr == null) {
+                                try {
+                                  final resp = await PurchaseRequestNetwork().fetchPurchaseRequestById(prId);
+                                  if (resp.statusCode == 200 && resp.data != null) {
+                                    pr = PurchaseRequest.fromJson(resp.data);
+                                  }
+                                } catch (_) {
+                                  pr = null;
+                                }
+                              }
+
+                              if (pr != null) {
+                                // PR requester: prefer explicit username from PR
+                                if (pr.requestedByUsername != null && pr.requestedByUsername!.isNotEmpty) {
+                                  prRequesterUsername = pr.requestedByUsername;
+                                } else if (pr.requestedBy != null) {
+                                  try {
+                                    final rid = pr.requestedBy;
+                                    final u = userController.users.firstWhere((u) => u.id == rid);
+                                    if (u.username != null && u.username!.isNotEmpty) prRequesterUsername = u.username;
+                                  } catch (_) {
+                                    prRequesterUsername = null;
+                                  }
+                                }
+
+                                // PR approver: prefer explicit username from PR
+                                if (pr.approvedByUsername != null && pr.approvedByUsername!.isNotEmpty) {
+                                  prApproverUsername = pr.approvedByUsername;
+                                } else if (pr.approvedBy != null) {
+                                  try {
+                                    final aid = pr.approvedBy;
+                                    final u = userController.users.firstWhere((u) => u.id == aid);
+                                    if (u.username != null && u.username!.isNotEmpty) prApproverUsername = u.username;
+                                  } catch (_) {
+                                    prApproverUsername = null;
+                                  }
+                                }
+
+                                prApprovalDate = pr.updatedAt;
+                              }
                             } catch (_) {}
                           }
 
-                          // Creator (Administration) -> best-effort: lookup by requestedByUser
+                          // Creator (Administration) -> best-effort: lookup by requestedByUser (only exact username matches)
                           String? creatorUsername;
                           if (_order.requestedByUser != null) {
                             try {
                               final creator = userController.users.firstWhere((u) => u.id == _order.requestedByUser);
-                              creatorUsername = creator.username;
-                            } catch (_) {}
+                              if (creator.username != null && creator.username!.isNotEmpty) creatorUsername = creator.username;
+                            } catch (_) {
+                              creatorUsername = null;
+                            }
                           }
                           DateTime? creatorDate = _order.createdAt;
 
-                          // Service Achat -> if PO approver has role id 6, treat as accountant approval
+                          // Service Achat -> if PO approver has role id 6 and was resolved from users cache, treat as accountant approval
                           String? accountantUsername;
                           DateTime? accountantApprovalDate;
                           try {
-                            if (approverUser.role != null && approverUser.role!.id == 6) {
-                              accountantUsername = approverUser.username;
+                            if (approverUserObj != null && approverUserObj.role != null && approverUserObj.role!.id == 6) {
+                              accountantUsername = approverUsername;
                               accountantApprovalDate = _order.updatedAt;
                             }
                           } catch (_) {}
 
+                          // Prefer PR usernames when available; otherwise use PO-level usernames (but do NOT substitute with generic current user or IDs)
+                          final effectiveRequesterUsername = prRequesterUsername ?? requesterUsername;
+                          final effectiveApproverUsername = prApproverUsername ?? approverUsername;
+
+                          final userIdToUsername = {
+                            for (var u in userController.users)
+                              if (u.id != null && u.username != null) u.id!: u.username!
+                          };
                           final bytes = await PdfGenerator.generatePurchaseOrderPdf(
                             _order,
-                            requesterUsername: requesterUser.username ?? requesterUser.id?.toString(),
-                            approverUsername: approverUser.username ?? approverUser.id?.toString(),
-                            prApproverUsername: prApproverUsername,
+                            requesterUsername: effectiveRequesterUsername,
+                            approverUsername: effectiveApproverUsername,
                             prApprovalDate: prApprovalDate,
                             creatorUsername: creatorUsername,
                             creatorDate: creatorDate,
                             accountantUsername: accountantUsername,
                             accountantApprovalDate: accountantApprovalDate,
+                            userIdToUsername: userIdToUsername,
                           );
                           await _saveOrDownload(bytes, 'purchase_order_${_order.id ?? 'po'}.pdf', preferAppDocs: true);
                         } catch (e) {
@@ -665,46 +740,48 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                       onPressed: () async {
                         try {
                           final updatedOrderJson = {
-                            'id': _order.id,
-                            'requested_by_user': _order.requestedByUser,
-                            'approved_by': userController.currentUser.id,
+                            ..._order.toJson(),
+                            // Ajout pour role 6 : approved_by_user
+                            if (userController.currentUser.role?.id == 6)
+                              'approved_by_user': userController.currentUser.id,
+                            // Correction format date pour l'API
+                            if (_order.startDate != null)
+                              'start_date': DateFormat('yyyy-MM-dd').format(_order.startDate!),
+                            if (_order.endDate != null)
+                              'end_date': DateFormat('yyyy-MM-dd').format(_order.endDate!),
+                            if (_order.supplierDeliveryDate != null)
+                              'supplier_delivery_date': DateFormat('yyyy-MM-dd').format(_order.supplierDeliveryDate!),
+                            // Set status to approved
                             'statuss': 'approved',
-                            'start_date': _order.startDate != null ? DateFormat('yyyy-MM-dd').format(_order.startDate!) : null,
-                            'end_date': _order.endDate != null ? DateFormat('yyyy-MM-dd').format(_order.endDate!) : null,
-                            'priority': _order.priority,
-                            'description': _order.description,
-                            'products': (_order.products ?? []).map((p) => p.toJson()).toList(),
-                            'title': _order.title ?? '',
-                            'created_at': _order.createdAt != null ? DateFormat('yyyy-MM-dd').format(_order.createdAt!) : null,
-                            'updated_at': DateFormat('yyyy-MM-dd').format(DateTime.now()),
                           };
                           await purchaseOrderController.updateOrder(updatedOrderJson);
                           await purchaseOrderController.fetchOrders();
                           if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(AppLocalizations.of(context)!.purchaseOrderApproved), backgroundColor: Colors.green),
-                            );
                             setState(() {
                               _order = PurchaseOrder(
                                 id: _order.id,
                                 requestedByUser: _order.requestedByUser,
                                 approvedBy: userController.currentUser.id,
-                                status: 'Approved',
+                                status: 'approved',
                                 startDate: _order.startDate,
                                 endDate: _order.endDate,
                                 priority: _order.priority,
                                 description: _order.description,
+                                refuseReason: _order.refuseReason,
                                 products: _order.products,
                                 title: _order.title,
                                 createdAt: _order.createdAt,
                                 updatedAt: DateTime.now(),
                               );
                             });
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Purchase order approved!')),
+                            );
                           }
                         } catch (e) {
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(AppLocalizations.of(context)!.failedWithError(e.toString())), backgroundColor: Colors.red),
+                              SnackBar(content: Text('Error approving order: $e'), backgroundColor: Colors.red),
                             );
                           }
                         }
@@ -741,7 +818,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                               'id': _order.id,
                               'requested_by_user': _order.requestedByUser,
                               'approved_by': userController.currentUser.id,
-                              'statuss': 'rejected',
+                              'status': 'rejected',
                               if (choice == 'modify') 'for_modification': true,
                               'start_date': _order.startDate != null ? DateFormat('yyyy-MM-dd').format(_order.startDate!) : null,
                               'end_date': _order.endDate != null ? DateFormat('yyyy-MM-dd').format(_order.endDate!) : null,
@@ -759,15 +836,12 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                             await purchaseOrderController.fetchOrders();
 
                             if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(AppLocalizations.of(context)!.purchaseOrderRejected), backgroundColor: Colors.red),
-                              );
                               setState(() {
                                 _order = PurchaseOrder(
                                   id: _order.id,
                                   requestedByUser: _order.requestedByUser,
                                   approvedBy: userController.currentUser.id,
-                                  status: 'Rejected',
+                                  status: 'rejected',
                                   startDate: _order.startDate,
                                   endDate: _order.endDate,
                                   priority: _order.priority,
@@ -782,6 +856,9 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                                   (_order as dynamic).rejectedReason = result['reason_id'];
                                 } catch (_) {}
                               });
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(AppLocalizations.of(context)!.purchaseOrderRejected), backgroundColor: Colors.red),
+                              );
                             }
 
                             return;
@@ -797,7 +874,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                               'id': _order.id,
                               'requested_by_user': _order.requestedByUser,
                               'approved_by': userController.currentUser.id,
-                              'statuss': 'rejected',
+                              'status': 'rejected',
                               'start_date': _order.startDate != null ? DateFormat('yyyy-MM-dd').format(_order.startDate!) : null,
                               'end_date': _order.endDate != null ? DateFormat('yyyy-MM-dd').format(_order.endDate!) : null,
                               'priority': _order.priority,
@@ -814,16 +891,12 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                             await purchaseOrderController.updateOrder(updatedOrderJson);
                             await purchaseOrderController.fetchOrders();
                             if (mounted) {
-                              // ignore: use_build_context_synchronously
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(AppLocalizations.of(context)!.purchaseOrderRejected), backgroundColor: Colors.red),
-                              );
                               setState(() {
                                 _order = PurchaseOrder(
                                   id: _order.id,
                                   requestedByUser: _order.requestedByUser,
                                   approvedBy: userController.currentUser.id,
-                                  status: 'Rejected',
+                                  status: 'rejected',
                                   startDate: _order.startDate,
                                   endDate: _order.endDate,
                                   priority: _order.priority,
@@ -840,6 +913,10 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                                   (_order as dynamic).rejectedReason = result['reason_id'];
                                 } catch (_) {}
                               });
+                              // ignore: use_build_context_synchronously
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(AppLocalizations.of(context)!.purchaseOrderRejected), backgroundColor: Colors.red),
+                              );
                             }
                           }
                         } catch (e) {

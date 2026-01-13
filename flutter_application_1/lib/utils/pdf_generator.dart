@@ -7,25 +7,45 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_application_1/l10n/app_localizations.dart';
 import '../models/purchase_order.dart';
 import '../network/supplier_network.dart';
-
-
+import '../network/purchase_request_network.dart';
+import '../models/purchase_request.dart';
 class PdfGenerator {
   static Future<Uint8List> generatePurchaseOrderPdf(
     PurchaseOrder order, {
     AppLocalizations? l10n,
     String? requesterUsername,
     String? approverUsername,
-    String? prApproverUsername,
     DateTime? prApprovalDate,
     String? creatorUsername,
     DateTime? creatorDate,
     String? accountantUsername,
     DateTime? accountantApprovalDate,
-  }) 
-  
-  async {
+    Map<int, String>? userIdToUsername,
+  }) async {
+    String? serviceAchatUsername;
+    try {
+      print('[PDF DEBUG] order.approvedBy: [33m${order.approvedBy}[0m');
+      print('[PDF DEBUG] userIdToUsername: [36m${userIdToUsername}[0m');
+      if (order.approvedBy != null && userIdToUsername != null) {
+        final id = order.approvedBy is int
+            ? order.approvedBy as int
+            : int.tryParse(order.approvedBy.toString());
+        print('[PDF DEBUG] Service Achat lookup id: [35m$id[0m');
+        if (id != null) {
+          serviceAchatUsername = userIdToUsername[id];
+          print('[PDF DEBUG] Service Achat username from map: [32m$serviceAchatUsername[0m');
+        }
+      }
+      // fallback to showing the ID as string if username not found
+      serviceAchatUsername ??= order.approvedBy?.toString();
+      print('[PDF DEBUG] Final serviceAchatUsername: [31m$serviceAchatUsername[0m');
+    } catch (e) {
+      print('[PDF DEBUG] Exception in serviceAchatUsername lookup: $e');
+      serviceAchatUsername = null;
+    }
     final pdf = pw.Document();
     final dateFormat = DateFormat('dd-MM-yyyy');
+
 
     String formatDate(DateTime? dt) => dt != null ? dateFormat.format(dt) : '-';
 
@@ -110,7 +130,69 @@ class PdfGenerator {
       // ignore supplier fetch errors
     }
 
+    // Effective values: prefer values passed by the caller. Only attempt to fetch the originating Purchase Request
+    // when both `requesterUsername` and `approverUsername` are NOT provided (to avoid overwriting caller-provided names).
+    String? prRequesterUsername;
+    String? prApproverUsername;
+    DateTime? fetchedPrApprovalDate;
+    // If the PO is linked to a Purchase Request, always try to fetch it and prefer its requester/approver
+    // so the generated PO PDF matches the PR PDF.
+    try {
+      print('[PDF DEBUG] order.purchaseRequestId: [33m${order.purchaseRequestId}[0m');
+      if (order.purchaseRequestId != null) {
+        final prId = order.purchaseRequestId!;
+        print('[PDF DEBUG] Attempting to fetch PR with id: [36m$prId[0m');
+        try {
+          final resp = await PurchaseRequestNetwork().fetchPurchaseRequestById(prId);
+          print('[PDF DEBUG] PR fetch response: statusCode=${resp.statusCode}');
+          print('[PDF DEBUG] PR fetch data: ${resp.data}');
+          if (resp.statusCode == 200 && resp.data != null) {
+            final pr = PurchaseRequest.fromJson(resp.data);
+            print('[PDF DEBUG] PR parsed: requestedByUsername="${pr.requestedByUsername}" approvedByUsername="${pr.approvedByUsername}" requestedByName="${pr.requestedByName}" approvedByName="${pr.approvedByName}"');
+            // Prefer explicit username fields from PR when available
+            if (pr.requestedByUsername != null && pr.requestedByUsername!.isNotEmpty) {
+              prRequesterUsername = pr.requestedByUsername;
+            } else if (pr.requestedByName != null && pr.requestedByName!.isNotEmpty) {
+              prRequesterUsername = pr.requestedByName;
+            }
+
+            if (pr.approvedByUsername != null && pr.approvedByUsername!.isNotEmpty) {
+              prApproverUsername = pr.approvedByUsername;
+            } else if (pr.approvedByName != null && pr.approvedByName!.isNotEmpty) {
+              prApproverUsername = pr.approvedByName;
+            
+            }
+            
+
+            fetchedPrApprovalDate = pr.updatedAt;
+            print('Fetched PR #$prId: requester=$prRequesterUsername, approver=$prApproverUsername');
+          }
+        } catch (_) {
+          // ignore fetch errors
+        }
+      } else {
+        print('[PDF DEBUG] No purchaseRequestId, skipping PR fetch.');
+      }
+    } catch (_) {}
+
+    final effectiveRequesterUsername = prRequesterUsername ?? requesterUsername;
+    final effectiveApproverUsername = prApproverUsername ?? approverUsername;
+    final effectivePrApprovalDate = prApprovalDate ?? fetchedPrApprovalDate;
+
     final totalAmount = (order.products ?? []).fold<double>(0.0, (sum, p) => sum + ((p.unitPrice ?? 0.0) * (p.quantity ?? 0)));
+
+    // Log the value of serviceAchatUsername before building the PDF table
+    print('[PDF DEBUG] (TABLE) serviceAchatUsername used: $serviceAchatUsername');
+
+  // Log the value of serviceAchatUsername before building the PDF table
+  print('[PDF DEBUG] (TABLE) serviceAchatUsername used: $serviceAchatUsername');
+
+  print('[PDF DEBUG] (TABLE) serviceAchatUsername used: $serviceAchatUsername');
+
+    print('[PDF DEBUG] PO.requesterUsername: '
+        '"${requesterUsername}" PO.approverUsername: "${approverUsername}"');
+    print('[PDF DEBUG] PR prRequesterUsername: "${prRequesterUsername}" prApproverUsername: "${prApproverUsername}"');
+    print('[PDF DEBUG] effectiveRequesterUsername: "${effectiveRequesterUsername}" effectiveApproverUsername: "${effectiveApproverUsername}"');
 
     pdf.addPage(
       pw.MultiPage(
@@ -390,6 +472,7 @@ class PdfGenerator {
           pw.SizedBox(height: 20),
 
           // Sign-off / approval table (left label column) — same as Purchase Request
+          
           pw.Table(
             border: pw.TableBorder.all(color: PdfColors.black, width: 1),
             children: [
@@ -409,19 +492,27 @@ class PdfGenerator {
               pw.TableRow(
                 children: [
                   pw.Padding(padding: pw.EdgeInsets.all(6), child: pw.Text('Nom', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9))),
-                  // Emetteur (requester)
-                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(displayUser(name: null, username: requesterUsername, fallbackId: order.requestedByUser?.toString()), style: pw.TextStyle(fontSize: 9))),
-                  // Resp. Technique (prefer PR approver username when provided)
-                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(displayUser(name: null, username: prApproverUsername ?? approverUsername, fallbackId: order.approvedBy?.toString()), style: pw.TextStyle(fontSize: 9))),
-                  // pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(requesterUsername ?? (order.requestedByUser?.toString() ?? '-'), style: pw.TextStyle(fontSize: 9))),
-                  // Resp. Technique -> prefer PR approver when available
-                  // pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(prApproverUsername ?? '-', style: pw.TextStyle(fontSize: 9))),
-                  // Directeur Production -> PO approver (if approved)
-                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text((order.status?.toLowerCase() == 'approved') ? (approverUsername ?? (order.approvedBy?.toString() ?? '-')) : '-', style: pw.TextStyle(fontSize: 9))),
-                  // Administration -> user who created the PO (supervisor)
-                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(creatorUsername ?? '-', style: pw.TextStyle(fontSize: 9))),
-                  // Service Achat -> accountant username (role id 6) if known
-                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(accountantUsername ?? '-', style: pw.TextStyle(fontSize: 9))),
+                  // Emetteur: prefer PR requester username when available
+                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(displayUser(name: null, username: effectiveRequesterUsername, fallbackId: null), style: pw.TextStyle(fontSize: 9))),
+                  // Resp. Technique: prefer PR approver username when available
+                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(displayUser(name: null, username: effectiveApproverUsername, fallbackId: null), style: pw.TextStyle(fontSize: 9))),
+                  // Directeur Production -> PO approver (if approved) — prefer PR approver username when available
+                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text((order.status?.toLowerCase() == 'approved') ? displayUser(name: null, username: effectiveApproverUsername, fallbackId: null) : '-', style: pw.TextStyle(fontSize: 9))),
+                  // Administration -> user who created the PO (supervisor) — only show username when available
+                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(displayUser(name: null, username: creatorUsername, fallbackId: null) , style: pw.TextStyle(fontSize: 9))),
+                  // Service Achat -> always show username for approved_by_user
+                  pw.Padding(
+                    padding: pw.EdgeInsets.all(10),
+                    child: pw.Text(
+                      displayUser(
+                        name: null,
+                        username: serviceAchatUsername,
+                        fallbackId: null,
+                      ),
+                      style: pw.TextStyle(fontSize: 9),
+                      
+                    ),
+                  ),
                 ],
               ),
 
@@ -432,7 +523,7 @@ class PdfGenerator {
                   // Emetteur date (PO creation date)
                   pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(formatDate(order.createdAt), style: pw.TextStyle(fontSize: 9))),
                   // PR approval date (Resp. Technique)
-                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(prApprovalDate != null ? formatDate(prApprovalDate) : '-', style: pw.TextStyle(fontSize: 9))),
+                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(effectivePrApprovalDate != null ? formatDate(effectivePrApprovalDate) : '-', style: pw.TextStyle(fontSize: 9))),
                   // Directeur Production approval date (PO approval date)
                   pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text((order.status?.toLowerCase() == 'approved') ? formatDate(order.updatedAt) : '-', style: pw.TextStyle(fontSize: 9))),
                   // Administration date (PO creation date or provided creatorDate)
@@ -447,8 +538,9 @@ class PdfGenerator {
         ],
       ),
     );
-
+print('[PDF DEBUG] (TABLE) serviceAchatUsername used: $serviceAchatUsername');
     return pdf.save();
+    
   }
 
 }

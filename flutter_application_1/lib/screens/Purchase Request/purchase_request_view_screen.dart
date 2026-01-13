@@ -263,20 +263,28 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                           onTap: () async {
                             try {
                               // Prefer explicit usernames from the users cache when available
-                              final requesterUser = userController.users.firstWhere(
-                                (u) => u.id == widget.purchaseRequest.requestedBy,
-                                orElse: () => userController.currentUser,
-                              );
-                              final approverUser = userController.users.firstWhere(
-                                (u) => u.id == widget.purchaseRequest.approvedBy,
-                                orElse: () => userController.currentUser,
-                              );
+                              String? requesterUsername;
+                              String? approverUsername;
+                              try {
+                                final requesterUser = userController.users.firstWhere((u) => u.id == widget.purchaseRequest.requestedBy);
+                                // Only use the explicit username when present; do NOT fall back to the ID
+                                requesterUsername = requesterUser.username;
+                              } catch (_) {
+                                // Don't substitute another user — leave null so PDF shows '-'
+                                requesterUsername = null;
+                              }
+                              try {
+                                final approverUser = userController.users.firstWhere((u) => u.id == widget.purchaseRequest.approvedBy);
+                                approverUsername = approverUser.username;
+                              } catch (_) {
+                                approverUsername = null;
+                              }
 
                               final bytes = await PurchaseRequestPdf.generatePurchaseRequestPdf(
                                 widget.purchaseRequest,
                                 l10n: AppLocalizations.of(context),
-                                requesterUsername: requesterUser.username ?? requesterUser.id?.toString(),
-                                approverUsername: approverUser.username ?? approverUser.id?.toString(),
+                                requesterUsername: requesterUsername,
+                                approverUsername: approverUsername,
                               );
                               final filename = 'purchase_request_${widget.purchaseRequest.id ?? 'request'}.pdf';
                               if (kIsWeb) {
@@ -686,10 +694,10 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                   if (id == null) throw Exception('ID missing');
                                   final payload = {
                                     'status': 'transformed',
-                                    'approved_by': userController.currentUser.id,
                                   };
                                   await PurchaseRequestNetwork().updatePurchaseRequest(id, payload, method: 'PATCH');
-                                  widget.purchaseRequest.approvedBy = widget.purchaseRequest.approvedBy;
+                                  // Update local model so the view reflects transformed status but do not change approvedBy
+                                  widget.purchaseRequest.status = 'transformed';
 
                                   // Build initial PO data to prefill the editor (do NOT set 'id' here — leave null so editor treats it as new)
                                   Map<String, dynamic> purchaseOrderData = {
