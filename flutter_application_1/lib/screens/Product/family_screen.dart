@@ -270,12 +270,21 @@ class _FamiliesPageState extends State<FamiliesPage> {
     if (ok == true) {
       try {
         print('Deleting family with ID: ${families[index]['id']}');
-        // await productController.deleteCategory(families[index]['id'].toString());
-        setState(() => families.removeAt(index));
+        final id = families[index]['id']?.toString();
+        if (id == null || id.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.failedToDeleteFamily('ID not found'))));
+          return;
+        }
+        setState(() => _loading = true);
+        await productController.deleteCategory(id);
+        // Refresh the families list from server after successful deletion
+        await fetchFamilies();
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.familyDeletedSuccessfully)));
       } catch (e) {
         print('Error occurred while deleting family: $e');
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.failedToDeleteFamily(e.toString()))));
+      } finally {
+        setState(() => _loading = false);
       }
     }
   }
