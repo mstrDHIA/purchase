@@ -219,7 +219,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
     if (Provider.of<UserController>(context, listen: false).currentUser.role?.id == 6) {
       mapped = mapped.where((order) {
         final s = (order['statuss'] ?? '').toString().toLowerCase();
-        return s == 'approved' || s == 'rejected' || s == 'edited' || s == 'pending';
+        return s == 'approved' || s == 'rejected' || s == 'edited' || s == 'pending' || s == 'for modification';
       }).toList();
     }
 
@@ -1345,7 +1345,11 @@ class _PurchaseOrderDataSource extends DataTableSource {
       bgColor = const Color(0xFFEF5350); // red
     } else if (v == 'transformed' || v == 'converted') {
       bgColor = const Color(0xFF42A5F5); // blue
-    } else {
+    }
+    else if (v == 'for modification') {
+      bgColor = const Color.fromARGB(255, 1, 213, 241); // blue
+    }
+     else {
       bgColor = Colors.grey;
     }
     final label = (v == 'approved') ? AppLocalizations.of(this.context!)!.approved : (v == 'pending') ? AppLocalizations.of(this.context!)!.pending : (v == 'rejected') ? AppLocalizations.of(this.context!)!.rejected : (v == 'transformed' || v == 'converted') ? AppLocalizations.of(this.context!)!.transformed : v;

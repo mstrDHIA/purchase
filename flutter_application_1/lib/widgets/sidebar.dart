@@ -315,16 +315,42 @@ class _AppSidebarState extends State<AppSidebar> {
     
     final confirmed = await showDialog<bool>(
       context: context,
+      barrierDismissible: false,
       builder: (context) => AlertDialog(
-        title: Text(l10n.confirm),
-        content: Text(l10n.doYouReallyWantToLogout),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 32, vertical: 34),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: Row(
+          children: [
+            CircleAvatar(
+              backgroundColor: Colors.red.shade50,
+              radius: 20,
+              child: const Icon(Icons.logout, color: Colors.red),
+            ),
+            const SizedBox(width: 14),
+            Text(l10n.confirm, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 18)),
+          ],
+        ),
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(minWidth: 360, maxWidth: 520),
+          child: Text(l10n.doYouReallyWantToLogout),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(l10n.cancel)),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: Text(l10n.logout)),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            style: TextButton.styleFrom(foregroundColor: Colors.black87),
+            child: Text(l10n.cancel),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+            child: Text( l10n.logout, style: const TextStyle(color: Colors.white)),
+          ),
         ],
       ),
     );
     if (confirmed == true) {
+      // show a brief feedback before logout (optional)
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.logout), duration: const Duration(milliseconds: 600)));
       userController.logout(context);
     }
   }

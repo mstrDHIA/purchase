@@ -61,7 +61,7 @@ class _FamiliesPageState extends State<FamiliesPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(AppLocalizations.of(context)!.failedToLoadFamilies(e.toString()))),
       );
-      print('Error fetching families: $e');
+      // print('Error fetching families: $e');
     } finally {
       setState(() {
         _loading = false;
@@ -128,16 +128,20 @@ class _FamiliesPageState extends State<FamiliesPage> {
       builder: (context) => StatefulBuilder(builder: (context, setState) {
         var _isSaving = false;
         return Dialog(
-          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 160, vertical: 24),
           // square / sharp corners
           shape: const RoundedRectangleBorder(),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: const BoxDecoration(color: Colors.white),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minWidth: 320, maxWidth: 480),
+            child: Container(
+              
+              padding: const EdgeInsets.all(16),
+              decoration: const BoxDecoration(color: Colors.white),
+              
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                 Text(family == null ? 'Add Family' : 'Edit Family', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 12),
                 Form(
@@ -157,26 +161,26 @@ class _FamiliesPageState extends State<FamiliesPage> {
                         maxLines: 2,
                       ),
                       const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(selectedDate != null ? selectedDate!.toIso8601String().substring(0, 10) : 'No creation date'),
-                          ),
-                          TextButton(
-                            onPressed: () async {
-                              final now = DateTime.now();
-                              final picked = await showDatePicker(
-                                context: context,
-                                initialDate: selectedDate ?? now,
-                                firstDate: DateTime(2000),
-                                lastDate: DateTime(now.year + 5),
-                              );
-                              if (picked != null) setState(() => selectedDate = picked);
-                            },
-                            child: Text(AppLocalizations.of(context)!.pickDate),
-                          ),
-                        ],
-                      ),
+                      // Row(
+                      //   children: [
+                      //     Expanded(
+                      //       child: Text(selectedDate != null ? selectedDate!.toIso8601String().substring(0, 10) : 'No creation date'),
+                      //     ),
+                      //     // TextButton(
+                      //     //   onPressed: () async {
+                      //     //     final now = DateTime.now();
+                      //     //     final picked = await showDatePicker(
+                      //     //       context: context,
+                      //     //       initialDate: selectedDate ?? now,
+                      //     //       firstDate: DateTime(2000),
+                      //     //       lastDate: DateTime(now.year + 5),
+                      //     //     );
+                      //     //     if (picked != null) setState(() => selectedDate = picked);
+                      //     //   },
+                      //     //   child: Text(AppLocalizations.of(context)!.pickDate),
+                      //     // ),
+                      //   ],
+                      // ),
                     ],
                   ),
                 ),
@@ -216,11 +220,25 @@ class _FamiliesPageState extends State<FamiliesPage> {
                                 }
                                 Navigator.of(context).pop();
                                 ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(
-                                    content: Text(family != null ? AppLocalizations.of(this.context)!.familyUpdatedSuccessfully : AppLocalizations.of(this.context)!.familyCreatedSuccessfully)));
+                                    content: 
+                                    Text(family != null ? AppLocalizations.of(this.context)!.familyUpdatedSuccessfully : AppLocalizations.of(this.context)!.familyCreatedSuccessfully),
+                                    backgroundColor: Colors.green,
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                    duration: const Duration(seconds: 3),
+                                    )
+                                    );
 
                               } catch (e) {
-                                ScaffoldMessenger.of(this.context)
-                                    .showSnackBar(SnackBar(content: Text(family != null ? AppLocalizations.of(this.context)!.failedToUpdateFamily(e.toString()) : AppLocalizations.of(this.context)!.failedToCreateFamily(e.toString()))));
+                                ScaffoldMessenger.of(this.context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(family != null ? AppLocalizations.of(this.context)!.failedToUpdateFamily(e.toString()) : AppLocalizations.of(this.context)!.failedToCreateFamily(e.toString())),
+                                    backgroundColor: const Color.fromARGB(255, 240, 4, 4),
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                    duration: const Duration(seconds: 3),
+                                  ),
+                                );
                               } finally {
                                 try {
                                   setState(() => _isSaving = false);
@@ -238,14 +256,15 @@ class _FamiliesPageState extends State<FamiliesPage> {
                               const SizedBox(width: 10),
                               Text(AppLocalizations.of(context)!.saving),
                             ])
-                          : Text(family != null ? 'Save' : 'Create'),
+                          : Text(family != null ? 'Save' : 'Create',style: const TextStyle(color: Colors.white),),
                     ),
                   ],
                 ),
               ],
             ),
           ),
-        );
+        ),
+      );
       }),
     );
   }
@@ -272,14 +291,24 @@ class _FamiliesPageState extends State<FamiliesPage> {
         print('Deleting family with ID: ${families[index]['id']}');
         final id = families[index]['id']?.toString();
         if (id == null || id.isEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.failedToDeleteFamily('ID not found'))));
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.failedToDeleteFamily('ID not found')),
+          backgroundColor: const Color.fromARGB(255, 236, 5, 5),
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                    duration: const Duration(seconds: 3),
+          ));
           return;
         }
         setState(() => _loading = true);
         await productController.deleteCategory(id);
         // Refresh the families list from server after successful deletion
         await fetchFamilies();
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.familyDeletedSuccessfully)));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.familyDeletedSuccessfully,
+        ),
+        backgroundColor: const Color.fromARGB(255, 243, 3, 3),
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                    duration: const Duration(seconds: 3),));
       } catch (e) {
         print('Error occurred while deleting family: $e');
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.failedToDeleteFamily(e.toString()))));

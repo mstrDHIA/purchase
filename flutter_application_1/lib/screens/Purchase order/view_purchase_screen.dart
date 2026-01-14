@@ -202,7 +202,14 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                       icon: const Icon(Icons.picture_as_pdf, color: Colors.black87),
                       onPressed: () async {
                         try {
-                          ScaffoldMessenger.of(this.context).showSnackBar(const SnackBar(content: Text('Generating PDF...')));
+                          ScaffoldMessenger.of(this.context).showSnackBar( SnackBar(content: Text('Generating PDF...'),
+                          backgroundColor: const Color.fromARGB(255, 241, 179, 6),
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                    duration: Duration(seconds: 3),
+                          )
+                          ,
+                          );
                           String? requesterUsername;
                           String? approverUsername;
                           dynamic approverUserObj;
@@ -712,7 +719,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                     decoration: BoxDecoration(
                       color: displayStatus.toLowerCase() == 'approved'
                           ? Colors.green.shade100
-                          : displayStatus.toLowerCase() == 'pending'
+                          : (displayStatus.toLowerCase() == 'pending' || displayStatus.toLowerCase() == 'for modification')
                               ? const Color.fromARGB(255, 243, 147, 3)
                               : displayStatus.toLowerCase() == 'edited'
                                   ? const Color.fromARGB(255, 110, 110, 110)
@@ -724,7 +731,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                       style: TextStyle(
                         color: underlyingStatusLower == 'approved'
                             ? Colors.green.shade700
-                            : underlyingStatusLower == 'pending'
+                            : (underlyingStatusLower == 'pending' || underlyingStatusLower == 'for modification')
                                 ? Colors.orange.shade800
                                 : underlyingStatusLower == 'edited'
                                     ? const Color.fromARGB(255, 250, 243, 243)
@@ -775,7 +782,11 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                               );
                             });
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Purchase order approved!')),
+                              SnackBar(content: Text('Purchase order approved!'),
+                              backgroundColor: Colors.green,
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                    duration: const Duration(seconds: 3),),
                             );
                           }
                         } catch (e) {
@@ -814,12 +825,14 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                             );
                             if (result == null) return;
 
+                            final isForModification = choice == 'modify';
+
                             final updatedOrderJson = {
                               'id': _order.id,
                               'requested_by_user': _order.requestedByUser,
                               'approved_by': userController.currentUser.id,
-                              'status': 'rejected',
-                              if (choice == 'modify') 'for_modification': true,
+                              'statuss': isForModification ? 'for modification' : 'rejected',
+                              if (isForModification) 'for_modification': true,
                               'start_date': _order.startDate != null ? DateFormat('yyyy-MM-dd').format(_order.startDate!) : null,
                               'end_date': _order.endDate != null ? DateFormat('yyyy-MM-dd').format(_order.endDate!) : null,
                               'priority': _order.priority,
@@ -841,7 +854,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                                   id: _order.id,
                                   requestedByUser: _order.requestedByUser,
                                   approvedBy: userController.currentUser.id,
-                                  status: 'rejected',
+                                  status: isForModification ? 'for modification' : 'rejected',
                                   startDate: _order.startDate,
                                   endDate: _order.endDate,
                                   priority: _order.priority,
@@ -857,7 +870,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                                 } catch (_) {}
                               });
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(AppLocalizations.of(context)!.purchaseOrderRejected), backgroundColor: Colors.red),
+                                SnackBar(content: Text(isForModification ? '${AppLocalizations.of(context)!.rejected} (for modification)' : AppLocalizations.of(context)!.purchaseOrderRejected,  style: TextStyle(color: Colors.white)), backgroundColor: isForModification ? Colors.orange : Colors.red),
                               );
                             }
 
@@ -951,7 +964,12 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
       if (kIsWeb) {
         try {
           await saveAsFile(bytes, filename);
-          if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Downloaded $filename')));
+          if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Downloaded $filename'),
+          backgroundColor: const Color.fromARGB(255, 0, 247, 54),
+                                    behavior: SnackBarBehavior.floating,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                    duration: const Duration(seconds: 3),),
+          );
         } on UnsupportedError catch (e) {
           if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Download not supported in this web context: $e'), backgroundColor: Colors.red));
         } catch (e) {
