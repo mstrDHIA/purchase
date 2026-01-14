@@ -131,6 +131,10 @@ class Products {
     } else {
       supplier = sup?.toString();
     }
+    // Also accept supplier_id at top-level (some payloads provide it separately)
+    if (supplierId == null && json['supplier_id'] != null) {
+      supplierId = json['supplier_id'] is int ? json['supplier_id'] as int : (json['supplier_id'] != null ? int.tryParse(json['supplier_id'].toString()) : null);
+    }
     family = json['family'] ?? json['family_name'] ?? json['category'] ?? null;
     subFamily = json['subFamily'] ?? json['sub_family'] ?? json['subfamily'] ?? json['subcategory'] ?? null;
     price = (json['price'] is int)

@@ -133,19 +133,22 @@ class PdfGenerator {
       logoBytes = null;
     }
 
-    // Try to fetch supplier details dynamically (address) when supplier id is available in products
+    // Try to fetch supplier details dynamically (address & code) when supplier id is available in products
     String supplierName = '-';
     String supplierAddress = '';
+    String supplierCode = '';
     try {
       if (order.products != null && order.products!.isNotEmpty) {
         final p = order.products![0];
         if (p is Products) {
           supplierName = p.supplier ?? supplierName;
+
           if (p.supplierId != null) {
             final supData = await SupplierNetwork().fetchSupplierById(p.supplierId!);
             if (supData != null) {
               supplierAddress = supData['address']?.toString() ?? '';
               supplierName = supData['name']?.toString() ?? supplierName;
+              supplierCode = (supData['code_fournisseur'] ?? supData['code'] ?? supData['codeFournisseur'])?.toString() ?? supplierCode;
             }
           }
         } else {
@@ -155,12 +158,50 @@ class PdfGenerator {
             if (sup is Map) {
               supplierName = sup['name']?.toString() ?? supplierName;
               supplierAddress = sup['address']?.toString() ?? '';
+              supplierCode = (sup['code_fournisseur'] ?? sup['code'] ?? sup['codeFournisseur'])?.toString() ?? supplierCode;
             }
           } catch (_) {}
         }
       }
     } catch (_) {
       // ignore supplier fetch errors
+    }
+
+    // Fallback: if we couldn't resolve address/code from supplierId or inline map, try matching by supplier name
+    try {
+      if (supplierAddress.isEmpty || supplierCode.isEmpty) {
+        if (order.products != null && order.products!.isNotEmpty) {
+          final p = order.products![0];
+          String candidateName = '';
+          if (p is Products) {
+            candidateName = p.supplier ?? '';
+          } else if (p is Map) {
+            candidateName = (p['supplier'] is Map) ? (p['supplier']['name']?.toString() ?? '') : (p['supplier']?.toString() ?? '');
+          }
+          if (candidateName.trim().isNotEmpty) {
+            try {
+              final allSuppliers = await SupplierNetwork().fetchSuppliers();
+              for (final s in allSuppliers) {
+                try {
+                  final name = s is Map ? (s['name']?.toString() ?? '') : s.toString();
+                  final lname = name.toLowerCase();
+                  final lcandidate = candidateName.toLowerCase();
+                  if (lname == lcandidate || lname.contains(lcandidate) || lcandidate.contains(lname)) {
+                    supplierAddress = (s['address'] ?? supplierAddress)?.toString() ?? supplierAddress;
+                    supplierCode = (s['code_fournisseur'] ?? s['code'] ?? s['codeFournisseur'] ?? supplierCode)?.toString() ?? supplierCode;
+                    print('[PDF DEBUG] Fallback matched supplier: name=$name, address=$supplierAddress, code=$supplierCode');
+                    break;
+                  }
+                } catch (_) {}
+              }
+            } catch (e) {
+              print('[PDF DEBUG] Error during fallback supplier list fetch: $e');
+            }
+          }
+        }
+      }
+    } catch (e) {
+      print('[PDF DEBUG] Exception in supplier fallback lookup: $e');
     }
 
     // Effective values: prefer values passed by the caller. Only attempt to fetch the originating Purchase Request
@@ -213,6 +254,121 @@ class PdfGenerator {
     final effectivePrApprovalDate = prApprovalDate ?? fetchedPrApprovalDate;
 
     final totalAmount = (order.products ?? []).fold<double>(0.0, (sum, p) => sum + ((p.unitPrice ?? 0.0) * (p.quantity ?? 0)));
+
+    // Precompute product rows (including supplier code) by fetching supplier info when needed
+    final List<List<String>> productRows = [];
+    final productsList = order.products ?? <dynamic>[];
+    final Map<int, String> supplierCodeCache = {};
+    for (final p in productsList) {
+      String code = '';
+      String nosRef = '';
+      String designation = '-';
+      String unitStr = '';
+      int qty = 0;
+      double unitPrice = 0.0;
+
+      if (p is Products) {
+        nosRef = p.family?.toString() ?? '';
+        designation = p.product?.toString() ?? '-';
+        qty = p.quantity ?? 0;
+        unitPrice = p.unitPrice ?? 0.0;
+        unitStr = '';
+
+        if (p.supplierId != null) {
+          final sid = p.supplierId!;
+          if (supplierCodeCache.containsKey(sid)) {
+            code = supplierCodeCache[sid]!;
+          } else {
+            try {
+              final supData = await SupplierNetwork().fetchSupplierById(sid);
+              if (supData != null) {
+                final c = (supData['code_fournisseur'] ?? supData['code'] ?? supData['codeFournisseur'])?.toString() ?? '';
+                if (c.isNotEmpty) {
+                  supplierCodeCache[sid] = c;
+                  code = c;
+                }
+              }
+            } catch (_) {}
+          }
+        }
+      } else if (p is Map) {
+        nosRef = (p['family'] ?? '').toString();
+        designation = (p['product'] ?? '-').toString();
+        qty = (p['quantity'] ?? 0) is int ? (p['quantity'] as int) : int.tryParse((p['quantity'] ?? '0').toString()) ?? 0;
+        unitPrice = double.tryParse((p['unit_price'] ?? p['price'] ?? 0).toString()) ?? 0.0;
+        unitStr = '';
+
+        try {
+          if (p['supplier'] is Map) {
+            final sup = p['supplier'] as Map;
+            code = (sup['code_fournisseur'] ?? sup['code'] ?? sup['codeFournisseur'] ?? '')?.toString() ?? '';
+            if (code.isEmpty && (sup['id'] != null)) {
+              final sid = sup['id'] is int ? sup['id'] as int : int.tryParse(sup['id'].toString());
+              if (sid != null) {
+                if (supplierCodeCache.containsKey(sid)) {
+                  code = supplierCodeCache[sid]!;
+                } else {
+                  try {
+                    final supData = await SupplierNetwork().fetchSupplierById(sid);
+                    if (supData != null) {
+                      final c = (supData['code_fournisseur'] ?? supData['code'] ?? supData['codeFournisseur'])?.toString() ?? '';
+                      if (c.isNotEmpty) {
+                        supplierCodeCache[sid] = c;
+                        code = c;
+                      }
+                    }
+                  } catch (_) {}
+                }
+              }
+            }
+          } else if (p['supplier_id'] != null) {
+            final sid = p['supplier_id'] is int ? p['supplier_id'] as int : int.tryParse(p['supplier_id'].toString());
+            if (sid != null) {
+              if (supplierCodeCache.containsKey(sid)) {
+                code = supplierCodeCache[sid]!;
+              } else {
+                try {
+                  final supData = await SupplierNetwork().fetchSupplierById(sid);
+                  if (supData != null) {
+                    final c = (supData['code_fournisseur'] ?? supData['code'] ?? supData['codeFournisseur'])?.toString() ?? '';
+                    if (c.isNotEmpty) {
+                      supplierCodeCache[sid] = c;
+                      code = c;
+                    }
+                  }
+                } catch (_) {}
+              }
+            }
+          }
+        } catch (_) {}
+      } else {
+        try {
+          nosRef = p.family?.toString() ?? '';
+          designation = p.product?.toString() ?? '-';
+          qty = p.quantity ?? 0;
+          unitPrice = p.unitPrice ?? 0.0;
+          unitStr = '';
+        } catch (_) {}
+      }
+
+      final unitPriceStr = unitPrice.toStringAsFixed(2);
+      final qtyStr = qty.toString();
+      final total = (unitPrice * qty).toStringAsFixed(2);
+
+      if (code.isNotEmpty) print('[PDF DEBUG] Product supplier code for product "${designation}": $code');
+      productRows.add([
+        code,
+        nosRef,
+        designation,
+        unitStr,
+        qtyStr,
+        unitPriceStr,
+        total,
+      ]);
+    }
+    // Fill to 20 rows with empty lines for a form-like appearance
+    final _target = 20;
+    while (productRows.length < _target) productRows.add(['', '', '', '', '', '', '']);
 
     // Log the value of serviceAchatUsername before building the PDF table
     print('[PDF DEBUG] (TABLE) serviceAchatUsername used: $serviceAchatUsername');
@@ -301,7 +457,7 @@ class PdfGenerator {
                       children: [
                         pw.TableRow(children: [
                           pw.Padding(padding: pw.EdgeInsets.symmetric(vertical: 4), child: pw.Text('Code fournisseur :', style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold))),
-                          pw.Padding(padding: pw.EdgeInsets.symmetric(vertical: 4), child: pw.Text('', textAlign: pw.TextAlign.right, style: pw.TextStyle(fontWeight: pw.FontWeight.bold))),
+                          pw.Padding(padding: pw.EdgeInsets.symmetric(vertical: 4), child: pw.Text(supplierCode.isNotEmpty ? supplierCode : '-', textAlign: pw.TextAlign.right, style: pw.TextStyle(fontWeight: pw.FontWeight.bold))),
                         ]),
                         pw.TableRow(children: [
                           pw.Padding(padding: pw.EdgeInsets.symmetric(vertical: 4), child: pw.Text('Date :', style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold))),
@@ -361,64 +517,11 @@ class PdfGenerator {
           pw.SizedBox(height: 6),
           pw.Text('DETAIL DES ARTICLES', style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold), textAlign: pw.TextAlign.center),
           pw.SizedBox(height: 8),
-          // Build fixed-size table (20 rows) to match the template
+          // Build product rows (up to 20) and fetch supplier code per supplierId when available
+          // This precomputes rows asynchronously to allow supplier API lookups.
           pw.Table.fromTextArray(
             headers: ['Code Fourniss', 'Nos.Réf', 'Désignation', 'Unité', 'Quantité', 'Prix', 'Total'],
-            data: () {
-              final rows = <List<String>>[];
-              final products = order.products ?? <dynamic>[];
-              for (final p in products) {
-                String code = '';
-                String nosRef = '';
-                String designation = '-';
-                String unitStr = '';
-                int qty = 0;
-                double unitPrice = 0.0;
-
-                if (p is Products) {
-                  code = '';
-                  nosRef = p.family?.toString() ?? '';
-                  designation = p.product?.toString() ?? '-';
-                  qty = p.quantity ?? 0;
-                  unitPrice = p.unitPrice ?? 0.0;
-                  unitStr = '';
-                } else if (p is Map) {
-                  code = '';
-                  nosRef = (p['family'] ?? '').toString();
-                  designation = (p['product'] ?? '-').toString();
-                  qty = (p['quantity'] ?? 0) is int ? (p['quantity'] as int) : int.tryParse((p['quantity'] ?? '0').toString()) ?? 0;
-                  unitPrice = double.tryParse((p['unit_price'] ?? p['price'] ?? 0).toString()) ?? 0.0;
-                  unitStr = '';
-                } else {
-                  try {
-                    code = '';
-                    nosRef = p.family?.toString() ?? '';
-                    designation = p.product?.toString() ?? '-';
-                    qty = p.quantity ?? 0;
-                    unitPrice = p.unitPrice ?? 0.0;
-                    unitStr = '';
-                  } catch (_) {}
-                }
-
-                final unitPriceStr = unitPrice.toStringAsFixed(2);
-                final qtyStr = qty.toString();
-                final total = (unitPrice * qty).toStringAsFixed(2);
-
-                rows.add([
-                  code,
-                  nosRef,
-                  designation,
-                  unitStr,
-                  qtyStr,
-                  unitPriceStr,
-                  total,
-                ]);
-              }
-              // Fill to 20 rows with empty lines for a form-like appearance
-              final target = 20;
-              while (rows.length < target) rows.add(['', '', '', '', '', '', '']);
-              return rows;
-            }(),
+            data: productRows,
             headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9),
             headerDecoration: pw.BoxDecoration(color: PdfColors.grey200),
             cellAlignment: pw.Alignment.centerLeft,
@@ -529,8 +632,8 @@ class PdfGenerator {
                   pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(displayUser(name: null, username: effectiveRequesterUsername, fallbackId: null), style: pw.TextStyle(fontSize: 9))),
                   // Resp. Technique: prefer PR approver username when available
                   pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(displayUser(name: null, username: effectiveApproverUsername, fallbackId: null), style: pw.TextStyle(fontSize: 9))),
-                  // Directeur Production -> PO approver (if approved) — prefer PR approver username when available
-                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text((order.status?.toLowerCase() == 'approved') ? displayUser(name: null, username: effectiveApproverUsername, fallbackId: null) : '-', style: pw.TextStyle(fontSize: 9))),
+                  // Directeur Production -> intentionally left blank per request
+                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text('-', style: pw.TextStyle(fontSize: 9))),
                   // Administration -> user who created the PO (supervisor) — only show username when available
                   pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(displayUser(name: null, username: creatorUsername, fallbackId: null) , style: pw.TextStyle(fontSize: 9))),
                   // Service Achat -> always show username for approved_by_user
@@ -557,8 +660,8 @@ class PdfGenerator {
                   pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(formatDate(order.createdAt), style: pw.TextStyle(fontSize: 9))),
                   // PR approval date (Resp. Technique)
                   pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(effectivePrApprovalDate != null ? formatDate(effectivePrApprovalDate) : '-', style: pw.TextStyle(fontSize: 9))),
-                  // Directeur Production approval date (PO approval date)
-                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text((order.status?.toLowerCase() == 'approved') ? formatDate(order.updatedAt) : '-', style: pw.TextStyle(fontSize: 9))),
+                  // Directeur Production date intentionally left blank per request
+                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text('-', style: pw.TextStyle(fontSize: 9))),
                   // Administration date (PO creation date or provided creatorDate)
                   pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(creatorDate != null ? formatDate(creatorDate) : formatDate(order.createdAt), style: pw.TextStyle(fontSize: 9))),
                   // Service Achat approval date

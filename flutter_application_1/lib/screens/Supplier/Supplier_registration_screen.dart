@@ -94,6 +94,11 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
             ? _safeString(a.contactName).toLowerCase().compareTo(_safeString(b.contactName).toLowerCase())
             : _safeString(b.contactName).toLowerCase().compareTo(_safeString(a.contactName).toLowerCase()));
         break;
+      case 9:
+        controller.suppliers.sort((a, b) => asc
+            ? _safeString(a.address).toLowerCase().compareTo(_safeString(b.address).toLowerCase())
+            : _safeString(b.address).toLowerCase().compareTo(_safeString(a.address).toLowerCase()));
+        break;
     }
     setState(() {
       _sortIndex = columnIndex;
@@ -377,6 +382,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
 
     final groupNameCtrl = TextEditingController(text: supplier?.groupName ?? '');
     final contactNameCtrl = TextEditingController(text: supplier?.contactName ?? '');
+    final addressCtrl = TextEditingController(text: supplier?.address ?? '');
     bool isSubmitting = false;
     String _selectedCountryCode = '+216'; // Tunisie par défaut
     final controller = context.read<SupplierController>();
@@ -442,6 +448,8 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                     ],
                   ),
                   const SizedBox(height: 12),
+                  TextField(controller: addressCtrl, decoration: const InputDecoration(labelText: 'Address')),
+                  const SizedBox(height: 12),
                   TextField(controller: matriculeCtrl, decoration: const InputDecoration(labelText: 'Matricule')),
                   const SizedBox(height: 12),
                   TextField(controller: cinCtrl, decoration: const InputDecoration(labelText: 'CIN')),
@@ -476,6 +484,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                             name: nameCtrl.text,
                             contactEmail: emailCtrl.text,
                             phoneNumber: fullPhoneNumber,
+                                address: addressCtrl.text.isNotEmpty ? addressCtrl.text : null,
                                 codeFournisseur: codeCtrl.text.isNotEmpty ? codeCtrl.text : null,
                                 groupName: groupNameCtrl.text.isNotEmpty ? groupNameCtrl.text : null,
                                 contactName: contactNameCtrl.text.isNotEmpty ? contactNameCtrl.text : null,
@@ -518,8 +527,8 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                 _buildDetailRow(Icons.person, 'Name', _safeString(supplier.name)),
                 const SizedBox(height: 16),
                 _buildDetailRow(Icons.phone, 'Phone', _safeString(supplier.phoneNumber?.toString())),
-                const SizedBox(height: 16),
-                _buildDetailRow(Icons.badge, 'Matricule', _safeString(supplier.matricule)),
+                const SizedBox(height: 16),                _buildDetailRow(Icons.location_on, 'Address', _safeString(supplier.address)),
+                const SizedBox(height: 16),                _buildDetailRow(Icons.badge, 'Matricule', _safeString(supplier.matricule)),
                 const SizedBox(height: 16),
                 _buildDetailRow(Icons.credit_card, 'CIN', _safeString(supplier.cin)),
                 const SizedBox(height: 16),
@@ -786,6 +795,10 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                                       label: const Text('Contact Name', style: TextStyle(fontWeight: FontWeight.w600)),
                                       onSort: (i, asc) => _sortByColumn(8, asc),
                                     ),
+                                    DataColumn(
+                                      label: const Text('Address', style: TextStyle(fontWeight: FontWeight.w600)),
+                                      onSort: (i, asc) => _sortByColumn(9, asc),
+                                    ),
                                     const DataColumn(label: Text('')),
                                   ],
 
@@ -802,6 +815,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                                         DataCell(Text(_getSupplierCode(supplier))),
                                         DataCell(Text(_safeString(supplier.groupName))),
                                         DataCell(Text(_safeString(supplier.contactName))),
+                                        DataCell(Text(_safeString(supplier.address))),
                                         DataCell(Row(mainAxisSize: MainAxisSize.min, children: [
                                           IconButton(
                                             icon: const Icon(Icons.visibility, color: Colors.blue),

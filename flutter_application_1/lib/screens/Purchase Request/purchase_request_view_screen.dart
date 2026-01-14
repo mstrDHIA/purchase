@@ -699,6 +699,11 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                   // Update local model so the view reflects transformed status but do not change approvedBy
                                   widget.purchaseRequest.status = 'transformed';
 
+                                  // Hide the Create PO button immediately to prevent duplicate clicks
+                                  setState(() {
+                                    _poCreated = true;
+                                  });
+
                                   // Build initial PO data to prefill the editor (do NOT set 'id' here — leave null so editor treats it as new)
                                   Map<String, dynamic> purchaseOrderData = {
                                     'title': widget.purchaseRequest.title,
