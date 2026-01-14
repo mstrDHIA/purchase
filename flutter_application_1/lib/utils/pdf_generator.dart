@@ -8,8 +8,11 @@ import 'package:flutter_application_1/l10n/app_localizations.dart';
 import '../models/purchase_order.dart';
 import '../network/supplier_network.dart';
 import '../network/purchase_request_network.dart';
+import '../network/user_network.dart';
 import '../models/purchase_request.dart';
+
 class PdfGenerator {
+  
   static Future<Uint8List> generatePurchaseOrderPdf(
     PurchaseOrder order, {
     AppLocalizations? l10n,
@@ -43,6 +46,36 @@ class PdfGenerator {
       print('[PDF DEBUG] Exception in serviceAchatUsername lookup: $e');
       serviceAchatUsername = null;
     }
+    // If username not resolved from map or id, attempt to fetch user details from API
+    try {
+      if ((serviceAchatUsername == null || serviceAchatUsername.trim().isEmpty) && order.approvedBy != null) {
+        final _id = order.approvedBy is int ? order.approvedBy as int : int.tryParse(order.approvedBy.toString());
+        print('[PDF DEBUG] Post-check: approvedBy raw value="${order.approvedBy}", parsed id="$_id"');
+        if (_id != null) {
+          try {
+            print('[PDF DEBUG] Attempting API fetch for approvedBy id: $_id');
+            final fetchedUser = await UserNetwork().viewUser(_id);
+            print('[PDF DEBUG] API fetch returned user: ${fetchedUser != null ? (fetchedUser.username ?? fetchedUser.id?.toString()) : 'null'}');
+            if (fetchedUser != null) {
+              final fullName = ((fetchedUser.firstName ?? '') + ' ' + (fetchedUser.lastName ?? '')).trim();
+              if (fullName.isNotEmpty && (fetchedUser.username ?? '').isNotEmpty) {
+                serviceAchatUsername = '$fullName (${fetchedUser.username})';
+              } else if ((fetchedUser.username ?? '').isNotEmpty) {
+                serviceAchatUsername = fetchedUser.username;
+              } else {
+                serviceAchatUsername = fetchedUser.id?.toString();
+              }
+              print('[PDF DEBUG] Service Achat username fetched from API (post-check): $serviceAchatUsername');
+            }
+          } catch (e) {
+            print('[PDF DEBUG] Error fetching Service Achat user (post-check): $e');
+          }
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+
     final pdf = pw.Document();
     final dateFormat = DateFormat('dd-MM-yyyy');
 
@@ -507,7 +540,7 @@ class PdfGenerator {
                       displayUser(
                         name: null,
                         username: serviceAchatUsername,
-                        fallbackId: null,
+                        fallbackId: order.approvedBy != null ? order.approvedBy.toString() : '-',
                       ),
                       style: pw.TextStyle(fontSize: 9),
                       

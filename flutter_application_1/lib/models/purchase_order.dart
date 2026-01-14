@@ -37,7 +37,8 @@ class PurchaseOrder {
   PurchaseOrder.fromJson(Map<String, dynamic> json) {
     id = json['id'];
     requestedByUser = json['requested_by_user'];
-    approvedBy = json['approved_by'];
+    // Backwards-compatible parsing: accept both 'approved_by' and 'approved_by_user' field names
+    approvedBy = json['approved_by'] ?? json['approved_by_user'] ?? json['approvedBy'];
     startDate = _parseDate(json['start_date'] ?? json['startDate']);
     endDate = _parseDate(json['end_date'] ?? json['endDate']);
     // Accept both snake_case and camelCase keys from different backends
