@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/models/purchase_order.dart';
 import 'package:flutter_application_1/utils/download_helper.dart';
 import 'package:flutter_application_1/utils/pdf_generator.dart';
+import 'package:flutter_application_1/utils/excel_generator.dart';
 import 'package:intl/intl.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
@@ -194,146 +195,50 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                       ],
                     ),
                   ),
-                  // button to export pdf
+                  // Single Export button (choose PDF or Excel)
                   Align(
                     alignment: Alignment.centerRight,
-                    child: IconButton(
-                      tooltip: 'Export PDF',
-                      icon: const Icon(Icons.picture_as_pdf, color: Colors.black87),
-                      onPressed: () async {
-                        try {
-                          ScaffoldMessenger.of(this.context).showSnackBar( SnackBar(content: Text('Generating PDF...'),
-                          backgroundColor: const Color.fromARGB(255, 241, 179, 6),
-                                    behavior: SnackBarBehavior.floating,
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                    duration: Duration(seconds: 3),
-                          )
-                          ,
-                          );
-                          String? requesterUsername;
-                          String? approverUsername;
-                          dynamic approverUserObj;
-                          try {
-                            final reqUser = userController.users.firstWhere((u) => u.id == _order.requestedByUser);
-                            // Only use the username when present; do not fall back to ID
-                            requesterUsername = reqUser.username;
-                          } catch (_) {
-                            requesterUsername = null; // do not substitute
-                          }
-                          try {
-                            approverUserObj = userController.users.firstWhere((u) => u.id == _order.approvedBy);
-                            approverUsername = approverUserObj.username;
-                          } catch (_) {
-                            approverUsername = null;
-                            approverUserObj = null;
-                          }
-
-                          // Try to find the originating Purchase Request (if any) to get its requester/approver username and approval date
-                          String? prApproverUsername;
-                          String? prRequesterUsername;
-                          DateTime? prApprovalDate;
-                          if (_order.purchaseRequestId != null) {
-                            final prId = _order.purchaseRequestId!;
-                            try {
-                              final prController = Provider.of<PurchaseRequestController>(context, listen: false);
-                              PurchaseRequest? pr;
-                              // First try to find PR in controller cache
-                              try {
-                                pr = prController.requests.firstWhere((r) => r.id == prId);
-                              } catch (_) {
-                                pr = null;
-                              }
-
-                              // If not in cache, fetch from network
-                              if (pr == null) {
-                                try {
-                                  final resp = await PurchaseRequestNetwork().fetchPurchaseRequestById(prId);
-                                  if (resp.statusCode == 200 && resp.data != null) {
-                                    pr = PurchaseRequest.fromJson(resp.data);
-                                  }
-                                } catch (_) {
-                                  pr = null;
-                                }
-                              }
-
-                              if (pr != null) {
-                                // PR requester: prefer explicit username from PR
-                                if (pr.requestedByUsername != null && pr.requestedByUsername!.isNotEmpty) {
-                                  prRequesterUsername = pr.requestedByUsername;
-                                } else if (pr.requestedBy != null) {
-                                  try {
-                                    final rid = pr.requestedBy;
-                                    final u = userController.users.firstWhere((u) => u.id == rid);
-                                    if (u.username != null && u.username!.isNotEmpty) prRequesterUsername = u.username;
-                                  } catch (_) {
-                                    prRequesterUsername = null;
-                                  }
-                                }
-
-                                // PR approver: prefer explicit username from PR
-                                if (pr.approvedByUsername != null && pr.approvedByUsername!.isNotEmpty) {
-                                  prApproverUsername = pr.approvedByUsername;
-                                } else if (pr.approvedBy != null) {
-                                  try {
-                                    final aid = pr.approvedBy;
-                                    final u = userController.users.firstWhere((u) => u.id == aid);
-                                    if (u.username != null && u.username!.isNotEmpty) prApproverUsername = u.username;
-                                  } catch (_) {
-                                    prApproverUsername = null;
-                                  }
-                                }
-
-                                prApprovalDate = pr.updatedAt;
-                              }
-                            } catch (_) {}
-                          }
-
-                          // Creator (Administration) -> best-effort: lookup by requestedByUser (only exact username matches)
-                          String? creatorUsername;
-                          if (_order.requestedByUser != null) {
-                            try {
-                              final creator = userController.users.firstWhere((u) => u.id == _order.requestedByUser);
-                              if (creator.username != null && creator.username!.isNotEmpty) creatorUsername = creator.username;
-                            } catch (_) {
-                              creatorUsername = null;
-                            }
-                          }
-                          DateTime? creatorDate = _order.createdAt;
-
-                          // Service Achat -> if PO approver has role id 6 and was resolved from users cache, treat as accountant approval
-                          String? accountantUsername;
-                          DateTime? accountantApprovalDate;
-                          try {
-                            if (approverUserObj != null && approverUserObj.role != null && approverUserObj.role!.id == 6) {
-                              accountantUsername = approverUsername;
-                              accountantApprovalDate = _order.updatedAt;
-                            }
-                          } catch (_) {}
-
-                          // Prefer PR usernames when available; otherwise use PO-level usernames (but do NOT substitute with generic current user or IDs)
-                          final effectiveRequesterUsername = prRequesterUsername ?? requesterUsername;
-                          final effectiveApproverUsername = prApproverUsername ?? approverUsername;
-
-                          final userIdToUsername = {
-                            for (var u in userController.users)
-                              if (u.id != null && u.username != null) u.id!: u.username!
-                          };
-                          final bytes = await PdfGenerator.generatePurchaseOrderPdf(
-                            _order,
-                            requesterUsername: effectiveRequesterUsername,
-                            approverUsername: effectiveApproverUsername,
-                            prApprovalDate: prApprovalDate,
-                            creatorUsername: creatorUsername,
-                            creatorDate: creatorDate,
-                            accountantUsername: accountantUsername,
-                            accountantApprovalDate: accountantApprovalDate,
-                            userIdToUsername: userIdToUsername,
-                          );
-                          await _saveOrDownload(bytes, 'purchase_order_${_order.id ?? 'po'}.pdf', preferAppDocs: true);
-                        } catch (e) {
-                          if (mounted) ScaffoldMessenger.of(this.context).showSnackBar(SnackBar(content: Text('Error generating PDF: $e'), backgroundColor: Colors.red));
-                        }
-                      },
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            showModalBottomSheet<void>(
+                              context: context,
+                              builder: (ctx) => SafeArea(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    ListTile(
+                                      leading: const Icon(Icons.picture_as_pdf),
+                                      title: const Text('PDF'),
+                                      onTap: () {
+                                        Navigator.of(ctx).pop();
+                                        _exportFile('pdf');
+                                      },
+                                    ),
+                                    ListTile(
+                                      leading: const Icon(Icons.table_chart),
+                                      title: const Text('Excel'),
+                                      onTap: () {
+                                        Navigator.of(ctx).pop();
+                                        _exportFile('excel');
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.upload_file),
+                          label: const Text('Export'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF635BFF),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -957,6 +862,154 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
         ),
       ),
     );
+  }
+  Future<void> _exportFile(String type) async {
+    try {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Generating ${type.toUpperCase()}...'),
+          backgroundColor: const Color.fromARGB(255, 241, 179, 6),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+
+      final userController = Provider.of<UserController>(context, listen: false);
+
+      String? requesterUsername;
+      String? approverUsername;
+      dynamic approverUserObj;
+      try {
+        final reqUser = userController.users.firstWhere((u) => u.id == _order.requestedByUser);
+        requesterUsername = reqUser.username;
+      } catch (_) {
+        requesterUsername = null;
+      }
+      try {
+        approverUserObj = userController.users.firstWhere((u) => u.id == _order.approvedBy);
+        approverUsername = approverUserObj.username;
+      } catch (_) {
+        approverUsername = null;
+        approverUserObj = null;
+      }
+
+      String? prApproverUsername;
+      String? prRequesterUsername;
+      DateTime? prApprovalDate;
+      if (_order.purchaseRequestId != null) {
+        final prId = _order.purchaseRequestId!;
+        try {
+          final prController = Provider.of<PurchaseRequestController>(context, listen: false);
+          PurchaseRequest? pr;
+          try {
+            pr = prController.requests.firstWhere((r) => r.id == prId);
+          } catch (_) {
+            pr = null;
+          }
+
+          if (pr == null) {
+            try {
+              final resp = await PurchaseRequestNetwork().fetchPurchaseRequestById(prId);
+              if (resp.statusCode == 200 && resp.data != null) {
+                pr = PurchaseRequest.fromJson(resp.data);
+              }
+            } catch (_) {
+              pr = null;
+            }
+          }
+
+          if (pr != null) {
+            if (pr.requestedByUsername != null && pr.requestedByUsername!.isNotEmpty) {
+              prRequesterUsername = pr.requestedByUsername;
+            } else if (pr.requestedBy != null) {
+              try {
+                final rid = pr.requestedBy;
+                final u = userController.users.firstWhere((u) => u.id == rid);
+                if (u.username != null && u.username!.isNotEmpty) prRequesterUsername = u.username;
+              } catch (_) {
+                prRequesterUsername = null;
+              }
+            }
+
+            if (pr.approvedByUsername != null && pr.approvedByUsername!.isNotEmpty) {
+              prApproverUsername = pr.approvedByUsername;
+            } else if (pr.approvedBy != null) {
+              try {
+                final aid = pr.approvedBy;
+                final u = userController.users.firstWhere((u) => u.id == aid);
+                if (u.username != null && u.username!.isNotEmpty) prApproverUsername = u.username;
+              } catch (_) {
+                prApproverUsername = null;
+              }
+            }
+
+            prApprovalDate = pr.updatedAt;
+          }
+        } catch (_) {}
+      }
+
+      String? creatorUsername;
+      if (_order.requestedByUser != null) {
+        try {
+          final creator = userController.users.firstWhere((u) => u.id == _order.requestedByUser);
+          if (creator.username != null && creator.username!.isNotEmpty) creatorUsername = creator.username;
+        } catch (_) {
+          creatorUsername = null;
+        }
+      }
+      DateTime? creatorDate = _order.createdAt;
+
+      String? accountantUsername;
+      DateTime? accountantApprovalDate;
+      try {
+        if (approverUserObj != null && approverUserObj.role != null && approverUserObj.role!.id == 6) {
+          accountantUsername = approverUsername;
+          accountantApprovalDate = _order.updatedAt;
+        }
+      } catch (_) {}
+
+      final effectiveRequesterUsername = prRequesterUsername ?? requesterUsername;
+      final effectiveApproverUsername = prApproverUsername ?? approverUsername;
+
+      final userIdToUsername = {
+        for (var u in userController.users) if (u.id != null && u.username != null) u.id!: u.username!
+      };
+
+      if (type == 'excel') {
+        final bytes = await ExcelGenerator.generatePurchaseOrderExcel(
+          _order,
+          requesterUsername: effectiveRequesterUsername,
+          approverUsername: effectiveApproverUsername,
+          prApprovalDate: prApprovalDate,
+          creatorUsername: creatorUsername,
+          creatorDate: creatorDate,
+          accountantUsername: accountantUsername,
+          accountantApprovalDate: accountantApprovalDate,
+          userIdToUsername: userIdToUsername,
+        );
+        if (bytes != null) {
+          await _saveOrDownload(Uint8List.fromList(bytes), 'purchase_order_${_order.id ?? 'po'}.xlsx', preferAppDocs: true);
+        } else {
+          if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error encoding Excel file'), backgroundColor: Colors.red));
+        }
+      } else {
+        final bytes = await PdfGenerator.generatePurchaseOrderPdf(
+          _order,
+          requesterUsername: effectiveRequesterUsername,
+          approverUsername: effectiveApproverUsername,
+          prApprovalDate: prApprovalDate,
+          creatorUsername: creatorUsername,
+          creatorDate: creatorDate,
+          accountantUsername: accountantUsername,
+          accountantApprovalDate: accountantApprovalDate,
+          userIdToUsername: userIdToUsername,
+        );
+        await _saveOrDownload(bytes, 'purchase_order_${_order.id ?? 'po'}.pdf', preferAppDocs: true);
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error generating file: $e'), backgroundColor: Colors.red));
+    }
   }
 
   Future<void> _saveOrDownload(Uint8List bytes, String filename, {bool preferAppDocs = false}) async {

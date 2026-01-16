@@ -370,14 +370,7 @@ class PdfGenerator {
     final _target = 20;
     while (productRows.length < _target) productRows.add(['', '', '', '', '', '', '']);
 
-    // Log the value of serviceAchatUsername before building the PDF table
     print('[PDF DEBUG] (TABLE) serviceAchatUsername used: $serviceAchatUsername');
-
-  // Log the value of serviceAchatUsername before building the PDF table
-  print('[PDF DEBUG] (TABLE) serviceAchatUsername used: $serviceAchatUsername');
-
-  print('[PDF DEBUG] (TABLE) serviceAchatUsername used: $serviceAchatUsername');
-
     print('[PDF DEBUG] PO.requesterUsername: '
         '"${requesterUsername}" PO.approverUsername: "${approverUsername}"');
     print('[PDF DEBUG] PR prRequesterUsername: "${prRequesterUsername}" prApproverUsername: "${prApproverUsername}"');

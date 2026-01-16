@@ -743,6 +743,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                                 Navigator.of(ctx).pop(); // close editor dialog
                                                 ScaffoldMessenger.of(context).showSnackBar(
                                                   const SnackBar(content: Text('Purchase Order created successfully!'), backgroundColor: Colors.green),
+                                                  
                                                 );
                                                 // Navigate to Purchase Orders page and reuse the existing controller so the new PO is visible immediately
                                                 Navigator.of(context).push(MaterialPageRoute(builder: (_) => PurchaseOrderPage(controller: purchaseOrderController)));
@@ -953,7 +954,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                               }
 
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(backgroundColor: Color.fromARGB(255, 9, 37, 250), content: Text('rejected!')),
+                                const SnackBar(backgroundColor: Color.fromARGB(255, 243, 5, 5), content: Text('rejected!')),
                               );
                             },
                             child: Text(AppLocalizations.of(context)?.reject ?? 'Reject'),
