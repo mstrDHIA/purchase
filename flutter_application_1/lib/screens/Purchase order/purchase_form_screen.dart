@@ -218,10 +218,10 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
                       labelText: AppLocalizations.of(context)!.priority,
                       border: OutlineInputBorder(),
                     ),
-                    items: const [
-                      DropdownMenuItem(value: 'high', child: Text('high')),
-                      DropdownMenuItem(value: 'medium', child: Text('medium')),
-                      DropdownMenuItem(value: 'low', child: Text('low')),
+                    items: [
+                      DropdownMenuItem(value: 'high', child: Text(loc.high)),
+                      DropdownMenuItem(value: 'medium', child: Text(loc.medium)),
+                      DropdownMenuItem(value: 'low', child: Text(loc.low)),
                     ],
                     onChanged: (val) => setState(() => _priority = val),
                   ),
@@ -517,7 +517,7 @@ Row(
         'start_date': DateFormat('yyyy-MM-dd').format(DateTime.now()),
         'end_date': DateFormat('yyyy-MM-dd').format(parsedEndDate),
         'products': productsList,
-        'title': 'Purchase Order',
+        'title': AppLocalizations.of(context)!.purchaseOrder,
         'description': noteController.text,
         'statuss': 'pending', // Always set to pending
         'currency': _currencyCodes[_currency] ?? _currency,

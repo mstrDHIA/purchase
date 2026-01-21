@@ -310,7 +310,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
           return const Center(child: CircularProgressIndicator());
         }
         if (controller.error != null) {
-          return Center(child: Text('Error: ${controller.error}'));
+          return Center(child: Text('${AppLocalizations.of(context)!.error}: ${controller.error}'));
         }
         final allOrders = controller.orders;
         final filteredOrders = _filteredAndSortedOrders(allOrders);

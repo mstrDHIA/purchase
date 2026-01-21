@@ -15,6 +15,7 @@ class ExcelGenerator {
     String? accountantUsername,
     DateTime? accountantApprovalDate,
     Map<int, String>? userIdToUsername,
+    String locale = 'fr', // 'fr' or 'en'
   }) async {
     final excel = Excel.createExcel();
     final sheet = excel['Sheet1'];
@@ -53,6 +54,94 @@ class ExcelGenerator {
     }
 
     int row = 0;
+
+    // Simple built-in translations for FR/EN to keep generator self-contained.
+    final Map<String, Map<String, String>> _tr = {
+      'fr': {
+        'company_sector': 'Production de chaussures de sécurités',
+        'tel': 'Tel',
+        'fax': 'Fax',
+        'zone': 'Zone industrielle, route de Tunis',
+        'address_line': '7050 Menzel Bourguiba – TUNISIE',
+        'supplier_code': 'Code fournisseur :',
+        'supplier': 'Fournisseur :',
+        'date': 'Date :',
+        'address': 'Adresse:',
+        'purchase_request': 'Demande achat n° :',
+        'po_title': 'BON DE COMMANDE N°',
+        'headers_code': 'Code fournisseur',
+        'headers_ri': 'Nos.Ri',
+        'headers_desc': 'Désignation',
+        'headers_unit': 'Unité',
+        'headers_qty': 'Quantité',
+        'headers_price': 'Prix',
+        'headers_total': 'Total',
+        'note': 'Note',
+        'destination': 'Destination',
+        'delivery_place': 'Lieu de livraison',
+        'delivery_time': 'Délais de livraison :',
+        'payment_condition': 'Condition de paiement :',
+        'instr1': 'Nous vous prions de bien vouloir nous confirmé la date de livraison par mail ou par fax',
+        'instr2': 'Veuillez Indiquer le numéro de la commande sur votre facture',
+        'instr3': 'Veuillez respecter la destination indiquée sur le bon de commande',
+        'service_purchase': 'Service Achat',
+        'footer_capital': 'Capital Social : 19715600 dt',
+        'footer_matricule': 'Matricule fiscal : 1328212/J',
+        'footer_douane': 'Code en douane : 1328212/J',
+        'footer_bank': 'Référence Bancaire : T.I.B Bizerte',
+        'footer_registre': 'Registre de Commerce : B04239562013',
+        'footer_benef': 'Bénéficiaire de Loi: 93-120 du 27/12/1993',
+        'role': 'Role',
+        'emetteur': 'Emetteur',
+        'resp_tech': 'Resp. Technique',
+        'dir_prod': 'Directeur Production',
+        'administration': 'Administration',
+        'name': 'Nom',
+      },
+      'en': {
+        'company_sector': 'Safety shoes manufacturing',
+        'tel': 'Tel',
+        'fax': 'Fax',
+        'zone': 'Industrial Zone, Tunis Road',
+        'address_line': '7050 Menzel Bourguiba – TUNISIA',
+        'supplier_code': 'Supplier code :',
+        'supplier': 'Supplier :',
+        'date': 'Date :',
+        'address': 'Address:',
+        'purchase_request': 'Purchase request No :',
+        'po_title': 'PURCHASE ORDER N°',
+        'headers_code': 'Supplier Code',
+        'headers_ri': 'Nos.Ri',
+        'headers_desc': 'Description',
+        'headers_unit': 'Unit',
+        'headers_qty': 'Quantity',
+        'headers_price': 'Price',
+        'headers_total': 'Total',
+        'note': 'Note',
+        'destination': 'Destination',
+        'delivery_place': 'Delivery place',
+        'delivery_time': 'Delivery time :',
+        'payment_condition': 'Payment conditions :',
+        'instr1': 'Please confirm the delivery date by email or fax',
+        'instr2': 'Please indicate the purchase order number on your invoice',
+        'instr3': 'Please respect the delivery destination indicated on the purchase order',
+        'service_purchase': 'Purchasing Dept',
+        'footer_capital': 'Share capital : 19715600 dt',
+        'footer_matricule': 'Tax ID : 1328212/J',
+        'footer_douane': 'Customs code : 1328212/J',
+        'footer_bank': 'Bank reference : T.I.B Bizerte',
+        'footer_registre': 'Trade Register : B04239562013',
+        'footer_benef': 'Law beneficiary: 93-120 of 27/12/1993',
+        'role': 'Role',
+        'emetteur': 'Issuer',
+        'resp_tech': 'Tech. Resp.',
+        'dir_prod': 'Production Manager',
+        'administration': 'Administration',
+        'name': 'Name',
+      }
+    };
+
+    String t(String key) => _tr[locale]?[key] ?? _tr['fr']![key] ?? key;
 
     // Try to fetch supplier details dynamically (address & code) when supplier id is available in products
     String supplierName = '-';
@@ -134,36 +223,36 @@ class ExcelGenerator {
     row++;
 
     // Company details
-    _setCellValue(sheet, 0, row, 'Production de chaussures de sécurités');
+    _setCellValue(sheet, 0, row, t('company_sector'));
     // Put Fax on the line below Tel to match the capture
-    _sc(6, row).value = 'Tel: 72 113 700\nFax: 72 473 32';
+    _sc(6, row).value = '${t('tel')}: 72 113 700\n${t('fax')}: 72 473 32';
     row++;
 
-    _setCellValue(sheet, 0, row, 'Zone industrielle, route de Tunis');
+    _setCellValue(sheet, 0, row, t('zone'));
     row++;
 
-    _setCellValue(sheet, 0, row, '7050 Menzel Bourguiba – TUNISIE');
+    _setCellValue(sheet, 0, row, t('address_line'));
     row++;
 
     row++; // Empty row
 
     // Re-add Code fournisseur and Adresse here
-    _setCellWithValue(sheet, 0, row, 'Code fournisseur :', bold: true);
+    _setCellWithValue(sheet, 0, row, t('supplier_code'), bold: true);
     _sc(1, row).value = supplierCode;
-    _setCellWithValue(sheet, 3, row, 'Fournisseur :', bold: true);
+    _setCellWithValue(sheet, 3, row, t('supplier'), bold: true);
     _sc(4, row).value = supplierName;
     row++;
 
     // Date | Adresse
-    _setCellWithValue(sheet, 0, row, 'Date :', bold: true);
+    _setCellWithValue(sheet, 0, row, t('date'), bold: true);
     _sc(1, row).value = formatDate(order.startDate);
     _sc(2, row).value = '';
-    _setCellWithValue(sheet, 3, row, 'Adresse:', bold: true);
+    _setCellWithValue(sheet, 3, row, t('address'), bold: true);
     _sc(4, row).value = supplierAddress;
     row++;
 
     // Demande achat
-    _setCellWithValue(sheet, 0, row, 'Demande achat n° :', bold: true);
+    _setCellWithValue(sheet, 0, row, t('purchase_request'), bold: true);
     _sc(1, row).value = order.id?.toString() ?? '';
     row++;
 
@@ -172,13 +261,13 @@ class ExcelGenerator {
     // ===== BON DE COMMANDE TITLE =====
     // Keep original placement: centered at column 2 as before
     final String poNumber = order.id?.toString() ?? '';
-    _setCellValue(sheet, 2, row, 'BON DE COMMANDE N° ${poNumber}', fontSize: 12, bold: true);
+    _setCellValue(sheet, 2, row, '${t('po_title')} ${poNumber}', fontSize: 12, bold: true);
     row++;
 
     row++; // Empty row
 
     // ===== PRODUCTS TABLE =====
-    final headers = ['Code fournisseur', 'Nos.Ri', 'Désignation', 'Unité', 'Quantité', 'Prix', 'Total'];
+    final headers = [t('headers_code'), t('headers_ri'), t('headers_desc'), t('headers_unit'), t('headers_qty'), t('headers_price'), t('headers_total')];
     
     // Header row with background
     for (int col = 0; col < headers.length; col++) {
@@ -230,7 +319,7 @@ class ExcelGenerator {
     // ===== APPROVALS TABLE =====
     // Place approvals table directly after the products/total (original location)
     // keep one empty row then the approval headers/names/dates
-    final approvalHeaders = ['Role', 'Emetteur', 'Resp. Technique', 'Directeur Production', 'Administration', 'Service Achat'];
+    final approvalHeaders = [t('role'), t('emetteur'), t('resp_tech'), t('dir_prod'), t('administration'), t('service_purchase')];
     for (int col = 0; col < approvalHeaders.length; col++) {
       final cell = _sc(col, row);
       cell.value = approvalHeaders[col];
@@ -240,7 +329,7 @@ class ExcelGenerator {
     row++;
 
     // Names
-    final names = ['Nom', requesterUsername ?? '', approverUsername ?? '', '', creatorUsername ?? '', ''];
+    final names = [t('name'), requesterUsername ?? '', approverUsername ?? '', '', creatorUsername ?? '', ''];
     for (int col = 0; col < names.length; col++) {
       final ncell = _sc(col, row);
       ncell.value = names[col];
@@ -265,7 +354,7 @@ class ExcelGenerator {
 
     // ===== DESTINATION =====
     if ((order.description ?? '').isNotEmpty) {
-      _setCellValue(sheet, 0, row, 'Note', bold: true);
+      _setCellValue(sheet, 0, row, t('note'), bold: true);
       row++;
       _setCellValue(sheet, 0, row, order.description ?? '');
       row++;
@@ -273,10 +362,10 @@ class ExcelGenerator {
 
     // ===== DELIVERY / DESTINATION BLOCK (match capture) =====
     row++; // empty row
-    _setCellWithValue(sheet, 0, row, 'Destination', bold: true);
+    _setCellWithValue(sheet, 0, row, t('destination'), bold: true);
     _setCellValueColored(sheet, 1, row, supplierAddress.isNotEmpty ? supplierAddress : 'Martek Menzel Bourguiba (Zone industrielle)', textColor: '#FF0000');
     row++;
-    _setCellWithValue(sheet, 0, row, 'Lieu de livraison', bold: true);
+    _setCellWithValue(sheet, 0, row, t('delivery_place'), bold: true);
     // If the order has a deliveryPlace field use it, otherwise use a placeholder from the capture
     try {
       final deliveryPlace = (order as dynamic).deliveryPlace ?? 'QUALITE MAGASIN TIGE';
@@ -285,9 +374,9 @@ class ExcelGenerator {
       _sc(1, row).value = 'QUALITE MAGASIN TIGE';
     }
     row++;
-    _setCellWithValue(sheet, 0, row, 'Délais de livraison :', bold: true);
+    _setCellWithValue(sheet, 0, row, t('delivery_time'), bold: true);
     row++;
-    _setCellWithValue(sheet, 0, row, 'Condition de paiement :', bold: true);
+    _setCellWithValue(sheet, 0, row, t('payment_condition'), bold: true);
     row++;
 
     // Instruction lines shown in the capture
@@ -296,19 +385,19 @@ class ExcelGenerator {
     try {
       final int instrStart = row;
       sheet.merge(_ci(0, instrStart), _ci(4, instrStart));
-      _setCellValue(sheet, 0, instrStart, 'Nous vous prions de bien vouloir nous confirmé la date de livraison par mail ou par fax');
+      _setCellValue(sheet, 0, instrStart, t('instr1'));
       row++;
       sheet.merge(_ci(0, row), _ci(4, row));
-      _setCellValue(sheet, 0, row, 'Veuillez Indiquer le numéro de la commande sur votre facture');
+      _setCellValue(sheet, 0, row, t('instr2'));
       row++;
       sheet.merge(_ci(0, row), _ci(4, row));
-      _setCellValue(sheet, 0, row, 'Veuillez respecter la destination indiquée sur le bon de commande');
+      _setCellValue(sheet, 0, row, t('instr3'));
       row++;
     } catch (_) {}
 
     // Place 'Service Achat' to the right as in the capture
     row += 2; // small vertical gap
-    _setCellValue(sheet, 6, row, 'Service Achat', bold: true);
+    _setCellValue(sheet, 6, row, t('service_purchase'), bold: true);
     row += 2;
 
     const SizedBox(width: 20);
@@ -319,27 +408,27 @@ class ExcelGenerator {
       // Left segment (cols 0..2) - two lines
       sheet.merge(_ci(0, footerRow), _ci(2, footerRow));
       _sc(0, footerRow).cellStyle = CellStyle(backgroundColorHex: '#D3D3D3', fontSize: 9);
-      _sc(0, footerRow).value = 'Capital Social : 19715600 dt';
+      _sc(0, footerRow).value = t('footer_capital');
       // second footer line for left segment
       sheet.merge(_ci(0, footerRow + 1), _ci(2, footerRow + 1));
       _sc(0, footerRow + 1).cellStyle = CellStyle(backgroundColorHex: '#D3D3D3', fontSize: 9);
-      _sc(0, footerRow + 1).value = 'Matricule fiscal : 1328212/J';
+      _sc(0, footerRow + 1).value = t('footer_matricule');
 
       // Middle segment (cols 3..4) - two lines
       sheet.merge(_ci(3, footerRow), _ci(4, footerRow));
       _sc(3, footerRow).cellStyle = CellStyle(backgroundColorHex: '#D3D3D3', fontSize: 9);
-      _sc(3, footerRow).value = 'Code en douane : 1328212/J';
+      _sc(3, footerRow).value = t('footer_douane');
       sheet.merge(_ci(3, footerRow + 1), _ci(4, footerRow + 1));
       _sc(3, footerRow + 1).cellStyle = CellStyle(backgroundColorHex: '#D3D3D3', fontSize: 9);
-      _sc(3, footerRow + 1).value = 'Référence Bancaire : T.I.B Bizerte';
+      _sc(3, footerRow + 1).value = t('footer_bank');
 
       // Right segment (cols 5..6) - two lines
       sheet.merge(_ci(5, footerRow), _ci(6, footerRow));
       _sc(5, footerRow).cellStyle = CellStyle(backgroundColorHex: '#D3D3D3', fontSize: 9);
-      _sc(5, footerRow).value = 'Registre de Commerce : B04239562013';
+      _sc(5, footerRow).value = t('footer_registre');
       sheet.merge(_ci(5, footerRow + 1), _ci(6, footerRow + 1));
       _sc(5, footerRow + 1).cellStyle = CellStyle(backgroundColorHex: '#D3D3D3', fontSize: 9);
-      _sc(5, footerRow + 1).value = 'Bénéficiaire de Loi: 93-120 du 27/12/1993';
+      _sc(5, footerRow + 1).value = t('footer_benef');
     } catch (_) {}
 
     // Encode to bytes
