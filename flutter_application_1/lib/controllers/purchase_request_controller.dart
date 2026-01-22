@@ -33,7 +33,9 @@ class PurchaseRequestController extends ChangeNotifier {
     try {
       currentPage = page;
       pageSize = pageSizeParam;
+      print('DEBUG: Fetching requests for user: ${user.id}, role: ${user.role?.id}, email: ${user.email}');
       final Response response = await _network.fetchPurchaseRequests(user, page: page, pageSize: pageSize);
+      print('DEBUG: API Response status: ${response.statusCode}, data: ${response.data}');
       if (response.statusCode != 200) {
         throw Exception('Failed to load purchase requests');
       }
@@ -42,30 +44,47 @@ class PurchaseRequestController extends ChangeNotifier {
       var data = response.data;
       List<dynamic> items;
 
+      print('DEBUG: Full API Response: $data');
+      print('DEBUG: Response data type: ${data.runtimeType}');
+
       if (data is Map && data.containsKey('results')) {
         items = data['results'] as List<dynamic>;
         totalCount = data['count'] ?? items.length;
         hasNext = data['next'] != null;
         hasPrevious = data['previous'] != null;
+        print('DEBUG: Paginated response detected. Count: $totalCount, Items in results: ${items.length}');
       } else if (data is List) {
         // fallback: unpaginated list
         items = data;
         totalCount = items.length;
         hasNext = false;
         hasPrevious = false;
+        print('DEBUG: Unpaginated list response detected. Total items: ${items.length}');
       } else {
         throw Exception('Unexpected response format for purchase requests');
       }
+      
+      print('DEBUG: Items list before filtering: ${items.length} items');
 
       requests.clear();
       final currentUser = Provider.of<UserController>(context, listen: false).currentUser;
+      print('DEBUG: Current user role ID: ${currentUser.role!.id}');
+      
+      // Admin (role id 1) sees all requests - no filtering
+      if (currentUser.role!.id == 1) {
+        print('DEBUG: Admin user detected - showing all requests. Total items: ${items.length}');
+      }
       // Supervisor (role id 4) sees only approved requests (existing behavior)
-      if (currentUser.role!.id == 4) {
+      else if (currentUser.role!.id == 4) {
+        print('DEBUG: Supervisor user detected - filtering to approved only');
         items = items.where((item) => item['status'] == 'approved').toList();
+        print('DEBUG: After supervisor filter: ${items.length} items');
       }
       // Manager (role id 3) should see only requests where the requester is in the same department
-      if (currentUser.role!.id == 3) {
+      else if (currentUser.role!.id == 3) {
+        print('DEBUG: Manager user detected - filtering by department');
         final managerDepId = currentUser.depId;
+        print('DEBUG: Manager department ID: $managerDepId');
         if (managerDepId != null) {
           final usersList = Provider.of<UserController>(context, listen: false).users;
           items = items.where((item) {
@@ -95,11 +114,16 @@ class PurchaseRequestController extends ChangeNotifier {
 
             return reqDep != null && reqDep == managerDepId;
           }).toList();
+          print('DEBUG: After manager department filter: ${items.length} items');
         } else {
           // If manager has no department assigned, do not filter — show all requests
           // (leave `items` unchanged)
+          print('DEBUG: Manager has no department assigned - showing all items');
         }
       }
+      
+      print('DEBUG: Final items after role-based filtering: ${items.length} items');
+      print('DEBUG: Items to convert: ${items.map((e) => {'id': e['id'], 'status': e['status']}).toList()}');
       requests = items.map<PurchaseRequest>((json) => PurchaseRequest.fromJson(json)).toList();
     // Sort requests by id ascending
       requests.sort((a, b) {
@@ -108,12 +132,18 @@ class PurchaseRequestController extends ChangeNotifier {
         if (b.id == null) return -1;
         return a.id!.compareTo(b.id!);
       });
+      
+      print('DEBUG: Successfully converted to PurchaseRequest objects: ${requests.length} requests');
+      print('DEBUG: Final requests IDs: ${requests.map((r) => r.id).toList()}');
 
-    dataSource = PurchaseRequestDataSource(requests, context, 'someArgument');
+      dataSource = PurchaseRequestDataSource(requests, context, 'someArgument');
+      print('DEBUG: DataSource updated with ${requests.length} requests');
     } catch (e) {
       _error = e.toString();
+      print('DEBUG: Error in fetchRequests: $_error');
       isLoading = false;
       notifyListeners();
+      rethrow;
     }
     isLoading = false;
     notifyListeners();

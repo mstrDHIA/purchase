@@ -384,6 +384,13 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
 
     // fetch product families for filters (N2 and N3)
     _fetchProductFamilies();
+    
+    // Force reload requests after a short delay
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        purchaseRequestController.fetchRequests(context, userController.currentUser, page: 1, pageSizeParam: _rowsPerPageLocal);
+      }
+    });
 
     super.initState();
   }
@@ -448,6 +455,30 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
 
           // Use the controller data after loading to avoid showing stale cached requests
           final allRequests = purchaseRequestController.requests;
+          
+          // Debug: Check if requests are loaded
+          if (allRequests.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.inbox, size: 64, color: Colors.grey),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'No purchase requests found',
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      purchaseRequestController.fetchRequests(context, userController.currentUser);
+                    },
+                    child: const Text('Refresh'),
+                  ),
+                ],
+              ),
+            );
+          }
           var filteredRequests = allRequests;
           // Filter archived requests
           if (_showArchived) {
@@ -517,7 +548,10 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
           final _currentUser = Provider.of<UserController>(context, listen: false).currentUser;
           // Detect manager using role id only
           final isManagerRole = _currentUser.role?.id == 3;
-          if (isManagerRole) {
+          final isAdminRole = _currentUser.role?.id == 1; // Admin role (ID 1)
+          
+          // Only apply department filter for managers, not for admins
+          if (isManagerRole && !isAdminRole) {
             final managerDepId = _currentUser.depId;
             if (managerDepId != null) {
               final usersList = Provider.of<UserController>(context, listen: false).users;
@@ -585,6 +619,37 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
             });
           }
           final pageDataSource = filteredDataSource;
+
+          // Check if filteredRequests is empty after applying all filters
+          if (filteredRequests.isEmpty) {
+            return Column(
+              children: [
+                const SizedBox(height: 16),
+                _buildFiltersRow(),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.search_off, size: 64, color: Colors.grey),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'No results found',
+                          style: TextStyle(fontSize: 16, color: Colors.grey),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: _clearFilters,
+                          child: const Text('Clear Filters'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }
 
           return Column(
             children: [

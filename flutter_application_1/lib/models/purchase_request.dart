@@ -47,8 +47,16 @@ class PurchaseRequest {
     if (json['products'] is List) {
       products = (json['products'] as List).map((item) {
         if (item is ProductLine) return item;
+        // Handle product field which can be String or Map
+        String productName = '';
+        if (item['product'] is Map) {
+          final productMap = item['product'] as Map<String, dynamic>;
+          productName = (productMap['name'] ?? productMap['product'] ?? '')?.toString() ?? '';
+        } else {
+          productName = item['product']?.toString() ?? '';
+        }
         return ProductLine(
-          product: item['product'],
+          product: productName,
           // brand: item['brand'],
           family: item['family'] ?? item['family_name'] ?? item['category'] ?? null,
           subFamily: item['subFamily'] ?? item['sub_family'] ?? item['subcategory'] ?? null,
@@ -68,20 +76,22 @@ class PurchaseRequest {
     status = json['status'];
     // Handle nested user objects for requested_by and approved_by
     if (json['requested_by'] is Map) {
-      requestedBy = json['requested_by']['id'];
+      final rb = json['requested_by'] as Map<String, dynamic>;
+      requestedBy = rb['id'] is int ? rb['id'] : int.tryParse(rb['id']?.toString() ?? '');
       // try to capture a display name if backend provides it
-      requestedByName = (json['requested_by']['first_name'] ?? json['requested_by']['username'] ?? json['requested_by']['name'])?.toString();
+      requestedByName = (rb['first_name'] ?? rb['username'] ?? rb['name'])?.toString();
       // explicitly capture username when available
-      requestedByUsername = json['requested_by']['username']?.toString();
-    } else {
-      requestedBy = json['requested_by'];
+      requestedByUsername = rb['username']?.toString();
+    } else if (json['requested_by'] != null) {
+      requestedBy = json['requested_by'] is int ? json['requested_by'] : int.tryParse(json['requested_by']?.toString() ?? '');
     }
     if (json['approved_by'] is Map) {
-      approvedBy = json['approved_by']['id'];
-      approvedByName = (json['approved_by']['first_name'] ?? json['approved_by']['username'] ?? json['approved_by']['name'])?.toString();
-      approvedByUsername = json['approved_by']['username']?.toString();
-    } else {
-      approvedBy = json['approved_by'];
+      final ab = json['approved_by'] as Map<String, dynamic>;
+      approvedBy = ab['id'] is int ? ab['id'] : int.tryParse(ab['id']?.toString() ?? '');
+      approvedByName = (ab['first_name'] ?? ab['username'] ?? ab['name'])?.toString();
+      approvedByUsername = ab['username']?.toString();
+    } else if (json['approved_by'] != null) {
+      approvedBy = json['approved_by'] is int ? json['approved_by'] : int.tryParse(json['approved_by']?.toString() ?? '');
     }
     priority = json['priority'];
     isArchived = json['is_archived'] ?? false;
