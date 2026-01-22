@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/screens/Product/family_screen.dart';
 import 'package:flutter_application_1/screens/Supplier/Supplier_registration_screen.dart';
+import 'package:flutter_application_1/screens/Dashboard/purchase_dashboard.dart';
 import 'package:flutter_application_1/l10n/app_localizations.dart';
 
 class MyApp extends StatelessWidget {
@@ -38,8 +39,8 @@ class _MyHomePageState extends State<MyHomePage> {
               onItemSelected: (label) {
                 setState(() {
                   selected = label;
-                  // Keep the sidebar open when selecting Product so the user sees the Families page alongside the sidebar
-                  if (label != 'Product') {
+                  // Keep the sidebar open when selecting Product or Supplier
+                  if (label != 'Product' && label != 'Supplier') {
                     showSidebar = false; // Ferme le sidebar après sélection for other pages
                   }
                 });
@@ -51,14 +52,14 @@ class _MyHomePageState extends State<MyHomePage> {
                 // Render main content according to the selected item. For 'Product', show FamiliesPage within the layout so the sidebar stays visible.
                 Builder(builder: (context) {
                   if (selected == 'Product') {
-                    return const Padding(
-                      padding: EdgeInsets.only(left: 0),
+                    return Padding(
+                      padding: const EdgeInsets.only(left: 0),
                       child: SizedBox.expand(child: FamiliesPage()),
                     );
                   }
                   if (selected == 'Supplier') {
-                    return const Padding(
-                      padding: EdgeInsets.only(left: 0),
+                    return Padding(
+                      padding: const EdgeInsets.only(left: 0),
                       child: SizedBox.expand(child: SupplierRegistrationPage()),
                     );
                   }
@@ -135,6 +136,7 @@ class _AppSidebarState extends State<AppSidebar> {
 // 5 visitor
   String _getLocalizedLabel(String label, AppLocalizations localizations) {
     final labelMap = {
+      'Dashboard': localizations.dashboard,
       'Users': localizations.users,
       'Password': localizations.password,
       'PurchaseRequest': localizations.purchaseRequest,
@@ -151,11 +153,7 @@ class _AppSidebarState extends State<AppSidebar> {
   void initSideBarItems() {
     if(userController.currentUser.role_id==1){
       items.addAll([
-      // {'label': 'Home', 'icon': Icons.home},
-      // {'label': 'Dashboard', 'icon': Icons.dashboard},
-      // {'label': 'Profile', 'icon': Icons.account_circle},
-      
-      
+      {'label': 'Dashboard', 'icon': Icons.dashboard},
       {'label': 'PurchaseRequest', 'icon': Icons.note_add},
       {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
       {'label': 'Supplier', 'icon': Icons.store},
@@ -173,8 +171,7 @@ class _AppSidebarState extends State<AppSidebar> {
     }
     else if(userController.currentUser.role_id==2){
       items.addAll([
-      // {'label': 'Home', 'icon': Icons.home},
-      // {'label': 'Dashboard', 'icon': Icons.dashboard},
+      {'label': 'Dashboard', 'icon': Icons.dashboard},
       {'label': 'PurchaseRequest', 'icon': Icons.note_add},
       {'label': 'Profile', 'icon': Icons.account_circle},
       // {'label': 'Users', 'icon': Icons.people},
@@ -188,8 +185,7 @@ class _AppSidebarState extends State<AppSidebar> {
     }
     else if(userController.currentUser.role_id==3){
       items.addAll([
-      // {'label': 'Home', 'icon': Icons.home},
-      // {'label': 'Dashboard', 'icon': Icons.dashboard},
+      {'label': 'Dashboard', 'icon': Icons.dashboard},
       {'label': 'PurchaseRequest', 'icon': Icons.note_add},
       {'label': 'Profile', 'icon': Icons.account_circle},
       // {'label': 'Users', 'icon': Icons.people},
@@ -203,8 +199,7 @@ class _AppSidebarState extends State<AppSidebar> {
     }
      else if((userController.currentUser.role_id==4)){
       items.addAll([
-      // {'label': 'Home', 'icon': Icons.home},
-      // {'label': 'Dashboard', 'icon': Icons.dashboard},
+      {'label': 'Dashboard', 'icon': Icons.dashboard},
       {'label': 'PurchaseRequest', 'icon': Icons.note_add},
       {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
       {'label': 'Profile', 'icon': Icons.account_circle},
@@ -219,9 +214,8 @@ class _AppSidebarState extends State<AppSidebar> {
     }
     else if((userController.currentUser.role_id==6)){
       items.addAll([
+        {'label': 'Dashboard', 'icon': Icons.dashboard},
         {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
-      // {'label': 'Home', 'icon': Icons.home},
-      // {'label': 'Dashboard', 'icon': Icons.dashboard},
       {'label': 'Profile', 'icon': Icons.account_circle},
       // {'label': 'Users', 'icon': Icons.people},
       {'label': 'Password', 'icon': Icons.lock},
@@ -235,8 +229,7 @@ class _AppSidebarState extends State<AppSidebar> {
     }
     else if(userController.currentUser.role_id==5){
        items.addAll([
-      // {'label': 'Home', 'icon': Icons.home},
-      // {'label': 'Dashboard', 'icon': Icons.dashboard},
+      {'label': 'Dashboard', 'icon': Icons.dashboard},
       {'label': 'Profile', 'icon': Icons.account_circle},
       // {'label': 'Users', 'icon': Icons.people},
       {'label': 'Password', 'icon': Icons.lock},
@@ -278,6 +271,7 @@ class _AppSidebarState extends State<AppSidebar> {
 
     // mapping labels -> routes (ne modifie pas la façon dont les items sont générés par rôle)
     final Map<String, String> labelToRoute = {
+      'Dashboard': '/dashboard',
       'Profile': '/Profile',
       'PurchaseRequest': '/purchase_requests',
       'Purchase Order': '/purchase_orders',
@@ -289,7 +283,6 @@ class _AppSidebarState extends State<AppSidebar> {
       'Roles and access': '/role',
       'Password': '/password',
       'Settings': '/settings',
-      // 'Profile': '/dashboard',
       // add other mappings if needed
     };
 

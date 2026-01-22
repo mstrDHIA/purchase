@@ -1,5 +1,6 @@
 import 'package:flutter_application_1/Settings/settings_screen.dart';
-import 'package:flutter_application_1/screens/Dashboard/dashboard_screen.dart';
+// import 'package:flutter_application_1/screens/Dashboard/dashboard_screen.dart';
+import 'package:flutter_application_1/screens/Dashboard/purchase_dashboard.dart';
 import 'package:flutter_application_1/main.dart';
 import 'package:flutter_application_1/screens/Product/family_screen.dart';
 import 'package:flutter_application_1/screens/Purchase Request/purchase_request_list_screen.dart';
@@ -37,9 +38,13 @@ final GoRouter router = GoRouter(
         return MainScreen(child: child);  
       },
       routes: [
+        // GoRoute(
+        //   path: '/dashboard',
+        //   builder: (context, state) => DashboardPage(),
+        // ),
         GoRoute(
           path: '/dashboard',
-          builder: (context, state) => DashboardPage(),
+          builder: (context, state) => PurchaseDashboardPage(),
         ),
          GoRoute(
           path: '/Profile',

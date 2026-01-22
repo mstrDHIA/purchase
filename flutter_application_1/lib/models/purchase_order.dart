@@ -63,6 +63,10 @@ class PurchaseOrder {
     isArchived = json['is_archived'] ?? false;
   }
 
+  
+
+  get total_amount => null;
+
   static DateTime? _parseDate(dynamic value) {
     if (value == null) return null;
     if (value is DateTime) return value;

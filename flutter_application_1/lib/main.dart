@@ -12,6 +12,7 @@ import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter_application_1/controllers/role_controller.dart';
 import 'package:flutter_application_1/providers/theme_provider.dart';
 import 'package:flutter_application_1/screens/Product/family_screen.dart';
+import 'package:flutter_application_1/screens/Dashboard/purchase_dashboard.dart';
 // import 'package:flutter_application_1/screens/Product/product_screen.dart';
 import 'package:flutter_application_1/screens/Purchase%20Request/purchase_request_list_screen.dart' as requestor_order;
 import 'package:flutter_application_1/screens/Purchase%20order/pushase_order_screen.dart';
@@ -137,6 +138,8 @@ class _MainScreenState extends State<MainScreen> {
 
   Widget _getPage({required int id}) {
     switch (_selected) {
+      case 'Dashboard':
+        return PurchaseDashboardPage();
       case 'Profile':
         return ProfilePageScreen(userId: id);
       case 'Users':
