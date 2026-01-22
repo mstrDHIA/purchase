@@ -37,6 +37,205 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> {
 
   String _safeString(String? value) => value ?? '';
 
+  void _showOrderDetailsDialog(BuildContext context, dynamic order, UserController userController) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 600, maxHeight: 700),
+            child: Column(
+              children: [
+                // Header
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.deepPurple.withOpacity(0.1),
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(12),
+                      topRight: Radius.circular(12),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Purchase Order #${order.id}',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF2C3E50),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                ),
+                // Content
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Order Info
+                        _buildInfoRow('Order ID', order.id.toString()),
+                        _buildInfoRow('Title', _safeString(order.title)),
+                        _buildInfoRow(
+                          'Date',
+                          order.startDate != null
+                              ? DateFormat('yyyy-MM-dd').format(order.startDate!)
+                              : '-',
+                        ),
+                        _buildInfoRow(
+                          'Requester',
+                          userController.currentUser.id == order.requestedByUser
+                              ? userController.currentUser.username ?? '-'
+                              : '-',
+                        ),
+                        _buildStatusRow('Status', order.status ?? '-'),
+                        const SizedBox(height: 20),
+                        
+                        // Products Section
+                        const Text(
+                          'Products',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2C3E50),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        
+                        if (order.products == null || order.products!.isEmpty)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 16),
+                            child: Text(
+                              'No products',
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          )
+                        else
+                          Column(
+                            children: order.products!.map<Widget>((product) {
+                              final unitPrice = product.unitPrice ?? product.price ?? 0;
+                              final quantity = product.quantity ?? 0;
+                              final totalAmount = (quantity is int ? quantity.toDouble() : quantity as double) *
+                                  (unitPrice is int ? unitPrice.toDouble() : unitPrice as double);
+                              
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey.shade300),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildInfoRow('Product', _safeString(product.product)),
+                                    _buildInfoRow('Supplier', _safeString(product.supplier)),
+                                    _buildInfoRow('Unit Price', unitPrice.toString()),
+                                    _buildInfoRow('Quantity', quantity.toString()),
+                                    _buildInfoRow('Total Amount', totalAmount.toStringAsFixed(2)),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                // Footer
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepPurple,
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    ),
+                    child: const Text('Close', style: TextStyle(color: Colors.white)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF2C3E50),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(color: Colors.black87),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusRow(String label, String status) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF2C3E50),
+              ),
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: status == 'approved'
+                  ? Colors.green.withOpacity(0.2)
+                  : Colors.orange.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              status,
+              style: TextStyle(
+                color: status == 'approved' ? Colors.green : Colors.orange,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // Get all unique suppliers from orders
   List<String> _getSuppliers(List orders) {
     final suppliers = <String>{};
@@ -181,7 +380,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> {
                 Expanded(
                   child: Center(
                     child: Text(
-                      AppLocalizations.of(context)!.purchaseOrders,
+                      'Purchase Dashboard',
                       style: const TextStyle(
                         fontSize: 26,
                         fontWeight: FontWeight.bold,
@@ -408,44 +607,6 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> {
                                     DataColumn(
                                       label: GestureDetector(
                                         onTap: () => setState(() {
-                                          if (_sortBy == 'date') {
-                                            _sortAscending = !_sortAscending;
-                                          } else {
-                                            _sortBy = 'date';
-                                            _sortAscending = false;
-                                          }
-                                        }),
-                                        child: Row(
-                                          children: [
-                                            const Text('Date'),
-                                            if (_sortBy == 'date')
-                                              Icon(_sortAscending ? Icons.arrow_upward : Icons.arrow_downward, size: 14),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                    DataColumn(
-                                      label: GestureDetector(
-                                        onTap: () => setState(() {
-                                          if (_sortBy == 'status') {
-                                            _sortAscending = !_sortAscending;
-                                          } else {
-                                            _sortBy = 'status';
-                                            _sortAscending = false;
-                                          }
-                                        }),
-                                        child: Row(
-                                          children: [
-                                            Text(AppLocalizations.of(context)!.status),
-                                            if (_sortBy == 'status')
-                                              Icon(_sortAscending ? Icons.arrow_upward : Icons.arrow_downward, size: 14),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                    DataColumn(
-                                      label: GestureDetector(
-                                        onTap: () => setState(() {
                                           if (_sortBy == 'title') {
                                             _sortAscending = !_sortAscending;
                                           } else {
@@ -503,25 +664,6 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> {
                                     DataColumn(
                                       label: GestureDetector(
                                         onTap: () => setState(() {
-                                          if (_sortBy == 'unitPrice') {
-                                            _sortAscending = !_sortAscending;
-                                          } else {
-                                            _sortBy = 'unitPrice';
-                                            _sortAscending = false;
-                                          }
-                                        }),
-                                        child: Row(
-                                          children: [
-                                            const Text('Unit Price'),
-                                            if (_sortBy == 'unitPrice')
-                                              Icon(_sortAscending ? Icons.arrow_upward : Icons.arrow_downward, size: 14),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                    DataColumn(
-                                      label: GestureDetector(
-                                        onTap: () => setState(() {
                                           if (_sortBy == 'quantity') {
                                             _sortAscending = !_sortAscending;
                                           } else {
@@ -533,6 +675,25 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> {
                                           children: [
                                             const Text('Quantity'),
                                             if (_sortBy == 'quantity')
+                                              Icon(_sortAscending ? Icons.arrow_upward : Icons.arrow_downward, size: 14),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                    DataColumn(
+                                      label: GestureDetector(
+                                        onTap: () => setState(() {
+                                          if (_sortBy == 'unitPrice') {
+                                            _sortAscending = !_sortAscending;
+                                          } else {
+                                            _sortBy = 'unitPrice';
+                                            _sortAscending = false;
+                                          }
+                                        }),
+                                        child: Row(
+                                          children: [
+                                            const Text('Unit Price'),
+                                            if (_sortBy == 'unitPrice')
                                               Icon(_sortAscending ? Icons.arrow_upward : Icons.arrow_downward, size: 14),
                                           ],
                                         ),
@@ -557,7 +718,45 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> {
                                         ),
                                       ),
                                     ),
+                                    DataColumn(
+                                      label: GestureDetector(
+                                        onTap: () => setState(() {
+                                          if (_sortBy == 'date') {
+                                            _sortAscending = !_sortAscending;
+                                          } else {
+                                            _sortBy = 'date';
+                                            _sortAscending = false;
+                                          }
+                                        }),
+                                        child: Row(
+                                          children: [
+                                            const Text('Date'),
+                                            if (_sortBy == 'date')
+                                              Icon(_sortAscending ? Icons.arrow_upward : Icons.arrow_downward, size: 14),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
                                     DataColumn(label: const Text('Requester')),
+                                    DataColumn(
+                                      label: GestureDetector(
+                                        onTap: () => setState(() {
+                                          if (_sortBy == 'status') {
+                                            _sortAscending = !_sortAscending;
+                                          } else {
+                                            _sortBy = 'status';
+                                            _sortAscending = false;
+                                          }
+                                        }),
+                                        child: Row(
+                                          children: [
+                                            Text(AppLocalizations.of(context)!.status),
+                                            if (_sortBy == 'status')
+                                              Icon(_sortAscending ? Icons.arrow_upward : Icons.arrow_downward, size: 14),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
                                     DataColumn(label: Text('')),
                                   ],
                                   rows: paginatedOrders.expand((order) {
@@ -567,8 +766,17 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> {
                                       return [
                                         DataRow(cells: [
                                           DataCell(Text(order.id.toString())),
+                                          DataCell(Text(_safeString(order.title ?? ''))),
+                                          DataCell(const Text('-')),
+                                          DataCell(const Text('-')),
+                                          DataCell(const Text('-')),
+                                          DataCell(const Text('-')),
+                                          DataCell(const Text('-')),
                                           DataCell(Text(order.startDate != null
                                               ? DateFormat('yyyy-MM-dd').format(order.startDate!)
+                                              : '-')),
+                                          DataCell(Text(userController.currentUser.id == order.requestedByUser
+                                              ? userController.currentUser.username ?? '-'
                                               : '-')),
                                           DataCell(
                                             Container(
@@ -588,19 +796,10 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> {
                                               ),
                                             ),
                                           ),
-                                          DataCell(Text(_safeString(order.title ?? ''))),
-                                          DataCell(const Text('-')),
-                                          DataCell(const Text('-')),
-                                          DataCell(const Text('-')),
-                                          DataCell(const Text('-')),
-                                          DataCell(const Text('-')),
-                                          DataCell(Text(userController.currentUser.id == order.requestedByUser
-                                              ? userController.currentUser.username ?? '-'
-                                              : '-')),
                                           DataCell(
                                             IconButton(
                                               icon: const Icon(Icons.visibility, color: Colors.blue),
-                                              onPressed: () {},
+                                              onPressed: () => _showOrderDetailsDialog(context, order, userController),
                                             ),
                                           ),
                                         ]),
@@ -615,8 +814,17 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> {
                                       
                                       return DataRow(cells: [
                                         DataCell(Text(order.id.toString())),
+                                        DataCell(Text(_safeString(order.title ?? ''))),
+                                        DataCell(Text(_safeString(product.product ?? ''))),
+                                        DataCell(Text(_safeString(product.supplier ?? '-'))),
+                                        DataCell(Text(quantity.toString())),
+                                        DataCell(Text(unitPrice.toString())),
+                                        DataCell(Text(totalAmount.toStringAsFixed(2))),
                                         DataCell(Text(order.startDate != null
                                             ? DateFormat('yyyy-MM-dd').format(order.startDate!)
+                                            : '-')),
+                                        DataCell(Text(userController.currentUser.id == order.requestedByUser
+                                            ? userController.currentUser.username ?? '-'
                                             : '-')),
                                         DataCell(
                                           Container(
@@ -636,19 +844,10 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> {
                                             ),
                                           ),
                                         ),
-                                        DataCell(Text(_safeString(order.title ?? ''))),
-                                        DataCell(Text(_safeString(product.product ?? ''))),
-                                        DataCell(Text(_safeString(product.supplier ?? '-'))),
-                                        DataCell(Text(unitPrice.toString())),
-                                        DataCell(Text(quantity.toString())),
-                                        DataCell(Text(totalAmount.toStringAsFixed(2))),
-                                        DataCell(Text(userController.currentUser.id == order.requestedByUser
-                                            ? userController.currentUser.username ?? '-'
-                                            : '-')),
                                         DataCell(
                                           IconButton(
                                             icon: const Icon(Icons.visibility, color: Colors.blue),
-                                            onPressed: () {},
+                                            onPressed: () => _showOrderDetailsDialog(context, order, userController),
                                           ),
                                         ),
                                       ]);
