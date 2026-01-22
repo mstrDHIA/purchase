@@ -55,6 +55,7 @@ class SupplierController extends ChangeNotifier {
     String? matricule,
     String? cin,
     String? codeFournisseur,
+    String? approvalStatus,
   }) async {
     try {
       final response = await _network.createSupplier(
@@ -67,6 +68,7 @@ class SupplierController extends ChangeNotifier {
         matricule: matricule,
         cin: cin,
         codeFournisseur: codeFournisseur,
+        approvalStatus: approvalStatus,
       );
       
       // Convert response to Supplier and add to list
@@ -97,6 +99,7 @@ class SupplierController extends ChangeNotifier {
     String? matricule,
     String? cin,
     String? codeFournisseur,
+    String? approvalStatus,
   }) async {
     try {
       final response = await _network.editSupplier(
@@ -110,6 +113,7 @@ class SupplierController extends ChangeNotifier {
         matricule: matricule,
         cin: cin,
         codeFournisseur: codeFournisseur,
+        approvalStatus: approvalStatus,
       );
       
       // Convert response to Supplier and update in list

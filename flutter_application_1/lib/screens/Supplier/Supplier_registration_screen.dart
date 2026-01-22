@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter_application_1/controllers/supplier_controller.dart';
+import 'package:flutter_application_1/controllers/user_controller.dart';
 
 import 'package:flutter_application_1/models/supplier.dart';
 
@@ -323,6 +324,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                             contactName: contactNameCtrl.text.isNotEmpty ? contactNameCtrl.text : null,
                             matricule: matriculeCtrl.text.isNotEmpty ? matriculeCtrl.text : null,
                             cin: cinCtrl.text.isNotEmpty ? cinCtrl.text : null,
+                            approvalStatus: 'pending',
                           );
 
                           if (mounted) {
@@ -490,6 +492,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                                 contactName: contactNameCtrl.text.isNotEmpty ? contactNameCtrl.text : null,
                                 matricule: matriculeCtrl.text.isNotEmpty ? matriculeCtrl.text : null,
                                 cin: cinCtrl.text.isNotEmpty ? cinCtrl.text : null,
+                                approvalStatus: 'pending',
                           );
                           if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Supplier updated')));
                         }
@@ -510,6 +513,9 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
   }
 
   Future<void> _showViewSupplierDialog(Supplier supplier) async {
+    final userController = context.read<UserController>();
+    final isAccountant = userController.currentUser.role_id == 6;
+    
     await showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
@@ -536,6 +542,8 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                 const SizedBox(height: 16),
                 _buildDetailRow(Icons.person_outline, 'Contact Name', _safeString(supplier.contactName)),
                 const SizedBox(height: 16),
+                _buildDetailRow(Icons.check_circle, 'Approval Status', (_safeString(supplier.approvalStatus).isNotEmpty ? _safeString(supplier.approvalStatus).toUpperCase() : 'N/A')),
+                const SizedBox(height: 16),
                 // Try to find the full model to show additional fields like Code Fournisseur
                 Builder(
                   builder: (context) {
@@ -559,14 +567,82 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
           ),
         ),
         actions: [
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.deepPurple),
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Back', style: TextStyle(color: Colors.white)),
-          ),
+          if (isAccountant)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.deepPurple),
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Back', style: TextStyle(color: Colors.white)),
+                ),
+                Row(
+                  children: [
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                      onPressed: () async {
+                        Navigator.of(context).pop();
+                        await _updateSupplierStatus(supplier, 'rejected');
+                      },
+                      child: const Text('Reject', style: TextStyle(color: Colors.white)),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                      onPressed: () async {
+                        Navigator.of(context).pop();
+                        await _updateSupplierStatus(supplier, 'approved');
+                      },
+                      child: const Text('Approve', style: TextStyle(color: Colors.white)),
+                    ),
+                  ],
+                ),
+              ],
+            )
+          else
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.deepPurple),
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Back', style: TextStyle(color: Colors.white)),
+                ),
+              ],
+            ),
         ],
       ),
     );
+  }
+
+  Future<void> _updateSupplierStatus(Supplier supplier, String newStatus) async {
+    final controller = context.read<SupplierController>();
+    try {
+      await controller.editSupplier(
+        id: supplier.id!,
+        name: supplier.name ?? '',
+        contactEmail: supplier.contactEmail ?? '',
+        phoneNumber: supplier.phoneNumber?.toString(),
+        address: supplier.address,
+        codeFournisseur: supplier.codeFournisseur,
+        groupName: supplier.groupName,
+        contactName: supplier.contactName,
+        matricule: supplier.matricule,
+        cin: supplier.cin,
+        approvalStatus: newStatus,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Supplier status updated to ${newStatus.toUpperCase()}')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error updating supplier: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 
   Widget _buildDetailRow(IconData icon, String label, String value) {
@@ -799,6 +875,9 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                                       label: const Text('Address', style: TextStyle(fontWeight: FontWeight.w600)),
                                       onSort: (i, asc) => _sortByColumn(9, asc),
                                     ),
+                                    DataColumn(
+                                      label: const Text('Status', style: TextStyle(fontWeight: FontWeight.w600)),
+                                    ),
                                     const DataColumn(label: Text('')),
                                   ],
 
@@ -816,6 +895,27 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                                         DataCell(Text(_safeString(supplier.groupName))),
                                         DataCell(Text(_safeString(supplier.contactName))),
                                         DataCell(Text(_safeString(supplier.address))),
+                                        DataCell(
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: supplier.approvalStatus == 'approved' ? Colors.green[50] :
+                                                     supplier.approvalStatus == 'rejected' ? Colors.red[50] :
+                                                     Colors.orange[50],
+                                              borderRadius: BorderRadius.circular(4),
+                                            ),
+                                            child: Text(
+                                              _safeString(supplier.approvalStatus).toLowerCase(),
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w600,
+                                                color: supplier.approvalStatus == 'approved' ? Colors.green[700] :
+                                                       supplier.approvalStatus == 'rejected' ? Colors.red[700] :
+                                                       Colors.orange[700],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
                                         DataCell(Row(mainAxisSize: MainAxisSize.min, children: [
                                           IconButton(
                                             icon: const Icon(Icons.visibility, color: Colors.blue),

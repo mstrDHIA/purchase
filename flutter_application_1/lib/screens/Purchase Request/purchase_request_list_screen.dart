@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import 'package:flutter_application_1/l10n/app_localizations.dart';
 import 'package:flutter_application_1/controllers/product_controller.dart';
 import 'package:flutter_application_1/controllers/purchase_request_controller.dart';
+import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
+import 'package:flutter_application_1/network/purchase_request_network.dart';
 import 'package:flutter_application_1/screens/Purchase%20Request/requestor_form_screen.dart';
 import 'package:flutter_application_1/screens/Purchase%20order/pushase_order_screen.dart' as purchase_order;
 import 'package:provider/provider.dart';
@@ -371,6 +373,46 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
     );
   }
   late UserController userController;
+  
+  /// Synchronizes purchase requests that have corresponding POs but status wasn't updated
+  Future<void> _syncOrphanRequests() async {
+    try {
+      final poController = Provider.of<PurchaseOrderController>(context, listen: false);
+      final prController = Provider.of<PurchaseRequestController>(context, listen: false);
+      
+      // Get all active (non-archived) POs with purchase_request_id set
+      final poIds = <int>{};
+      for (final po in poController.orders) {
+        if ((po.isArchived ?? false) == false && po.purchaseRequestId != null) {
+          poIds.add(po.purchaseRequestId!);
+        }
+      }
+      
+      if (poIds.isEmpty) return;
+      
+      // Find PRs that are "approved" but have corresponding POs (should be "transformed")
+      for (final pr in prController.requests) {
+        if (pr.id != null && poIds.contains(pr.id) && pr.status?.toLowerCase() == 'approved') {
+          try {
+            final payload = {'status': 'transformed'};
+            await PurchaseRequestNetwork().updatePurchaseRequest(pr.id!, payload, method: 'PATCH');
+            pr.status = 'transformed';
+            print('✓ Synced PR ${pr.id} status to transformed');
+          } catch (e) {
+            print('⚠ Failed to sync PR ${pr.id}: $e');
+          }
+        }
+      }
+      
+      // Refresh PR list after syncing
+      if (mounted) {
+        await prController.fetchRequests(context, userController.currentUser, page: 1, pageSizeParam: _rowsPerPageLocal);
+      }
+    } catch (e) {
+      print('Error in _syncOrphanRequests: $e');
+    }
+  }
+
   @override
   void initState() {
     userController = Provider.of<UserController>(context, listen: false);
@@ -389,6 +431,12 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
     Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted) {
         purchaseRequestController.fetchRequests(context, userController.currentUser, page: 1, pageSizeParam: _rowsPerPageLocal);
+        // Also sync orphan requests (PRs with POs but status not updated)
+        Future.delayed(const Duration(seconds: 1), () {
+          if (mounted) {
+            _syncOrphanRequests();
+          }
+        });
       }
     });
 

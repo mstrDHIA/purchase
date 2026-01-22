@@ -176,12 +176,19 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
   Future<void> _fetchSuppliers() async {
     try {
       await supplierController.fetchSuppliers();
+      final approvedOnly = <String>[];
+      for (var s in supplierController.suppliers) {
+        final status = (s.approvalStatus ?? '').trim().toLowerCase();
+        if (status == 'approved') {
+          approvedOnly.add(s.name ?? '');
+        }
+      }
       setState(() {
-        suppliers = supplierController.suppliers.map((s) => s.name ?? '').toList();
+        suppliers = approvedOnly;
         suppliers.add('Autre');
       });
-    } catch (_) {
-      // ignore
+    } catch (e) {
+      print('Error fetching suppliers: $e');
     }
   }
 

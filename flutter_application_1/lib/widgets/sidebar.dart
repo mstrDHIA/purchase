@@ -171,7 +171,6 @@ class _AppSidebarState extends State<AppSidebar> {
     }
     else if(userController.currentUser.role_id==2){
       items.addAll([
-      {'label': 'Dashboard', 'icon': Icons.dashboard},
       {'label': 'PurchaseRequest', 'icon': Icons.note_add},
       {'label': 'Profile', 'icon': Icons.account_circle},
       // {'label': 'Users', 'icon': Icons.people},
@@ -185,7 +184,6 @@ class _AppSidebarState extends State<AppSidebar> {
     }
     else if(userController.currentUser.role_id==3){
       items.addAll([
-      {'label': 'Dashboard', 'icon': Icons.dashboard},
       {'label': 'PurchaseRequest', 'icon': Icons.note_add},
       {'label': 'Profile', 'icon': Icons.account_circle},
       // {'label': 'Users', 'icon': Icons.people},
@@ -199,9 +197,9 @@ class _AppSidebarState extends State<AppSidebar> {
     }
      else if((userController.currentUser.role_id==4)){
       items.addAll([
-      {'label': 'Dashboard', 'icon': Icons.dashboard},
       {'label': 'PurchaseRequest', 'icon': Icons.note_add},
       {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
+      {'label': 'Supplier', 'icon': Icons.store},
       {'label': 'Profile', 'icon': Icons.account_circle},
       // {'label': 'Users', 'icon': Icons.people},
       {'label': 'Password', 'icon': Icons.lock},
@@ -214,8 +212,8 @@ class _AppSidebarState extends State<AppSidebar> {
     }
     else if((userController.currentUser.role_id==6)){
       items.addAll([
-        {'label': 'Dashboard', 'icon': Icons.dashboard},
         {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
+      {'label': 'Supplier', 'icon': Icons.store},
       {'label': 'Profile', 'icon': Icons.account_circle},
       // {'label': 'Users', 'icon': Icons.people},
       {'label': 'Password', 'icon': Icons.lock},
@@ -229,7 +227,6 @@ class _AppSidebarState extends State<AppSidebar> {
     }
     else if(userController.currentUser.role_id==5){
        items.addAll([
-      {'label': 'Dashboard', 'icon': Icons.dashboard},
       {'label': 'Profile', 'icon': Icons.account_circle},
       // {'label': 'Users', 'icon': Icons.people},
       {'label': 'Password', 'icon': Icons.lock},

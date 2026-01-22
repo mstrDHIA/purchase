@@ -209,7 +209,9 @@ class UserController extends ChangeNotifier {
         final int? roleId = currentUser.role?.id;
         WidgetsBinding.instance.addPostFrameCallback((_) {
           final router = GoRouter.of(context);
-          if (roleId == 1 || roleId == 3|| roleId == 2|| roleId == 4) {
+          if (roleId == 1) {
+            router.go('/dashboard'); // Admin goes to dashboard
+          } else if (roleId == 3|| roleId == 2|| roleId == 4) {
             router.go('/purchase_requests'); // ensure this route exists in your GoRouter routes
           } else if ( roleId == 6) {
             router.go('/purchase_orders'); // ensure this route exists in your GoRouter routes

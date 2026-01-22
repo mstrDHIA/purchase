@@ -54,6 +54,7 @@ class SupplierNetwork {
     String? matricule,
     String? cin,
     String? codeFournisseur,
+    String? approvalStatus,
   }) async {
     try {
       final Map<String, dynamic> payload = {
@@ -82,6 +83,9 @@ class SupplierNetwork {
       }
       if (codeFournisseur != null && codeFournisseur.isNotEmpty) {
         payload['code_fournisseur'] = codeFournisseur;
+      }
+      if (approvalStatus != null && approvalStatus.isNotEmpty) {
+        payload['approval_status'] = approvalStatus;
       }
 
       // Log payload for debugging
@@ -138,6 +142,7 @@ class SupplierNetwork {
     String? matricule,
     String? cin,
     String? codeFournisseur,
+    String? approvalStatus,
   }) async {
     try {
       final Map<String, dynamic> payload = {
@@ -166,6 +171,9 @@ class SupplierNetwork {
       }
       if (codeFournisseur != null && codeFournisseur.isNotEmpty) {
         payload['code_fournisseur'] = codeFournisseur;
+      }
+      if (approvalStatus != null && approvalStatus.isNotEmpty) {
+        payload['approval_status'] = approvalStatus;
       }
 
       // Log payload for debugging

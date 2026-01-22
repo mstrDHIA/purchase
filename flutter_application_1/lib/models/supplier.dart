@@ -9,6 +9,7 @@ class Supplier {
   String? cin;
   String? groupName;
   String? contactName;
+  String? approvalStatus;
   DateTime? createdAt;
   DateTime? updatedAt;
 
@@ -23,6 +24,7 @@ class Supplier {
     this.cin,
     this.groupName,
     this.contactName,
+    this.approvalStatus,
     this.createdAt,
     this.updatedAt,
   });
@@ -38,6 +40,7 @@ class Supplier {
     cin = json['cin'];
     groupName = json['group_name'] ?? json['groupName'];
     contactName = json['contact_name'] ?? json['contactName'];
+    approvalStatus = json['approval_status'] ?? json['status'];
     createdAt = json['created_at'] is String ? DateTime.tryParse(json['created_at']) : json['created_at'];
     updatedAt = json['updated_at'] is String ? DateTime.tryParse(json['updated_at']) : json['updated_at'];
   }
@@ -54,6 +57,7 @@ class Supplier {
     data['cin'] = cin;
     data['group_name'] = groupName;
     data['contact_name'] = contactName;
+    data['approval_status'] = approvalStatus;
     data['created_at'] = createdAt?.toIso8601String();
     data['updated_at'] = updatedAt?.toIso8601String();
     return data;

@@ -1,6 +1,8 @@
 // ignore_for_file: unused_field
 import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
+import 'package:flutter_application_1/controllers/purchase_request_controller.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
+import 'package:flutter_application_1/models/user_model.dart';
 import 'package:flutter_application_1/network/purchase_request_network.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -692,12 +694,6 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                 if (shouldCreate == true) {
                                   final id = widget.purchaseRequest.id;
                                   if (id == null) throw Exception('ID missing');
-                                  final payload = {
-                                    'status': 'transformed',
-                                  };
-                                  await PurchaseRequestNetwork().updatePurchaseRequest(id, payload, method: 'PATCH');
-                                  // Update local model so the view reflects transformed status but do not change approvedBy
-                                  widget.purchaseRequest.status = 'transformed';
 
                                   // Hide the Create PO button immediately to prevent duplicate clicks
                                   setState(() {
@@ -722,6 +718,9 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                     'end_date': widget.purchaseRequest.endDate != null ? DateFormat('yyyy-MM-dd').format(widget.purchaseRequest.endDate!) : null,
                                   };
 
+                                  // Track whether PO was successfully created
+                                  bool poCreatedSuccessfully = false;
+
                                   // Open the EditPurchaseOrder editor in a dialog so user can review/edit before saving
                                   await showDialog<void>(
                                     context: context,
@@ -734,6 +733,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                           onSave: (newOrder) async {
                                             try {
                                               await purchaseOrderController!.addOrder(newOrder);
+                                              poCreatedSuccessfully = true;
                                               if (mounted) {
                                                 setState(() {
                                                   _showActionButtons = false;
@@ -745,11 +745,12 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                                   const SnackBar(content: Text('Purchase Order created successfully!'), backgroundColor: Colors.green),
                                                   
                                                 );
-                                                // Navigate to Purchase Orders page and reuse the existing controller so the new PO is visible immediately
-                                                Navigator.of(context).push(MaterialPageRoute(builder: (_) => PurchaseOrderPage(controller: purchaseOrderController)));
                                               }
                                             } catch (e) {
                                               if (mounted) {
+                                                setState(() {
+                                                  _poCreated = false;
+                                                });
                                                 ScaffoldMessenger.of(context).showSnackBar(
                                                   SnackBar(content: Text('Failed to create Purchase Order: $e'), backgroundColor: Colors.red),
                                                 );
@@ -760,6 +761,45 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                       ),
                                     ),
                                   );
+
+                                  // Only mark PR as transformed AFTER PO is successfully created
+                                  if (poCreatedSuccessfully) {
+                                    bool statusUpdateSuccess = false;
+                                    try {
+                                      final payload = {
+                                        'status': 'transformed',
+                                      };
+                                      await PurchaseRequestNetwork().updatePurchaseRequest(id, payload, method: 'PATCH');
+                                      statusUpdateSuccess = true;
+                                      // Update local model so the view reflects transformed status
+                                      widget.purchaseRequest.status = 'transformed';
+                                      
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('Purchase Request marked as converted!'), backgroundColor: Colors.green),
+                                        );
+                                        // Refresh the controller to get the latest PR list
+                                        final prController = Provider.of<PurchaseRequestController>(context, listen: false);
+                                        await prController.fetchRequests(context, userController as User, page: 1);
+                                      }
+                                    } catch (e) {
+                                      print('Error updating PR status: $e');
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text('PO created successfully! Request status update failed: $e\n\nPlease refresh the page.'),
+                                            backgroundColor: Colors.orange,
+                                            duration: const Duration(seconds: 5),
+                                          ),
+                                        );
+                                      }
+                                    }
+                                    
+                                    // Navigate only if status update succeeded, otherwise show error and stay
+                                    if (statusUpdateSuccess && mounted) {
+                                      Navigator.of(context).push(MaterialPageRoute(builder: (_) => PurchaseOrderPage(controller: purchaseOrderController)));
+                                    }
+                                  }
                                 } else {
                                   // Just close the dialog and maybe pop the view
                                   if (mounted) {}
