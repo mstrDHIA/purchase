@@ -515,102 +515,120 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
   Future<void> _showViewSupplierDialog(Supplier supplier) async {
     final userController = context.read<UserController>();
     final isAccountant = userController.currentUser.role_id == 6;
+    bool isSubmitting = false;
     
     await showDialog<void>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Supplier Details'),
-        content: SizedBox(
-          width: 480,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildDetailRow(Icons.mail, 'Email', _safeString(supplier.contactEmail)),
-                const SizedBox(height: 16),
-                const SizedBox(height: 16),
-                _buildDetailRow(Icons.person, 'Name', _safeString(supplier.name)),
-                const SizedBox(height: 16),
-                _buildDetailRow(Icons.phone, 'Phone', _safeString(supplier.phoneNumber?.toString())),
-                const SizedBox(height: 16),                _buildDetailRow(Icons.location_on, 'Address', _safeString(supplier.address)),
-                const SizedBox(height: 16),                _buildDetailRow(Icons.badge, 'Matricule', _safeString(supplier.matricule)),
-                const SizedBox(height: 16),
-                _buildDetailRow(Icons.credit_card, 'CIN', _safeString(supplier.cin)),
-                const SizedBox(height: 16),
-                _buildDetailRow(Icons.groups, 'Group Name', _safeString(supplier.groupName)),
-                const SizedBox(height: 16),
-                _buildDetailRow(Icons.person_outline, 'Contact Name', _safeString(supplier.contactName)),
-                const SizedBox(height: 16),
-                _buildDetailRow(Icons.check_circle, 'Approval Status', (_safeString(supplier.approvalStatus).isNotEmpty ? _safeString(supplier.approvalStatus).toUpperCase() : 'N/A')),
-                const SizedBox(height: 16),
-                // Try to find the full model to show additional fields like Code Fournisseur
-                Builder(
-                  builder: (context) {
-                    final matches = context.read<SupplierController>().suppliers.where((s) => (s as dynamic).id == supplier.id).toList();
-                    final model = matches.isNotEmpty ? matches.first : null;
-                    final code = _getSupplierCode(model);
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        if (code.isNotEmpty) ...[
-                          _buildDetailRow(Icons.tag, 'Code fournisseur', code),
-                          const SizedBox(height: 16),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Supplier Details'),
+          content: SizedBox(
+            width: 480,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildDetailRow(Icons.mail, 'Email', _safeString(supplier.contactEmail)),
+                  const SizedBox(height: 16),
+                  const SizedBox(height: 16),
+                  _buildDetailRow(Icons.person, 'Name', _safeString(supplier.name)),
+                  const SizedBox(height: 16),
+                  _buildDetailRow(Icons.phone, 'Phone', _safeString(supplier.phoneNumber?.toString())),
+                  const SizedBox(height: 16),                _buildDetailRow(Icons.location_on, 'Address', _safeString(supplier.address)),
+                  const SizedBox(height: 16),                _buildDetailRow(Icons.badge, 'Matricule', _safeString(supplier.matricule)),
+                  const SizedBox(height: 16),
+                  _buildDetailRow(Icons.credit_card, 'CIN', _safeString(supplier.cin)),
+                  const SizedBox(height: 16),
+                  _buildDetailRow(Icons.groups, 'Group Name', _safeString(supplier.groupName)),
+                  const SizedBox(height: 16),
+                  _buildDetailRow(Icons.person_outline, 'Contact Name', _safeString(supplier.contactName)),
+                  const SizedBox(height: 16),
+                  _buildDetailRow(Icons.check_circle, 'Approval Status', (_safeString(supplier.approvalStatus).isNotEmpty ? _safeString(supplier.approvalStatus).toUpperCase() : 'N/A')),
+                  const SizedBox(height: 16),
+                  // Try to find the full model to show additional fields like Code Fournisseur
+                  Builder(
+                    builder: (context) {
+                      final matches = context.read<SupplierController>().suppliers.where((s) => (s as dynamic).id == supplier.id).toList();
+                      final model = matches.isNotEmpty ? matches.first : null;
+                      final code = _getSupplierCode(model);
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (code.isNotEmpty) ...[
+                            _buildDetailRow(Icons.tag, 'Code fournisseur', code),
+                            const SizedBox(height: 16),
+                          ],
+                          _buildDetailRow(Icons.tag, 'ID', supplier.id.toString()),
                         ],
-                        _buildDetailRow(Icons.tag, 'ID', supplier.id.toString()),
-                      ],
-                    );
-                  },
-                ),
-              ],
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
+          actions: [
+            if (isAccountant)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.deepPurple),
+                    onPressed: isSubmitting ? null : () => Navigator.of(context).pop(),
+                    child: const Text('Back', style: TextStyle(color: Colors.white)),
+                  ),
+                  if (supplier.approvalStatus == 'pending')
+                    Row(
+                      children: [
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                          onPressed: isSubmitting ? null : () async {
+                            setDialogState(() => isSubmitting = true);
+                            try {
+                              await _updateSupplierStatus(supplier, 'rejected');
+                              if (mounted) Navigator.of(context).pop();
+                            } finally {
+                              if (mounted) setDialogState(() => isSubmitting = false);
+                            }
+                          },
+                          child: isSubmitting
+                              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(Colors.white)))
+                              : const Text('Reject', style: TextStyle(color: Colors.white)),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                          onPressed: isSubmitting ? null : () async {
+                            setDialogState(() => isSubmitting = true);
+                            try {
+                              await _updateSupplierStatus(supplier, 'approved');
+                              if (mounted) Navigator.of(context).pop();
+                            } finally {
+                              if (mounted) setDialogState(() => isSubmitting = false);
+                            }
+                          },
+                          child: isSubmitting
+                              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(Colors.white)))
+                              : const Text('Approve', style: TextStyle(color: Colors.white)),
+                        ),
+                      ],
+                    ),
+                ],
+              )
+            else
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.deepPurple),
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Back', style: TextStyle(color: Colors.white)),
+                  ),
+                ],
+              ),
+          ],
         ),
-        actions: [
-          if (isAccountant)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.deepPurple),
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Back', style: TextStyle(color: Colors.white)),
-                ),
-                Row(
-                  children: [
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                      onPressed: () async {
-                        Navigator.of(context).pop();
-                        await _updateSupplierStatus(supplier, 'rejected');
-                      },
-                      child: const Text('Reject', style: TextStyle(color: Colors.white)),
-                    ),
-                    const SizedBox(width: 8),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                      onPressed: () async {
-                        Navigator.of(context).pop();
-                        await _updateSupplierStatus(supplier, 'approved');
-                      },
-                      child: const Text('Approve', style: TextStyle(color: Colors.white)),
-                    ),
-                  ],
-                ),
-              ],
-            )
-          else
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.deepPurple),
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Back', style: TextStyle(color: Colors.white)),
-                ),
-              ],
-            ),
-        ],
       ),
     );
   }
@@ -635,6 +653,8 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Supplier status updated to ${newStatus.toUpperCase()}')),
         );
+        // Refresh suppliers list to update the UI
+        await controller.fetchSuppliers();
       }
     } catch (e) {
       if (mounted) {
