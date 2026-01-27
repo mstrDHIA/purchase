@@ -416,31 +416,80 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
   @override
   void initState() {
     userController = Provider.of<UserController>(context, listen: false);
-    // ensure users are loaded so we can display names instead of ids
     purchaseRequestController = Provider.of<PurchaseRequestController>(context, listen: false);
 
-    // Fetch users first, then fetch requests so we can resolve ids to names immediately
-    userController.getUsers().whenComplete(() {
-      purchaseRequestController.fetchRequests(context, userController.currentUser, page: 1, pageSizeParam: _rowsPerPageLocal);
-    });
-
-    // fetch product families for filters (N2 and N3)
-    _fetchProductFamilies();
-    
-    // Force reload requests after a short delay
-    Future.delayed(const Duration(milliseconds: 500), () {
+    // Sequential initialization: users → requests → product families → sync → auto-archive
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // Step 1: Fetch users
+      await userController.getUsers();
+      
+      // Step 2: Fetch requests
+      await purchaseRequestController.fetchRequests(context, userController.currentUser, page: 1, pageSizeParam: _rowsPerPageLocal);
+      
+      // Step 3: Fetch product families
+      await _fetchProductFamilies();
+      
       if (mounted) {
-        purchaseRequestController.fetchRequests(context, userController.currentUser, page: 1, pageSizeParam: _rowsPerPageLocal);
-        // Also sync orphan requests (PRs with POs but status not updated)
-        Future.delayed(const Duration(seconds: 1), () {
-          if (mounted) {
-            _syncOrphanRequests();
-          }
-        });
+        // Step 4: Sync orphan requests
+        await _syncOrphanRequests();
+        
+        // Step 5: Auto-archive old requests
+        await _autoArchiveOldRequests();
       }
     });
 
     super.initState();
+  }
+
+  // Auto-archive purchase requests older than 2 weeks
+  Future<void> _autoArchiveOldRequests() async {
+    try {
+      final controller = Provider.of<PurchaseRequestController>(context, listen: false);
+      final now = DateTime.now();
+      final twoWeeksAgo = now.subtract(const Duration(days: 14));
+      
+      print('🔄 Starting auto-archive check for PRs (checking before: ${twoWeeksAgo.toLocal()})');
+      print('📊 Total PRs to check: ${controller.requests.length}');
+
+      int archivedCount = 0;
+      for (var request in controller.requests) {
+        // Skip already archived requests
+        if (request.isArchived ?? false) {
+          print('⏭️ Skipping already archived PR ${request.id}');
+          continue;
+        }
+        
+        // Check if request's updatedAt is older than 2 weeks
+        final lastUpdate = request.updatedAt ?? request.startDate;
+        if (lastUpdate != null && lastUpdate.isBefore(twoWeeksAgo)) {
+          print('📋 PR ${request.id} last updated: ${lastUpdate.toLocal()} - archiving...');
+          try {
+            // Use update endpoint with is_archived flag
+            await PurchaseRequestNetwork().updatePurchaseRequest(
+              request.id!,
+              {'is_archived': true},
+              method: 'PATCH'
+            );
+            archivedCount++;
+            print('✓ Auto-archived PR ${request.id}');
+          } catch (e) {
+            print('❌ Failed to auto-archive PR ${request.id}: $e');
+          }
+        } else {
+          print('⏳ PR ${request.id} is recent (${lastUpdate?.toLocal()}), skipped');
+        }
+      }
+      
+      // Refresh list after archiving
+      if (archivedCount > 0 && mounted) {
+        await controller.fetchRequests(context, userController.currentUser);
+        print('✓ Auto-archived $archivedCount old PRs - refreshing list');
+      } else {
+        print('ℹ️ No old PRs to archive (checked $archivedCount)');
+      }
+    } catch (e) {
+      print('❌ Error in _autoArchiveOldRequests: $e');
+    }
   }
 
   void viewPurchaseRequest(Map<String, dynamic> order) {

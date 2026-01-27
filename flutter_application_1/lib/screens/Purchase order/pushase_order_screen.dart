@@ -66,10 +66,64 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
   void initState() {
     super.initState();
     userController = Provider.of<UserController>(context, listen: false);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<PurchaseOrderController>(context, listen: false).fetchOrders();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final controller = Provider.of<PurchaseOrderController>(context, listen: false);
+      
+      // Wait for orders to be fetched
+      await controller.fetchOrders();
       _fetchProductFamilies();
+      
+      // Now auto-archive after orders are loaded
+      if (mounted) {
+        await _autoArchiveOldOrders();
+      }
     });
+  }
+
+  // Auto-archive purchase orders older than 2 weeks
+  Future<void> _autoArchiveOldOrders() async {
+    try {
+      final controller = Provider.of<PurchaseOrderController>(context, listen: false);
+      final now = DateTime.now();
+      final twoWeeksAgo = now.subtract(const Duration(days: 14));
+      
+      print('🔄 Starting auto-archive check for POs (checking before: ${twoWeeksAgo.toLocal()})');
+      print('📊 Total POs to check: ${controller.orders.length}');
+
+      int archivedCount = 0;
+      for (var order in controller.orders) {
+        // Skip already archived orders
+        if (order.isArchived ?? false) {
+          print('⏭️ Skipping already archived PO ${order.id}');
+          continue;
+        }
+        
+        // Check if order's updatedAt is older than 2 weeks
+        final lastUpdate = order.updatedAt ?? order.createdAt;
+        if (lastUpdate != null && lastUpdate.isBefore(twoWeeksAgo)) {
+          print('📋 PO ${order.id} last updated: ${lastUpdate.toLocal()} - archiving...');
+          try {
+            await controller.archivePurchaseOrder(order.id);
+            archivedCount++;
+            print('✓ Auto-archived PO ${order.id}');
+          } catch (e) {
+            print('❌ Failed to auto-archive PO ${order.id}: $e');
+          }
+        } else {
+          print('⏳ PO ${order.id} is recent (${lastUpdate?.toLocal()}), skipped');
+        }
+      }
+      
+      // Refresh list after archiving
+      if (archivedCount > 0 && mounted) {
+        await controller.fetchOrders();
+        print('✓ Auto-archived $archivedCount old POs - refreshing list');
+      } else {
+        print('ℹ️ No old POs to archive (checked $archivedCount)');
+      }
+    } catch (e) {
+      print('❌ Error in _autoArchiveOldOrders: $e');
+    }
   }
   List<Map<String, dynamic>> _filteredAndSortedOrders(List orders) {
   List<Map<String, dynamic>> mapped = orders
