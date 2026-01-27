@@ -112,7 +112,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
     final dynamic roleIdRaw = userController.currentUser.role?.id;
     final int roleIdInt = roleIdRaw is int ? roleIdRaw : int.tryParse(roleIdRaw?.toString() ?? '') ?? -1;
     final String statusStr = (_order.status ?? '').toString().toLowerCase().trim();
-    String displayStatus = (roleIdInt == 6 && statusStr == 'edited') ? 'pending' : statusStr;
+    String displayStatus = (statusStr == 'edited') ? 'pending' : statusStr;
     // Transform "for modification" to display as "rework"
     if (displayStatus.toLowerCase() == 'for modification') {
       displayStatus = 'rework';

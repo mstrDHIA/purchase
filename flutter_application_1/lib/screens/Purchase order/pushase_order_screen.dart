@@ -178,7 +178,8 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
         // });
       }
       final rawStatus = (order.status ?? '').toString();
-      final displayStatus = (Provider.of<UserController>(context, listen: false).currentUser.role?.id == 6 && rawStatus.toLowerCase() == 'edited') ? 'pending' : rawStatus;
+      final statusLower = rawStatus.toLowerCase();
+      final displayStatus = (statusLower == 'edited') ? 'pending' : rawStatus;
       return {
         // keep id as numeric to allow proper numeric sorting (not string lexicographic)
         'id': order.id ?? 0,
