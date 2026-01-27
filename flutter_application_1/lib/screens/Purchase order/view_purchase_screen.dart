@@ -112,7 +112,11 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
     final dynamic roleIdRaw = userController.currentUser.role?.id;
     final int roleIdInt = roleIdRaw is int ? roleIdRaw : int.tryParse(roleIdRaw?.toString() ?? '') ?? -1;
     final String statusStr = (_order.status ?? '').toString().toLowerCase().trim();
-    final String displayStatus = (roleIdInt == 6 && statusStr == 'edited') ? 'pending' : statusStr;
+    String displayStatus = (roleIdInt == 6 && statusStr == 'edited') ? 'pending' : statusStr;
+    // Transform "for modification" to display as "rework"
+    if (displayStatus.toLowerCase() == 'for modification') {
+      displayStatus = 'rework';
+    }
     final String displayStatusLower = displayStatus.toLowerCase();
     final String underlyingStatusLower = statusStr;
 
@@ -624,11 +628,13 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                     decoration: BoxDecoration(
                       color: displayStatus.toLowerCase() == 'approved'
                           ? Colors.green.shade100
-                          : (displayStatus.toLowerCase() == 'pending' || displayStatus.toLowerCase() == 'for modification')
+                          : displayStatus.toLowerCase() == 'pending'
                               ? const Color.fromARGB(255, 243, 147, 3)
-                              : displayStatus.toLowerCase() == 'edited'
-                                  ? const Color.fromARGB(255, 110, 110, 110)
-                                  : Colors.red.shade100,
+                              : displayStatus.toLowerCase() == 'rework'
+                                  ? Colors.blue.shade100
+                                  : displayStatus.toLowerCase() == 'edited'
+                                      ? const Color.fromARGB(255, 110, 110, 110)
+                                      : Colors.red.shade100,
                       borderRadius: BorderRadius.circular(18),
                     ),
                     child: Text(
@@ -636,11 +642,13 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                       style: TextStyle(
                         color: underlyingStatusLower == 'approved'
                             ? Colors.green.shade700
-                            : (underlyingStatusLower == 'pending' || underlyingStatusLower == 'for modification')
+                            : underlyingStatusLower == 'pending'
                                 ? Colors.orange.shade800
-                                : underlyingStatusLower == 'edited'
-                                    ? const Color.fromARGB(255, 250, 243, 243)
-                                    : const Color.fromARGB(255, 48, 47, 47),
+                                : underlyingStatusLower == 'for modification'
+                                    ? Colors.blue.shade700
+                                    : underlyingStatusLower == 'edited'
+                                        ? const Color.fromARGB(255, 250, 243, 243)
+                                        : const Color.fromARGB(255, 48, 47, 47),
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
                       ),

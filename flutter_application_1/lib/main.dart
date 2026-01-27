@@ -166,10 +166,30 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     userController = Provider.of<UserController>(context, listen: false);
-    if (userController.currentUserId == null) {
-      userController.login('admin', 'admin', context, null);
-    }
+    _initializeUser();
     super.initState();
+  }
+
+  Future<void> _initializeUser() async {
+    try {
+      // Essayer de charger l'utilisateur sauvegardé
+      final bool loadedUser = await userController.loadUserData();
+      
+      if (!loadedUser && userController.currentUserId == null) {
+        // Si aucun utilisateur sauvegardé et mounted, se connecter en tant qu'admin
+        if (mounted) {
+          userController.login('admin', 'admin', context, null);
+        }
+      } else if (loadedUser && mounted) {
+        // Utilisateur chargé, notifier les listeners
+        userController.notifyListeners();
+      }
+    } catch (e) {
+      print('Error initializing user: $e');
+      if (mounted) {
+        userController.login('admin', 'admin', context, null);
+      }
+    }
   }
 
   @override

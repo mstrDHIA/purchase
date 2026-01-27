@@ -713,7 +713,17 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
       // If this editor was opened from a Purchase Request, prefer to create the PO with 'edited' status
       final prId = widget.initialOrder['purchase_request_id'] ?? widget.initialOrder['purchase_request'];
       final defaultStatus = 'edited';
-      final statusToUse = widget.initialOrder['statuss'] ?? widget.initialOrder['status'] ?? defaultStatus;
+      var statusToUse = widget.initialOrder['statuss'] ?? widget.initialOrder['status'] ?? defaultStatus;
+      
+      // Check if we're in edit mode (has existing id)
+      final isEditMode = _id != null && _id! > 0;
+      
+      // Si le statut était "for modification" et qu'on édite et sauvegarde, le mettre à "pending"
+      final statusLower = statusToUse.toString().toLowerCase().trim();
+      if (isEditMode && (statusLower == 'rework' || statusLower == 'for modification')) {
+        statusToUse = 'pending';
+        print('✓ Changed status from $statusToUse to pending');
+      }
 
       final jsonBody = {
         'requested_by_user': _requestedByUser ?? 1,

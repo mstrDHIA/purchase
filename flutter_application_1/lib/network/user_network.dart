@@ -89,6 +89,32 @@ class UserNetwork {
   }
   return null;
 }
+
+  // Refresh token
+  Future<Response?> refreshToken(String refreshToken) async {
+    try {
+      final response = await api.dio.post(
+        '${APIS.baseUrl}token/refresh/',
+        data: {'refresh': refreshToken},
+        options: Options(
+          headers: {
+            'ngrok-skip-browser-warning': 'true',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        APIS.token = response.data['access'];
+        return response;
+      }
+      return null;
+    } catch (e) {
+      print('Error refreshing token: $e');
+      return null;
+    }
+  }
+
   // register
   Future<dynamic> register({required String username, required String password}) async {
     final response = await api.dio.post(

@@ -3,8 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/models/role.dart';
 import 'package:flutter_application_1/models/user_model.dart';
 import 'package:flutter_application_1/network/user_network.dart';
+import 'package:flutter_application_1/network/api.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
 class UserController extends ChangeNotifier {
   bool displaySnackBar = false;
@@ -189,6 +192,7 @@ class UserController extends ChangeNotifier {
     currentUserId = null;
     selectedUserId = null;
     selectedUser = User();
+    clearUserData(); // Effacer les données sauvegardées
     isLoading = false;
     context.go('/login');
     notifyListeners();
@@ -205,6 +209,11 @@ class UserController extends ChangeNotifier {
         currentUserId = decodedToken['user_id'];
         selectedUserId = currentUserId;
         currentUser = User.fromJson(response.data['user']);
+        
+        // Sauvegarder les données utilisateur, token d'accès et refresh token
+        final refreshToken = response.data['refresh'];
+        await saveUserData(response.data['access'], response.data['user'], refreshToken: refreshToken);
+        
         // navigation decided by role id
         final int? roleId = currentUser.role?.id;
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -257,6 +266,118 @@ class UserController extends ChangeNotifier {
           content: Text('An error occurred during login'),
         ),
       );
+    }
+  }
+
+  // Sauvegarder les données utilisateur dans SharedPreferences
+  Future<void> saveUserData(String token, Map<String, dynamic> userData, {String? refreshToken}) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('auth_token', token);
+      await prefs.setString('user_data', jsonEncode(userData));
+      if (refreshToken != null) {
+        await prefs.setString('refresh_token', refreshToken);
+      }
+    } catch (e) {
+      print('Error saving user data: $e');
+    }
+  }
+
+  // Charger les données utilisateur depuis SharedPreferences
+  Future<bool> loadUserData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+      final userDataJson = prefs.getString('user_data');
+
+      if (token != null && userDataJson != null) {
+        try {
+          // Vérifier si le token est expiré
+          bool isExpired = JwtDecoder.isExpired(token);
+          
+          if (!isExpired) {
+            Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+            currentUserId = decodedToken['user_id'];
+            selectedUserId = currentUserId;
+            
+            Map<String, dynamic> userData = jsonDecode(userDataJson);
+            if (userData.isNotEmpty) {
+              currentUser = User.fromJson(userData);
+              // Mettre à jour le token global
+              APIS.token = token;
+              notifyListeners();
+              return true;
+            }
+          } else {
+            // Token expiré, essayer de le rafraîchir
+            final refreshToken = prefs.getString('refresh_token');
+            if (refreshToken != null) {
+              return await refreshAccessToken(refreshToken);
+            } else {
+              // Pas de refresh token, effacer les données
+              await clearUserData();
+              return false;
+            }
+          }
+        } catch (e) {
+          print('Error decoding token or user data: $e');
+          await clearUserData();
+          return false;
+        }
+      }
+      return false;
+    } catch (e) {
+      print('Error loading user data: $e');
+      return false;
+    }
+  }
+
+  // Rafraîchir le token d'accès
+  Future<bool> refreshAccessToken(String refreshToken) async {
+    try {
+      print('Attempting to refresh token...');
+      final response = await userNetwork.refreshToken(refreshToken);
+      if (response != null && response.statusCode == 200) {
+        final newToken = response.data['access'];
+        if (newToken != null) {
+          // Sauvegarder le nouveau token
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('auth_token', newToken);
+          APIS.token = newToken;
+          
+          // Si un nouveau refresh token est fourni
+          if (response.data['refresh'] != null) {
+            await prefs.setString('refresh_token', response.data['refresh']);
+          }
+          
+          print('Token refreshed successfully');
+          notifyListeners();
+          return true;
+        }
+      }
+      // Échec du refresh, effacer les données
+      await clearUserData();
+      return false;
+    } catch (e) {
+      print('Error refreshing token: $e');
+      await clearUserData();
+      return false;
+    }
+  }
+
+  // Effacer les données utilisateur
+  Future<void> clearUserData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('auth_token');
+      await prefs.remove('user_data');
+      await prefs.remove('refresh_token');
+      currentUserId = null;
+      selectedUserId = null;
+      currentUser = User();
+      notifyListeners();
+    } catch (e) {
+      print('Error clearing user data: $e');
     }
   }
 

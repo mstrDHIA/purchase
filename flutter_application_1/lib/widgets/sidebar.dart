@@ -151,7 +151,9 @@ class _AppSidebarState extends State<AppSidebar> {
   }
 
   void initSideBarItems() {
-    if(userController.currentUser.role_id==1){
+    final roleId = userController.currentUser.role?.id ?? userController.currentUser.role_id;
+    
+    if(roleId == 1){
       items.addAll([
       {'label': 'Dashboard', 'icon': Icons.dashboard},
       {'label': 'PurchaseRequest', 'icon': Icons.note_add},
@@ -169,7 +171,7 @@ class _AppSidebarState extends State<AppSidebar> {
       {'label': 'Settings', 'icon': Icons.settings},
     ]);
     }
-    else if(userController.currentUser.role_id==2){
+    else if(roleId == 2){
       items.addAll([
       {'label': 'PurchaseRequest', 'icon': Icons.note_add},
       {'label': 'Profile', 'icon': Icons.account_circle},
@@ -182,7 +184,7 @@ class _AppSidebarState extends State<AppSidebar> {
       {'label': 'Settings', 'icon': Icons.settings},
     ]);
     }
-    else if(userController.currentUser.role_id==3){
+    else if(roleId == 3){
       items.addAll([
       {'label': 'PurchaseRequest', 'icon': Icons.note_add},
       {'label': 'Profile', 'icon': Icons.account_circle},
@@ -195,7 +197,7 @@ class _AppSidebarState extends State<AppSidebar> {
       {'label': 'Settings', 'icon': Icons.settings},
     ]);
     }
-     else if((userController.currentUser.role_id==4)){
+     else if((roleId == 4)){
       items.addAll([
       {'label': 'PurchaseRequest', 'icon': Icons.note_add},
       {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
@@ -210,7 +212,7 @@ class _AppSidebarState extends State<AppSidebar> {
     ]);
     // (userController.currentUser.role_id==4)
     }
-    else if((userController.currentUser.role_id==6)){
+    else if((roleId == 6)){
       items.addAll([
         {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
       {'label': 'Supplier', 'icon': Icons.store},
@@ -225,7 +227,7 @@ class _AppSidebarState extends State<AppSidebar> {
     ]);
     // (userController.currentUser.role_id==4)
     }
-    else if(userController.currentUser.role_id==5){
+    else if(roleId == 5){
        items.addAll([
       {'label': 'Profile', 'icon': Icons.account_circle},
       // {'label': 'Users', 'icon': Icons.people},
@@ -256,8 +258,26 @@ class _AppSidebarState extends State<AppSidebar> {
   @override
   void initState() {
     userController = Provider.of<UserController>(context, listen: false);
+    // Initialiser les items du sidebar
     initSideBarItems();
+    
+    // Ajouter un listener pour réinitialiser les items quand l'utilisateur change
+    userController.addListener(_onUserChanged);
     super.initState();
+  }
+
+  void _onUserChanged() {
+    // Réinitialiser les items du sidebar quand l'utilisateur change
+    setState(() {
+      items.clear();
+      initSideBarItems();
+    });
+  }
+
+  @override
+  void dispose() {
+    userController.removeListener(_onUserChanged);
+    super.dispose();
   }
 
   void _onItemTap(String label) {

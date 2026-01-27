@@ -219,7 +219,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
     if (Provider.of<UserController>(context, listen: false).currentUser.role?.id == 6) {
       mapped = mapped.where((order) {
         final s = (order['statuss'] ?? '').toString().toLowerCase();
-        return s == 'approved' || s == 'rejected' || s == 'edited' || s == 'pending' || s == 'for modification';
+        return s == 'approved' || s == 'rejected' || s == 'edited' || s == 'pending' || s == 'rework';
       }).toList();
     }
 
@@ -1075,6 +1075,9 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
       try {
         await controller.archivePurchaseOrder(order['id']);
         await controller.fetchOrders();
+        if (mounted) {
+          setState(() {});
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(AppLocalizations.of(context)!.archivedPurchaseOrder(order['id']))),
         );
@@ -1157,6 +1160,9 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
       try {
         await controller.unarchivePurchaseOrder(order['id']);
         await controller.fetchOrders();
+        if (mounted) {
+          setState(() {});
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(AppLocalizations.of(context)!.unarchivedPurchaseOrder(order['id']))),
         );
@@ -1242,6 +1248,17 @@ class _PurchaseOrderDataSource extends DataTableSource {
                 if (isRoleN4) {
                   // N4 users should not see the Edit action at all
                   return const SizedBox.shrink();
+                }
+                // Role 4 users cannot edit rejected orders (show disabled icon)
+                if (isSupervisorN3 && itemStatus == 'rejected') {
+                  return Opacity(
+                    opacity: 0.4,
+                    child: IconButton(
+                      icon: const Icon(Icons.edit_outlined),
+                      onPressed: null,
+                      tooltip: AppLocalizations.of(context!)!.edit,
+                    ),
+                  );
                 }
                 // N3 users cannot edit approved orders (show disabled icon)
                 if (isSupervisorN3 && itemStatus == 'approved') {
@@ -1346,13 +1363,13 @@ class _PurchaseOrderDataSource extends DataTableSource {
     } else if (v == 'transformed' || v == 'converted') {
       bgColor = const Color(0xFF42A5F5); // blue
     }
-    else if (v == 'for modification') {
-      bgColor = const Color.fromARGB(255, 1, 213, 241); // blue
+    else if (v == 'rework' || v == 'for modification' || v.contains('for')) {
+      bgColor = const Color.fromARGB(255, 1, 213, 241); // sky blue
     }
      else {
       bgColor = Colors.grey;
     }
-    final label = (v == 'approved') ? AppLocalizations.of(this.context!)!.approved : (v == 'pending') ? AppLocalizations.of(this.context!)!.pending : (v == 'rejected') ? AppLocalizations.of(this.context!)!.rejected : (v == 'transformed' || v == 'converted') ? AppLocalizations.of(this.context!)!.transformed : v;
+    final label = (v == 'approved') ? AppLocalizations.of(this.context!)!.approved : (v == 'pending') ? AppLocalizations.of(this.context!)!.pending : (v == 'rejected') ? AppLocalizations.of(this.context!)!.rejected : (v == 'transformed' || v == 'converted') ? AppLocalizations.of(this.context!)!.transformed : (v == 'for modification' || v == 'rework' || v.contains('for')) ? 'Rework' : v;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Container(

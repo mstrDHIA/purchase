@@ -510,7 +510,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
         ),
       ),
     );
-  }
+  } 
 
   Future<void> _showViewSupplierDialog(Supplier supplier) async {
     final userController = context.read<UserController>();

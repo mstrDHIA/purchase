@@ -103,21 +103,21 @@ class _ProfilePageScreenState extends State<ProfilePageScreen> {
                       ],
                     ),
                     const Spacer(),
-                    ElevatedButton(
-                      onPressed: () async {
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.deepPurple[50],
-                        foregroundColor: Colors.deepPurple[700],
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        elevation: 0,
-                        shadowColor: Colors.transparent,
-                      ),
-                      child: const Text('Copy link'),
-                    ),
+                    // ElevatedButton(
+                    //   onPressed: () async {
+                    //   },
+                    //   style: ElevatedButton.styleFrom(
+                    //     backgroundColor: Colors.deepPurple[50],
+                    //     foregroundColor: Colors.deepPurple[700],
+                    //     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    //     shape: RoundedRectangleBorder(
+                    //       borderRadius: BorderRadius.circular(8),
+                    //     ),
+                    //     elevation: 0,
+                    //     shadowColor: Colors.transparent,
+                    //   ),
+                    //   child: const Text('Copy link'),
+                    // ),
                     const SizedBox(width: 12),
                     OutlinedButton.icon(
                       onPressed: () async {

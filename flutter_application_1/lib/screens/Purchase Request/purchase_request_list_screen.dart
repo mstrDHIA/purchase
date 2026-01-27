@@ -630,7 +630,18 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
             }
           }
 
-          final filteredDataSource = PurchaseRequestDataSource(filteredRequests, context, 'filtered');
+          final filteredDataSource = PurchaseRequestDataSource(filteredRequests, context, 'filtered', onDataChanged: () async {
+            if (mounted) {
+              try {
+                await purchaseRequestController.fetchRequests(context, userController.currentUser);
+                if (mounted) {
+                  setState(() {});
+                }
+              } catch (e) {
+                print('Error refreshing requests: $e');
+              }
+            }
+          });
           // pagination data available in controller if needed
           // Sort filteredRequests if a sort column is selected
           if (_sortColumnIndex != null) {
@@ -751,9 +762,14 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                                     }
                                     await controller.fetchRequests(context, userCtrl.currentUser);
                                     pageDataSource.clearSelection();
-                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(isUnarchive ? AppLocalizations.of(context)!.unarchivedRequests(curSelected.length.toString()) : AppLocalizations.of(context)!.archivedRequests(curSelected.length.toString()))));
+                                    if (mounted) {
+                                      setState(() {});
+                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(isUnarchive ? AppLocalizations.of(context)!.unarchivedRequests(curSelected.length.toString()) : AppLocalizations.of(context)!.archivedRequests(curSelected.length.toString()))));
+                                    }
                                   } catch (e) {
-                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.failedWithError(e.toString()))));
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.failedWithError(e.toString()))));
+                                    }
                                   }
                                 },
                                 icon: Icon(_showArchived ? Icons.unarchive_outlined : Icons.archive_outlined),
@@ -783,9 +799,14 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                                     }
                                     await controller.fetchRequests(context, userCtrl.currentUser);
                                     pageDataSource.clearSelection();
-                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.deletedRequests(curSelected.length.toString()))));
+                                    if (mounted) {
+                                      setState(() {});
+                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.deletedRequests(curSelected.length.toString()))));
+                                    }
                                   } catch (e) {
-                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.failedToDeleteRequests(e.toString()))));
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.failedToDeleteRequests(e.toString()))));
+                                    }
                                   }
                                 },
                                 icon: const Icon(Icons.delete_outline),
@@ -859,6 +880,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                                     _sort<String>((req) => req.priority?.toString() ?? '', columnIndex, ascending);
                                   },
                                 ),
+                                if(userController.currentUser.role!.id!=4)
                                 DataColumn(
                                   label: Text(AppLocalizations.of(context)!.status),
                                   onSort: (columnIndex, ascending) {

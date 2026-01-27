@@ -14,11 +14,12 @@ class PurchaseRequestDataSource extends DataTableSource {
   final List<PurchaseRequest> requests;
   final BuildContext context;
   final String someArgument;
+  final VoidCallback? onDataChanged; // Callback pour notifier les changements
   
   // Keep track of selected request ids
   final Set<int> _selectedIds = {};
 
-  PurchaseRequestDataSource(this.requests, this.context, this.someArgument) {
+  PurchaseRequestDataSource(this.requests, this.context, this.someArgument, {this.onDataChanged}) {
   }
 
   @override
@@ -126,6 +127,7 @@ class PurchaseRequestDataSource extends DataTableSource {
             ),
           ),
         )),
+        if(user.role!.id!=4)
         DataCell(Padding(
           padding: const EdgeInsets.symmetric(
             vertical: 8.0),
@@ -283,7 +285,7 @@ class PurchaseRequestDataSource extends DataTableSource {
                       if (confirmed == true) {
                         try {
                           await Provider.of<PurchaseRequestController>(cellContext, listen: false).unarchivePurchaseRequest(request.id!);
-                          await Provider.of<PurchaseRequestController>(cellContext, listen: false).fetchRequests(cellContext, Provider.of<UserController>(cellContext, listen: false).currentUser);
+                          onDataChanged?.call(); // Appeler le callback pour mettre à jour la page parent
                           ScaffoldMessenger.of(cellContext).showSnackBar(SnackBar(shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(8))), backgroundColor: Colors.green, content: Text('Purchase request ${request.id} unarchived')));
                         } catch (e) {
                           ScaffoldMessenger.of(cellContext).showSnackBar(SnackBar(shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(8))), backgroundColor: Colors.red, content: Text('Failed to unarchive purchase request: $e')));
@@ -333,7 +335,7 @@ class PurchaseRequestDataSource extends DataTableSource {
                     if (confirmed == true) {
                       try {
                         await Provider.of<PurchaseRequestController>(cellContext, listen: false).archivePurchaseRequest(request.id!);
-                        await Provider.of<PurchaseRequestController>(cellContext, listen: false).fetchRequests(cellContext, Provider.of<UserController>(cellContext, listen: false).currentUser);
+                        onDataChanged?.call(); // Appeler le callback pour mettre à jour la page parent
                         ScaffoldMessenger.of(cellContext).showSnackBar(SnackBar(shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(8))), backgroundColor: const Color(0xFF7C3AED), content: Text('Purchase request ${request.id} archived')));
                       } catch (e) {
                         ScaffoldMessenger.of(cellContext).showSnackBar(SnackBar(shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(8))), backgroundColor: Colors.red, content: Text('Failed to archive purchase request: $e')));
