@@ -94,6 +94,7 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
 
   bool _isSaving = false;
   String? supplierName;
+  String? _dateWarning; // For displaying date conflict warning
 
   @override
   void initState() {
@@ -308,6 +309,7 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
 
   void _checkDateConflict() {
     if (supplierDeliveryDateController.text.isEmpty || dueDateController.text.isEmpty) {
+      setState(() => _dateWarning = null);
       return;
     }
 
@@ -316,16 +318,12 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
       DateTime dueDate = DateFormat('dd-MM-yyyy').parseStrict(dueDateController.text);
 
       if (supplierDate.isAfter(dueDate)) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Warning: Supplier delivery date is after due date'),
-            backgroundColor: Colors.orange,
-            duration: Duration(seconds: 2),
-          ),
-        );
+        setState(() => _dateWarning = 'Warning: Supplier delivery date is after due date');
+      } else {
+        setState(() => _dateWarning = null);
       }
     } catch (_) {
-      // Ignore parsing errors, dates might not be fully entered yet
+      setState(() => _dateWarning = null);
     }
   }
 
@@ -609,6 +607,22 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
               ),
+              if (_dateWarning != null) ...[
+                const SizedBox(height: 12),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade100,
+                    border: Border.all(color: Colors.orange.shade300),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    _dateWarning!,
+                    style: TextStyle(color: Colors.orange.shade900, fontWeight: FontWeight.w500),
+                  ),
+                ),
+              ],
               const SizedBox(height: 32),
             ],
           ),
@@ -749,8 +763,6 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
       // Construction du body attendu par le backend
       // If this editor was opened from a Purchase Request, prefer to create the PO with 'edited' status
       final prId = widget.initialOrder['purchase_request_id'] ?? widget.initialOrder['purchase_request'];
-      print('🔍 DEBUG Edit_purchase_screen - prId from initialOrder: $prId');
-      print('   initialOrder keys: ${widget.initialOrder.keys.toList()}');
       final defaultStatus = 'edited';
       var statusToUse = widget.initialOrder['statuss'] ?? widget.initialOrder['status'] ?? defaultStatus;
       
@@ -761,7 +773,6 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
       final statusLower = statusToUse.toString().toLowerCase().trim();
       if (isEditMode && (statusLower == 'rework' || statusLower == 'for modification')) {
         statusToUse = 'pending';
-        print('✓ Changed status from $statusToUse to pending');
       }
 
       final jsonBody = {
@@ -814,41 +825,25 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
           // Update PR status if we created from a PR (role 4 creates PO from PR)
           if (prId != null) {
             try {
-              print('🔄 Attempting to update PR status in Edit_purchase_screen...');
-              print('   prId: $prId (type: ${prId.runtimeType})');
-              if (prId == null) {
-                print('⚠️ prId is null, cannot update PR');
-              } else {
-                final userController = Provider.of<UserController>(context, listen: false);
-                // Change PR status to 'transformed' after PO creation
-                final updatePayload = {
-                  'status': 'transformed',
-                  'statuss': 'transformed', // Some backends expect both
-                };
-                print('   Payload: $updatePayload');
-                final response = await PurchaseRequestNetwork().updatePurchaseRequest(
-                  prId as int,
-                  updatePayload,
-                  method: 'PATCH'
-                );
-                print('✓ API Response: $response');
-                // Refresh the PR list immediately so it disappears from the datatable without page change
-                await Provider.of<PurchaseRequestController>(context, listen: false)
-                    .fetchRequests(context, userController.currentUser);
-                print('✓ PR $prId status updated to transformed and PR list refreshed');
-              }
+              final userController = Provider.of<UserController>(context, listen: false);
+              // Change PR status to 'transformed' after PO creation
+              final updatePayload = {
+                'status': 'transformed',
+                'statuss': 'transformed', // Some backends expect both
+              };
+              final response = await PurchaseRequestNetwork().updatePurchaseRequest(
+                prId as int,
+                updatePayload,
+                method: 'PATCH'
+              );
+              // Refresh the PR list immediately so it disappears from the datatable without page change
+              await Provider.of<PurchaseRequestController>(context, listen: false)
+                  .fetchRequests(context, userController.currentUser);
             } catch (e) {
-              print('❌ Failed to update PR status in Edit_purchase_screen: $e');
-              print('   Type: ${e.runtimeType}');
-              print('   prId: $prId');
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Warning: PR status not updated: $e'), backgroundColor: Colors.orange),
-                );
+                // Silently ignore PR update errors
               }
             }
-          } else {
-            print('⚠️ prId is null - not updating PR status');
           }
           
           ScaffoldMessenger.of(context).showSnackBar(

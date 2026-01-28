@@ -675,19 +675,20 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                           };
                           await purchaseOrderController.updateOrder(updatedOrderJson);
                           
-                          // Sync PR status to approved when PO is approved
-                          if (_order.purchaseRequestId != null) {
-                            try {
-                              await PurchaseRequestNetwork().updatePurchaseRequest(
-                                _order.purchaseRequestId!,
-                                {'status': 'approved'},
-                                method: 'PATCH'
-                              );
-                              print('✓ PR ${_order.purchaseRequestId} synced to approved');
-                            } catch (e) {
-                              print('Error syncing PR status: $e');
-                            }
-                          }
+                          // DISABLED: Sync PR status to approved when PO is approved
+                          // PR status is now independent from PO status
+                          // if (_order.purchaseRequestId != null) {
+                          //   try {
+                          //     await PurchaseRequestNetwork().updatePurchaseRequest(
+                          //       _order.purchaseRequestId!,
+                          //       {'status': 'approved'},
+                          //       method: 'PATCH'
+                          //     );
+                          //     print('✓ PR ${_order.purchaseRequestId} synced to approved');
+                          //   } catch (e) {
+                          //     print('Error syncing PR status: $e');
+                          //   }
+                          // }
                           
                           await purchaseOrderController.fetchOrders();
                           if (mounted) {
@@ -774,20 +775,21 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
 
                             await purchaseOrderController.updateOrder(updatedOrderJson);
                             
-                            // Sync PR status when PO is rejected or marked for modification
-                            if (_order.purchaseRequestId != null) {
-                              try {
-                                final prNewStatus = isForModification ? 'pending' : 'rejected';
-                                await PurchaseRequestNetwork().updatePurchaseRequest(
-                                  _order.purchaseRequestId!,
-                                  {'status': prNewStatus},
-                                  method: 'PATCH'
-                                );
-                                print('✓ PR ${_order.purchaseRequestId} synced to $prNewStatus');
-                              } catch (e) {
-                                print('Error syncing PR status: $e');
-                              }
-                            }
+                            // DISABLED: Sync PR status when PO is rejected or marked for modification
+                            // PR status is now independent from PO status
+                            // if (_order.purchaseRequestId != null) {
+                            //   try {
+                            //     final prNewStatus = isForModification ? 'pending' : 'rejected';
+                            //     await PurchaseRequestNetwork().updatePurchaseRequest(
+                            //       _order.purchaseRequestId!,
+                            //       {'status': prNewStatus},
+                            //       method: 'PATCH'
+                            //     );
+                            //     print('✓ PR ${_order.purchaseRequestId} synced to $prNewStatus');
+                            //   } catch (e) {
+                            //     print('Error syncing PR status: $e');
+                            //   }
+                            // }
                             
                             await purchaseOrderController.fetchOrders();
 
@@ -846,19 +848,20 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                             };
                             await purchaseOrderController.updateOrder(updatedOrderJson);
                             
-                            // Sync PR status to rejected when PO is rejected
-                            if (_order.purchaseRequestId != null) {
-                              try {
-                                await PurchaseRequestNetwork().updatePurchaseRequest(
-                                  _order.purchaseRequestId!,
-                                  {'status': 'rejected'},
-                                  method: 'PATCH'
-                                );
-                                print('✓ PR ${_order.purchaseRequestId} synced to rejected');
-                              } catch (e) {
-                                print('Error syncing PR status: $e');
-                              }
-                            }
+                            // DISABLED: Sync PR status to rejected when PO is rejected
+                            // PR status is now independent from PO status
+                            // if (_order.purchaseRequestId != null) {
+                            //   try {
+                            //     await PurchaseRequestNetwork().updatePurchaseRequest(
+                            //       _order.purchaseRequestId!,
+                            //       {'status': 'rejected'},
+                            //       method: 'PATCH'
+                            //     );
+                            //     print('✓ PR ${_order.purchaseRequestId} synced to rejected');
+                            //   } catch (e) {
+                            //     print('Error syncing PR status: $e');
+                            //   }
+                            // }
                             
                             await purchaseOrderController.fetchOrders();
                             if (mounted) {

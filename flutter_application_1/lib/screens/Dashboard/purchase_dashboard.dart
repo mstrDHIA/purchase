@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'dart:async';
 import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
 import 'package:flutter_application_1/controllers/supplier_controller.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
@@ -17,6 +18,7 @@ class PurchaseDashboardPage extends StatefulWidget {
 class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> {
   final TextEditingController _searchCtrl = TextEditingController();
   bool _initialLoadDone = false;
+  Timer? _refreshTimer;
   
   // Pagination state
   int _currentPage = 1;
@@ -34,6 +36,29 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> {
   @override
   void initState() {
     super.initState();
+    // Load orders immediately on init
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final poController = context.read<PurchaseOrderController>();
+      poController.fetchOrders();
+      _startAutoRefresh();
+    });
+  }
+
+  void _startAutoRefresh() {
+    // Refresh purchase orders every 30 seconds
+    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted) {
+        context.read<PurchaseOrderController>().fetchOrders();
+      }
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Refresh orders when returning to this screen
+      context.read<PurchaseOrderController>().fetchOrders();
+    }
   }
 
   String _safeString(String? value) => value ?? '';
@@ -904,6 +929,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> {
   @override
   void dispose() {
     _searchCtrl.dispose();
+    _refreshTimer?.cancel();
     super.dispose();
   }
 }
