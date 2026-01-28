@@ -27,6 +27,13 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
       _sortAscending = ascending;
     });
   }
+
+  // Helper function to capitalize status
+  String _capitalizeStatus(String? status) {
+    if (status == null || status.isEmpty) return '';
+    return status[0].toUpperCase() + status.substring(1).toLowerCase();
+  }
+
   final List<String> _priorityOptions = [
     'high',
     'medium',
@@ -38,7 +45,6 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
     'pending',
     'approved',
     'rejected',
-    'converted',
   ];
   int _rowsPerPage = PaginatedDataTable.defaultRowsPerPage;
   int? _sortColumnIndex = 0;
@@ -289,7 +295,6 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                           s == 'pending' ? AppLocalizations.of(context)!.pending
                             : s == 'approved' ? AppLocalizations.of(context)!.approved
                             : s == 'rejected' ? AppLocalizations.of(context)!.rejected
-                            : s == 'converted' ? AppLocalizations.of(context)!.transformed
                             : s[0].toUpperCase() + s.substring(1),
                         ),
                       )),
@@ -308,8 +313,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                       : (_statusFilter == 'pending' ? AppLocalizations.of(context)!.pending
                         : _statusFilter == 'approved' ? AppLocalizations.of(context)!.approved
                           : _statusFilter == 'rejected' ? AppLocalizations.of(context)!.rejected
-                            : _statusFilter == 'converted' ? AppLocalizations.of(context)!.transformed
-                              : _statusFilter![0].toUpperCase() + _statusFilter!.substring(1));
+                            : _statusFilter![0].toUpperCase() + _statusFilter!.substring(1));
                     return Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -390,24 +394,9 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
       
       if (poIds.isEmpty) return;
       
-      // Find PRs that are "approved" but have corresponding POs (should be "transformed")
-      for (final pr in prController.requests) {
-        if (pr.id != null && poIds.contains(pr.id) && pr.status?.toLowerCase() == 'approved') {
-          try {
-            final payload = {'status': 'transformed'};
-            await PurchaseRequestNetwork().updatePurchaseRequest(pr.id!, payload, method: 'PATCH');
-            pr.status = 'transformed';
-            print('✓ Synced PR ${pr.id} status to transformed');
-          } catch (e) {
-            print('⚠ Failed to sync PR ${pr.id}: $e');
-          }
-        }
-      }
-      
-      // Refresh PR list after syncing
-      if (mounted) {
-        await prController.fetchRequests(context, userController.currentUser, page: 1, pageSizeParam: _rowsPerPageLocal);
-      }
+      // Note: PR statuses are only pending, approved, rejected
+      // When a PR is approved and becomes a PO, the PR status stays "approved"
+      // No need to sync statuses to "converted" or "transformed" as those are not valid statuses
     } catch (e) {
       print('Error in _syncOrphanRequests: $e');
     }
@@ -418,23 +407,26 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
     userController = Provider.of<UserController>(context, listen: false);
     purchaseRequestController = Provider.of<PurchaseRequestController>(context, listen: false);
 
-    // Sequential initialization: users → requests → product families → sync → auto-archive
+    // Sequential initialization: users → requests → product families → sync → auto-archive → single refresh
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       // Step 1: Fetch users
       await userController.getUsers();
       
-      // Step 2: Fetch requests
+      // Step 2: Fetch requests (only once)
       await purchaseRequestController.fetchRequests(context, userController.currentUser, page: 1, pageSizeParam: _rowsPerPageLocal);
       
       // Step 3: Fetch product families
       await _fetchProductFamilies();
       
       if (mounted) {
-        // Step 4: Sync orphan requests
+        // Step 4: Sync orphan requests (without refresh)
         await _syncOrphanRequests();
         
-        // Step 5: Auto-archive old requests
+        // Step 5: Auto-archive old requests (without refresh)
         await _autoArchiveOldRequests();
+        
+        // Step 6: Do a single final refresh if needed
+        // This will be done only if auto-archive made changes
       }
     });
 
@@ -452,10 +444,39 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
       print('📊 Total PRs to check: ${controller.requests.length}');
 
       int archivedCount = 0;
+      int unarchivedCount = 0;
+      
       for (var request in controller.requests) {
+        // First: unarchive any archived items with status that shouldn't be archived
+        if (request.isArchived ?? false) {
+          final status = (request.status ?? '').toString().toLowerCase();
+          if (status != 'rejected' && status != 'approved') {
+            print('🔓 Unarchiving PR ${request.id} with status "$status"');
+            try {
+              await PurchaseRequestNetwork().updatePurchaseRequest(
+                request.id!,
+                {'is_archived': false},
+                method: 'PATCH'
+              );
+              unarchivedCount++;
+              print('✓ Unarchived PR ${request.id}');
+            } catch (e) {
+              print('❌ Failed to unarchive PR ${request.id}: $e');
+            }
+            continue;
+          }
+        }
+        
         // Skip already archived requests
         if (request.isArchived ?? false) {
           print('⏭️ Skipping already archived PR ${request.id}');
+          continue;
+        }
+        
+        // Only auto-archive if status is rejected or approved
+        final status = (request.status ?? '').toString().toLowerCase();
+        if (status != 'rejected' && status != 'approved') {
+          print('⏳ PR ${request.id} status is "$status" (not rejected/approved), skipped');
           continue;
         }
         
@@ -480,12 +501,12 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
         }
       }
       
-      // Refresh list after archiving
-      if (archivedCount > 0 && mounted) {
+      // Refresh list after archiving/unarchiving
+      if ((archivedCount > 0 || unarchivedCount > 0) && mounted) {
         await controller.fetchRequests(context, userController.currentUser);
-        print('✓ Auto-archived $archivedCount old PRs - refreshing list');
+        print('✓ Auto-archived $archivedCount, Unarchived $unarchivedCount - refreshing list');
       } else {
-        print('ℹ️ No old PRs to archive (checked $archivedCount)');
+        print('ℹ️ No changes needed (archived: $archivedCount, unarchived: $unarchivedCount)');
       }
     } catch (e) {
       print('❌ Error in _autoArchiveOldRequests: $e');
@@ -553,29 +574,6 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
           // Use the controller data after loading to avoid showing stale cached requests
           final allRequests = purchaseRequestController.requests;
           
-          // Debug: Check if requests are loaded
-          if (allRequests.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.inbox, size: 64, color: Colors.grey),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'No purchase requests found',
-                    style: TextStyle(fontSize: 16, color: Colors.grey),
-                  ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      purchaseRequestController.fetchRequests(context, userController.currentUser);
-                    },
-                    child: const Text('Refresh'),
-                  ),
-                ],
-              ),
-            );
-          }
           var filteredRequests = allRequests;
           // Filter archived requests
           if (_showArchived) {
@@ -583,23 +581,24 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
           } else {
             filteredRequests = filteredRequests.where((req) => !(req.isArchived ?? false)).toList();
           }
+          
+// Role 4 (Supervisor) only sees approved PRs (not converted or pending)
+      final currentUser = Provider.of<UserController>(context, listen: false).currentUser;
+      if (currentUser.role?.id == 4) {
+        print('🔍 DEBUG Role 4 - Total PRs before filter: ${filteredRequests.length}');
+        for (final req in filteredRequests) {
+          print('   PR ${req.id}: status = "${req.status}" (lowercase: "${req.status?.toLowerCase()}")');
+        }
+        // Role 4 only sees 'approved' PRs. 'converted' status indicates PR was already converted to PO (hidden from role 4)
+        filteredRequests = filteredRequests.where((req) => req.status?.toLowerCase() == 'approved').toList();
+            print('🔍 DEBUG Role 4 - Total PRs after filter: ${filteredRequests.length}');
+          }
+          
           if (_statusFilter != null) {
             final statusLower = _statusFilter!.toLowerCase().trim();
-            final stem = statusLower.replaceAll(RegExp(r'(ed|e|ed_to_po|to_po)\$'), '').trim();
             filteredRequests = filteredRequests.where((req) {
               final s = (req.status?.toString().toLowerCase().trim() ?? '');
-              if (s.isEmpty) return false;
-              // direct or substring match
-              if (s == statusLower || s.contains(statusLower) || statusLower.contains(s)) return true;
-              // synonyms: converted <-> transformed
-              if (statusLower == 'converted' && (s.contains('convert') || s.contains('transf'))) return true;
-              if (statusLower == 'transformed' && (s.contains('convert') || s.contains('transf'))) return true;
-              // stem/prefix match (catch small spelling/case differences, accents removed earlier)
-              final minLen = 4;
-              final sPrefix = s.length >= minLen ? s.substring(0, minLen) : s;
-              final stemPrefix = stem.length >= minLen ? stem.substring(0, minLen) : stem;
-              if (sPrefix == stemPrefix && stemPrefix.isNotEmpty) return true;
-              return false;
+              return s == statusLower;
             }).toList();
           }
           if (_priorityFilter != null) {
@@ -727,37 +726,6 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
             });
           }
           final pageDataSource = filteredDataSource;
-
-          // Check if filteredRequests is empty after applying all filters
-          if (filteredRequests.isEmpty) {
-            return Column(
-              children: [
-                const SizedBox(height: 16),
-                _buildFiltersRow(),
-                const SizedBox(height: 8),
-                Expanded(
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.search_off, size: 64, color: Colors.grey),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'No results found',
-                          style: TextStyle(fontSize: 16, color: Colors.grey),
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: _clearFilters,
-                          child: const Text('Clear Filters'),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            );
-          }
 
           return Column(
             children: [

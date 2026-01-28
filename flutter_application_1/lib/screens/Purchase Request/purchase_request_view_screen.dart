@@ -12,6 +12,7 @@ import '../../l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/controllers/product_controller.dart';
 import '../../utils/purchase_request_pdf.dart';
+import '../../utils/status_utils.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart' show MissingPluginException;
 import 'dart:io';
@@ -46,6 +47,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
   bool _loadingFamilies = false;
   String? _familiesError;
   PurchaseOrderController? purchaseOrderController;
+  
   @override
   void initState() {
   super.initState();
@@ -631,11 +633,11 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
-                              color: (_status?.toLowerCase() == 'pending')
+                              color: (StatusUtils.getDisplayStatus(_status) == 'pending')
                                   ? Colors.orange.shade100
-                                  : (_status?.toLowerCase() == 'approved')
+                                  : (StatusUtils.getDisplayStatus(_status) == 'approved')
                                       ? Colors.green.shade100
-                                      : (_status?.toLowerCase() == 'rejected')
+                                      : (StatusUtils.getDisplayStatus(_status) == 'rejected')
                                           ? Colors.red.shade100
                                           : Colors.grey.shade200,
                               borderRadius: BorderRadius.circular(8),
@@ -643,21 +645,19 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                             child: Text(
                               (_status == null || _status!.isEmpty)
                                   ? ''
-                                  : (_status!.toLowerCase() == 'pending')
+                                  : (StatusUtils.getDisplayStatus(_status) == 'pending')
                                       ? AppLocalizations.of(context)!.pending
-                                      : (_status!.toLowerCase() == 'approved')
+                                      : (StatusUtils.getDisplayStatus(_status) == 'approved')
                                           ? AppLocalizations.of(context)!.approved
-                                          : (_status!.toLowerCase() == 'rejected')
+                                          : (StatusUtils.getDisplayStatus(_status) == 'rejected')
                                               ? AppLocalizations.of(context)!.rejected
-                                              : (_status!.toLowerCase() == 'transformed')
+                                              : (StatusUtils.getDisplayStatus(_status) == 'transformed')
                                                   ? AppLocalizations.of(context)!.transformed
-                                                  : (_status!.toLowerCase() == 'edited')
-                                                      ? AppLocalizations.of(context)!.edited
-                                                      : _status![0].toUpperCase() + _status!.substring(1),
+                                              : StatusUtils.getDisplayStatus(_status)[0].toUpperCase() + StatusUtils.getDisplayStatus(_status)!.substring(1),
                               style: TextStyle(
-                                color: (_status?.toLowerCase() == 'pending')
+                                color: (StatusUtils.getDisplayStatus(_status) == 'pending')
                                     ? Colors.orange.shade800
-                                    : (_status?.toLowerCase() == 'approved')
+                                    : (StatusUtils.getDisplayStatus(_status) == 'approved')
                                         ? Colors.green.shade800
                                         : (_status?.toLowerCase() == 'rejected')
                                             ? Colors.red.shade800
@@ -734,11 +734,33 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                             try {
                                               await purchaseOrderController!.addOrder(newOrder);
                                               poCreatedSuccessfully = true;
+                                              
+                                              // Update PR status to 'transformed' on the server
+                                              try {
+                                                print('🔄 Updating PR ${widget.purchaseRequest.id} status to transformed');
+                                                final updatePayload = {
+                                                  'status': 'transformed',
+                                                  'statuss': 'transformed', // Some backends expect both
+                                                };
+                                                print('   Payload: $updatePayload');
+                                                await PurchaseRequestNetwork().updatePurchaseRequest(
+                                                  widget.purchaseRequest.id!,
+                                                  updatePayload,
+                                                  method: 'PATCH'
+                                                );
+                                                print('✓ PR status updated to transformed');
+                                              } catch (e) {
+                                                print('❌ Failed to update PR status on view_screen: $e');
+                                                print('   Type: ${e.runtimeType}');
+                                                print('   PR ID: ${widget.purchaseRequest.id}');
+                                                // Don't fail the entire flow, just warn
+                                              }
+                                              
                                               if (mounted) {
                                                 setState(() {
                                                   _showActionButtons = false;
                                                   _poCreated = true;
-                                                  _status = 'transformed';
+                                                  _status = 'converted';
                                                 });
                                                 Navigator.of(ctx).pop(); // close editor dialog
                                                 ScaffoldMessenger.of(context).showSnackBar(

@@ -38,6 +38,7 @@ class _MyHomePageState extends State<MyHomePage> {
               selected: selected,
               onItemSelected: (label) {
                 setState(() {
+      
                   selected = label;
                   // Keep the sidebar open when selecting Product or Supplier
                   if (label != 'Product' && label != 'Supplier') {
@@ -136,7 +137,7 @@ class _AppSidebarState extends State<AppSidebar> {
 // 5 visitor
   String _getLocalizedLabel(String label, AppLocalizations localizations) {
     final labelMap = {
-      'Dashboard': localizations.dashboard,
+      'PO Dashboard': localizations.dashboard,
       'Users': localizations.users,
       'Password': localizations.password,
       'PurchaseRequest': localizations.purchaseRequest,
@@ -155,7 +156,7 @@ class _AppSidebarState extends State<AppSidebar> {
     
     if(roleId == 1){
       items.addAll([
-      {'label': 'Dashboard', 'icon': Icons.dashboard},
+      {'label': 'PO Dashboard', 'icon': Icons.dashboard},
       {'label': 'PurchaseRequest', 'icon': Icons.note_add},
       {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
       {'label': 'Supplier', 'icon': Icons.store},
@@ -199,6 +200,7 @@ class _AppSidebarState extends State<AppSidebar> {
     }
      else if((roleId == 4)){
       items.addAll([
+        {'label': 'PO Dashboard', 'icon': Icons.dashboard},
       {'label': 'PurchaseRequest', 'icon': Icons.note_add},
       {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
       {'label': 'Supplier', 'icon': Icons.store},
@@ -214,6 +216,7 @@ class _AppSidebarState extends State<AppSidebar> {
     }
     else if((roleId == 6)){
       items.addAll([
+        {'label': 'PO Dashboard', 'icon': Icons.dashboard},
         {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
       {'label': 'Supplier', 'icon': Icons.store},
       {'label': 'Profile', 'icon': Icons.account_circle},
@@ -281,14 +284,14 @@ class _AppSidebarState extends State<AppSidebar> {
   }
 
   void _onItemTap(String label) {
-    // conserve le comportement actuel (mise à jour du selected dans le parent)
-    widget.onItemSelected(label);
-
-    // Department navigation handled via route mapping below
+    // Only update state if the selected item changed
+    if (label != widget.selected) {
+      widget.onItemSelected(label);
+    }
 
     // mapping labels -> routes (ne modifie pas la façon dont les items sont générés par rôle)
     final Map<String, String> labelToRoute = {
-      'Dashboard': '/dashboard',
+      'PO Dashboard': '/dashboard',
       'Profile': '/Profile',
       'PurchaseRequest': '/purchase_requests',
       'Purchase Order': '/purchase_orders',

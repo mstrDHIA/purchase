@@ -74,7 +74,7 @@ class PurchaseRequestController extends ChangeNotifier {
       if (currentUser.role!.id == 1) {
         print('DEBUG: Admin user detected - showing all requests. Total items: ${items.length}');
       }
-      // Supervisor (role id 4) sees only approved requests (existing behavior)
+      // Supervisor (role id 4) sees only approved requests
       else if (currentUser.role!.id == 4) {
         print('DEBUG: Supervisor user detected - filtering to approved only');
         items = items.where((item) => item['status'] == 'approved').toList();

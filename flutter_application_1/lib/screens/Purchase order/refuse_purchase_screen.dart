@@ -12,7 +12,6 @@ class RefusePurchaseDialog extends StatefulWidget {
 
 class _RefusePurchaseDialogState extends State<RefusePurchaseDialog> {
   final TextEditingController reasonController = TextEditingController();
-  final TextEditingController otherReasonController = TextEditingController();
   final TextEditingController commentController = TextEditingController();
   bool reasonError = false;
   int? _selectedReasonId;
@@ -86,33 +85,12 @@ class _RefusePurchaseDialogState extends State<RefusePurchaseDialog> {
                           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         ),
                         hint: const Text('Select a reason'),
-                        items: [
-                          ...reasons.map((r) => DropdownMenuItem(value: r.id, child: Text(r.reason))).toList(),
-                          const DropdownMenuItem(value: -1, child: Text('Other')),
-                        ],
+                        items: reasons.map((r) => DropdownMenuItem(value: r.id, child: Text(r.reason))).toList(),
                         onChanged: (val) => setState(() {
-                          _selectedReasonId = val == -1 ? -1 : val;
+                          _selectedReasonId = val;
                           if (reasonError) reasonError = false;
                         }),
                       ),
-                      if (_selectedReasonId == -1) ...[
-                        const SizedBox(height: 8),
-                        TextField(
-                          controller: otherReasonController,
-                          maxLines: 2,
-                          decoration: InputDecoration(
-                            hintText: 'Enter custom reason',
-                            filled: true,
-                            fillColor: const Color(0xFFF0F0F0),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-                            errorText: reasonError ? 'Reason is required' : null,
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          ),
-                          onChanged: (_) {
-                            if (reasonError) setState(() => reasonError = false);
-                          },
-                        ),
-                      ]
                     ],
                   )
                 else
@@ -165,10 +143,6 @@ class _RefusePurchaseDialogState extends State<RefusePurchaseDialog> {
                             setState(() => reasonError = true);
                             return;
                           }
-                          if (_selectedReasonId == -1 && otherReasonController.text.trim().isEmpty) {
-                            setState(() => reasonError = true);
-                            return;
-                          }
                         } else {
                           if (reasonController.text.trim().isEmpty) {
                             setState(() => reasonError = true);
@@ -180,13 +154,8 @@ class _RefusePurchaseDialogState extends State<RefusePurchaseDialog> {
                         int? reasonId;
                         String reasonText = '';
                         if (reasons.isNotEmpty) {
-                          if (_selectedReasonId == -1) {
-                            reasonId = null;
-                            reasonText = otherReasonController.text.trim();
-                          } else {
-                            reasonId = _selectedReasonId;
-                            reasonText = reasons.firstWhere((r) => r.id == _selectedReasonId).reason;
-                          }
+                          reasonId = _selectedReasonId;
+                          reasonText = reasons.firstWhere((r) => r.id == _selectedReasonId).reason;
                         } else {
                           reasonId = null;
                           reasonText = reasonController.text.trim();

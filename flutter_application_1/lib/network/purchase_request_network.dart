@@ -67,24 +67,43 @@ class PurchaseRequestNetwork {
         'Content-Type': 'application/json',
         'ngrok-skip-browser-warning': 'true',
       },
+      validateStatus: (status) => status != null, // Don't throw on any status
     );
-    if (method == 'PATCH') {
-      response = await api.dio.patch(
-        url,
-        data: jsonEncode(data),
-        options: options,
-      );
-    } else {
-      response = await api.dio.put(
-        url,
-        data: jsonEncode(data),
-        options: options,
-      );
-    }
-    if (response.statusCode == 200) {
-      return response.data;
-    } else {
-      throw Exception('Failed to update purchase request: status=${response.statusCode}, body=${response.data}');
+    
+    print('📡 updatePurchaseRequest - URL: $url');
+    print('   Method: $method');
+    print('   Data: $data');
+    
+    try {
+      if (method == 'PATCH') {
+        response = await api.dio.patch(
+          url,
+          data: jsonEncode(data),
+          options: options,
+        );
+      } else {
+        response = await api.dio.put(
+          url,
+          data: jsonEncode(data),
+          options: options,
+        );
+      }
+      
+      print('📡 Response status: ${response.statusCode}');
+      print('   Response data: ${response.data}');
+      
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        print('❌ Error response:');
+        print('   Status: ${response.statusCode}');
+        print('   Body: ${response.data}');
+        throw Exception('Failed to update purchase request: status=${response.statusCode}, body=${response.data}');
+      }
+    } catch (e) {
+      print('❌ updatePurchaseRequest exception: $e');
+      print('   Type: ${e.runtimeType}');
+      rethrow;
     }
   }
 

@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
 import 'package:flutter_application_1/controllers/supplier_controller.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
+import 'package:flutter_application_1/models/user_model.dart';
 import '../../l10n/app_localizations.dart';
 
 class PurchaseDashboardPage extends StatefulWidget {
@@ -36,6 +37,27 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> {
   }
 
   String _safeString(String? value) => value ?? '';
+
+  String _getRequesterName(dynamic order, UserController userController) {
+    // Prefer explicit requester username if provided by API
+    try {
+      final reqName = order.requestedByUsername;
+      if (reqName != null && reqName.toString().isNotEmpty) return reqName.toString();
+    } catch (_) {}
+    // Fallback: try to resolve from loaded users by id
+    try {
+      final uid = order.requestedByUser;
+      if (uid != null) {
+        final found = userController.users.firstWhere(
+          (u) => u.id == uid,
+          orElse: () => User(id: uid, username: ''),
+        );
+        if (found.username != null && found.username!.isNotEmpty) return found.username!;
+        return uid.toString();
+      }
+    } catch (_) {}
+    return '-';
+  }
 
   void _showOrderDetailsDialog(BuildContext context, dynamic order, UserController userController) {
     showDialog(
@@ -93,9 +115,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> {
                         ),
                         _buildInfoRow(
                           'Requester',
-                          userController.currentUser.id == order.requestedByUser
-                              ? userController.currentUser.username ?? '-'
-                              : '-',
+                          _getRequesterName(order, userController),
                         ),
                         _buildStatusRow('Status', order.status ?? '-'),
                         const SizedBox(height: 20),
@@ -775,9 +795,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> {
                                           DataCell(Text(order.startDate != null
                                               ? DateFormat('yyyy-MM-dd').format(order.startDate!)
                                               : '-')),
-                                          DataCell(Text(userController.currentUser.id == order.requestedByUser
-                                              ? userController.currentUser.username ?? '-'
-                                              : '-')),
+                                          DataCell(Text(_getRequesterName(order, userController))),
                                           DataCell(
                                             Container(
                                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -823,9 +841,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> {
                                         DataCell(Text(order.startDate != null
                                             ? DateFormat('yyyy-MM-dd').format(order.startDate!)
                                             : '-')),
-                                        DataCell(Text(userController.currentUser.id == order.requestedByUser
-                                            ? userController.currentUser.username ?? '-'
-                                            : '-')),
+                                        DataCell(Text(_getRequesterName(order, userController))),
                                         DataCell(
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),

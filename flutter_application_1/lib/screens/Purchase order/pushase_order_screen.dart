@@ -91,10 +91,35 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
       print('📊 Total POs to check: ${controller.orders.length}');
 
       int archivedCount = 0;
+      int unarchivedCount = 0;
+      
       for (var order in controller.orders) {
+        // First: unarchive any archived items with status that shouldn't be archived
+        if (order.isArchived ?? false) {
+          final status = (order.status ?? '').toString().toLowerCase();
+          if (status != 'rejected' && status != 'approved') {
+            print('🔓 Unarchiving PO ${order.id} with status "$status"');
+            try {
+              await controller.unarchivePurchaseOrder(order.id);
+              unarchivedCount++;
+              print('✓ Unarchived PO ${order.id}');
+            } catch (e) {
+              print('❌ Failed to unarchive PO ${order.id}: $e');
+            }
+            continue;
+          }
+        }
+        
         // Skip already archived orders
         if (order.isArchived ?? false) {
           print('⏭️ Skipping already archived PO ${order.id}');
+          continue;
+        }
+        
+        // Only auto-archive if status is rejected or approved
+        final status = (order.status ?? '').toString().toLowerCase();
+        if (status != 'rejected' && status != 'approved') {
+          print('⏳ PO ${order.id} status is "$status" (not rejected/approved), skipped');
           continue;
         }
         
@@ -114,12 +139,12 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
         }
       }
       
-      // Refresh list after archiving
-      if (archivedCount > 0 && mounted) {
+      // Refresh list after archiving/unarchiving
+      if ((archivedCount > 0 || unarchivedCount > 0) && mounted) {
         await controller.fetchOrders();
-        print('✓ Auto-archived $archivedCount old POs - refreshing list');
+        print('✓ Auto-archived $archivedCount, Unarchived $unarchivedCount - refreshing list');
       } else {
-        print('ℹ️ No old POs to archive (checked $archivedCount)');
+        print('ℹ️ No changes needed (archived: $archivedCount, unarchived: $unarchivedCount)');
       }
     } catch (e) {
       print('❌ Error in _autoArchiveOldOrders: $e');
@@ -431,7 +456,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                                   },
                                   itemBuilder: (context) => [
                                     PopupMenuItem(value: 'view', child: Text(AppLocalizations.of(context)!.view)),
-                                    if (!isRoleN4Local) PopupMenuItem(value: 'edit', enabled: !(isSupervisorN3Local && itemStatusLocal == 'approved'), child: Text(AppLocalizations.of(context)!.edit)),
+                                    if (!isRoleN4Local) PopupMenuItem(value: 'edit', enabled: !(isSupervisorN3Local && itemStatusLocal == 'approved') && itemStatusLocal != 'pending' && itemStatusLocal != 'edited', child: Text(AppLocalizations.of(context)!.edit)),
                                     PopupMenuItem(value: 'delete', child: Text(AppLocalizations.of(context)!.delete)),
                                   ],
                                 ),
@@ -827,8 +852,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                   PopupMenuItem(value: 'pending', child: Text(AppLocalizations.of(context)!.pending)),
                   PopupMenuItem(value: 'approved', child: Text(AppLocalizations.of(context)!.approved)),
                   PopupMenuItem(value: 'rejected', child: Text(AppLocalizations.of(context)!.rejected)),
-                  PopupMenuItem(value: 'transformed', child: Text(AppLocalizations.of(context)!.transformed)),
-                  PopupMenuItem(value: 'edited', child: Text(AppLocalizations.of(context)!.edited)),
+                  PopupMenuItem(value: 'rework', child: Text('Rework')),
                 ],
                 child: OutlinedButton(
                   style: OutlinedButton.styleFrom(
@@ -1304,6 +1328,17 @@ class _PurchaseOrderDataSource extends DataTableSource {
                   // N4 users should not see the Edit action at all
                   return const SizedBox.shrink();
                 }
+                // Cannot edit if status is pending or edited (edited displays as pending for role 6)
+                if (itemStatus == 'pending' || itemStatus == 'edited') {
+                  return Opacity(
+                    opacity: 0.4,
+                    child: IconButton(
+                      icon: const Icon(Icons.edit_outlined),
+                      onPressed: null,
+                      tooltip: AppLocalizations.of(context!)!.edit,
+                    ),
+                  );
+                }
                 // Role 4 users cannot edit rejected orders (show disabled icon)
                 if (isSupervisorN3 && itemStatus == 'rejected') {
                   return Opacity(
@@ -1425,6 +1460,10 @@ class _PurchaseOrderDataSource extends DataTableSource {
       bgColor = Colors.grey;
     }
     final label = (v == 'approved') ? AppLocalizations.of(this.context!)!.approved : (v == 'pending') ? AppLocalizations.of(this.context!)!.pending : (v == 'rejected') ? AppLocalizations.of(this.context!)!.rejected : (v == 'transformed' || v == 'converted') ? AppLocalizations.of(this.context!)!.transformed : (v == 'for modification' || v == 'rework' || v.contains('for')) ? 'Rework' : v;
+    // Capitalize first letter
+    final displayLabel = label.isNotEmpty 
+        ? label[0].toUpperCase() + label.substring(1) 
+        : label;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Container(
@@ -1437,7 +1476,7 @@ class _PurchaseOrderDataSource extends DataTableSource {
         ),
         alignment: Alignment.center,
         child: Text(
-          label,
+          displayLabel,
           textAlign: TextAlign.center,
           style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.2),
         ),

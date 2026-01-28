@@ -121,9 +121,8 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
     final String underlyingStatusLower = statusStr;
 
     // Determine whether action buttons should be visible for current user
-    // Allow supervisors (role id 4), admins (1) and accountants (6) to act when order is 'pending'.
-    // Do not show actions when status is 'edited'.
-    final canShowActions = ((underlyingStatusLower == 'pending' || displayStatusLower == 'pending') && (roleIdInt == 1 || roleIdInt == 4 || roleIdInt == 6));
+    // Allow admins (role 1), supervisors (role id 4) and accountants (6) to act when order is 'pending' or 'edited'.
+    final canShowActions = ((underlyingStatusLower == 'pending' || underlyingStatusLower == 'edited') && (roleIdInt == 1 ||  roleIdInt == 6));
 
     // Debug short log to help trace role 6 visibility issues (safe to remove later)
     if (roleIdInt == 6 && !canShowActions) {
@@ -249,29 +248,6 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
               ),
               const SizedBox(height: 32),
               const SizedBox(height: 24),
-              if ((_order.refuseReason ?? '').isNotEmpty) ...[
-                Text(AppLocalizations.of(context)!.refuseReasonLabel),
-                const SizedBox(height: 4),
-                TextField(
-                  controller: TextEditingController(text: _order.refuseReason ?? ''),
-                  readOnly: true,
-                  maxLines: 3,
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.white,
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: Colors.black87),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(color: Colors.deepPurple),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  ),
-                ),
-                const SizedBox(height: 24),
-              ],
               // Priority row (supplier header removed)
               Row(
                 children: [
@@ -596,6 +572,29 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                 ),
               ),
               const SizedBox(height: 24),
+              if ((_order.refuseReason ?? '').isNotEmpty) ...[
+                Text(AppLocalizations.of(context)!.refuseReasonLabel),
+                const SizedBox(height: 4),
+                TextField(
+                  controller: TextEditingController(text: _order.refuseReason ?? ''),
+                  readOnly: true,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Colors.white,
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(color: Colors.black87),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(color: Colors.deepPurple),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ],
               // Status, total, and action buttons moved to the fixed bottom bar
               const SizedBox(height: 24),
             ],
@@ -675,6 +674,21 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                             'statuss': 'approved',
                           };
                           await purchaseOrderController.updateOrder(updatedOrderJson);
+                          
+                          // Sync PR status to approved when PO is approved
+                          if (_order.purchaseRequestId != null) {
+                            try {
+                              await PurchaseRequestNetwork().updatePurchaseRequest(
+                                _order.purchaseRequestId!,
+                                {'status': 'approved'},
+                                method: 'PATCH'
+                              );
+                              print('✓ PR ${_order.purchaseRequestId} synced to approved');
+                            } catch (e) {
+                              print('Error syncing PR status: $e');
+                            }
+                          }
+                          
                           await purchaseOrderController.fetchOrders();
                           if (mounted) {
                             setState(() {
@@ -759,6 +773,22 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                             };
 
                             await purchaseOrderController.updateOrder(updatedOrderJson);
+                            
+                            // Sync PR status when PO is rejected or marked for modification
+                            if (_order.purchaseRequestId != null) {
+                              try {
+                                final prNewStatus = isForModification ? 'pending' : 'rejected';
+                                await PurchaseRequestNetwork().updatePurchaseRequest(
+                                  _order.purchaseRequestId!,
+                                  {'status': prNewStatus},
+                                  method: 'PATCH'
+                                );
+                                print('✓ PR ${_order.purchaseRequestId} synced to $prNewStatus');
+                              } catch (e) {
+                                print('Error syncing PR status: $e');
+                              }
+                            }
+                            
                             await purchaseOrderController.fetchOrders();
 
                             if (mounted) {
@@ -815,6 +845,21 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                               'updated_at': DateFormat('yyyy-MM-dd').format(DateTime.now()),
                             };
                             await purchaseOrderController.updateOrder(updatedOrderJson);
+                            
+                            // Sync PR status to rejected when PO is rejected
+                            if (_order.purchaseRequestId != null) {
+                              try {
+                                await PurchaseRequestNetwork().updatePurchaseRequest(
+                                  _order.purchaseRequestId!,
+                                  {'status': 'rejected'},
+                                  method: 'PATCH'
+                                );
+                                print('✓ PR ${_order.purchaseRequestId} synced to rejected');
+                              } catch (e) {
+                                print('Error syncing PR status: $e');
+                              }
+                            }
+                            
                             await purchaseOrderController.fetchOrders();
                             if (mounted) {
                               setState(() {

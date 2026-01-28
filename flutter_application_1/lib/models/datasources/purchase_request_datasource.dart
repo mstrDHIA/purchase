@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/controllers/purchase_request_controller.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter_application_1/models/purchase_request.dart';
+import 'package:flutter_application_1/utils/status_utils.dart';
 import 'package:flutter_application_1/models/user_model.dart';
 import 'package:flutter_application_1/screens/Purchase%20Request/Request_Edit_screen.dart';
 import 'package:flutter_application_1/screens/Purchase%20Request/purchase_request_view_screen.dart';
@@ -134,7 +135,7 @@ class PurchaseRequestDataSource extends DataTableSource {
           child: Container(
             width: 80,
             decoration: BoxDecoration(
-              color: request.status == 'approved' ? Colors.green : request.status == 'rejected' ? Colors.red:Colors.orange,
+              color: StatusUtils.getDisplayStatus(request.status) == 'approved' ? Colors.green : StatusUtils.getDisplayStatus(request.status) == 'rejected' ? Colors.red:Colors.orange,
               borderRadius: BorderRadius.circular(4),
             ),
             child: Padding(
@@ -142,24 +143,30 @@ class PurchaseRequestDataSource extends DataTableSource {
               child: Builder(builder: (cellContext) {
                 final s = (request.status ?? 'pending').toString();
                 final lv = s.toLowerCase();
-                final Color cellColor = lv == 'approved'
+                // Use StatusUtils to get display status ('converted' -> 'pending')
+                final displayStatus = StatusUtils.getDisplayStatus(s);
+                final Color cellColor = displayStatus == 'approved'
                     ? Colors.green
-                    : lv == 'rejected'
+                    : displayStatus == 'rejected'
                         ? Colors.red
-                        : (lv == 'transformed' || lv == 'converted')
-                            ? Colors.blue
-                            : Colors.orange;
-                final String display = lv == 'pending'
+                        : displayStatus == 'pending'
+                            ? Colors.orange
+                            : Colors.blue;
+                final String display = displayStatus == 'pending'
                     ? AppLocalizations.of(cellContext)!.pending
-                    : lv == 'approved'
+                    : displayStatus == 'approved'
                         ? AppLocalizations.of(cellContext)!.approved
-                        : lv == 'rejected'
+                        : displayStatus == 'rejected'
                             ? AppLocalizations.of(cellContext)!.rejected
-                            : (lv == 'transformed' || lv == 'converted')
+                            : displayStatus == 'transformed'
                                 ? AppLocalizations.of(cellContext)!.transformed
-                                : lv == 'edited'
+                                : displayStatus == 'edited'
                                     ? AppLocalizations.of(cellContext)!.edited
                                     : s;
+                // Capitalize first letter
+                final displayCapitalized = display.isNotEmpty 
+                    ? display[0].toUpperCase() + display.substring(1) 
+                    : display;
                 return Container(
                   width: 80,
                   decoration: BoxDecoration(
@@ -170,7 +177,7 @@ class PurchaseRequestDataSource extends DataTableSource {
                     padding: const EdgeInsets.all(4.0),
                     child: Center(
                       child: Text(
-                        display,
+                        displayCapitalized,
                         style: const TextStyle(
                           color: Colors.white,
                         ),
@@ -204,14 +211,14 @@ class PurchaseRequestDataSource extends DataTableSource {
             ),
             // if(request.status == 'pending')
             IconButton(
-              color: user.role!.id==4?Colors.grey : request.status == 'pending'||user.role!.id==1? Colors.black : Colors.grey,
+              color: user.role!.id==4||StatusUtils.isPendingLike(request.status)?Colors.grey : request.status == null||user.role!.id==1? Colors.black : Colors.grey,
               icon: const Icon(Icons.edit_outlined, size: 25),
               padding: const EdgeInsets.all(8),
               constraints: const BoxConstraints(),
               onPressed: () async {
                 print(user.role!.id);
-                if(user.role!.id!=4){
-                if(request.status == 'pending'||user.role!.id==1){
+                if(user.role!.id!=4 && !StatusUtils.isPendingLike(request.status)){
+                if(user.role!.id==1 || request.status == null){
                 // Build a lightweight Map for the edit page to avoid relying on a class method
                 final Map<String, dynamic> requestMap = {
                   'id': request.id,

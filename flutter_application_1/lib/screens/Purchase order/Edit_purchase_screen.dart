@@ -3,8 +3,10 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/controllers/product_controller.dart';
 import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
+import 'package:flutter_application_1/controllers/purchase_request_controller.dart';
 import 'package:flutter_application_1/controllers/supplier_controller.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
+import 'package:flutter_application_1/network/purchase_request_network.dart';
 import '../../l10n/app_localizations.dart';
 
 class ProductLine {
@@ -304,6 +306,29 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
     }
   }
 
+  void _checkDateConflict() {
+    if (supplierDeliveryDateController.text.isEmpty || dueDateController.text.isEmpty) {
+      return;
+    }
+
+    try {
+      DateTime supplierDate = DateFormat('dd-MM-yyyy').parseStrict(supplierDeliveryDateController.text);
+      DateTime dueDate = DateFormat('dd-MM-yyyy').parseStrict(dueDateController.text);
+
+      if (supplierDate.isAfter(dueDate)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Warning: Supplier delivery date is after due date'),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (_) {
+      // Ignore parsing errors, dates might not be fully entered yet
+    }
+  }
+
   
 
   @override
@@ -522,6 +547,7 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
                               setState(() {
                                 supplierDeliveryDateController.text = DateFormat('dd-MM-yyyy').format(pickedDate);
                               });
+                              _checkDateConflict();
                             }
                           },
                         ),
@@ -553,6 +579,7 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
                               setState(() {
                                 dueDateController.text = DateFormat('dd-MM-yyyy').format(pickedDate);
                               });
+                              _checkDateConflict();
                             }
                           },
                         ),
@@ -644,6 +671,15 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
       return;
     }
 
+    // Require unit price on each product
+    final missingPrices = productLines.any((p) => p.unitPrice <= 0);
+    if (missingPrices) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please set a unit price for each product.')),
+      );
+      return;
+    }
+
     // parse supplier delivery date (optional but if provided must be valid)
     DateTime? parsedSupplierDeliveryDate;
     if ((supplierDeliveryDateController.text).isNotEmpty) {
@@ -680,6 +716,7 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
       );
       return;
     }
+
     setState(() => _isSaving = true);
     try {
       // Adapter la structure des produits pour le backend (supplier per product)
@@ -712,6 +749,8 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
       // Construction du body attendu par le backend
       // If this editor was opened from a Purchase Request, prefer to create the PO with 'edited' status
       final prId = widget.initialOrder['purchase_request_id'] ?? widget.initialOrder['purchase_request'];
+      print('🔍 DEBUG Edit_purchase_screen - prId from initialOrder: $prId');
+      print('   initialOrder keys: ${widget.initialOrder.keys.toList()}');
       final defaultStatus = 'edited';
       var statusToUse = widget.initialOrder['statuss'] ?? widget.initialOrder['status'] ?? defaultStatus;
       
@@ -772,10 +811,50 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
         await Provider.of<PurchaseOrderController>(context, listen: false)
             .addOrder(jsonBody);
         if (mounted) {
+          // Update PR status if we created from a PR (role 4 creates PO from PR)
+          if (prId != null) {
+            try {
+              print('🔄 Attempting to update PR status in Edit_purchase_screen...');
+              print('   prId: $prId (type: ${prId.runtimeType})');
+              if (prId == null) {
+                print('⚠️ prId is null, cannot update PR');
+              } else {
+                final userController = Provider.of<UserController>(context, listen: false);
+                // Change PR status to 'transformed' after PO creation
+                final updatePayload = {
+                  'status': 'transformed',
+                  'statuss': 'transformed', // Some backends expect both
+                };
+                print('   Payload: $updatePayload');
+                final response = await PurchaseRequestNetwork().updatePurchaseRequest(
+                  prId as int,
+                  updatePayload,
+                  method: 'PATCH'
+                );
+                print('✓ API Response: $response');
+                // Refresh the PR list immediately so it disappears from the datatable without page change
+                await Provider.of<PurchaseRequestController>(context, listen: false)
+                    .fetchRequests(context, userController.currentUser);
+                print('✓ PR $prId status updated to transformed and PR list refreshed');
+              }
+            } catch (e) {
+              print('❌ Failed to update PR status in Edit_purchase_screen: $e');
+              print('   Type: ${e.runtimeType}');
+              print('   prId: $prId');
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Warning: PR status not updated: $e'), backgroundColor: Colors.orange),
+                );
+              }
+            }
+          } else {
+            print('⚠️ prId is null - not updating PR status');
+          }
+          
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Purchase order saved!')),
           );
-          Navigator.of(context).pop();
+          Navigator.of(context).pop(true); // Return true to indicate PR list was updated
         }
       }
     } catch (e) {
