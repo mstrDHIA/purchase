@@ -181,8 +181,8 @@ class _MainScreenState extends State<MainScreen> {
           userController.login('admin', 'admin', context, null);
         }
       } else if (loadedUser && mounted) {
-        // Utilisateur chargé, notifier les listeners
-        userController.notifyListeners();
+        // Utilisateur chargé, forcer le rebuild local
+        setState(() {});
       }
     } catch (e) {
       print('Error initializing user: $e');

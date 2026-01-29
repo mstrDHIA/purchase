@@ -142,7 +142,6 @@ class PurchaseRequestDataSource extends DataTableSource {
               padding: const EdgeInsets.all(2.0),
               child: Builder(builder: (cellContext) {
                 final s = (request.status ?? 'pending').toString();
-                final lv = s.toLowerCase();
                 // Use StatusUtils to get display status ('converted' -> 'pending')
                 final displayStatus = StatusUtils.getDisplayStatus(s);
                 final Color cellColor = displayStatus == 'approved'

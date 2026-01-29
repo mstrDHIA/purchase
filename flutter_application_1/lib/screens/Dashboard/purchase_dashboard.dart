@@ -7,6 +7,7 @@ import 'package:flutter_application_1/controllers/supplier_controller.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter_application_1/models/user_model.dart';
 import '../../l10n/app_localizations.dart';
+import 'package:flutter_application_1/widgets/standard_header.dart';
 
 class PurchaseDashboardPage extends StatefulWidget {
   const PurchaseDashboardPage({super.key});
@@ -15,7 +16,7 @@ class PurchaseDashboardPage extends StatefulWidget {
   State<PurchaseDashboardPage> createState() => _PurchaseDashboardPageState();
 }
 
-class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> {
+class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with WidgetsBindingObserver {
   final TextEditingController _searchCtrl = TextEditingController();
   bool _initialLoadDone = false;
   Timer? _refreshTimer;
@@ -30,12 +31,15 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> {
 
   // Filter states
   String? _selectedSupplier;
+  String? _selectedFamily;
+  String? _selectedSubFamily;
   DateTime? _startDate;
   DateTime? _endDate;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     // Load orders immediately on init
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final poController = context.read<PurchaseOrderController>();
@@ -53,6 +57,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> {
     });
   }
 
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
@@ -62,6 +67,19 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> {
   }
 
   String _safeString(String? value) => value ?? '';
+
+  String _currencySymbol(String? currencyRaw) {
+    if (currencyRaw == null || currencyRaw.isEmpty) return '';
+    final code = currencyRaw.toUpperCase();
+    final Map<String, String> codeToSymbol = {'USD': '\$', 'EUR': '€', 'TND': 'DT', 'DZD': 'DT'};
+    if (codeToSymbol.containsKey(code)) return codeToSymbol[code]!;
+    final low = currencyRaw.toLowerCase();
+    if (low.contains('dinar')) return 'DT';
+    if (low.contains('dollar')) return '\$';
+    if (low.contains('euro')) return '€';
+    if (currencyRaw.length <= 4) return currencyRaw;
+    return '';
+  }
 
   String _getRequesterName(dynamic order, UserController userController) {
     // Prefer explicit requester username if provided by API
@@ -186,7 +204,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> {
                                     _buildInfoRow('Supplier', _safeString(product.supplier)),
                                     _buildInfoRow('Unit Price', unitPrice.toString()),
                                     _buildInfoRow('Quantity', quantity.toString()),
-                                    _buildInfoRow('Total Amount', totalAmount.toStringAsFixed(2)),
+                                    _buildInfoRow('Total Amount', totalAmount.toStringAsFixed(2) + (_currencySymbol(order.currency).isNotEmpty ? ' ' + _currencySymbol(order.currency) : '')),
                                   ],
                                 ),
                               );
@@ -296,6 +314,39 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> {
     return suppliers.toList()..sort();
   }
 
+  // Get all unique families from orders
+  List<String> _getFamilies(List orders) {
+    final families = <String>{};
+    for (var order in orders) {
+      if (order.products != null) {
+        for (var product in order.products!) {
+          final f = product.family;
+          if (f != null && f.toString().trim().isNotEmpty) families.add(f.toString().trim());
+        }
+      }
+    }
+    return families.toList()..sort();
+  }
+
+  // Get subfamilies optionally filtered by family
+  List<String> _getSubFamilies(List orders, String? family) {
+    final sub = <String>{};
+    for (var order in orders) {
+      if (order.products != null) {
+        for (var product in order.products!) {
+          final sf = product.subFamily;
+          final f = product.family;
+          if (sf != null && sf.toString().trim().isNotEmpty) {
+            if (family == null || (f != null && f.toString().trim() == family)) {
+              sub.add(sf.toString().trim());
+            }
+          }
+        }
+      }
+    }
+    return sub.toList()..sort();
+  }
+
   void _sortOrders(List orders, String sortBy, bool ascending) {
     orders.sort((a, b) {
       int comparison = 0;
@@ -353,7 +404,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> {
   @override
   Widget build(BuildContext context) {
     final poController = context.watch<PurchaseOrderController>();
-    final supplierController = context.read<SupplierController>();
+    final supplierController = context.watch<SupplierController>();
     final userController = context.read<UserController>();
 
     if (!_initialLoadDone && poController.orders.isEmpty && !poController.isLoading) {
@@ -370,7 +421,17 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> {
         .toList();
 
     // Get suppliers list for dropdown
-    final suppliers = _getSuppliers(approvedOrders);
+    // Combine suppliers present in approved orders with suppliers from SupplierController
+    final controllerApproved = supplierController.suppliers
+        .where((s) => (s.approvalStatus ?? '').toLowerCase() == 'approved' && (s.name?.isNotEmpty ?? false))
+        .map((s) => s.name!.trim())
+        .toSet();
+    final ordersSuppliers = _getSuppliers(approvedOrders).toSet();
+    final suppliers = (controllerApproved..addAll(ordersSuppliers)).toList()..sort();
+
+    // Families and Subfamilies for filters
+    final families = _getFamilies(approvedOrders);
+    final subfamilies = _getSubFamilies(approvedOrders, _selectedFamily);
 
     // Apply filters (search, supplier and date range)
     final filter = _searchCtrl.text.toLowerCase();
@@ -387,6 +448,18 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> {
       if (_selectedSupplier != null && _selectedSupplier!.isNotEmpty) {
         final hasSupplier = order.products?.any((p) => p.supplier == _selectedSupplier) ?? false;
         if (!hasSupplier) return false;
+      }
+
+      // Filter by family if selected
+      if (_selectedFamily != null && _selectedFamily!.isNotEmpty) {
+        final hasFamily = order.products?.any((p) => (p.family ?? '').toString().trim() == _selectedFamily) ?? false;
+        if (!hasFamily) return false;
+      }
+
+      // Filter by subfamily if selected
+      if (_selectedSubFamily != null && _selectedSubFamily!.isNotEmpty) {
+        final hasSub = order.products?.any((p) => (p.subFamily ?? '').toString().trim() == _selectedSubFamily) ?? false;
+        if (!hasSub) return false;
       }
 
       // Filter by date range if set
@@ -413,31 +486,10 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> {
     final paginatedOrders = filteredOrders.sublist(startIndex, endIndex);
 
     return Scaffold(
+      appBar: const StandardHeader(title: 'PO Dashboard'),
       backgroundColor: const Color(0xFFF6F7FB),
       body: Column(
         children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            color: Colors.white,
-            child: Row(
-              children: [
-                Expanded(
-                  child: Center(
-                    child: Text(
-                      'Purchase Dashboard',
-                      style: const TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF2C3E50),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 48),
-              ],
-            ),
-          ),
           // Search and Filter bar
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -502,6 +554,55 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> {
                 ),
                 const SizedBox(width: 8),
 
+                // Family Filter
+                Expanded(
+                  flex: 1,
+                  child: DropdownButton<String?>(
+                    isExpanded: true,
+                    value: _selectedFamily,
+                    hint: const Text('Family', style: TextStyle(fontSize: 13, color: Color(0xFF999999))),
+                    items: [
+                      const DropdownMenuItem<String?>(
+                        value: null,
+                        child: Text('All Families', style: TextStyle(fontSize: 13)),
+                      ),
+                      ...families.map((f) => DropdownMenuItem<String>(value: f, child: Text(f, style: const TextStyle(fontSize: 13)))),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedFamily = value;
+                        _selectedSubFamily = null; // reset subfamily when family changes
+                        _currentPage = 1;
+                      });
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+
+                // Subfamily Filter
+                Expanded(
+                  flex: 1,
+                  child: DropdownButton<String?>(
+                    isExpanded: true,
+                    value: _selectedSubFamily,
+                    hint: const Text('Subfamily', style: TextStyle(fontSize: 13, color: Color(0xFF999999))),
+                    items: [
+                      const DropdownMenuItem<String?>(
+                        value: null,
+                        child: Text('All Subfamilies', style: TextStyle(fontSize: 13)),
+                      ),
+                      ...subfamilies.map((sf) => DropdownMenuItem<String>(value: sf, child: Text(sf, style: const TextStyle(fontSize: 13)))),
+                    ],
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedSubFamily = value;
+                        _currentPage = 1;
+                      });
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+
                 // Start Date Filter
                 Expanded(
                   flex: 1,
@@ -515,17 +616,34 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> {
                         initialDate: _startDate ?? DateTime.now(),
                         firstDate: DateTime(2020),
                         lastDate: DateTime.now(),
+                        helpText: 'Select From Date',
                       );
                       if (picked != null) {
                         setState(() {
                           _startDate = picked;
                           _currentPage = 1;
                         });
+
+                        // Automatically open To Date picker after selecting From Date
+                        final endInitial = (_endDate != null && !_endDate!.isBefore(picked)) ? _endDate! : picked;
+                        final pickedEnd = await showDatePicker(
+                          context: context,
+                          initialDate: endInitial,
+                          firstDate: picked,
+                          lastDate: DateTime.now(),
+                          helpText: 'Select To Date',
+                        );
+                        if (pickedEnd != null) {
+                          setState(() {
+                            _endDate = pickedEnd;
+                            _currentPage = 1;
+                          });
+                        }
                       }
                     },
                     child: Text(
                       _startDate != null 
-                          ? DateFormat('yyyy-MM-dd').format(_startDate!)
+                          ? 'From: ' + DateFormat('yyyy-MM-dd').format(_startDate!)
                           : 'From Date',
                       style: const TextStyle(fontSize: 13),
                     ),
@@ -546,6 +664,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> {
                         initialDate: _endDate ?? DateTime.now(),
                         firstDate: DateTime(2020),
                         lastDate: DateTime.now(),
+                        helpText: 'Select To Date',
                       );
                       if (picked != null) {
                         setState(() {
@@ -556,7 +675,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> {
                     },
                     child: Text(
                       _endDate != null
-                          ? DateFormat('yyyy-MM-dd').format(_endDate!)
+                          ? 'To: ' + DateFormat('yyyy-MM-dd').format(_endDate!)
                           : 'To Date',
                       style: const TextStyle(fontSize: 13),
                     ),
@@ -573,6 +692,8 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> {
                       setState(() {
                         _currentPage = 1;
                         _selectedSupplier = null;
+                        _selectedFamily = null;
+                        _selectedSubFamily = null;
                         _startDate = null;
                         _endDate = null;
                         _sortBy = 'id';
@@ -584,7 +705,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> {
                       foregroundColor: Colors.black87,
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                     ),
-                    child: const Icon(Icons.refresh, size: 18),
+                    child: const Icon(Icons.close, size: 18),
                   ),
                 ),
               ],
@@ -862,7 +983,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> {
                                         DataCell(Text(_safeString(product.supplier ?? '-'))),
                                         DataCell(Text(quantity.toString())),
                                         DataCell(Text(unitPrice.toString())),
-                                        DataCell(Text(totalAmount.toStringAsFixed(2))),
+                                        DataCell(Text(totalAmount.toStringAsFixed(2) + (_currencySymbol(order.currency).isNotEmpty ? ' ' + _currencySymbol(order.currency) : ''))),
                                         DataCell(Text(order.startDate != null
                                             ? DateFormat('yyyy-MM-dd').format(order.startDate!)
                                             : '-')),

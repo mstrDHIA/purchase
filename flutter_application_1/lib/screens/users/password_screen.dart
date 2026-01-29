@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
+import 'package:flutter_application_1/widgets/standard_header.dart';
 import 'package:flutter_application_1/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 
@@ -32,6 +33,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
     if (l10n == null) return const SizedBox.shrink();
     
     return Scaffold(
+      appBar: StandardHeader(title: l10n.changePassword),
       backgroundColor: const Color(0xFFF8F8FA),
       body: SafeArea(
         child: Padding(

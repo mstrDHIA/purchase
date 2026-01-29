@@ -6,6 +6,8 @@ import 'package:flutter_application_1/controllers/supplier_controller.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
 
 import 'package:flutter_application_1/models/supplier.dart';
+import 'package:flutter_application_1/widgets/standard_header.dart';
+import 'package:flutter_application_1/l10n/app_localizations.dart';
 
 // Note: this screen now uses the shared `Supplier` model from lib/models/supplier.dart
 // which contains fields like `contactEmail`, `phoneNumber`, `matricule`, `cin`, `codeFournisseur`, etc.
@@ -716,30 +718,9 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
     final paginatedFiltered = filtered.sublist(startIndex, endIndex);
 
     return Scaffold(
+      appBar: StandardHeader(title: AppLocalizations.of(context)!.supplier + ' Registration'),
       body: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            color: Colors.white,
-            child: const Row(
-              children: [
-                Expanded(
-                  child: Center(
-                    child: Text(
-                      'Supplier Registration',
-                      style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF2C3E50),
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(width: 48),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Row(

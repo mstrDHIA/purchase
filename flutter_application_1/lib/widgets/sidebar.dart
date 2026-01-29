@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/screens/Product/family_screen.dart';
 import 'package:flutter_application_1/screens/Supplier/Supplier_registration_screen.dart';
-import 'package:flutter_application_1/screens/Dashboard/purchase_dashboard.dart';
 import 'package:flutter_application_1/l10n/app_localizations.dart';
 
 class MyApp extends StatelessWidget {
@@ -137,7 +136,8 @@ class _AppSidebarState extends State<AppSidebar> {
 // 5 visitor
   String _getLocalizedLabel(String label, AppLocalizations localizations) {
     final labelMap = {
-      'PO Dashboard': localizations.dashboard,
+      // Display literal label 'PO Dashboard' instead of localized 'Dashboard'
+      'PO Dashboard': 'PO Dashboard',
       'Users': localizations.users,
       'Password': localizations.password,
       'PurchaseRequest': localizations.purchaseRequest,

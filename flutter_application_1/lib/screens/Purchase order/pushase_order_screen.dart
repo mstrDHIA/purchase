@@ -5,6 +5,7 @@ import 'package:flutter_application_1/screens/Purchase%20order/view_purchase_scr
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
+import 'package:flutter_application_1/widgets/standard_header.dart';
 import 'package:flutter_application_1/controllers/product_controller.dart';
 import 'package:flutter_application_1/models/user_model.dart';
 import 'package:flutter/material.dart';
@@ -405,9 +406,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
           onUnarchive: unarchivePurchaseOrder,
         );
         return Scaffold(
-          appBar: AppBar(
-            title: Text(AppLocalizations.of(context)!.purchaseOrders),
-          ),
+          appBar: StandardHeader(title: AppLocalizations.of(context)!.purchaseOrders),
           body: 
           (MediaQuery.of(context).size.width<600)?
                           ListView.builder(itemBuilder:  (context,index){

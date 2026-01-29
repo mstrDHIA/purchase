@@ -8,6 +8,7 @@ import 'package:flutter_application_1/controllers/purchase_request_controller.da
 import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
 import 'package:flutter_application_1/network/purchase_request_network.dart';
 import 'package:flutter_application_1/screens/Purchase%20Request/requestor_form_screen.dart';
+import 'package:flutter_application_1/widgets/standard_header.dart';
 import 'package:flutter_application_1/screens/Purchase%20order/pushase_order_screen.dart' as purchase_order;
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/models/datasources/purchase_request_datasource.dart';
@@ -544,8 +545,8 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
   Widget build(BuildContext context) {
     
   return Scaffold(
-      appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.purchaseRequests),
+      appBar: StandardHeader(
+        title: AppLocalizations.of(context)!.purchaseRequests,
         actions: [
           if(userController.currentUser.role!.id==2||userController.currentUser.role!.id==1)
           ElevatedButton.icon(
@@ -562,7 +563,6 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
               elevation: 0,
             ),
           ),
-          const SizedBox(width: 16),
         ],
       ),
       body: Consumer<PurchaseRequestController>(

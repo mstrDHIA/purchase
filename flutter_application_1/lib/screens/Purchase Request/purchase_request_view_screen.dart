@@ -653,7 +653,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                               ? AppLocalizations.of(context)!.rejected
                                               : (StatusUtils.getDisplayStatus(_status) == 'transformed')
                                                   ? AppLocalizations.of(context)!.transformed
-                                              : StatusUtils.getDisplayStatus(_status)[0].toUpperCase() + StatusUtils.getDisplayStatus(_status)!.substring(1),
+                                              : StatusUtils.getDisplayStatus(_status)[0].toUpperCase() + StatusUtils.getDisplayStatus(_status).substring(1),
                               style: TextStyle(
                                 color: (StatusUtils.getDisplayStatus(_status) == 'pending')
                                     ? Colors.orange.shade800

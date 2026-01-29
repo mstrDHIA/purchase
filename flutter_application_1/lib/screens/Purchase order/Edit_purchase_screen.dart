@@ -831,7 +831,7 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
                 'status': 'transformed',
                 'statuss': 'transformed', // Some backends expect both
               };
-              final response = await PurchaseRequestNetwork().updatePurchaseRequest(
+              await PurchaseRequestNetwork().updatePurchaseRequest(
                 prId as int,
                 updatePayload,
                 method: 'PATCH'

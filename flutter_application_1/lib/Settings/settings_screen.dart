@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_application_1/providers/theme_provider.dart';
 import 'package:flutter_application_1/screens/users/password_screen.dart';
+import 'package:flutter_application_1/widgets/standard_header.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -131,11 +132,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
     return Scaffold(
-      appBar: AppBar(
-        title: Text(loc.settings),
-        centerTitle: true,
-        elevation: 0,
-      ),
+      appBar: StandardHeader(title: loc.settings),
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         children: [

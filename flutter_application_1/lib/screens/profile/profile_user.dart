@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // Import for Clipboard
 import 'package:flutter_application_1/controllers/user_controller.dart';
+import 'package:flutter_application_1/widgets/standard_header.dart';
+import 'package:flutter_application_1/l10n/app_localizations.dart';
 import 'package:flutter_application_1/screens/users/modify_user_screen.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
@@ -66,12 +68,7 @@ class _ProfilePageScreenState extends State<ProfilePageScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('User Profile'),
-        backgroundColor: Colors.deepPurple[700],
-        foregroundColor: Colors.white,
-        systemOverlayStyle: SystemUiOverlayStyle.light,
-      ),
+      appBar: StandardHeader(title: AppLocalizations.of(context)!.profile),
       backgroundColor: Colors.white,
       body: Consumer<UserController>(
         builder: (context,userController, child) {
