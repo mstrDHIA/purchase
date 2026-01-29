@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:country_code_picker/country_code_picker.dart';
 import 'package:flutter_application_1/controllers/supplier_controller.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
+import 'package:flutter_application_1/controllers/reset_notifier.dart';
 
 import 'package:flutter_application_1/models/supplier.dart';
 import 'package:flutter_application_1/widgets/standard_header.dart';
@@ -29,9 +30,46 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
   int _currentPage = 1;
   final int _rowsPerPage = 10;
 
+  // Reset notifier
+  ResetNotifier? _resetNotifier;
+
   @override
   void initState() {
     super.initState();
+    // Register reset listener after first frame so Provider is ready
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _resetNotifier = Provider.of<ResetNotifier>(context, listen: false);
+      _resetNotifier?.addListener(_onResetTriggered);
+    });
+  }
+
+  @override
+  void dispose() {
+    _resetNotifier?.removeListener(_onResetTriggered);
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  void _onResetTriggered() {
+    final target = _resetNotifier?.lastTarget;
+    if (target == 'Supplier') {
+      _resetPage();
+      _resetNotifier?.clear();
+    }
+  }
+
+  void _resetPage() {
+    setState(() {
+      _searchCtrl.clear();
+      _sortIndex = null;
+      _sortAsc = true;
+      _currentPage = 1;
+    });
+    // re-fetch suppliers to ensure fresh data
+    try {
+      final controller = context.read<SupplierController>();
+      controller.fetchSuppliers();
+    } catch (_) {}
   }
 
   String _safeString(String? value) => value ?? '';

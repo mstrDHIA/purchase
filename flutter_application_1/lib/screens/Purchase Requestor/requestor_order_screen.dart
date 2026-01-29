@@ -3,6 +3,7 @@ import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_application_1/network/purchase_request_network.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_application_1/controllers/reset_notifier.dart';
 
 class PurchaseRequestPage extends StatefulWidget {
   const PurchaseRequestPage({super.key});
@@ -147,10 +148,54 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
   DateTime? _selectedDueDate;
   bool _isLoading = false;
   late UserController userController; 
+
+  // Reset notifier
+  ResetNotifier? _resetNotifier;
+
   @override
   void initState() {
     userController= Provider.of<UserController>(context, listen: false);
     super.initState();
+    _fetchRequestsFromApi();
+
+    // Attach reset listener after first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _resetNotifier = Provider.of<ResetNotifier>(context, listen: false);
+      _resetNotifier?.addListener(_onResetTriggered);
+    });
+  }
+
+  @override
+  void dispose() {
+    _resetNotifier?.removeListener(_onResetTriggered);
+    super.dispose();
+  }
+
+  void _onResetTriggered() {
+    final target = _resetNotifier?.lastTarget;
+    if (target == 'PurchaseRequest' || target == 'Purchase Request') {
+      // Close any pushed detail/edit pages first (safety cap of 10 pops)
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        int pops = 0;
+        while (Navigator.of(context).canPop() && pops < 10) {
+          Navigator.of(context).pop();
+          pops++;
+        }
+        if (mounted) _resetPage();
+      });
+      _resetNotifier?.clear();
+    }
+  }
+
+  void _resetPage() {
+    setState(() {
+      _priorityFilter = null;
+      _statusFilter = null;
+      _selectedSubmissionDate = null;
+      _selectedDueDate = null;
+      _sortColumnIndex = null;
+      _sortAscending = true;
+    });
     _fetchRequestsFromApi();
   }
 

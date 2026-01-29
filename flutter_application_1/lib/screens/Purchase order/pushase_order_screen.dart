@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter_application_1/widgets/standard_header.dart';
+import 'package:flutter_application_1/controllers/reset_notifier.dart';
 import 'package:flutter_application_1/controllers/product_controller.dart';
 import 'package:flutter_application_1/models/user_model.dart';
 import 'package:flutter/material.dart';
@@ -63,6 +64,9 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
   String _searchText = '';
 
 
+  // Reset notifier
+  ResetNotifier? _resetNotifier;
+
   @override
   void initState() {
     super.initState();
@@ -78,7 +82,56 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
       if (mounted) {
         await _autoArchiveOldOrders();
       }
+
+      // Attach reset listener
+      _resetNotifier = Provider.of<ResetNotifier>(context, listen: false);
+      _resetNotifier?.addListener(_onResetTriggered);
     });
+  }
+
+  @override
+  void dispose() {
+    _resetNotifier?.removeListener(_onResetTriggered);
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onResetTriggered() {
+    final target = _resetNotifier?.lastTarget;
+    if (target == 'Purchase Order' || target == 'PurchaseOrder') {
+      // Close any pushed detail/edit pages first (safety cap of 10 pops)
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        int pops = 0;
+        while (Navigator.of(context).canPop() && pops < 10) {
+          Navigator.of(context).pop();
+          pops++;
+        }
+        if (mounted) _resetPage();
+      });
+      _resetNotifier?.clear();
+    }
+  }
+
+  void _resetPage() async {
+    setState(() {
+      _priorityFilter = null;
+      _statusFilter = null;
+      _showArchived = false;
+      _selectedSubmissionDate = null;
+      _selectedDueDate = null;
+      _familyFilter = null;
+      _subFamilyFilter = null;
+      _searchController.clear();
+      _searchText = '';
+      _sortColumnIndex = 0;
+      _sortAscending = false;
+    });
+
+    final controller = Provider.of<PurchaseOrderController>(context, listen: false);
+    try {
+      await controller.fetchOrders();
+      await _fetchProductFamilies();
+    } catch (_) {}
   }
 
   // Auto-archive purchase orders older than 2 weeks

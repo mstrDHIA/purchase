@@ -6,6 +6,7 @@ import '../../l10n/app_localizations.dart';
 import '../../network/product_network.dart';
 import '../../controllers/product_controller.dart';
 import '../../models/category.dart';
+import '../../controllers/reset_notifier.dart';
 
 class FamiliesPage extends StatefulWidget {
   const FamiliesPage({Key? key}) : super(key: key);
@@ -18,6 +19,10 @@ class _FamiliesPageState extends State<FamiliesPage> {
   List<Map<String, dynamic>> families = [];
   late ProductController productController;
   bool _loading = false;
+
+  // Reset notifier
+  ResetNotifier? _resetNotifier;
+
   @override
   void initState() {
     super.initState();
@@ -25,11 +30,44 @@ class _FamiliesPageState extends State<FamiliesPage> {
     final network = ProductNetwork();
     productController = Provider.of<ProductController>(context, listen: false);
     // fetchFamilies();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _resetNotifier = Provider.of<ResetNotifier>(context, listen: false);
+      _resetNotifier?.addListener(_onResetTriggered);
+    });
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    fetchFamilies();
+  }
+
+  @override
+  void dispose() {
+    _resetNotifier?.removeListener(_onResetTriggered);
+    _searchCtrl.dispose();
+    super.dispose();
+  }
+
+  void _onResetTriggered() {
+    final target = _resetNotifier?.lastTarget;
+    if (target == 'Product') {
+      _resetPage();
+      _resetNotifier?.clear();
+    }
+  }
+
+  void _resetPage() {
+    setState(() {
+      _searchCtrl.clear();
+      _sortIndex = null;
+      _sortAsc = true;
+      _minSubfamilies = null;
+      _maxSubfamilies = null;
+      _currentPage = 1;
+    });
+    // Re-fetch families
     fetchFamilies();
   }
 

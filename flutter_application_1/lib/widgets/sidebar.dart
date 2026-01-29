@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:flutter_application_1/screens/Product/family_screen.dart';
 import 'package:flutter_application_1/screens/Supplier/Supplier_registration_screen.dart';
 import 'package:flutter_application_1/l10n/app_localizations.dart';
+import 'package:flutter_application_1/controllers/reset_notifier.dart';
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -284,10 +285,8 @@ class _AppSidebarState extends State<AppSidebar> {
   }
 
   void _onItemTap(String label) {
-    // Only update state if the selected item changed
-    if (label != widget.selected) {
-      widget.onItemSelected(label);
-    }
+    // Always inform parent about selection so the UI can set selected/highlighted state
+    widget.onItemSelected(label);
 
     // mapping labels -> routes (ne modifie pas la façon dont les items sont générés par rôle)
     final Map<String, String> labelToRoute = {
@@ -307,6 +306,8 @@ class _AppSidebarState extends State<AppSidebar> {
     };
 
     final route = labelToRoute[label];
+    final resetNotifier = Provider.of<ResetNotifier>(context, listen: false);
+
     if (route != null) {
       // Prevent navigation to restricted routes for non-admin users
       if (route == '/reject_reasons' && userController.currentUser.role_id != 1) {
@@ -317,7 +318,18 @@ class _AppSidebarState extends State<AppSidebar> {
       if (Scaffold.maybeOf(context)?.isDrawerOpen ?? false) {
         Navigator.of(context).pop();
       }
-      GoRouter.of(context).go(route);
+
+      // Append a timestamp query param to always change the route and force a rebuild when clicking the same item
+      final uri = '$route?_r=${DateTime.now().millisecondsSinceEpoch}';
+      GoRouter.of(context).go(uri);
+
+      // Trigger a reset event after a short delay so the destination page has time to mount and register its listener
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Future.delayed(const Duration(milliseconds: 60), () => resetNotifier.trigger(label));
+      });
+    } else {
+      // For items that don't map to a specific route (or are rendered inline), trigger immediately
+      resetNotifier.trigger(label);
     }
   }
 

@@ -6,6 +6,7 @@ import 'package:flutter_application_1/l10n/app_localizations.dart';
 import 'package:flutter_application_1/controllers/product_controller.dart';
 import 'package:flutter_application_1/controllers/purchase_request_controller.dart';
 import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
+import 'package:flutter_application_1/controllers/reset_notifier.dart';
 import 'package:flutter_application_1/network/purchase_request_network.dart';
 import 'package:flutter_application_1/screens/Purchase%20Request/requestor_form_screen.dart';
 import 'package:flutter_application_1/widgets/standard_header.dart';
@@ -378,6 +379,8 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
     );
   }
   late UserController userController;
+  // Reset notifier to handle sidebar reset events
+  ResetNotifier? _resetNotifier;
   
   /// Synchronizes purchase requests that have corresponding POs but status wasn't updated
   Future<void> _syncOrphanRequests() async {
@@ -429,6 +432,10 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
         // Step 6: Do a single final refresh if needed
         // This will be done only if auto-archive made changes
       }
+
+      // Attach reset listener so this page can respond when the sidebar triggers a reset
+      _resetNotifier = Provider.of<ResetNotifier>(context, listen: false);
+      _resetNotifier?.addListener(_onResetTriggered);
     });
 
     super.initState();
@@ -512,6 +519,45 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
     } catch (e) {
       print('❌ Error in _autoArchiveOldRequests: $e');
     }
+  }
+
+  @override
+  void dispose() {
+    _resetNotifier?.removeListener(_onResetTriggered);
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onResetTriggered() {
+    final target = _resetNotifier?.lastTarget;
+    if (target == 'PurchaseRequest' || target == 'Purchase Request') {
+      // Close any pushed detail/edit pages first (safety cap of 10 pops)
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        int pops = 0;
+        while (Navigator.of(context).canPop() && pops < 10) {
+          Navigator.of(context).pop();
+          pops++;
+        }
+        if (mounted) _resetPage();
+      });
+      _resetNotifier?.clear();
+    }
+  }
+
+  void _resetPage() async {
+    // Reuse existing helper to clear filters
+    _clearFilters();
+
+    setState(() {
+      _sortColumnIndex = 0;
+      _sortAscending = false;
+      _rowsPerPageLocal = PaginatedDataTable.defaultRowsPerPage;
+    });
+
+    try {
+      await purchaseRequestController.fetchRequests(context, userController.currentUser, page: 1, pageSizeParam: _rowsPerPageLocal);
+      await _fetchProductFamilies();
+    } catch (e) {}
   }
 
   void viewPurchaseRequest(Map<String, dynamic> order) {

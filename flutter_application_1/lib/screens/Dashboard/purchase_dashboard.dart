@@ -5,6 +5,7 @@ import 'dart:async';
 import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
 import 'package:flutter_application_1/controllers/supplier_controller.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
+import 'package:flutter_application_1/controllers/reset_notifier.dart';
 import 'package:flutter_application_1/models/user_model.dart';
 import '../../l10n/app_localizations.dart';
 import 'package:flutter_application_1/widgets/standard_header.dart';
@@ -45,6 +46,16 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
       final poController = context.read<PurchaseOrderController>();
       poController.fetchOrders();
       _startAutoRefresh();
+
+      // Register reset listener
+      final resetNotifier = Provider.of<ResetNotifier>(context, listen: false);
+      resetNotifier.addListener(() {
+        final target = resetNotifier.lastTarget;
+        if (target == 'PO Dashboard') {
+          _resetToInitial();
+          resetNotifier.clear();
+        }
+      });
     });
   }
 
@@ -1045,6 +1056,23 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
         ],
       ),
     );
+  }
+
+  void _resetToInitial() {
+    setState(() {
+      _searchCtrl.clear();
+      _currentPage = 1;
+      _sortBy = 'id';
+      _sortAscending = false;
+      _selectedSupplier = null;
+      _selectedFamily = null;
+      _selectedSubFamily = null;
+      _startDate = null;
+      _endDate = null;
+    });
+    try {
+      context.read<PurchaseOrderController>().fetchOrders();
+    } catch (_) {}
   }
 
   @override
