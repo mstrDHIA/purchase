@@ -10,6 +10,70 @@ import 'package:flutter_application_1/models/supplier.dart';
 import 'package:flutter_application_1/widgets/standard_header.dart';
 import 'package:flutter_application_1/l10n/app_localizations.dart';
 
+// Phone number formatter helper used to format national numbers according to country dial code
+class PhoneNumberFormatter extends TextInputFormatter {
+  final List<int> groups;
+  PhoneNumberFormatter(this.groups);
+
+  static List<String> supportedDialCodes() => ['+216', '+1', '+33', '+44'];
+
+  factory PhoneNumberFormatter.fromCountryCode(String dialCode) {
+    switch (dialCode) {
+      case '+216':
+        return PhoneNumberFormatter([2, 3, 3]); // e.g. 12 345 678
+      case '+1':
+        return PhoneNumberFormatter([3, 3, 4]); // 123 456 7890
+      case '+33':
+        return PhoneNumberFormatter([1, 2, 2, 2]); // 1 23 45 67
+      case '+44':
+        return PhoneNumberFormatter([2, 4, 4]);
+      default:
+        return PhoneNumberFormatter([3, 3, 4]);
+    }
+  }
+
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    final digits = newValue.text.replaceAll(RegExp(r'\D'), '');
+    if (digits.isEmpty) return TextEditingValue(text: '', selection: TextSelection.collapsed(offset: 0));
+
+    final buffer = StringBuffer();
+    int idx = 0;
+    for (final g in groups) {
+      if (idx + g >= digits.length) {
+        buffer.write(digits.substring(idx));
+        break;
+      }
+      buffer.write(digits.substring(idx, idx + g));
+      buffer.write(' ');
+      idx += g;
+    }
+    final formatted = buffer.toString().trim();
+    return TextEditingValue(text: formatted, selection: TextSelection.collapsed(offset: formatted.length));
+  }
+
+  // Format a national digit string for display given a dial code
+  static String formatNational(String digits, String dialCode) {
+    final formatter = PhoneNumberFormatter.fromCountryCode(dialCode);
+    final value = formatter.formatEditUpdate(TextEditingValue.empty, TextEditingValue(text: digits));
+    return value.text;
+  }
+}
+
+String formatPhoneForDisplay(String? fullPhone) {
+  if (fullPhone == null || fullPhone.isEmpty) return '';
+  for (final code in PhoneNumberFormatter.supportedDialCodes()) {
+    if (fullPhone.startsWith(code)) {
+      final national = fullPhone.substring(code.length).replaceAll(RegExp(r'\D'), '');
+      final formatted = PhoneNumberFormatter.formatNational(national, code);
+      return '$code $formatted';
+    }
+  }
+  // fallback: group digits in blocks of 3
+  final digits = fullPhone.replaceAll(RegExp(r'\D'), '');
+  return PhoneNumberFormatter([3, 3, 4]).formatEditUpdate(TextEditingValue.empty, TextEditingValue(text: digits)).text;
+}
+
 // Note: this screen now uses the shared `Supplier` model from lib/models/supplier.dart
 // which contains fields like `contactEmail`, `phoneNumber`, `matricule`, `cin`, `codeFournisseur`, etc.
 // }
@@ -270,14 +334,15 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                             controller: phoneCtrl,
                             decoration: const InputDecoration(
                               labelText: 'Phone Number',
-                              hintText: 'Enter phone number (min 8 digits)',
+                              hintText: 'Enter phone number (min 6 digits)',
                             ),
                             keyboardType: TextInputType.number,
-                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                            inputFormatters: [FilteringTextInputFormatter.digitsOnly, PhoneNumberFormatter.fromCountryCode(_selectedCountryCode)],
                             validator: (v) {
-                              if (v == null || v.isEmpty) return 'Phone is required';
-                              if (v.length < 8) return 'Phone must be at least 8 digits';
-                              if (!RegExp(r'^[0-9]+$').hasMatch(v)) return 'Phone must contain only digits';
+                              final digits = v == null ? '' : v.replaceAll(RegExp(r'\D'), '');
+                              if (digits.isEmpty) return 'Phone is required';
+                              if (digits.length < 6) return 'Phone must be at least 6 digits';
+                              if (!RegExp(r'^[0-9]+$').hasMatch(digits)) return 'Phone must contain only digits';
                               return null;
                             },
                             enabled: !isSubmitting,
@@ -418,7 +483,17 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
   Future<void> _showEditDialog({Supplier? supplier, int? index}) async {
     final nameCtrl = TextEditingController(text: supplier?.name ?? '');
     final emailCtrl = TextEditingController(text: supplier?.contactEmail ?? '');
-    final phoneCtrl = TextEditingController(text: supplier?.phoneNumber?.toString() ?? '');
+    // Determine country code from existing phone before creating controller
+    String _initialPhone = supplier?.phoneNumber?.toString() ?? '';
+    String _selectedCountryCode = '+216'; // default
+    for (final c in PhoneNumberFormatter.supportedDialCodes()) {
+      if (_initialPhone.startsWith(c)) {
+        _selectedCountryCode = c;
+        break;
+      }
+    }
+    final national = _initialPhone.replaceFirst(_selectedCountryCode, '').replaceAll(RegExp(r'\D'), '');
+    final phoneCtrl = TextEditingController(text: PhoneNumberFormatter.formatNational(national, _selectedCountryCode));
     final matriculeCtrl = TextEditingController(text: supplier?.matricule ?? '');
     final cinCtrl = TextEditingController(text: supplier?.cin ?? '');
 
@@ -426,7 +501,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
     final contactNameCtrl = TextEditingController(text: supplier?.contactName ?? '');
     final addressCtrl = TextEditingController(text: supplier?.address ?? '');
     bool isSubmitting = false;
-    String _selectedCountryCode = '+216'; // Tunisie par défaut
+
     final controller = context.read<SupplierController>();
     // Try to retrieve the detailed model for additional fields like codeFournisseur
     final matches = controller.suppliers.where((s) => (s as dynamic).id == supplier?.id).toList();
@@ -481,10 +556,10 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                           controller: phoneCtrl,
                           decoration: const InputDecoration(
                             labelText: 'Phone Number',
-                            hintText: 'Min 8 digits',
+                            hintText: 'Min 6 digits',
                           ),
                           keyboardType: TextInputType.number,
-                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                          inputFormatters: [FilteringTextInputFormatter.digitsOnly, PhoneNumberFormatter.fromCountryCode(_selectedCountryCode)],
                         ),
                       ),
                     ],
@@ -574,7 +649,8 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                   const SizedBox(height: 16),
                   _buildDetailRow(Icons.person, 'Name', _safeString(supplier.name)),
                   const SizedBox(height: 16),
-                  _buildDetailRow(Icons.phone, 'Phone', _safeString(supplier.phoneNumber?.toString())),
+                  _buildDetailRow(Icons.phone, 'Phone', formatPhoneForDisplay(supplier.phoneNumber?.toString())),
+                  const SizedBox(height: 16),
                   const SizedBox(height: 16),                _buildDetailRow(Icons.location_on, 'Address', _safeString(supplier.address)),
                   const SizedBox(height: 16),                _buildDetailRow(Icons.badge, 'Matricule', _safeString(supplier.matricule)),
                   const SizedBox(height: 16),
@@ -927,7 +1003,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                                         DataCell(Text(supplier.id.toString())),
                                         DataCell(Text(_safeString(supplier.contactEmail))),
                                         DataCell(Text(_safeString(supplier.name))),
-                                        DataCell(Text(_safeString(supplier.phoneNumber?.toString()))),
+                                        DataCell(Text(formatPhoneForDisplay(supplier.phoneNumber?.toString()))),
                                         DataCell(Text(_safeString(supplier.matricule))),
                                         DataCell(Text(_safeString(supplier.cin))),
                                         DataCell(Text(_getSupplierCode(supplier))),
