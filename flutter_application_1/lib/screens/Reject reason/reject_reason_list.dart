@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/reject_reason_controller.dart';
 import '../../models/reject_reason.dart';
+import 'package:flutter_application_1/widgets/standard_header.dart';
 
 class RejectReasonListPage extends StatefulWidget {
 	const RejectReasonListPage({super.key});
@@ -152,10 +153,11 @@ class _RejectReasonListPageState extends State<RejectReasonListPage> {
 		final filtered = list.where((r) => r.reason.toLowerCase().contains(filter) || (r.description ?? '').toLowerCase().contains(filter)).toList();
 
 		return Scaffold(
-			appBar: AppBar(
-				title: const Text('Reject Reasons'),
+			appBar: StandardHeader(
+				title: 'Reject Reasons',
 				actions: [
 					IconButton(onPressed: () => _ensureLoaded(), icon: const Icon(Icons.refresh)),
+					TextButton.icon(onPressed: () => _openEditDialog(), icon: const Icon(Icons.add), label: const Text('Add')),
 				],
 			),
 			body: SafeArea(

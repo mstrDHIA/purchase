@@ -7,6 +7,7 @@ import 'package:flutter_application_1/screens/users/modify_user_screen.dart';
 import 'package:flutter_application_1/l10n/app_localizations.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_application_1/widgets/standard_header.dart';
 
 class UserListPage extends StatefulWidget {
   const UserListPage({super.key});
@@ -31,50 +32,14 @@ class _UserListPageState extends State<UserListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F2F5),
+      appBar: StandardHeader(
+        title: _getLocalizedText(context, 'users_list', "User's List"),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Titre, bouton et refresh
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    _getLocalizedText(context, 'users_list', "User's List"),
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepPurple,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                  ),
-                  onPressed: () {
-                    context.push('/add_user').then((value) {
-                      if(userController.displaySnackBar) {
-                        userController.displaySnackBar = false; // Reset the flag
-                        SnackBar snackBar = SnackBar(
-        backgroundColor: Colors.green,
-        content: Text(_getLocalizedText(context, 'user_added', 'User added successfully.')),
-      );
-                      userController.getUsers();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          snackBar
-                        );
-                        userController.displaySnackBar = false; // Reset the flag
-                      }
-                    });
-                  },
-                  icon: const Icon(Icons.add, color: Colors.white),
-                  label: Text(_getLocalizedText(context, 'add_new_user', "Add New User")),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
             // Barre de recherche et filtres
             Row(
               children: [
@@ -98,6 +63,35 @@ class _UserListPageState extends State<UserListPage> {
                 ),
                 const SizedBox(width: 16),
                 _buildFilterButtons(context),
+                const SizedBox(width: 16),
+                Padding(
+                  padding: const EdgeInsets.only(right: 4.0),
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepPurple,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    ),
+                    onPressed: () {
+                      context.push('/add_user').then((value) {
+                        if (userController.displaySnackBar) {
+                          userController.displaySnackBar = false; // Reset the flag
+                          final snackBar = SnackBar(
+                            backgroundColor: Colors.green,
+                            content: Text(_getLocalizedText(context, 'user_added', 'User added successfully.')),
+                          );
+                          userController.getUsers();
+                          ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                          userController.displaySnackBar = false; // Reset the flag
+                        }
+                      });
+                    },
+                    icon: const Icon(Icons.add, color: Colors.white),
+                    label: Text(_getLocalizedText(context, 'add_new_user', "Add New User")),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 20),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/department_controller.dart';
+import 'package:flutter_application_1/widgets/standard_header.dart';
 // import 'add_department_screen.dart';
 
 /// Department item model used by the screen.
@@ -460,19 +461,8 @@ class _DepartmentListScreenState extends State<DepartmentListScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-        backgroundColor: Colors.deepPurple,
-        elevation: 2,
-        centerTitle: true,
-        actions: [
-          TextButton.icon(
-            onPressed: () => _showEditDialog(DepartmentItem(id: null, name: '')),
-            icon: const Icon(Icons.add, color: Colors.white),
-            label: const Text('Add department', style: TextStyle(color: Colors.white)),
-            style: TextButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 16)),
-          ),
-        ],
+      appBar: StandardHeader(
+        title: widget.title,
       ),
       // floatingActionButton: FloatingActionButton(
       //   onPressed: () => _showEditDialog(DepartmentItem(id: null, name: '')),
@@ -500,33 +490,55 @@ class _DepartmentListScreenState extends State<DepartmentListScreen>
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
-              child: Material(
-                elevation: 2,
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    color: Colors.grey.shade50,
-                  ),
-                  child: TextField(
-                    onChanged: _onSearchChanged,
-                    decoration: InputDecoration(
-                      hintText: 'Search departments...',
-                      hintStyle: TextStyle(color: Colors.grey.shade500),
-                      prefixIcon: Icon(Icons.search, color: Colors.deepPurple.shade300),
-                      suffixIcon: _query.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear),
-                              onPressed: () {
-                                _onSearchChanged('');
-                              },
-                            )
-                          : null,
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Material(
+                      elevation: 2,
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          color: Colors.grey.shade50,
+                        ),
+                        child: TextField(
+                          onChanged: _onSearchChanged,
+                          decoration: InputDecoration(
+                            hintText: 'Search departments...',
+                            hintStyle: TextStyle(color: Colors.grey.shade500),
+                            prefixIcon: Icon(Icons.search, color: Colors.deepPurple.shade300),
+                            suffixIcon: _query.isNotEmpty
+                                ? IconButton(
+                                    icon: const Icon(Icons.clear),
+                                    onPressed: () {
+                                      _onSearchChanged('');
+                                    },
+                                  )
+                                : null,
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                  const SizedBox(width: 12),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 4.0),
+                    child: ElevatedButton.icon(
+                      onPressed: () => _showEditDialog(DepartmentItem(id: null, name: '')),
+                      icon: const Icon(Icons.add, color: Colors.white),
+                      label: const Text('Add department'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.deepPurple,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             if (_query.isNotEmpty)

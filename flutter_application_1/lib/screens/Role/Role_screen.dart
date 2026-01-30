@@ -5,6 +5,7 @@ import 'package:flutter_application_1/screens/Role/add_Role_screen.dart';
 import 'package:flutter_application_1/screens/Role/edit_Role_screen.dart';
 import 'package:flutter_application_1/screens/Role/view_Role_screen.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_application_1/widgets/standard_header.dart';
 
 class RolePage extends StatefulWidget {
   const RolePage({super.key});
@@ -31,64 +32,47 @@ class _RolePageState extends State<RolePage> {
         final error = roleController.error;
         return Scaffold(
           backgroundColor: const Color(0xFFF8F8FB),
+          appBar: StandardHeader(
+            title: 'Roles',
+          ),
           body: SafeArea(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Header
-                      Row(
-                        children: const [
-                          Icon(Icons.assignment_ind_outlined, size: 32, color: Colors.black87),
-                          SizedBox(width: 12),
-                          Text(
-                            'Roles',
-                            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-                          ),
-                          Spacer(),
-                        ],
-                      ),
-                      const SizedBox(height: 18),
-                      Row(
-                        children: [
-                          const Spacer(),
-                          ElevatedButton.icon(
-                            onPressed: () async {
-                              final newRole = await Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (context) => const AddRolePage()),
-                              );
-                              if (newRole != null) {
-                                await roleController.fetchRoles();
-                              }
-                            },
-                            icon: const Icon(Icons.add),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFB7A6F7),
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                              elevation: 0,
-                            ),
-                            label: const Text('Create new role'),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 18),
-                      if (error != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8.0),
-                          child: Text(error, style: const TextStyle(color: Colors.red)),
+                Row(
+                  children: [
+                    const Spacer(),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 8),
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          final newRole = await Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const AddRolePage()),
+                          );
+                          if (newRole != null) {
+                            await roleController.fetchRoles();
+                          }
+                        },
+                        icon: const Icon(Icons.add, color: Colors.white),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFB7A6F7),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                         ),
-                    ],
-                  ),
+                        label: const Text('Create new role'),
+                      ),
+                    ),
+                  ],
                 ),
+                const SizedBox(height: 12),
+                if (error != null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 8),
+                    child: Text(error, style: const TextStyle(color: Colors.red)),
+                  ),
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 40),
