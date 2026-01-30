@@ -3,6 +3,7 @@ import 'package:flutter/widgets.dart' hide Border, BorderStyle;
 import 'package:intl/intl.dart';
 import 'package:flutter_application_1/models/purchase_order.dart';
 import 'package:flutter_application_1/network/supplier_network.dart';
+import 'package:flutter_application_1/network/user_network.dart';
 
 class ExcelGenerator {
   static Future<List<int>?> generatePurchaseOrderExcel(
@@ -94,8 +95,8 @@ class ExcelGenerator {
         'role': 'Role',
         'emetteur': 'Emetteur',
         'resp_tech': 'Resp. Technique',
-        'dir_prod': 'Directeur Production',
         'administration': 'Administration',
+        'comptabilite': 'Comptabilité',
         'name': 'Nom',
       },
       'en': {
@@ -135,8 +136,8 @@ class ExcelGenerator {
         'role': 'Role',
         'emetteur': 'Issuer',
         'resp_tech': 'Tech. Resp.',
-        'dir_prod': 'Production Manager',
         'administration': 'Administration',
+        'comptabilite': 'Accounting',
         'name': 'Name',
       }
     };
@@ -317,19 +318,50 @@ class ExcelGenerator {
     row++; // Empty row
 
     // ===== APPROVALS TABLE =====
+    // Resolve accountant username automatically when missing: prefer provided `accountantUsername`, then `userIdToUsername` map, then API lookup of `order.approvedBy` only if the user has role_id == 6
+    try {
+      if ((accountantUsername == null || accountantUsername.isEmpty) && order.approvedBy != null) {
+        final id = order.approvedBy is int ? order.approvedBy as int : int.tryParse(order.approvedBy.toString());
+        if (id != null) {
+          // Try lookup in provided map cache first
+          try {
+            if (userIdToUsername != null && userIdToUsername.containsKey(id)) {
+              accountantUsername = userIdToUsername[id];
+            }
+          } catch (_) {}
+
+          // If still missing, fetch via API and ensure role is accountant (role_id == 6)
+          if (accountantUsername == null || accountantUsername!.isEmpty) {
+            try {
+              final u = await UserNetwork().viewUser(id);
+              if (u != null && (u.role_id == 6)) {
+                final name = ((u.firstName ?? '') + ' ' + (u.lastName ?? '')).trim();
+                accountantUsername = name.isNotEmpty ? (name + (u.username != null && u.username!.isNotEmpty ? ' (' + u.username! + ')' : '')) : (u.username ?? u.id?.toString());
+              }
+            } catch (_) {}
+          }
+        }
+      }
+    } catch (_) {}
+    // If accountant found and accountantApprovalDate is empty, use order.updatedAt (approval timestamp) as fallback
+    try {
+      if (accountantApprovalDate == null && accountantUsername != null && accountantUsername!.isNotEmpty) {
+        accountantApprovalDate = order.updatedAt;
+      }
+    } catch (_) {}
     // Place approvals table directly after the products/total (original location)
     // keep one empty row then the approval headers/names/dates
-    final approvalHeaders = [t('role'), t('emetteur'), t('resp_tech'), t('dir_prod'), t('administration'), t('service_purchase')];
+    final approvalHeaders = [t('role'), t('emetteur'), t('resp_tech'), t('service_purchase'), t('comptabilite')];
     for (int col = 0; col < approvalHeaders.length; col++) {
       final cell = _sc(col, row);
       cell.value = approvalHeaders[col];
       cell.cellStyle = _borderedCellStyle(bold: true, bgHex: '#D3D3D3');
     }
-    // Keep each approval header in its own column so all six columns have equal width.
+    // Keep each approval header in its own column so all five columns have equal width.
     row++;
 
     // Names
-    final names = [t('name'), requesterUsername ?? '', approverUsername ?? '', '', creatorUsername ?? '', ''];
+    final names = [t('name'), requesterUsername ?? '', approverUsername ?? '', creatorUsername ?? '', accountantUsername ?? ''];
     for (int col = 0; col < names.length; col++) {
       final ncell = _sc(col, row);
       ncell.value = names[col];
@@ -339,7 +371,7 @@ class ExcelGenerator {
     row++;
 
     // Dates
-    final dates = ['Date', formatDate(order.createdAt), formatDate(prApprovalDate), '', formatDate(creatorDate ?? order.createdAt), formatDate(accountantApprovalDate)];
+    final dates = ['Date', formatDate(order.createdAt), formatDate(prApprovalDate), formatDate(creatorDate ?? order.createdAt), formatDate(accountantApprovalDate)];
     for (int col = 0; col < dates.length; col++) {
       final dcell = _sc(col, row);
       dcell.value = dates[col];

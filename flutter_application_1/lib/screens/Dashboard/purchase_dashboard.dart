@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'dart:async';
+import 'package:excel/excel.dart' as ex;
+import 'package:open_file/open_file.dart';
 import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
 import 'package:flutter_application_1/controllers/supplier_controller.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
@@ -9,6 +11,7 @@ import 'package:flutter_application_1/controllers/reset_notifier.dart';
 import 'package:flutter_application_1/models/user_model.dart';
 import '../../l10n/app_localizations.dart';
 import 'package:flutter_application_1/widgets/standard_header.dart';
+import 'package:flutter_application_1/utils/file_download.dart' show saveFile;
 
 class PurchaseDashboardPage extends StatefulWidget {
   const PurchaseDashboardPage({super.key});
@@ -694,7 +697,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                 ),
                 const SizedBox(width: 8),
 
-                // Reset button
+                // Export button (exports current filtered PO list)
                 SizedBox(
                   height: 40,
                   child: ElevatedButton(
@@ -719,6 +722,44 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                     child: const Icon(Icons.close, size: 18),
                   ),
                 ),
+                SizedBox(
+                  height: 40,
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.file_download, size: 18),
+                    label: const Text('Export Excel'),
+                    onPressed: () async {
+                      final ordersToExport = filteredOrders;
+                      if (ordersToExport.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No orders to export for current filters')));
+                        return;
+                      }
+
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: Text('Export ${ordersToExport.length} orders?'),
+                          content: Text('This will export the ${ordersToExport.length} purchase orders currently shown on the dashboard.'),
+                          actions: [
+                            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
+                            ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Export')),
+                          ],
+                        ),
+                      );
+
+                      if (confirm == true) {
+                        await _exportOrdersToExcel(ordersToExport);
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green[700],
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                    ),
+                  ),
+                ),
+
+                // Reset button
+                
               ],
             ),
           ),
@@ -1056,6 +1097,126 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
         ],
       ),
     );
+  }
+
+  Future<void> _exportOrdersToExcel(List orders) async {
+    // Build excel file with same columns as the datatable
+    try {
+      if (orders.isEmpty) {
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No orders to export for the selected range')));
+        return;
+      }
+
+      final excel = ex.Excel.createExcel();
+      final sheet = excel['PO Dashboard'];
+
+      // Header row (styled)
+      final headerStyle = ex.CellStyle(bold: true, backgroundColorHex: "#6A1B9A", fontColorHex: "#FFFFFF");
+      final idCellStyle = ex.CellStyle(bold: true, backgroundColorHex: "#EDE7F6", fontColorHex: "#4A148C");
+      final titleCellStyle = ex.CellStyle(fontColorHex: "#1E88E5");
+
+      sheet.appendRow([
+        'ID',
+        'Title',
+        'Product',
+        'Supplier',
+        'Quantity',
+        'Unit Price',
+        'Total Amount',
+        'Date',
+        'Requester',
+        'Status',
+      ]);
+
+      // Apply header style and set column widths for readability
+      for (var c = 0; c < 10; c++) {
+        final cell = sheet.cell(ex.CellIndex.indexByColumnRow(columnIndex: c, rowIndex: 0));
+        cell.cellStyle = headerStyle;
+      }
+      // Optionally override Title header color to match titleCellStyle (keep white text readable)
+      sheet.cell(ex.CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: 0)).cellStyle = headerStyle;
+
+      // Set some reasonable column widths
+      sheet.setColWidth(0, 8); // ID
+      sheet.setColWidth(1, 30); // Title
+      sheet.setColWidth(2, 30); // Product
+      sheet.setColWidth(3, 20); // Supplier
+      sheet.setColWidth(4, 10); // Quantity
+      sheet.setColWidth(5, 12); // Unit Price
+      sheet.setColWidth(6, 14); // Total Amount
+      sheet.setColWidth(7, 12); // Date
+      sheet.setColWidth(8, 18); // Requester
+      sheet.setColWidth(9, 12); // Status
+
+      final orderStyle = ex.CellStyle(bold: true, backgroundColorHex: "#F2F2F2");
+
+      for (var order in orders) {
+        final products = order.products;
+        final orderDate = order.startDate != null ? DateFormat('yyyy-MM-dd').format(order.startDate!) : '-';
+
+        if (products == null || products.isEmpty) {
+          // Single row when no products
+          sheet.appendRow([
+            order.id?.toString() ?? '-',
+            (order.title?.toString() ?? '-'),
+            '-', // Product
+            '-', // Supplier
+            0, // Quantity
+            0, // Unit Price
+            0.0, // Total Amount
+            orderDate,
+            _getRequesterName(order, context.read<UserController>()),
+            order.status ?? '-',
+          ]);
+        } else {
+          for (var product in products) {
+            final unitPrice = product.unitPrice ?? product.price ?? 0;
+            final quantity = product.quantity ?? 0;
+            final totalAmount = ((quantity is int ? quantity.toDouble() : quantity as double) * (unitPrice is int ? unitPrice.toDouble() : unitPrice as double));
+            // Each product line repeats the PO ID and Title (previous behavior)
+            sheet.appendRow([
+              order.id?.toString() ?? '-',
+              (order.title?.toString() ?? '-'),
+              product.product?.toString() ?? '-',
+              product.supplier?.toString() ?? '-',
+              quantity, // numeric
+              unitPrice, // numeric
+              totalAmount, // numeric
+              orderDate,
+              _getRequesterName(order, context.read<UserController>()),
+              order.status ?? '-',
+            ]);
+          }
+        }
+      }
+
+      final fileBytes = excel.encode();
+      if (fileBytes == null) throw Exception('Failed to encode Excel file');
+
+      final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+      final fileName = 'PO-Export-$timestamp.xlsx';
+
+      // Use platform-specific saver (web triggers download, others save to Documents)
+      final saved = await saveFile(fileBytes, fileName);
+
+      if (mounted) {
+        if (saved == 'downloaded') {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Downloaded $fileName')));
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Exported to $saved'),
+            action: SnackBarAction(
+              label: 'Open',
+              onPressed: () async {
+                await OpenFile.open(saved);
+              },
+            ),
+          ));
+        }
+      }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Export failed: $e')));
+    }
   }
 
   void _resetToInitial() {

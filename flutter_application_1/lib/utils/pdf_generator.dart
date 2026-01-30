@@ -611,9 +611,8 @@ class PdfGenerator {
                   pw.Padding(padding: pw.EdgeInsets.all(6), child: pw.Text('', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9))),
                   pw.Padding(padding: pw.EdgeInsets.all(6), child: pw.Text('Emetteur', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9), textAlign: pw.TextAlign.center)),
                   pw.Padding(padding: pw.EdgeInsets.all(6), child: pw.Text('Resp. Technique', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9), textAlign: pw.TextAlign.center)),
-                  pw.Padding(padding: pw.EdgeInsets.all(6), child: pw.Text('Directeur Production', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9), textAlign: pw.TextAlign.center)),
-                  pw.Padding(padding: pw.EdgeInsets.all(6), child: pw.Text('Administration', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9), textAlign: pw.TextAlign.center)),
                   pw.Padding(padding: pw.EdgeInsets.all(6), child: pw.Text('Service Achat', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9), textAlign: pw.TextAlign.center)),
+                  pw.Padding(padding: pw.EdgeInsets.all(6), child: pw.Text('Comptabilité', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9), textAlign: pw.TextAlign.center)),
                 ],
               ),
 
@@ -625,11 +624,9 @@ class PdfGenerator {
                   pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(displayUser(name: null, username: effectiveRequesterUsername, fallbackId: null), style: pw.TextStyle(fontSize: 9))),
                   // Resp. Technique: prefer PR approver username when available
                   pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(displayUser(name: null, username: effectiveApproverUsername, fallbackId: null), style: pw.TextStyle(fontSize: 9))),
-                  // Directeur Production -> intentionally left blank per request
-                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text('-', style: pw.TextStyle(fontSize: 9))),
-                  // Administration -> user who created the PO (supervisor) — only show username when available
+                  // Service Achat: user who created the PO (supervisor) — only show username when available
                   pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(displayUser(name: null, username: creatorUsername, fallbackId: null) , style: pw.TextStyle(fontSize: 9))),
-                  // Service Achat -> always show username for approved_by_user
+                  // Comptabilité -> show Service Achat username (approvedBy) by default
                   pw.Padding(
                     padding: pw.EdgeInsets.all(10),
                     child: pw.Text(
@@ -639,7 +636,6 @@ class PdfGenerator {
                         fallbackId: order.approvedBy != null ? order.approvedBy.toString() : '-',
                       ),
                       style: pw.TextStyle(fontSize: 9),
-                      
                     ),
                   ),
                 ],
@@ -653,11 +649,9 @@ class PdfGenerator {
                   pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(formatDate(order.createdAt), style: pw.TextStyle(fontSize: 9))),
                   // PR approval date (Resp. Technique)
                   pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(effectivePrApprovalDate != null ? formatDate(effectivePrApprovalDate) : '-', style: pw.TextStyle(fontSize: 9))),
-                  // Directeur Production date intentionally left blank per request
-                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text('-', style: pw.TextStyle(fontSize: 9))),
-                  // Administration date (PO creation date or provided creatorDate)
+                  // Service Achat date (PO creation or provided creatorDate)
                   pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(creatorDate != null ? formatDate(creatorDate) : formatDate(order.createdAt), style: pw.TextStyle(fontSize: 9))),
-                  // Service Achat approval date
+                  // Comptabilité approval date
                   pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(accountantApprovalDate != null ? formatDate(accountantApprovalDate) : '-', style: pw.TextStyle(fontSize: 9))),
                 ],
               ),

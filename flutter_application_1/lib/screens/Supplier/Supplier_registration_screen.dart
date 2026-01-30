@@ -413,6 +413,15 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                   ? null
                   : () async {
                       if (formKey.currentState!.validate()) {
+                        // Prevent adding a supplier with an existing name (case-insensitive)
+                        final newName = nameCtrl.text.trim();
+                        if (controller.suppliers.any((s) => (s.name ?? '').toLowerCase() == newName.toLowerCase())) {
+                          setDialogState(() {
+                            fieldErrors = {...fieldErrors, 'name': 'Supplier already exists'};
+                          });
+                          return;
+                        }
+
                         setDialogState(() {
                           isSubmitting = true;
                           fieldErrors = {};
@@ -592,6 +601,16 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                         );
                         return;
                       }
+
+                      // Prevent renaming to an existing supplier name (case-insensitive), excluding current supplier
+                      final newName = nameCtrl.text.trim();
+                      if (supplier != null && controller.suppliers.any((s) => s.id != supplier.id && (s.name ?? '').toLowerCase() == newName.toLowerCase())) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Supplier with this name already exists')),
+                        );
+                        return;
+                      }
+
                       setDialogState(() => isSubmitting = true);
                       try {
                         if (supplier != null && index != null) {
