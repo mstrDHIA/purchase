@@ -98,19 +98,23 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
   String _getRequesterName(dynamic order, UserController userController) {
     // Prefer explicit requester username if provided by API
     try {
-      final reqName = order.requestedByUsername;
-      if (reqName != null && reqName.toString().isNotEmpty) return reqName.toString();
+      final reqName = (order.requestedByUsername ?? '').toString().trim();
+      if (reqName.isNotEmpty) return reqName;
     } catch (_) {}
+
     // Fallback: try to resolve from loaded users by id
     try {
       final uid = order.requestedByUser;
       if (uid != null) {
+        // Attempt to find a matching user; if username is empty, return placeholder instead of raw id
         final found = userController.users.firstWhere(
           (u) => u.id == uid,
           orElse: () => User(id: uid, username: ''),
         );
-        if (found.username != null && found.username!.isNotEmpty) return found.username!;
-        return uid.toString();
+        final username = (found.username ?? '').toString().trim();
+        if (username.isNotEmpty) return username;
+        // If users are not yet resolved, show a friendly placeholder
+        return '-';
       }
     } catch (_) {}
     return '-';
@@ -419,7 +423,8 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
   Widget build(BuildContext context) {
     final poController = context.watch<PurchaseOrderController>();
     final supplierController = context.watch<SupplierController>();
-    final userController = context.read<UserController>();
+    // Use watch so the UI rebuilds when the users list is loaded/updated
+    final userController = context.watch<UserController>();
 
     if (!_initialLoadDone && poController.orders.isEmpty && !poController.isLoading) {
       _initialLoadDone = true;

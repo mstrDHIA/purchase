@@ -209,6 +209,7 @@ class PdfGenerator {
     String? prRequesterUsername;
     String? prApproverUsername;
     DateTime? fetchedPrApprovalDate;
+    DateTime? fetchedPrStartDate;
     // If the PO is linked to a Purchase Request, always try to fetch it and prefer its requester/approver
     // so the generated PO PDF matches the PR PDF.
     try {
@@ -239,6 +240,46 @@ class PdfGenerator {
             
 
             fetchedPrApprovalDate = pr.updatedAt;
+            // Capture PR start_date for Emetteur date cell
+            fetchedPrStartDate = pr.startDate;
+
+            // If PR didn't provide usernames, try to resolve them using User API by id
+            try {
+              if ((prRequesterUsername ?? '').trim().isEmpty && pr.requestedBy != null) {
+                try {
+                  final fetchedReqUser = await UserNetwork().viewUser(pr.requestedBy!);
+                  if (fetchedReqUser != null) {
+                    final u = (fetchedReqUser.username ?? '').toString().trim();
+                    prRequesterUsername = u.isNotEmpty ? u : (((fetchedReqUser.firstName ?? '') + ' ' + (fetchedReqUser.lastName ?? '')).trim());
+                    if (prRequesterUsername.isEmpty) {
+                      prRequesterUsername = fetchedReqUser.id?.toString();
+                    }
+                    print('[PDF DEBUG] Resolved PR requester via UserNetwork: $prRequesterUsername');
+                  }
+                } catch (e) {
+                  print('[PDF DEBUG] Error resolving PR requester user: $e');
+                }
+              }
+            } catch (_) {}
+
+            try {
+              if ((prApproverUsername ?? '').trim().isEmpty && pr.approvedBy != null) {
+                try {
+                  final fetchedApprUser = await UserNetwork().viewUser(pr.approvedBy!);
+                  if (fetchedApprUser != null) {
+                    final u = (fetchedApprUser.username ?? '').toString().trim();
+                    prApproverUsername = u.isNotEmpty ? u : (((fetchedApprUser.firstName ?? '') + ' ' + (fetchedApprUser.lastName ?? '')).trim());
+                    if (prApproverUsername.isEmpty) {
+                      prApproverUsername = fetchedApprUser.id?.toString();
+                    }
+                    print('[PDF DEBUG] Resolved PR approver via UserNetwork: $prApproverUsername');
+                  }
+                } catch (e) {
+                  print('[PDF DEBUG] Error resolving PR approver user: $e');
+                }
+              }
+            } catch (_) {}
+
             print('Fetched PR #$prId: requester=$prRequesterUsername, approver=$prApproverUsername');
           }
         } catch (_) {
@@ -645,8 +686,8 @@ class PdfGenerator {
               pw.TableRow(
                 children: [
                   pw.Padding(padding: pw.EdgeInsets.all(6), child: pw.Text('Date', style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 9))),
-                  // Emetteur date (PO creation date)
-                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(formatDate(order.createdAt), style: pw.TextStyle(fontSize: 9))),
+                  // Emetteur date (prefer PR start_date, fallback to order.startDate or order.createdAt)
+                  pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(formatDate(fetchedPrStartDate ?? order.startDate ?? order.createdAt), style: pw.TextStyle(fontSize: 9))),
                   // PR approval date (Resp. Technique)
                   pw.Padding(padding: pw.EdgeInsets.all(10), child: pw.Text(effectivePrApprovalDate != null ? formatDate(effectivePrApprovalDate) : '-', style: pw.TextStyle(fontSize: 9))),
                   // Service Achat date (PO creation or provided creatorDate)

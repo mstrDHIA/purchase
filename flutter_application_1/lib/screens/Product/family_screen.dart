@@ -7,6 +7,7 @@ import '../../network/product_network.dart';
 import '../../controllers/product_controller.dart';
 import '../../models/category.dart';
 import '../../controllers/reset_notifier.dart';
+import 'package:flutter_application_1/widgets/standard_header.dart';
 
 class FamiliesPage extends StatefulWidget {
   const FamiliesPage({Key? key}) : super(key: key);
@@ -376,23 +377,10 @@ class _FamiliesPageState extends State<FamiliesPage> {
     final displayed = filtered.sublist(startIndex, endIndex);
 
     return Scaffold(
+      appBar: StandardHeader(title: AppLocalizations.of(context)!.productFamilies),
+      backgroundColor: const Color(0xFFF7F4FA),
       body: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            color: Colors.white,
-            child: Row(
-              children: [
-                // ...existing code...
-                Expanded(
-                  child: Center(
-                    child: Text(AppLocalizations.of(context)!.productFamilies, style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
-                  ),
-                ),
-                const SizedBox(width: 48),
-              ],
-            ),
-          ),
           const SizedBox(height: 12),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),

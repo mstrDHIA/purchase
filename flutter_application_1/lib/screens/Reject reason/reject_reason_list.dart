@@ -155,10 +155,6 @@ class _RejectReasonListPageState extends State<RejectReasonListPage> {
 		return Scaffold(
 			appBar: StandardHeader(
 				title: 'Reject Reasons',
-				actions: [
-					IconButton(onPressed: () => _ensureLoaded(), icon: const Icon(Icons.refresh)),
-					TextButton.icon(onPressed: () => _openEditDialog(), icon: const Icon(Icons.add), label: const Text('Add')),
-				],
 			),
 			body: SafeArea(
 				child: RefreshIndicator(
@@ -183,6 +179,11 @@ class _RejectReasonListPageState extends State<RejectReasonListPage> {
 											),
 										),
 										const SizedBox(width: 12),
+								IconButton(
+									onPressed: () => _ensureLoaded(),
+									icon: const Icon(Icons.refresh, color: Color(0xFF6F4DBF)),
+									tooltip: 'Refresh',
+								),
 										ElevatedButton.icon(
 											icon: const Icon(Icons.add),
 											label: const Text('Add'),
