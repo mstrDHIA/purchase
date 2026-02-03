@@ -621,15 +621,20 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
           final allRequests = purchaseRequestController.requests;
           
           var filteredRequests = allRequests;
-          // Filter archived requests
-          if (_showArchived) {
-            filteredRequests = filteredRequests.where((req) => (req.isArchived ?? false)).toList();
+          // Filter archived requests — admins (role id 1) see all requests regardless of archived flag
+          final currentUser = Provider.of<UserController>(context, listen: false).currentUser;
+          final isAdmin = currentUser.role?.id == 1;
+          if (!isAdmin) {
+            if (_showArchived) {
+              filteredRequests = filteredRequests.where((req) => (req.isArchived ?? false)).toList();
+            } else {
+              filteredRequests = filteredRequests.where((req) => !(req.isArchived ?? false)).toList();
+            }
           } else {
-            filteredRequests = filteredRequests.where((req) => !(req.isArchived ?? false)).toList();
+            // Admin: show all (both archived and non-archived)
           }
           
 // Role 4 (Supervisor) only sees approved PRs (not converted or pending)
-      final currentUser = Provider.of<UserController>(context, listen: false).currentUser;
       if (currentUser.role?.id == 4) {
         print('🔍 DEBUG Role 4 - Total PRs before filter: ${filteredRequests.length}');
         for (final req in filteredRequests) {

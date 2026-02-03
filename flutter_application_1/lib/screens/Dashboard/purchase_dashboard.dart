@@ -1138,9 +1138,9 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
         final cell = sheet.cell(ex.CellIndex.indexByColumnRow(columnIndex: c, rowIndex: 0));
         cell.cellStyle = headerStyle;
       }
-      // Optionally override Title header color to match titleCellStyle (keep white text readable)
-      sheet.cell(ex.CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: 0)).cellStyle = headerStyle;
-
+      // Override ID and Title header styles for improved readability
+      sheet.cell(ex.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0)).cellStyle = idCellStyle;
+      sheet.cell(ex.CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: 0)).cellStyle = titleCellStyle;
       // Set some reasonable column widths
       sheet.setColWidth(0, 8); // ID
       sheet.setColWidth(1, 30); // Title
@@ -1153,7 +1153,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
       sheet.setColWidth(8, 18); // Requester
       sheet.setColWidth(9, 12); // Status
 
-      final orderStyle = ex.CellStyle(bold: true, backgroundColorHex: "#F2F2F2");
+
 
       for (var order in orders) {
         final products = order.products;

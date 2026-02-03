@@ -331,7 +331,7 @@ class ExcelGenerator {
           } catch (_) {}
 
           // If still missing, fetch via API and ensure role is accountant (role_id == 6)
-          if (accountantUsername == null || accountantUsername!.isEmpty) {
+          if (accountantUsername == null || accountantUsername.isEmpty) {
             try {
               final u = await UserNetwork().viewUser(id);
               if (u != null && (u.role_id == 6)) {
@@ -345,7 +345,7 @@ class ExcelGenerator {
     } catch (_) {}
     // If accountant found and accountantApprovalDate is empty, use order.updatedAt (approval timestamp) as fallback
     try {
-      if (accountantApprovalDate == null && accountantUsername != null && accountantUsername!.isNotEmpty) {
+      if (accountantApprovalDate == null && accountantUsername != null && accountantUsername.isNotEmpty) {
         accountantApprovalDate = order.updatedAt;
       }
     } catch (_) {}

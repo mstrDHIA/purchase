@@ -17,6 +17,7 @@ class ProductLine {
   String? supplier;
   int quantity;
   double unitPrice;
+  String currency; // e.g. 'Dollar'
 
   ProductLine({
     this.product,
@@ -26,6 +27,7 @@ class ProductLine {
     this.supplier,
     this.quantity = 1,
     this.unitPrice = 12.33,
+    this.currency = 'Dollar',
   });
 
   Map<String, dynamic> toJson() {
@@ -37,9 +39,10 @@ class ProductLine {
       'supplier': supplier,
       'quantity': quantity,
       'unit_price': unitPrice,
+      'currency': currency,
     };
   }
-}
+} 
 
 class EditPurchaseOrder extends StatefulWidget {
   final Map<String, dynamic> initialOrder;
@@ -62,6 +65,7 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
   int? _approvedBy;      // Now int
   DateTime? _updatedAt;
   List<ProductLine> productLines = [ProductLine()];
+  // Product cards shown as static stacked list (all information visible)
   // Order-level Supplier Delivery date
   final TextEditingController supplierDeliveryDateController = TextEditingController();
   // Multi-currency support
@@ -197,6 +201,11 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
                 : (p['unit_price'] is int)
                     ? (p['unit_price'] as int).toDouble()
                     : double.tryParse(p['unit_price']?.toString() ?? '') ?? 0.0,
+            currency: (() {
+              final c = p['currency'] ?? p['currency_code'] ?? initial['currency'];
+              if (c == null) return _currency;
+              return _codeToCurrency[c.toString()] ?? c.toString();
+            })(),
           );
         }).toList();
         // no-op: product brands are kept in productLines; supplier delivery date is order-level
@@ -334,91 +343,68 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F6FF),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Top bar with back button and centered title
-              Stack(
-                alignment: Alignment.center,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Fixed header: back button + centered title + ID badge (all immobile)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              color: Colors.transparent,
+              child: Row(
                 children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: IconButton(
-                      icon: const Icon(Icons.arrow_back, color: Colors.black87),
-                      onPressed: () => Navigator.of(context).pop(),
-                      tooltip: AppLocalizations.of(context)!.cancel,
-                    ),
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.black87),
+                    onPressed: () => Navigator.of(context).pop(),
+                    tooltip: AppLocalizations.of(context)!.cancel,
                   ),
-                  Center(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          AppLocalizations.of(context)!.purchaseOrder,
-                          style: const TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        if (_id != null) ...[
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF3F2F5),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              'ID: ${_id}',
-                              style: const TextStyle(fontSize: 12, color: Colors.black87),
+                  Expanded(
+                    child: Center(
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            AppLocalizations.of(context)!.purchaseOrder,
+                            style: const TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87,
                             ),
                           ),
+                          if (_id != null) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF3F2F5),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                'ID: ${_id}',
+                                style: const TextStyle(fontSize: 12, color: Colors.black87),
+                              ),
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
                   ),
+                  // balance spacing so title stays centered
+                  const SizedBox(width: 48),
                 ],
               ),
-              const SizedBox(height: 32),
-              const SizedBox(height: 32),
+            ),
+            // Scrollable content below the fixed header
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 32),
               // Supplier dropdown always visible
               Row(
                 children: [
-                  // Currency selector
-                  SizedBox(
-                    width: 180,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(AppLocalizations.of(context)!.currency),
-                        const SizedBox(height: 4),
-                        DropdownButtonFormField<String>(
-                          value: _currency,
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: Colors.white,
-                            enabledBorder: OutlineInputBorder(
-                              borderSide: const BorderSide(color: Colors.black87),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderSide: const BorderSide(color: Colors.deepPurple),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          ),
-                          items: _currencySymbols.keys.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-                          onChanged: (val) => setState(() => _currency = val ?? 'Dollar'),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 24),
                   Expanded(
-                    flex: 2,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -482,11 +468,41 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
                   child: Text(_familiesError!, style: const TextStyle(color: Colors.red)),
                 ),
               ],
-              ...productLines.asMap().entries.map((entry) {
-                int index = entry.key;
-                ProductLine product = entry.value;
-                return _buildProductLine(product, index);
-              }),
+              // Product cards as stacked list (all information visible, fully expanded)
+              Column(
+                children: List.generate(productLines.length, (index) {
+                  final product = productLines[index];
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 6.0),
+                    child: Card(
+                      margin: const EdgeInsets.symmetric(vertical: 0),
+                      elevation: 2,
+                      color: Colors.white.withOpacity(0.98),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: BorderSide(color: Colors.grey.shade300, width: 2),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text('Product ${index + 1} / ${productLines.length}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                // static header
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            _buildProductLine(product, index),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
               Align(
                 alignment: Alignment.centerRight,
                 child: ElevatedButton.icon(
@@ -496,9 +512,11 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
                     backgroundColor: Colors.deepPurple,
                     foregroundColor: Colors.white,
                   ),
-                  onPressed: () => setState(() {
-                    productLines.add(ProductLine());
-                  }),
+                  onPressed: () {
+                    setState(() {
+                      productLines.add(ProductLine(currency: _currency));
+                    });
+                  },
                 ),
               ),
               const SizedBox(height: 24),
@@ -562,9 +580,20 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
                         TextFormField(
                           controller: dueDateController,
                           readOnly: true,
-                          decoration: const InputDecoration(
-                            border: OutlineInputBorder(),
-                            suffixIcon: Icon(Icons.calendar_today),
+                          decoration: InputDecoration(
+                            border: const OutlineInputBorder(),
+                            filled: true,
+                            fillColor: Colors.white,
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Colors.black87),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: const BorderSide(color: Colors.deepPurple),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            suffixIcon: const Icon(Icons.calendar_today),
                           ),
                           onTap: () async {
                             DateTime? pickedDate = await showDatePicker(
@@ -625,47 +654,57 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
               ],
               const SizedBox(height: 32),
             ],
+          ), // end inner Column
+        ), // end SingleChildScrollView
+      ), // end Expanded
+    ], // end outer Column children
+  ), // end outer Column
+), // end SafeArea
+bottomNavigationBar: Container(
+  decoration: BoxDecoration(
+    color: Colors.white,
+    border: Border(top: BorderSide(color: Colors.grey.shade300)),
+  ),
+  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+  child: SafeArea(
+    top: false,
+    child: Row(
+      children: [
+        Text(
+          'Total: ${_currencySymbols[productLines.isNotEmpty ? productLines.first.currency : _currency]}${totalPrice.toStringAsFixed(2)}',
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.indigo),
+        ),
+        const Spacer(),
+        ElevatedButton(
+          onPressed: _isSaving ? null : _saveOrder,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.deepPurple,
+            minimumSize: const Size(120, 44),
           ),
+          child: _isSaving
+              ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+              : const Text('Save', style: TextStyle(color: Colors.white)),
         ),
-      ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border(top: BorderSide(color: Colors.grey.shade300)),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        child: SafeArea(
-          top: false,
-          child: Row(
-            children: [
-              Text(
-                'Total: ${_currencySymbols[_currency]}${totalPrice.toStringAsFixed(2)}',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.indigo),
-              ),
-              const Spacer(),
-              ElevatedButton(
-                onPressed: _isSaving ? null : _saveOrder,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.deepPurple,
-                  minimumSize: const Size(120, 44),
-                ),
-                child: _isSaving
-                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : const Text('Save', style: TextStyle(color: Colors.white)),
-              ),
-              const SizedBox(width: 12),
-              OutlinedButton(
-                onPressed: () => Navigator.of(context).pop(),
-                style: OutlinedButton.styleFrom(
-                  minimumSize: const Size(120, 44),
-                ),
-                child: const Text('Cancel'),
-              ),
-            ],
+        const SizedBox(width: 12),
+        OutlinedButton(
+          onPressed: () => Navigator.of(context).pop(),
+          style: OutlinedButton.styleFrom(
+            minimumSize: const Size(120, 44),
           ),
+          child: const Text('Cancel'),
         ),
-      ),
-      );
+      ],
+    ),
+  ),
+),
+);
+  }
+
+  void _removeProductAt(int index) {
+    if (index < 0 || index >= productLines.length) return;
+    setState(() {
+      productLines.removeAt(index);
+    });
   }
 
   Future<void> _saveOrder() async {
@@ -758,6 +797,7 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
           'quantity': p.quantity,
           'unit_price': p.unitPrice,
           'supplier': prodSupplierObj,
+          'currency': _currencyCodes[p.currency] ?? p.currency,
         };
       }).toList();
       // Construction du body attendu par le backend
@@ -866,10 +906,13 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Column(
         children: [
-          // First row: Family | Subfamily
+          // Single row: Family | Subfamily | Product | Quantity (web-friendly)
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Family
               Expanded(
+                flex: 2,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -880,14 +923,23 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
                         : (dynamicProductFamilies.isEmpty)
                             ? TextFormField(
                                 initialValue: product.family,
-                                decoration: const InputDecoration(
+                                decoration: InputDecoration(
                                   hintText: 'Family',
-                                  border: OutlineInputBorder(),
+                                  filled: true,
+                                  fillColor: Colors.white,
+                                  enabledBorder: OutlineInputBorder(
+                                    borderSide: const BorderSide(color: Colors.black87),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderSide: const BorderSide(color: Colors.deepPurple),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                                 ),
                                 onChanged: (val) => setState(() => product.family = val),
                               )
                             : DropdownButtonFormField<String>(
-                                // ensure current value is present in the items so it's displayed
                                 value: (product.family != null && dynamicProductFamilies.keys.contains(product.family)) ? product.family : (product.family != null ? product.family : null),
                                 items: () {
                                   final list = <String>[];
@@ -899,7 +951,6 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
                                 }(),
                                 onChanged: (val) => setState(() {
                                   product.family = val;
-                                  // default subFamily to first available when family changes
                                   final subs = dynamicProductFamilies[val] ?? [];
                                   product.subFamily = subs.isNotEmpty ? subs.first : null;
                                 }),
@@ -921,7 +972,9 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
                 ),
               ),
               const SizedBox(width: 12),
+              // Subfamily
               Expanded(
+                flex: 2,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -955,24 +1008,29 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
                           )
                         : TextFormField(
                             initialValue: product.subFamily,
-                            decoration: const InputDecoration(
+                            decoration: InputDecoration(
                               hintText: 'Optional subfamily',
-                              border: OutlineInputBorder(),
+                              filled: true,
+                              fillColor: Colors.white,
+                              enabledBorder: OutlineInputBorder(
+                                borderSide: const BorderSide(color: Colors.black87),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderSide: const BorderSide(color: Colors.deepPurple),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                             ),
                             onChanged: (val) => setState(() => product.subFamily = val),
                           ),
                   ],
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          // Second row: Product (wide) | Quantity (small)
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+              const SizedBox(width: 12),
+              // Product
               Expanded(
-                flex: 4,
+                flex: 3,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -999,8 +1057,9 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
                 ),
               ),
               const SizedBox(width: 12),
+              // Quantity (fixed width)
               SizedBox(
-                width: 120,
+                width: 160,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -1027,14 +1086,19 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
                   ],
                 ),
               ),
+              // Remove button
               if (productLines.length > 1)
-                IconButton(
-                  icon: const Icon(Icons.remove_circle, color: Colors.red),
-                  onPressed: () => setState(() => productLines.removeAt(index)),
-                  tooltip: 'Remove product',
+                Padding(
+                  padding: const EdgeInsets.only(left: 8.0),
+                  child: IconButton(
+                    icon: const Icon(Icons.remove_circle, color: Colors.red),
+                    onPressed: () => _removeProductAt(index),
+                    tooltip: 'Remove product',
+                  ),
                 ),
             ],
           ),
+          const SizedBox(height: 12),
           const SizedBox(height: 12),
           Row(
             children: [
@@ -1122,16 +1186,47 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
           const SizedBox(height: 12),
           Row(
             children: [
+              SizedBox(
+                width: 160, // agrandi de 120 -> 160
+                child: DropdownButtonFormField<String>(
+                  value: product.currency,
+                  items: _currencySymbols.keys.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
+                  onChanged: (val) => setState(() => product.currency = val ?? _currency),
+                  decoration: InputDecoration(
+                    filled: true,
+                    fillColor: Colors.white,
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(color: Colors.black87),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(color: Colors.deepPurple),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  ),
+                  dropdownColor: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 12),
               Expanded(
-                flex: 3,
+                flex: 2, // réduit de 3 -> 2 pour diminuer le champ Unit Price
                 child: TextFormField(
-                  //  initialValue: product.unitPrice.toStringAsFixed(2),
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   decoration: InputDecoration(
                     hintText: '0.00',
-                    labelText: 'Unit Price (${_currencySymbols[_currency]})',
-                    border: const OutlineInputBorder(),
+                    labelText: 'Unit Price (${_currencySymbols[product.currency] ?? _currencySymbols[_currency]})',
+                    filled: true,
+                    fillColor: Colors.white,
+                    enabledBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(color: Colors.black87),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: const BorderSide(color: Colors.deepPurple),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   ),
                   onChanged: (val) => setState(() {
                     final parsed = double.tryParse(val);
@@ -1145,15 +1240,14 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
               Expanded(
                 flex: 3,
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
                   decoration: BoxDecoration(
                     color: Colors.grey.shade200,
                     borderRadius: BorderRadius.circular(4),
                     border: Border.all(color: Colors.grey.shade400),
                   ),
                   child: Text(
-                    '${_currencySymbols[_currency]}${(product.unitPrice * product.quantity).toStringAsFixed(2)}',
+                    '${_currencySymbols[product.currency] ?? _currencySymbols[_currency]}${(product.unitPrice * product.quantity).toStringAsFixed(2)}',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
@@ -1168,17 +1262,15 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
                 tooltip: 'Remove line',
                 onPressed: () {
                   if (productLines.length > 1) {
-                    setState(() {
-                      productLines.removeAt(index);
-                    });
+                    _removeProductAt(index);
                   }
                 },
               ),
             ],
           ),
         ],
-      ),
-    );
+    ),
+      );
   }
 
   

@@ -28,6 +28,7 @@ class PurchaseRequestDataSource extends DataTableSource {
     User user=Provider.of<UserController>(context, listen: false).currentUser;
     if (index >= requests.length) return null;
     final request = requests[index];
+    final bool canEdit = (user.role!.id == 1) || (user.role!.id != 4 && StatusUtils.isPendingLike(request.status));
     return DataRow(
       selected: request.id != null && _selectedIds.contains(request.id),
       onSelectChanged: (sel) {
@@ -208,43 +209,42 @@ class PurchaseRequestDataSource extends DataTableSource {
               },
               tooltip: 'View',
             ),
-            // if(request.status == 'pending')
+            // Edit button
             IconButton(
-              color: user.role!.id==4||StatusUtils.isPendingLike(request.status)?Colors.grey : request.status == null||user.role!.id==1? Colors.black : Colors.grey,
+              color: canEdit ? Colors.black : Colors.grey,
               icon: const Icon(Icons.edit_outlined, size: 25),
               padding: const EdgeInsets.all(8),
               constraints: const BoxConstraints(),
-              onPressed: () async {
-                print(user.role!.id);
-                if(user.role!.id!=4 && !StatusUtils.isPendingLike(request.status)){
-                if(user.role!.id==1 || request.status == null){
-                // Build a lightweight Map for the edit page to avoid relying on a class method
-                final Map<String, dynamic> requestMap = {
-                  'id': request.id,
-                  'start_date': request.startDate?.toIso8601String(),
-                  'end_date': request.endDate?.toIso8601String(),
-                  'title': request.title,
-                  'description': request.description,
-                  'status': request.status,
-                  'priority': request.priority,
-                  'products': request.products?.map((p) => p.toJson()).toList(),
-                  'is_archived': request.isArchived ?? false,
-                };
+              onPressed: canEdit
+                  ? () async {
+                      // Build a lightweight Map for the edit page to avoid relying on a class method
+                      final Map<String, dynamic> requestMap = {
+                        'id': request.id,
+                        'start_date': request.startDate?.toIso8601String(),
+                        'end_date': request.endDate?.toIso8601String(),
+                        'title': request.title,
+                        'description': request.description,
+                        'status': request.status,
+                        'priority': request.priority,
+                        'products': request.products?.map((p) => p.toJson()).toList(),
+                        'is_archived': request.isArchived ?? false,
+                      };
 
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => RequestEditPage(
-                      request: requestMap,
-                      onSave: (updatedRequest) {},
-                      purchaseRequest: request,
-                      order: requestMap,
-                    ),
-                  ),
-                );
-                Provider.of<PurchaseRequestController>(context, listen: false).fetchRequests(context,Provider.of<UserController>(context, listen: false).currentUser);
-              }}
-              },
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => RequestEditPage(
+                            request: requestMap,
+                            onSave: (updatedRequest) {},
+                            purchaseRequest: request,
+                            order: requestMap,
+                          ),
+                        ),
+                      );
+                      Provider.of<PurchaseRequestController>(context, listen: false)
+                          .fetchRequests(context, Provider.of<UserController>(context, listen: false).currentUser);
+                    }
+                  : null,
               tooltip: 'Edit',
             ),
             Builder(
