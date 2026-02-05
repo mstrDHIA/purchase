@@ -148,6 +148,7 @@ class _AppSidebarState extends State<AppSidebar> {
       'Supplier': localizations.supplier,
       'Product': localizations.product,
       'Profile': localizations.profile,
+      'Statistics': 'Statistics',
     };
     return labelMap[label] ?? label;
   }
@@ -158,6 +159,7 @@ class _AppSidebarState extends State<AppSidebar> {
     if(roleId == 1){
       items.addAll([
       {'label': 'PO Dashboard', 'icon': Icons.dashboard},
+      {'label': 'Statistics', 'icon': Icons.insert_chart_outlined},
       {'label': 'PurchaseRequest', 'icon': Icons.note_add},
       {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
       {'label': 'Supplier', 'icon': Icons.store},
@@ -202,6 +204,7 @@ class _AppSidebarState extends State<AppSidebar> {
      else if((roleId == 4)){
       items.addAll([
         {'label': 'PO Dashboard', 'icon': Icons.dashboard},
+        {'label': 'Statistics', 'icon': Icons.insert_chart_outlined},
       {'label': 'PurchaseRequest', 'icon': Icons.note_add},
       {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
       {'label': 'Supplier', 'icon': Icons.store},
@@ -218,6 +221,7 @@ class _AppSidebarState extends State<AppSidebar> {
     else if((roleId == 6)){
       items.addAll([
         {'label': 'PO Dashboard', 'icon': Icons.dashboard},
+        {'label': 'Statistics', 'icon': Icons.insert_chart_outlined},
         {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
       {'label': 'Supplier', 'icon': Icons.store},
       {'label': 'Profile', 'icon': Icons.account_circle},
@@ -302,9 +306,9 @@ class _AppSidebarState extends State<AppSidebar> {
       'Roles and access': '/role',
       'Password': '/password',
       'Settings': '/settings',
+      'Statistics': '/stats',
       // add other mappings if needed
     };
-
     final route = labelToRoute[label];
     final resetNotifier = Provider.of<ResetNotifier>(context, listen: false);
 

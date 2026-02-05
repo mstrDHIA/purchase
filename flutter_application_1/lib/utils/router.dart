@@ -11,6 +11,7 @@ import 'package:flutter_application_1/screens/Supplier/Add_supplier_screen.dart'
 import 'package:flutter_application_1/screens/Supplier/View_supplier_screen.dart';
 import 'package:flutter_application_1/screens/Department/department_list_screen.dart';
 import 'package:flutter_application_1/screens/auth/login_screen.dart';
+import 'package:flutter_application_1/screens/stats/stats_screen.dart';
 import 'package:flutter_application_1/screens/profile/profile_user.dart';
 import 'package:flutter_application_1/screens/users/password_screen.dart';
 import 'package:flutter_application_1/screens/Role/Role_screen.dart';
@@ -73,6 +74,10 @@ final GoRouter router = GoRouter(
         GoRoute(
           path: '/purchase_orders', // <- nouvelle route (pluriel)
           builder: (context, state) => const PurchaseOrderPage(),
+        ),
+        GoRoute(
+          path: '/stats',
+          builder: (context, state) => const StatsScreen(),
         ),
 
         GoRoute(
