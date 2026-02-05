@@ -120,6 +120,16 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
     return '-';
   }
 
+  String _localizedStatus(BuildContext context, String? status) {
+    final s = (status ?? '').toLowerCase();
+    final loc = AppLocalizations.of(context)!;
+    if (s == 'approved') return loc.approved;
+    if (s == 'pending') return loc.pending;
+    if (s == 'rejected') return loc.rejected;
+    // fallback to raw status or dash
+    return status ?? '-';
+  }
+
   void _showOrderDetailsDialog(BuildContext context, dynamic order, UserController userController) {
     showDialog(
       context: context,
@@ -144,7 +154,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Purchase Order #${order.id}',
+                        AppLocalizations.of(context)!.viewPurchaseOrder(order.id),
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -166,25 +176,25 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Order Info
-                        _buildInfoRow('Order ID', order.id.toString()),
-                        _buildInfoRow('Title', _safeString(order.title)),
+                        _buildInfoRow(AppLocalizations.of(context)!.id, order.id.toString()),
+                        _buildInfoRow(AppLocalizations.of(context)!.title, _safeString(order.title)),
                         _buildInfoRow(
-                          'Date',
+                          AppLocalizations.of(context)!.date,
                           order.startDate != null
                               ? DateFormat('yyyy-MM-dd').format(order.startDate!)
                               : '-',
                         ),
                         _buildInfoRow(
-                          'Requester',
+                          AppLocalizations.of(context)!.requester,
                           _getRequesterName(order, userController),
                         ),
-                        _buildStatusRow('Status', order.status ?? '-'),
+                        _buildStatusRow(AppLocalizations.of(context)!.status, _localizedStatus(context, order.status)),
                         const SizedBox(height: 20),
                         
                         // Products Section
-                        const Text(
-                          'Products',
-                          style: TextStyle(
+                        Text(
+                          AppLocalizations.of(context)!.products,
+                          style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF2C3E50),
@@ -193,11 +203,11 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                         const SizedBox(height: 12),
                         
                         if (order.products == null || order.products!.isEmpty)
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 16),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
                             child: Text(
-                              'No products',
-                              style: TextStyle(color: Colors.grey),
+                              AppLocalizations.of(context)!.noProducts,
+                              style: const TextStyle(color: Colors.grey),
                             ),
                           )
                         else
@@ -218,11 +228,11 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    _buildInfoRow('Product', _safeString(product.product)),
-                                    _buildInfoRow('Supplier', _safeString(product.supplier)),
-                                    _buildInfoRow('Unit Price', unitPrice.toString()),
-                                    _buildInfoRow('Quantity', quantity.toString()),
-                                    _buildInfoRow('Total Amount', totalAmount.toStringAsFixed(2) + (_currencySymbol(order.currency).isNotEmpty ? ' ' + _currencySymbol(order.currency) : '')),
+                                    _buildInfoRow(AppLocalizations.of(context)!.product, _safeString(product.product)),
+                                    _buildInfoRow(AppLocalizations.of(context)!.supplier, _safeString(product.supplier)),
+                                    _buildInfoRow(AppLocalizations.of(context)!.unitPrice, unitPrice.toString()),
+                                    _buildInfoRow(AppLocalizations.of(context)!.quantity, quantity.toString()),
+                                    _buildInfoRow(AppLocalizations.of(context)!.totalPrice, totalAmount.toStringAsFixed(2) + (_currencySymbol(order.currency).isNotEmpty ? ' ' + _currencySymbol(order.currency) : '')),
                                   ],
                                 ),
                               );
@@ -241,7 +251,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                       backgroundColor: Colors.deepPurple,
                       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                     ),
-                    child: const Text('Close', style: TextStyle(color: Colors.white)),
+                    child: Text(AppLocalizations.of(context)!.close, style: const TextStyle(color: Colors.white)),
                   ),
                 ),
               ],
@@ -505,7 +515,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
     final paginatedOrders = filteredOrders.sublist(startIndex, endIndex);
 
     return Scaffold(
-      appBar: const StandardHeader(title: 'PO Dashboard'),
+      appBar: StandardHeader(title: AppLocalizations.of(context)!.poDashboardTitle),
       backgroundColor: const Color(0xFFF6F7FB),
       body: Column(
         children: [
@@ -551,11 +561,11 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                   child: DropdownButton<String?>(
                     isExpanded: true,
                     value: _selectedSupplier,
-                    hint: const Text('Select Supplier', style: TextStyle(fontSize: 13, color: Color(0xFF999999))),
+                    hint: Text(AppLocalizations.of(context)!.selectSupplier, style: const TextStyle(fontSize: 13, color: Color(0xFF999999))),
                     items: [
-                      const DropdownMenuItem<String?>(
+                      DropdownMenuItem<String?>(
                         value: null,
-                        child: Text('All Suppliers', style: TextStyle(fontSize: 13)),
+                        child: Text(AppLocalizations.of(context)!.allSuppliers, style: const TextStyle(fontSize: 13)),
                       ),
                       ...suppliers.map((supplier) =>
                           DropdownMenuItem<String>(
@@ -579,11 +589,11 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                   child: DropdownButton<String?>(
                     isExpanded: true,
                     value: _selectedFamily,
-                    hint: const Text('Family', style: TextStyle(fontSize: 13, color: Color(0xFF999999))),
+                    hint: Text(AppLocalizations.of(context)!.familyLabel, style: const TextStyle(fontSize: 13, color: Color(0xFF999999))),
                     items: [
-                      const DropdownMenuItem<String?>(
+                      DropdownMenuItem<String?>(
                         value: null,
-                        child: Text('All Families', style: TextStyle(fontSize: 13)),
+                        child: Text(AppLocalizations.of(context)!.allFamilies, style: const TextStyle(fontSize: 13)),
                       ),
                       ...families.map((f) => DropdownMenuItem<String>(value: f, child: Text(f, style: const TextStyle(fontSize: 13)))),
                     ],
@@ -604,11 +614,11 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                   child: DropdownButton<String?>(
                     isExpanded: true,
                     value: _selectedSubFamily,
-                    hint: const Text('Subfamily', style: TextStyle(fontSize: 13, color: Color(0xFF999999))),
+                    hint: Text(AppLocalizations.of(context)!.subfamilyLabel, style: const TextStyle(fontSize: 13, color: Color(0xFF999999))),
                     items: [
-                      const DropdownMenuItem<String?>(
+                      DropdownMenuItem<String?>(
                         value: null,
-                        child: Text('All Subfamilies', style: TextStyle(fontSize: 13)),
+                        child: Text(AppLocalizations.of(context)!.allSubfamilies, style: const TextStyle(fontSize: 13)),
                       ),
                       ...subfamilies.map((sf) => DropdownMenuItem<String>(value: sf, child: Text(sf, style: const TextStyle(fontSize: 13)))),
                     ],
@@ -635,7 +645,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                         initialDate: _startDate ?? DateTime.now(),
                         firstDate: DateTime(2020),
                         lastDate: DateTime.now(),
-                        helpText: 'Select From Date',
+                        helpText: AppLocalizations.of(context)!.selectFromDate,
                       );
                       if (picked != null) {
                         setState(() {
@@ -662,8 +672,8 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                     },
                     child: Text(
                       _startDate != null 
-                          ? 'From: ' + DateFormat('yyyy-MM-dd').format(_startDate!)
-                          : 'From Date',
+                          ? AppLocalizations.of(context)!.fromPrefix + DateFormat('yyyy-MM-dd').format(_startDate!)
+                          : AppLocalizations.of(context)!.fromDate,
                       style: const TextStyle(fontSize: 13),
                     ),
                   ),
@@ -683,7 +693,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                         initialDate: _endDate ?? DateTime.now(),
                         firstDate: DateTime(2020),
                         lastDate: DateTime.now(),
-                        helpText: 'Select To Date',
+                          helpText: AppLocalizations.of(context)!.selectToDate,
                       );
                       if (picked != null) {
                         setState(() {
@@ -694,8 +704,8 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                     },
                     child: Text(
                       _endDate != null
-                          ? 'To: ' + DateFormat('yyyy-MM-dd').format(_endDate!)
-                          : 'To Date',
+                          ? AppLocalizations.of(context)!.toPrefix + DateFormat('yyyy-MM-dd').format(_endDate!)
+                          : AppLocalizations.of(context)!.toDate,
                       style: const TextStyle(fontSize: 13),
                     ),
                   ),
@@ -731,22 +741,22 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                   height: 40,
                   child: ElevatedButton.icon(
                     icon: const Icon(Icons.file_download, size: 18),
-                    label: const Text('Export Excel'),
+                    label: Text(AppLocalizations.of(context)!.exportExcel),
                     onPressed: () async {
                       final ordersToExport = filteredOrders;
                       if (ordersToExport.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No orders to export for current filters')));
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.noOrdersToExportForCurrentFilters)));
                         return;
                       }
 
                       final confirm = await showDialog<bool>(
                         context: context,
                         builder: (context) => AlertDialog(
-                          title: Text('Export ${ordersToExport.length} orders?'),
-                          content: Text('This will export the ${ordersToExport.length} purchase orders currently shown on the dashboard.'),
+                          title: Text(AppLocalizations.of(context)!.exportConfirmTitle(ordersToExport.length)),
+                          content: Text(AppLocalizations.of(context)!.exportConfirmContent(ordersToExport.length)),
                           actions: [
-                            TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
-                            ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Export')),
+                            TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(AppLocalizations.of(context)!.cancel)),
+                            ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: Text(AppLocalizations.of(context)!.export)),
                           ],
                         ),
                       );
@@ -839,7 +849,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                                         }),
                                         child: Row(
                                           children: [
-                                            const Text('Title'),
+                                            Text(AppLocalizations.of(context)!.title),
                                             if (_sortBy == 'title')
                                               Icon(_sortAscending ? Icons.arrow_upward : Icons.arrow_downward, size: 14),
                                           ],
@@ -858,7 +868,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                                         }),
                                         child: Row(
                                           children: [
-                                            const Text('Product'),
+                                            Text(AppLocalizations.of(context)!.product),
                                             if (_sortBy == 'product')
                                               Icon(_sortAscending ? Icons.arrow_upward : Icons.arrow_downward, size: 14),
                                           ],
@@ -896,7 +906,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                                         }),
                                         child: Row(
                                           children: [
-                                            const Text('Quantity'),
+                                            Text(AppLocalizations.of(context)!.quantity),
                                             if (_sortBy == 'quantity')
                                               Icon(_sortAscending ? Icons.arrow_upward : Icons.arrow_downward, size: 14),
                                           ],
@@ -915,7 +925,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                                         }),
                                         child: Row(
                                           children: [
-                                            const Text('Unit Price'),
+                                            Text(AppLocalizations.of(context)!.unitPrice),
                                             if (_sortBy == 'unitPrice')
                                               Icon(_sortAscending ? Icons.arrow_upward : Icons.arrow_downward, size: 14),
                                           ],
@@ -934,7 +944,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                                         }),
                                         child: Row(
                                           children: [
-                                            const Text('Total Amount'),
+                                            Text(AppLocalizations.of(context)!.totalPrice),
                                             if (_sortBy == 'totalAmount')
                                               Icon(_sortAscending ? Icons.arrow_upward : Icons.arrow_downward, size: 14),
                                           ],
@@ -953,14 +963,14 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                                         }),
                                         child: Row(
                                           children: [
-                                            const Text('Date'),
+                                            Text(AppLocalizations.of(context)!.date),
                                             if (_sortBy == 'date')
                                               Icon(_sortAscending ? Icons.arrow_upward : Icons.arrow_downward, size: 14),
                                           ],
                                         ),
                                       ),
                                     ),
-                                    DataColumn(label: const Text('Requester')),
+                                    DataColumn(label: Text(AppLocalizations.of(context)!.requester)),
                                     DataColumn(
                                       label: GestureDetector(
                                         onTap: () => setState(() {
@@ -1009,7 +1019,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                                                 borderRadius: BorderRadius.circular(12),
                                               ),
                                               child: Text(
-                                                order.status ?? '-',
+                                                _localizedStatus(context, order.status),
                                                 style: TextStyle(
                                                   color: order.status == 'approved' ? Colors.green : Colors.orange,
                                                   fontWeight: FontWeight.bold,
@@ -1055,7 +1065,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                                               borderRadius: BorderRadius.circular(12),
                                             ),
                                             child: Text(
-                                              order.status ?? '-',
+                                                _localizedStatus(context, order.status),
                                               style: TextStyle(
                                                 color: order.status == 'approved' ? Colors.green : Colors.orange,
                                                 fontWeight: FontWeight.bold,
@@ -1108,29 +1118,30 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
     // Build excel file with same columns as the datatable
     try {
       if (orders.isEmpty) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No orders to export for the selected range')));
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.noOrdersToExportForSelectedRange)));
         return;
       }
 
       final excel = ex.Excel.createExcel();
-      final sheet = excel['PO Dashboard'];
+      final sheet = excel[AppLocalizations.of(context)!.poDashboardTitle];
 
       // Header row (styled)
       final headerStyle = ex.CellStyle(bold: true, backgroundColorHex: "#6A1B9A", fontColorHex: "#FFFFFF");
       final idCellStyle = ex.CellStyle(bold: true, backgroundColorHex: "#EDE7F6", fontColorHex: "#4A148C");
       final titleCellStyle = ex.CellStyle(fontColorHex: "#1E88E5");
 
+      final loc = AppLocalizations.of(context)!;
       sheet.appendRow([
-        'ID',
-        'Title',
-        'Product',
-        'Supplier',
-        'Quantity',
-        'Unit Price',
-        'Total Amount',
-        'Date',
-        'Requester',
-        'Status',
+        loc.id,
+        loc.title,
+        loc.product,
+        loc.supplier,
+        loc.quantity,
+        loc.unitPrice,
+        loc.totalPrice,
+        loc.date,
+        loc.requester,
+        loc.status,
       ]);
 
       // Apply header style and set column widths for readability
@@ -1171,7 +1182,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
             0.0, // Total Amount
             orderDate,
             _getRequesterName(order, context.read<UserController>()),
-            order.status ?? '-',
+            _localizedStatus(context, order.status),
           ]);
         } else {
           for (var product in products) {
@@ -1189,7 +1200,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
               totalAmount, // numeric
               orderDate,
               _getRequesterName(order, context.read<UserController>()),
-              order.status ?? '-',
+              _localizedStatus(context, order.status),
             ]);
           }
         }
@@ -1206,10 +1217,10 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
 
       if (mounted) {
         if (saved == 'downloaded') {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Downloaded $fileName')));
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(loc.downloadedFile(fileName))));
         } else {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Exported to $saved'),
+            content: Text(loc.exportedToPath(saved)),
             action: SnackBarAction(
               label: 'Open',
               onPressed: () async {
@@ -1220,7 +1231,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
         }
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Export failed: $e')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.exportFailed(e.toString()))));
     }
   }
 

@@ -163,9 +163,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get editPurchaseRequest => 'Modifier la demande d\'achat';
 
   @override
-  String get editPurchaseOrder => 'Modifier le bon de commande';
-
-  @override
   String get confirmCancelUnsavedChanges => 'Êtes-vous sûr de vouloir annuler ? Les modifications non enregistrées seront perdues.';
 
   @override
@@ -179,6 +176,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get supplier => 'Fournisseur';
+
+  @override
+  String get supplierRegistration => 'Enregistrement Fournisseur';
 
   @override
   String get product => 'Produit';
@@ -440,12 +440,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get rejected => 'Rejeté';
-
-  @override
-  String get transformed => 'Converti';
-
-  @override
-  String get edited => 'Modifié';
 
   @override
   String get searchProduct => 'Rechercher par nom de produit...';
@@ -1035,5 +1029,244 @@ class AppLocalizationsFr extends AppLocalizations {
   String get pleaseFillAllRequiredFields => 'Veuillez remplir tous les champs requis.';
 
   @override
+  String get editPurchaseOrder => 'Modifier le bon de commande';
+
+  @override
   String get purchaseOrderSaved => 'Bon de commande enregistré !';
+
+  @override
+  String get poDashboardTitle => 'Tableau de bord PO';
+
+  @override
+  String get selectSupplier => 'Sélectionner un fournisseur';
+
+  @override
+  String get allSuppliers => 'Tous les fournisseurs';
+
+  @override
+  String get title => 'Titre';
+
+  @override
+  String get date => 'Date';
+
+  @override
+  String get requester => 'Demandeur';
+
+  @override
+  String get fromDate => 'Date de début';
+
+  @override
+  String get toDate => 'Date de fin';
+
+  @override
+  String get fromPrefix => 'De : ';
+
+  @override
+  String get toPrefix => 'À : ';
+
+  @override
+  String get selectFromDate => 'Sélectionnez la date de début';
+
+  @override
+  String get selectToDate => 'Sélectionnez la date de fin';
+
+  @override
+  String get exportExcel => 'Exporter Excel';
+
+  @override
+  String exportConfirmTitle(Object count) {
+    return 'Exporter $count commandes ?';
+  }
+
+  @override
+  String exportConfirmContent(Object count) {
+    return 'Ceci exportera les $count bons de commande actuellement affichés sur le tableau de bord.';
+  }
+
+  @override
+  String get export => 'Exporter';
+
+  @override
+  String get noOrdersToExportForCurrentFilters => 'Aucune commande à exporter pour les filtres actuels';
+
+  @override
+  String get noOrdersToExportForSelectedRange => 'Aucune commande à exporter pour la plage sélectionnée';
+
+  @override
+  String downloadedFile(Object fileName) {
+    return 'Téléchargé $fileName';
+  }
+
+  @override
+  String exportedToPath(Object path) {
+    return 'Exporté vers $path';
+  }
+
+  @override
+  String exportFailed(Object error) {
+    return 'Échec de l\'export : $error';
+  }
+
+  @override
+  String get close => 'Fermer';
+
+  @override
+  String get retry => 'Réessayer';
+
+  @override
+  String get noProducts => 'Aucun produit';
+
+  @override
+  String get supplierDeleteTitle => 'Supprimer le fournisseur';
+
+  @override
+  String supplierDeleteConfirm(Object name) {
+    return 'Supprimer \"$name\" ?';
+  }
+
+  @override
+  String get supplierCancel => 'Annuler';
+
+  @override
+  String get supplierDelete => 'Supprimer';
+
+  @override
+  String errorDeletingSupplier(Object error) {
+    return 'Erreur lors de la suppression du fournisseur : $error';
+  }
+
+  @override
+  String get supplierAddNew => 'Ajouter un nouveau fournisseur';
+
+  @override
+  String get supplierRequired => 'est requis';
+
+  @override
+  String get supplierContactEmail => 'Email de contact';
+
+  @override
+  String get emailInvalid => 'Veuillez entrer une adresse e-mail valide';
+
+  @override
+  String get supplierPhoneNumber => 'Numéro de téléphone';
+
+  @override
+  String get supplierPhoneHint => 'Entrez le numéro de téléphone (min 6 chiffres)';
+
+  @override
+  String get phoneRequired => 'Le téléphone est requis';
+
+  @override
+  String get phoneMinDigits => 'Le téléphone doit comporter au moins 6 chiffres';
+
+  @override
+  String get phoneDigitsOnly => 'Le téléphone doit contenir uniquement des chiffres';
+
+  @override
+  String get supplierMatricule => 'Matricule';
+
+  @override
+  String get supplierCIN => 'CIN';
+
+  @override
+  String get supplierAddress => 'Adresse';
+
+  @override
+  String get supplierCodeFournisseur => 'Code fournisseur';
+
+  @override
+  String get supplierGroupName => 'Nom du groupe';
+
+  @override
+  String get supplierContactName => 'Nom du contact';
+
+  @override
+  String get supplierAlreadyExists => 'Le fournisseur existe déjà';
+
+  @override
+  String supplierError(Object error) {
+    return 'Erreur : $error';
+  }
+
+  @override
+  String get supplierSave => 'Enregistrer';
+
+  @override
+  String get supplierAdd => 'Ajouter un fournisseur';
+
+  @override
+  String get supplierEdit => 'Modifier le fournisseur';
+
+  @override
+  String get supplierWithNameAlreadyExists => 'Un fournisseur avec ce nom existe déjà';
+
+  @override
+  String get supplierEitherMatriculeOrCINRequired => 'Soit Matricule soit CIN est requis';
+
+  @override
+  String get supplierDetailsTitle => 'Détails du fournisseur';
+
+  @override
+  String get supplierApprovalStatus => 'Statut d\'approbation';
+
+  @override
+  String get supplierID => 'ID';
+
+  @override
+  String get supplierBack => 'Retour';
+
+  @override
+  String get supplierReject => 'Rejeter';
+
+  @override
+  String get supplierApprove => 'Approuver';
+
+  @override
+  String supplierStatusUpdated(Object status) {
+    return 'Statut du fournisseur mis à jour : $status';
+  }
+
+  @override
+  String get supplierRegistrationTitle => 'Enregistrement Fournisseur';
+
+  @override
+  String get supplierSearchHint => 'Rechercher par nom, email, téléphone, matricule, CIN ...';
+
+  @override
+  String get supplierReset => 'Réinitialiser';
+
+  @override
+  String get supplierRetry => 'Réessayer';
+
+  @override
+  String get supplierMatriculeFiscale => 'Matricule fiscale';
+
+  @override
+  String get supplierCodeLabel => 'Code fournisseur';
+
+  @override
+  String get supplierStatusLabel => 'Statut';
+
+  @override
+  String get supplierView => 'Afficher';
+
+  @override
+  String supplierPageOf(Object current, Object total) {
+    return 'Page $current sur $total';
+  }
+
+  @override
+  String get transformed => 'Transformé';
+
+  @override
+  String get edited => 'Modifié';
+
+  @override
+  String get statusApproved => 'Approuvé';
+
+  @override
+  String get statusPending => 'En attente';
+
+  @override
+  String get statusRejected => 'Rejeté';
 }

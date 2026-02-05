@@ -397,12 +397,6 @@ abstract class AppLocalizations {
   /// **'Edit Purchase Request'**
   String get editPurchaseRequest;
 
-  /// No description provided for @editPurchaseOrder.
-  ///
-  /// In en, this message translates to:
-  /// **'Edit Purchase Order'**
-  String get editPurchaseOrder;
-
   /// No description provided for @confirmCancelUnsavedChanges.
   ///
   /// In en, this message translates to:
@@ -432,6 +426,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Supplier'**
   String get supplier;
+
+  /// No description provided for @supplierRegistration.
+  ///
+  /// In en, this message translates to:
+  /// **'Supplier Registration'**
+  String get supplierRegistration;
 
   /// No description provided for @product.
   ///
@@ -954,18 +954,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Rejected'**
   String get rejected;
-
-  /// No description provided for @transformed.
-  ///
-  /// In en, this message translates to:
-  /// **'Transformed'**
-  String get transformed;
-
-  /// No description provided for @edited.
-  ///
-  /// In en, this message translates to:
-  /// **'Edited'**
-  String get edited; 
 
   /// No description provided for @searchProduct.
   ///
@@ -2017,11 +2005,449 @@ abstract class AppLocalizations {
   /// **'Please fill all required fields.'**
   String get pleaseFillAllRequiredFields;
 
+  /// No description provided for @editPurchaseOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Purchase Order'**
+  String get editPurchaseOrder;
+
   /// No description provided for @purchaseOrderSaved.
   ///
   /// In en, this message translates to:
   /// **'Purchase order saved!'**
   String get purchaseOrderSaved;
+
+  /// No description provided for @poDashboardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'PO Dashboard'**
+  String get poDashboardTitle;
+
+  /// No description provided for @selectSupplier.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Supplier'**
+  String get selectSupplier;
+
+  /// No description provided for @allSuppliers.
+  ///
+  /// In en, this message translates to:
+  /// **'All Suppliers'**
+  String get allSuppliers;
+
+  /// No description provided for @title.
+  ///
+  /// In en, this message translates to:
+  /// **'Title'**
+  String get title;
+
+  /// No description provided for @date.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get date;
+
+  /// No description provided for @requester.
+  ///
+  /// In en, this message translates to:
+  /// **'Requester'**
+  String get requester;
+
+  /// No description provided for @fromDate.
+  ///
+  /// In en, this message translates to:
+  /// **'From Date'**
+  String get fromDate;
+
+  /// No description provided for @toDate.
+  ///
+  /// In en, this message translates to:
+  /// **'To Date'**
+  String get toDate;
+
+  /// No description provided for @fromPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'From: '**
+  String get fromPrefix;
+
+  /// No description provided for @toPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'To: '**
+  String get toPrefix;
+
+  /// No description provided for @selectFromDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Select From Date'**
+  String get selectFromDate;
+
+  /// No description provided for @selectToDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Select To Date'**
+  String get selectToDate;
+
+  /// No description provided for @exportExcel.
+  ///
+  /// In en, this message translates to:
+  /// **'Export Excel'**
+  String get exportExcel;
+
+  /// No description provided for @exportConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Export {count} orders?'**
+  String exportConfirmTitle(Object count);
+
+  /// No description provided for @exportConfirmContent.
+  ///
+  /// In en, this message translates to:
+  /// **'This will export the {count} purchase orders currently shown on the dashboard.'**
+  String exportConfirmContent(Object count);
+
+  /// No description provided for @export.
+  ///
+  /// In en, this message translates to:
+  /// **'Export'**
+  String get export;
+
+  /// No description provided for @noOrdersToExportForCurrentFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'No orders to export for current filters'**
+  String get noOrdersToExportForCurrentFilters;
+
+  /// No description provided for @noOrdersToExportForSelectedRange.
+  ///
+  /// In en, this message translates to:
+  /// **'No orders to export for the selected range'**
+  String get noOrdersToExportForSelectedRange;
+
+  /// No description provided for @downloadedFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloaded {fileName}'**
+  String downloadedFile(Object fileName);
+
+  /// No description provided for @exportedToPath.
+  ///
+  /// In en, this message translates to:
+  /// **'Exported to {path}'**
+  String exportedToPath(Object path);
+
+  /// No description provided for @exportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Export failed: {error}'**
+  String exportFailed(Object error);
+
+  /// No description provided for @close.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get close;
+
+  /// No description provided for @retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retry;
+
+  /// No description provided for @noProducts.
+  ///
+  /// In en, this message translates to:
+  /// **'No products'**
+  String get noProducts;
+
+  /// No description provided for @supplierDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Supplier'**
+  String get supplierDeleteTitle;
+
+  /// No description provided for @supplierDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete \"{name}\" ?'**
+  String supplierDeleteConfirm(Object name);
+
+  /// No description provided for @supplierCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get supplierCancel;
+
+  /// No description provided for @supplierDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get supplierDelete;
+
+  /// No description provided for @errorDeletingSupplier.
+  ///
+  /// In en, this message translates to:
+  /// **'Error deleting supplier: {error}'**
+  String errorDeletingSupplier(Object error);
+
+  /// No description provided for @supplierAddNew.
+  ///
+  /// In en, this message translates to:
+  /// **'Add New Supplier'**
+  String get supplierAddNew;
+
+  /// No description provided for @supplierRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'is required'**
+  String get supplierRequired;
+
+  /// No description provided for @supplierContactEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact Email'**
+  String get supplierContactEmail;
+
+  /// No description provided for @emailInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a valid email'**
+  String get emailInvalid;
+
+  /// No description provided for @supplierPhoneNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone Number'**
+  String get supplierPhoneNumber;
+
+  /// No description provided for @supplierPhoneHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter phone number (min 6 digits)'**
+  String get supplierPhoneHint;
+
+  /// No description provided for @phoneRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone is required'**
+  String get phoneRequired;
+
+  /// No description provided for @phoneMinDigits.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone must be at least 6 digits'**
+  String get phoneMinDigits;
+
+  /// No description provided for @phoneDigitsOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone must contain only digits'**
+  String get phoneDigitsOnly;
+
+  /// No description provided for @supplierMatricule.
+  ///
+  /// In en, this message translates to:
+  /// **'Matricule'**
+  String get supplierMatricule;
+
+  /// No description provided for @supplierCIN.
+  ///
+  /// In en, this message translates to:
+  /// **'CIN'**
+  String get supplierCIN;
+
+  /// No description provided for @supplierAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Address'**
+  String get supplierAddress;
+
+  /// No description provided for @supplierCodeFournisseur.
+  ///
+  /// In en, this message translates to:
+  /// **'Code fournisseur'**
+  String get supplierCodeFournisseur;
+
+  /// No description provided for @supplierGroupName.
+  ///
+  /// In en, this message translates to:
+  /// **'Group Name'**
+  String get supplierGroupName;
+
+  /// No description provided for @supplierContactName.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact Name'**
+  String get supplierContactName;
+
+  /// No description provided for @supplierAlreadyExists.
+  ///
+  /// In en, this message translates to:
+  /// **'Supplier already exists'**
+  String get supplierAlreadyExists;
+
+  /// No description provided for @supplierError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error: {error}'**
+  String supplierError(Object error);
+
+  /// No description provided for @supplierSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get supplierSave;
+
+  /// No description provided for @supplierAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Supplier'**
+  String get supplierAdd;
+
+  /// No description provided for @supplierEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Supplier'**
+  String get supplierEdit;
+
+  /// No description provided for @supplierWithNameAlreadyExists.
+  ///
+  /// In en, this message translates to:
+  /// **'Supplier with this name already exists'**
+  String get supplierWithNameAlreadyExists;
+
+  /// No description provided for @supplierEitherMatriculeOrCINRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Either Matricule or CIN is required'**
+  String get supplierEitherMatriculeOrCINRequired;
+
+  /// No description provided for @supplierDetailsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Supplier Details'**
+  String get supplierDetailsTitle;
+
+  /// No description provided for @supplierApprovalStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Approval Status'**
+  String get supplierApprovalStatus;
+
+  /// No description provided for @supplierID.
+  ///
+  /// In en, this message translates to:
+  /// **'ID'**
+  String get supplierID;
+
+  /// No description provided for @supplierBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get supplierBack;
+
+  /// No description provided for @supplierReject.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject'**
+  String get supplierReject;
+
+  /// No description provided for @supplierApprove.
+  ///
+  /// In en, this message translates to:
+  /// **'Approve'**
+  String get supplierApprove;
+
+  /// No description provided for @supplierStatusUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Supplier status updated to {status}'**
+  String supplierStatusUpdated(Object status);
+
+  /// No description provided for @supplierRegistrationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Supplier Registration'**
+  String get supplierRegistrationTitle;
+
+  /// No description provided for @supplierSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search supplier name, email, phone, matricule, cin ...'**
+  String get supplierSearchHint;
+
+  /// No description provided for @supplierReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get supplierReset;
+
+  /// No description provided for @supplierRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get supplierRetry;
+
+  /// No description provided for @supplierMatriculeFiscale.
+  ///
+  /// In en, this message translates to:
+  /// **'Matricule fiscale'**
+  String get supplierMatriculeFiscale;
+
+  /// No description provided for @supplierCodeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Code fournisseur'**
+  String get supplierCodeLabel;
+
+  /// No description provided for @supplierStatusLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Status'**
+  String get supplierStatusLabel;
+
+  /// No description provided for @supplierView.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get supplierView;
+
+  /// No description provided for @supplierPageOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Page {current} of {total}'**
+  String supplierPageOf(Object current, Object total);
+
+  /// No description provided for @transformed.
+  ///
+  /// In en, this message translates to:
+  /// **'Transformed'**
+  String get transformed;
+
+  /// No description provided for @edited.
+  ///
+  /// In en, this message translates to:
+  /// **'Edited'**
+  String get edited;
+
+  /// No description provided for @statusApproved.
+  ///
+  /// In en, this message translates to:
+  /// **'Approved'**
+  String get statusApproved;
+
+  /// No description provided for @statusPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get statusPending;
+
+  /// No description provided for @statusRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Rejected'**
+  String get statusRejected;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

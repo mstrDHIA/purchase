@@ -163,9 +163,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get editPurchaseRequest => 'Edit Purchase Request';
 
   @override
-  String get editPurchaseOrder => 'Edit Purchase Order';
-
-  @override
   String get confirmCancelUnsavedChanges => 'Are you sure you want to cancel? Unsaved changes will be lost.';
 
   @override
@@ -179,6 +176,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get supplier => 'Supplier';
+
+  @override
+  String get supplierRegistration => 'Supplier Registration';
 
   @override
   String get product => 'Product';
@@ -440,12 +440,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rejected => 'Rejected';
-
-  @override
-  String get transformed => 'Converted';
-
-  @override
-  String get edited => 'Edited';
 
   @override
   String get searchProduct => 'Search Product name...';
@@ -1035,5 +1029,244 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pleaseFillAllRequiredFields => 'Please fill all required fields.';
 
   @override
+  String get editPurchaseOrder => 'Edit Purchase Order';
+
+  @override
   String get purchaseOrderSaved => 'Purchase order saved!';
+
+  @override
+  String get poDashboardTitle => 'PO Dashboard';
+
+  @override
+  String get selectSupplier => 'Select Supplier';
+
+  @override
+  String get allSuppliers => 'All Suppliers';
+
+  @override
+  String get title => 'Title';
+
+  @override
+  String get date => 'Date';
+
+  @override
+  String get requester => 'Requester';
+
+  @override
+  String get fromDate => 'From Date';
+
+  @override
+  String get toDate => 'To Date';
+
+  @override
+  String get fromPrefix => 'From: ';
+
+  @override
+  String get toPrefix => 'To: ';
+
+  @override
+  String get selectFromDate => 'Select From Date';
+
+  @override
+  String get selectToDate => 'Select To Date';
+
+  @override
+  String get exportExcel => 'Export Excel';
+
+  @override
+  String exportConfirmTitle(Object count) {
+    return 'Export $count orders?';
+  }
+
+  @override
+  String exportConfirmContent(Object count) {
+    return 'This will export the $count purchase orders currently shown on the dashboard.';
+  }
+
+  @override
+  String get export => 'Export';
+
+  @override
+  String get noOrdersToExportForCurrentFilters => 'No orders to export for current filters';
+
+  @override
+  String get noOrdersToExportForSelectedRange => 'No orders to export for the selected range';
+
+  @override
+  String downloadedFile(Object fileName) {
+    return 'Downloaded $fileName';
+  }
+
+  @override
+  String exportedToPath(Object path) {
+    return 'Exported to $path';
+  }
+
+  @override
+  String exportFailed(Object error) {
+    return 'Export failed: $error';
+  }
+
+  @override
+  String get close => 'Close';
+
+  @override
+  String get retry => 'Retry';
+
+  @override
+  String get noProducts => 'No products';
+
+  @override
+  String get supplierDeleteTitle => 'Delete Supplier';
+
+  @override
+  String supplierDeleteConfirm(Object name) {
+    return 'Delete \"$name\" ?';
+  }
+
+  @override
+  String get supplierCancel => 'Cancel';
+
+  @override
+  String get supplierDelete => 'Delete';
+
+  @override
+  String errorDeletingSupplier(Object error) {
+    return 'Error deleting supplier: $error';
+  }
+
+  @override
+  String get supplierAddNew => 'Add New Supplier';
+
+  @override
+  String get supplierRequired => 'is required';
+
+  @override
+  String get supplierContactEmail => 'Contact Email';
+
+  @override
+  String get emailInvalid => 'Enter a valid email';
+
+  @override
+  String get supplierPhoneNumber => 'Phone Number';
+
+  @override
+  String get supplierPhoneHint => 'Enter phone number (min 6 digits)';
+
+  @override
+  String get phoneRequired => 'Phone is required';
+
+  @override
+  String get phoneMinDigits => 'Phone must be at least 6 digits';
+
+  @override
+  String get phoneDigitsOnly => 'Phone must contain only digits';
+
+  @override
+  String get supplierMatricule => 'Matricule';
+
+  @override
+  String get supplierCIN => 'CIN';
+
+  @override
+  String get supplierAddress => 'Address';
+
+  @override
+  String get supplierCodeFournisseur => 'Code fournisseur';
+
+  @override
+  String get supplierGroupName => 'Group Name';
+
+  @override
+  String get supplierContactName => 'Contact Name';
+
+  @override
+  String get supplierAlreadyExists => 'Supplier already exists';
+
+  @override
+  String supplierError(Object error) {
+    return 'Error: $error';
+  }
+
+  @override
+  String get supplierSave => 'Save';
+
+  @override
+  String get supplierAdd => 'Add Supplier';
+
+  @override
+  String get supplierEdit => 'Edit Supplier';
+
+  @override
+  String get supplierWithNameAlreadyExists => 'Supplier with this name already exists';
+
+  @override
+  String get supplierEitherMatriculeOrCINRequired => 'Either Matricule or CIN is required';
+
+  @override
+  String get supplierDetailsTitle => 'Supplier Details';
+
+  @override
+  String get supplierApprovalStatus => 'Approval Status';
+
+  @override
+  String get supplierID => 'ID';
+
+  @override
+  String get supplierBack => 'Back';
+
+  @override
+  String get supplierReject => 'Reject';
+
+  @override
+  String get supplierApprove => 'Approve';
+
+  @override
+  String supplierStatusUpdated(Object status) {
+    return 'Supplier status updated to $status';
+  }
+
+  @override
+  String get supplierRegistrationTitle => 'Supplier Registration';
+
+  @override
+  String get supplierSearchHint => 'Search supplier name, email, phone, matricule, cin ...';
+
+  @override
+  String get supplierReset => 'Reset';
+
+  @override
+  String get supplierRetry => 'Retry';
+
+  @override
+  String get supplierMatriculeFiscale => 'Matricule fiscale';
+
+  @override
+  String get supplierCodeLabel => 'Code fournisseur';
+
+  @override
+  String get supplierStatusLabel => 'Status';
+
+  @override
+  String get supplierView => 'View';
+
+  @override
+  String supplierPageOf(Object current, Object total) {
+    return 'Page $current of $total';
+  }
+
+  @override
+  String get transformed => 'Transformed';
+
+  @override
+  String get edited => 'Edited';
+
+  @override
+  String get statusApproved => 'Approved';
+
+  @override
+  String get statusPending => 'Pending';
+
+  @override
+  String get statusRejected => 'Rejected';
 }

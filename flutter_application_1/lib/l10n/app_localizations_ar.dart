@@ -163,9 +163,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get editPurchaseRequest => 'تحرير طلب الشراء';
 
   @override
-  String get editPurchaseOrder => 'تحرير أمر الشراء';
-
-  @override
   String get confirmCancelUnsavedChanges => 'هل أنت متأكد أنك تريد الإلغاء؟ سيتم فقدان التغييرات غير المحفوظة.';
 
   @override
@@ -179,6 +176,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get supplier => 'المورد';
+
+  @override
+  String get supplierRegistration => 'تسجيل المورد';
 
   @override
   String get product => 'المنتج';
@@ -440,12 +440,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get rejected => 'مرفوض';
-
-  @override
-  String get transformed => 'تم تحويله';
-
-  @override
-  String get edited => 'مُعدّل';
 
   @override
   String get searchProduct => 'البحث باسم المنتج...';
@@ -1035,5 +1029,244 @@ class AppLocalizationsAr extends AppLocalizations {
   String get pleaseFillAllRequiredFields => 'الرجاء ملء جميع الحقول المطلوبة.';
 
   @override
+  String get editPurchaseOrder => 'تحرير أمر الشراء';
+
+  @override
   String get purchaseOrderSaved => 'تم حفظ أمر الشراء!';
+
+  @override
+  String get poDashboardTitle => 'لوحة أوامر الشراء';
+
+  @override
+  String get selectSupplier => 'اختر المورد';
+
+  @override
+  String get allSuppliers => 'كل الموردين';
+
+  @override
+  String get title => 'العنوان';
+
+  @override
+  String get date => 'التاريخ';
+
+  @override
+  String get requester => 'طالب';
+
+  @override
+  String get fromDate => 'من تاريخ';
+
+  @override
+  String get toDate => 'إلى تاريخ';
+
+  @override
+  String get fromPrefix => 'من: ';
+
+  @override
+  String get toPrefix => 'إلى: ';
+
+  @override
+  String get selectFromDate => 'اختر تاريخ البدء';
+
+  @override
+  String get selectToDate => 'اختر تاريخ الانتهاء';
+
+  @override
+  String get exportExcel => 'تصدير إلى Excel';
+
+  @override
+  String exportConfirmTitle(Object count) {
+    return 'تصدير $count طلب؟';
+  }
+
+  @override
+  String exportConfirmContent(Object count) {
+    return 'سيتم تصدير $count أوامر الشراء المعروضة حاليًا على لوحة التحكم.';
+  }
+
+  @override
+  String get export => 'تصدير';
+
+  @override
+  String get noOrdersToExportForCurrentFilters => 'لا توجد أوامر للتصدير للفلاتر الحالية';
+
+  @override
+  String get noOrdersToExportForSelectedRange => 'لا توجد أوامر للتصدير للفترة المختارة';
+
+  @override
+  String downloadedFile(Object fileName) {
+    return 'تم تنزيل $fileName';
+  }
+
+  @override
+  String exportedToPath(Object path) {
+    return 'تم التصدير إلى $path';
+  }
+
+  @override
+  String exportFailed(Object error) {
+    return 'فشل التصدير: $error';
+  }
+
+  @override
+  String get close => 'إغلاق';
+
+  @override
+  String get retry => 'إعادة المحاولة';
+
+  @override
+  String get noProducts => 'لا توجد منتجات';
+
+  @override
+  String get supplierDeleteTitle => 'حذف المورد';
+
+  @override
+  String supplierDeleteConfirm(Object name) {
+    return 'حذف \"$name\" ؟';
+  }
+
+  @override
+  String get supplierCancel => 'إلغاء';
+
+  @override
+  String get supplierDelete => 'حذف';
+
+  @override
+  String errorDeletingSupplier(Object error) {
+    return 'خطأ أثناء حذف المورد: $error';
+  }
+
+  @override
+  String get supplierAddNew => 'إضافة مورد جديد';
+
+  @override
+  String get supplierRequired => 'مطلوب';
+
+  @override
+  String get supplierContactEmail => 'البريد الإلكتروني للاتصال';
+
+  @override
+  String get emailInvalid => 'الرجاء إدخال بريد إلكتروني صالح';
+
+  @override
+  String get supplierPhoneNumber => 'رقم الهاتف';
+
+  @override
+  String get supplierPhoneHint => 'أدخل رقم الهاتف (6 أرقام على الأقل)';
+
+  @override
+  String get phoneRequired => 'الهاتف مطلوب';
+
+  @override
+  String get phoneMinDigits => 'يجب أن يحتوي الهاتف على 6 أرقام على الأقل';
+
+  @override
+  String get phoneDigitsOnly => 'يجب أن يحتوي الهاتف على أرقام فقط';
+
+  @override
+  String get supplierMatricule => 'المعرف الضريبي';
+
+  @override
+  String get supplierCIN => 'CIN';
+
+  @override
+  String get supplierAddress => 'العنوان';
+
+  @override
+  String get supplierCodeFournisseur => 'رمز المورد';
+
+  @override
+  String get supplierGroupName => 'اسم المجموعة';
+
+  @override
+  String get supplierContactName => 'اسم جهة الاتصال';
+
+  @override
+  String get supplierAlreadyExists => 'المورد موجود بالفعل';
+
+  @override
+  String supplierError(Object error) {
+    return 'خطأ: $error';
+  }
+
+  @override
+  String get supplierSave => 'حفظ';
+
+  @override
+  String get supplierAdd => 'إضافة مورد';
+
+  @override
+  String get supplierEdit => 'تعديل المورد';
+
+  @override
+  String get supplierWithNameAlreadyExists => 'مورد بهذا الاسم موجود بالفعل';
+
+  @override
+  String get supplierEitherMatriculeOrCINRequired => 'المطلوب: إما المعرف الضريبي أو CIN';
+
+  @override
+  String get supplierDetailsTitle => 'تفاصيل المورد';
+
+  @override
+  String get supplierApprovalStatus => 'حالة الموافقة';
+
+  @override
+  String get supplierID => 'المعرّف';
+
+  @override
+  String get supplierBack => 'عودة';
+
+  @override
+  String get supplierReject => 'رفض';
+
+  @override
+  String get supplierApprove => 'موافقة';
+
+  @override
+  String supplierStatusUpdated(Object status) {
+    return 'تم تحديث حالة المورد إلى $status';
+  }
+
+  @override
+  String get supplierRegistrationTitle => 'تسجيل المورد';
+
+  @override
+  String get supplierSearchHint => 'ابحث باسم المورد أو البريد أو الهاتف أو المعرف ...';
+
+  @override
+  String get supplierReset => 'إعادة تعيين';
+
+  @override
+  String get supplierRetry => 'إعادة المحاولة';
+
+  @override
+  String get supplierMatriculeFiscale => 'المعرف الضريبي';
+
+  @override
+  String get supplierCodeLabel => 'رمز المورد';
+
+  @override
+  String get supplierStatusLabel => 'الحالة';
+
+  @override
+  String get supplierView => 'عرض';
+
+  @override
+  String supplierPageOf(Object current, Object total) {
+    return 'الصفحة $current من $total';
+  }
+
+  @override
+  String get transformed => 'تم تحويله';
+
+  @override
+  String get edited => 'تم التعديل';
+
+  @override
+  String get statusApproved => 'تمت الموافقة';
+
+  @override
+  String get statusPending => 'قيد الانتظار';
+
+  @override
+  String get statusRejected => 'مرفوض';
 }

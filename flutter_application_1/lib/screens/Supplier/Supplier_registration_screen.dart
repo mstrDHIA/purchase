@@ -74,6 +74,19 @@ String formatPhoneForDisplay(String? fullPhone) {
   return PhoneNumberFormatter([3, 3, 4]).formatEditUpdate(TextEditingValue.empty, TextEditingValue(text: digits)).text;
 }
 
+String _localizedApprovalStatus(BuildContext context, String? status) {
+  final loc = AppLocalizations.of(context)!;
+  switch ((status ?? '').toLowerCase()) {
+    case 'approved':
+      return loc.statusApproved;
+    case 'rejected':
+      return loc.statusRejected;
+    case 'pending':
+    default:
+      return loc.statusPending;
+  }
+}
+
 // Note: this screen now uses the shared `Supplier` model from lib/models/supplier.dart
 // which contains fields like `contactEmail`, `phoneNumber`, `matricule`, `cin`, `codeFournisseur`, etc.
 // }
@@ -218,17 +231,17 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Supplier'),
-        content: Text('Delete "${_safeString(supplier.name)}" ?'),
+        title: Text(AppLocalizations.of(context)!.supplierDeleteTitle),
+        content: Text(AppLocalizations.of(context)!.supplierDeleteConfirm(_safeString(supplier.name))),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.supplierCancel),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Delete'),
+            child: Text(AppLocalizations.of(context)!.supplierDelete),
           ),
         ],
       ),
@@ -239,13 +252,13 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
         await controller.deleteSupplier(supplier.id!);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Supplier deleted successfully')),
+            SnackBar(content: Text(AppLocalizations.of(context)!.supplierDeletedSuccessfully)),
           );
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error deleting supplier: $e', style: const TextStyle(color: Colors.red))),
+            SnackBar(content: Text(AppLocalizations.of(context)!.errorDeletingSupplier(e.toString()), style: const TextStyle(color: Colors.red))),
           );
         }
       }
@@ -273,7 +286,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
       barrierDismissible: false,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Add New Supplier'),
+          title: Text(AppLocalizations.of(context)!.supplierAddNew),
           contentPadding: const EdgeInsets.all(20),
           content: SizedBox(
             width: 480,
@@ -285,17 +298,17 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                   children: [
                     TextFormField(
                       controller: nameCtrl,
-                      decoration: InputDecoration(labelText: 'Name', errorText: fieldErrors['name']),
-                      validator: (v) => v == null || v.isEmpty ? 'Name is required' : null,
+                      decoration: InputDecoration(labelText: AppLocalizations.of(context)!.supplierName, errorText: fieldErrors['name']),
+                      validator: (v) => v == null || v.isEmpty ? AppLocalizations.of(context)!.supplierName + ' ' + AppLocalizations.of(context)!.supplierRequired : null,
                       enabled: !isSubmitting,
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: emailCtrl,
-                      decoration: InputDecoration(labelText: 'Contact Email', errorText: fieldErrors['contact_email']),
+                      decoration: InputDecoration(labelText: AppLocalizations.of(context)!.supplierContactEmail, errorText: fieldErrors['contact_email']),
                       validator: (v) {
-                        if (v == null || v.isEmpty) return 'Email is required';
-                        if (!v.contains('@')) return 'Enter a valid email';
+                        if (v == null || v.isEmpty) return AppLocalizations.of(context)!.emailRequired;
+                        if (!v.contains('@')) return AppLocalizations.of(context)!.emailInvalid;
                         return null;
                       },
                       enabled: !isSubmitting,
@@ -332,17 +345,17 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                         Expanded(
                           child: TextFormField(
                             controller: phoneCtrl,
-                            decoration: const InputDecoration(
-                              labelText: 'Phone Number',
-                              hintText: 'Enter phone number (min 6 digits)',
+                            decoration: InputDecoration(
+                              labelText: AppLocalizations.of(context)!.supplierPhoneNumber,
+                              hintText: AppLocalizations.of(context)!.supplierPhoneHint,
                             ),
                             keyboardType: TextInputType.number,
                             inputFormatters: [FilteringTextInputFormatter.digitsOnly, PhoneNumberFormatter.fromCountryCode(_selectedCountryCode)],
                             validator: (v) {
                               final digits = v == null ? '' : v.replaceAll(RegExp(r'\D'), '');
-                              if (digits.isEmpty) return 'Phone is required';
-                              if (digits.length < 6) return 'Phone must be at least 6 digits';
-                              if (!RegExp(r'^[0-9]+$').hasMatch(digits)) return 'Phone must contain only digits';
+                              if (digits.isEmpty) return AppLocalizations.of(context)!.phoneRequired;
+                              if (digits.length < 6) return AppLocalizations.of(context)!.phoneMinDigits;
+                              if (!RegExp(r'^[0-9]+$').hasMatch(digits)) return AppLocalizations.of(context)!.phoneDigitsOnly;
                               return null;
                             },
                             enabled: !isSubmitting,
@@ -353,7 +366,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: matriculeCtrl,
-                      decoration: const InputDecoration(labelText: 'Matricule'),
+                      decoration: InputDecoration(labelText: AppLocalizations.of(context)!.supplierMatricule),
                       validator: (v) {
                         if ((v == null || v.isEmpty) && (cinCtrl.text.isEmpty)) {
                           return 'Either Matricule or CIN is required';
@@ -365,7 +378,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: cinCtrl,
-                      decoration: const InputDecoration(labelText: 'CIN'),
+                      decoration: InputDecoration(labelText: AppLocalizations.of(context)!.supplierCIN),
                       validator: (v) {
                         if ((v == null || v.isEmpty) && (matriculeCtrl.text.isEmpty)) {
                           return 'Either Matricule or CIN is required';
@@ -377,25 +390,25 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: addressCtrl,
-                      decoration: InputDecoration(labelText: 'Address', errorText: fieldErrors['address']),
+                      decoration: InputDecoration(labelText: AppLocalizations.of(context)!.supplierAddress, errorText: fieldErrors['address']),
                       enabled: !isSubmitting,
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: codeCtrl,
-                      decoration: InputDecoration(labelText: 'Code fournisseur', errorText: fieldErrors['code_fournisseur']),
+                      decoration: InputDecoration(labelText: AppLocalizations.of(context)!.supplierCodeFournisseur, errorText: fieldErrors['code_fournisseur']),
                       enabled: !isSubmitting,
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: groupNameCtrl,
-                      decoration: const InputDecoration(labelText: 'Group Name'),
+                      decoration: InputDecoration(labelText: AppLocalizations.of(context)!.supplierGroupName),
                       enabled: !isSubmitting,
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
                       controller: contactNameCtrl,
-                      decoration: const InputDecoration(labelText: 'Contact Name'),
+                      decoration: InputDecoration(labelText: AppLocalizations.of(context)!.supplierContactName),
                       enabled: !isSubmitting,
                     ),
                   ],
@@ -406,7 +419,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
           actions: [
             TextButton(
               onPressed: isSubmitting ? null : () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
+              child: Text(AppLocalizations.of(context)!.supplierCancel),
             ),
             ElevatedButton(
               onPressed: isSubmitting
@@ -417,7 +430,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                         final newName = nameCtrl.text.trim();
                         if (controller.suppliers.any((s) => (s.name ?? '').toLowerCase() == newName.toLowerCase())) {
                           setDialogState(() {
-                            fieldErrors = {...fieldErrors, 'name': 'Supplier already exists'};
+                            fieldErrors = {...fieldErrors, 'name': AppLocalizations.of(context)!.supplierAlreadyExists};
                           });
                           return;
                         }
@@ -445,7 +458,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                             setDialogState(() { isSubmitting = false; });
                             Navigator.of(context).pop();
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Supplier created successfully!')),
+                              SnackBar(content: Text(AppLocalizations.of(context)!.supplierCreatedSuccessfully)),
                             );
                           }
                         } catch (e) {
@@ -471,7 +484,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                               });
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Error: ${e.toString()}')),
+                                SnackBar(content: Text(AppLocalizations.of(context)!.supplierError(e.toString()))),
                               );
                               setDialogState(() => isSubmitting = false);
                             }
@@ -481,7 +494,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                     },
               child: isSubmitting
                   ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Text('Save'),
+                  : Text(AppLocalizations.of(context)!.supplierSave),
             ),
           ],
         ),
@@ -522,16 +535,16 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: Text(supplier == null ? 'Add Supplier' : 'Edit Supplier'),
+          title: Text(supplier == null ? AppLocalizations.of(context)!.supplierAdd : AppLocalizations.of(context)!.supplierEdit),
           content: SizedBox(
             width: 480,
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Name')),
+                  TextField(controller: nameCtrl, decoration: InputDecoration(labelText: AppLocalizations.of(context)!.supplierName)),
                   const SizedBox(height: 12),
-                  TextField(controller: emailCtrl, decoration: const InputDecoration(labelText: 'Contact Email')),
+                  TextField(controller: emailCtrl, decoration: InputDecoration(labelText: AppLocalizations.of(context)!.supplierContactEmail)),
                   const SizedBox(height: 12),
                   Row(
                     children: [
@@ -563,9 +576,9 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                       Expanded(
                         child: TextField(
                           controller: phoneCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Phone Number',
-                            hintText: 'Min 6 digits',
+                          decoration: InputDecoration(
+                            labelText: AppLocalizations.of(context)!.supplierPhoneNumber,
+                            hintText: AppLocalizations.of(context)!.supplierPhoneHint,
                           ),
                           keyboardType: TextInputType.number,
                           inputFormatters: [FilteringTextInputFormatter.digitsOnly, PhoneNumberFormatter.fromCountryCode(_selectedCountryCode)],
@@ -574,30 +587,30 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  TextField(controller: addressCtrl, decoration: const InputDecoration(labelText: 'Address')),
+                  TextField(controller: addressCtrl, decoration: InputDecoration(labelText: AppLocalizations.of(context)!.supplierAddress)),
                   const SizedBox(height: 12),
-                  TextField(controller: matriculeCtrl, decoration: const InputDecoration(labelText: 'Matricule')),
+                  TextField(controller: matriculeCtrl, decoration: InputDecoration(labelText: AppLocalizations.of(context)!.supplierMatricule)),
                   const SizedBox(height: 12),
-                  TextField(controller: cinCtrl, decoration: const InputDecoration(labelText: 'CIN')),
+                  TextField(controller: cinCtrl, decoration: InputDecoration(labelText: AppLocalizations.of(context)!.supplierCIN)),
                   const SizedBox(height: 12),
-                  TextField(controller: codeCtrl, decoration: const InputDecoration(labelText: 'Code fournisseur')),
+                  TextField(controller: codeCtrl, decoration: InputDecoration(labelText: AppLocalizations.of(context)!.supplierCodeFournisseur)),
                   const SizedBox(height: 12),
-                  TextField(controller: groupNameCtrl, decoration: const InputDecoration(labelText: 'Group Name')),
+                  TextField(controller: groupNameCtrl, decoration: InputDecoration(labelText: AppLocalizations.of(context)!.supplierGroupName)),
                   const SizedBox(height: 12),
-                  TextField(controller: contactNameCtrl, decoration: const InputDecoration(labelText: 'Contact Name')),
+                  TextField(controller: contactNameCtrl, decoration: InputDecoration(labelText: AppLocalizations.of(context)!.supplierContactName)),
                 ],
               ),
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+            TextButton(onPressed: () => Navigator.of(context).pop(), child: Text(AppLocalizations.of(context)!.supplierCancel)),
             ElevatedButton(
               onPressed: isSubmitting
                   ? null
                   : () async {
                       if (matriculeCtrl.text.isEmpty && cinCtrl.text.isEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Either Matricule or CIN is required')),
+                          SnackBar(content: Text(AppLocalizations.of(context)!.supplierEitherMatriculeOrCINRequired)),
                         );
                         return;
                       }
@@ -606,7 +619,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                       final newName = nameCtrl.text.trim();
                       if (supplier != null && controller.suppliers.any((s) => s.id != supplier.id && (s.name ?? '').toLowerCase() == newName.toLowerCase())) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Supplier with this name already exists')),
+                          SnackBar(content: Text(AppLocalizations.of(context)!.supplierWithNameAlreadyExists)),
                         );
                         return;
                       }
@@ -628,17 +641,17 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                                 cin: cinCtrl.text.isNotEmpty ? cinCtrl.text : null,
                                 approvalStatus: 'pending',
                           );
-                          if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Supplier updated')));
+                          if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.supplierUpdated)));
                         }
                         Navigator.of(context).pop();
                       } catch (e) {
                         if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.supplierError(e.toString()))));
                           setDialogState(() => isSubmitting = false);
                         }
                       }
                     },
-              child: const Text('Save'),
+              child: Text(AppLocalizations.of(context)!.supplierSave),
             ),
           ],
         ),
@@ -655,7 +668,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          title: const Text('Supplier Details'),
+          title: Text(AppLocalizations.of(context)!.supplierDetailsTitle),
           content: SizedBox(
             width: 480,
             child: SingleChildScrollView(
@@ -663,23 +676,23 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildDetailRow(Icons.mail, 'Email', _safeString(supplier.contactEmail)),
+                  _buildDetailRow(Icons.mail, AppLocalizations.of(context)!.supplierEmail, _safeString(supplier.contactEmail)),
                   const SizedBox(height: 16),
                   const SizedBox(height: 16),
-                  _buildDetailRow(Icons.person, 'Name', _safeString(supplier.name)),
+                  _buildDetailRow(Icons.person, AppLocalizations.of(context)!.supplierName, _safeString(supplier.name)),
                   const SizedBox(height: 16),
-                  _buildDetailRow(Icons.phone, 'Phone', formatPhoneForDisplay(supplier.phoneNumber?.toString())),
+                  _buildDetailRow(Icons.phone, AppLocalizations.of(context)!.supplierPhoneNumber, formatPhoneForDisplay(supplier.phoneNumber?.toString())),
                   const SizedBox(height: 16),
-                  const SizedBox(height: 16),                _buildDetailRow(Icons.location_on, 'Address', _safeString(supplier.address)),
-                  const SizedBox(height: 16),                _buildDetailRow(Icons.badge, 'Matricule', _safeString(supplier.matricule)),
+                  const SizedBox(height: 16),                _buildDetailRow(Icons.location_on, AppLocalizations.of(context)!.supplierAddress, _safeString(supplier.address)),
+                  const SizedBox(height: 16),                _buildDetailRow(Icons.badge, AppLocalizations.of(context)!.supplierMatricule, _safeString(supplier.matricule)),
                   const SizedBox(height: 16),
-                  _buildDetailRow(Icons.credit_card, 'CIN', _safeString(supplier.cin)),
+                  _buildDetailRow(Icons.credit_card, AppLocalizations.of(context)!.supplierCIN, _safeString(supplier.cin)),
                   const SizedBox(height: 16),
-                  _buildDetailRow(Icons.groups, 'Group Name', _safeString(supplier.groupName)),
+                  _buildDetailRow(Icons.groups, AppLocalizations.of(context)!.supplierGroupName, _safeString(supplier.groupName)),
                   const SizedBox(height: 16),
-                  _buildDetailRow(Icons.person_outline, 'Contact Name', _safeString(supplier.contactName)),
+                  _buildDetailRow(Icons.person_outline, AppLocalizations.of(context)!.supplierContactName, _safeString(supplier.contactName)),
                   const SizedBox(height: 16),
-                  _buildDetailRow(Icons.check_circle, 'Approval Status', (_safeString(supplier.approvalStatus).isNotEmpty ? _safeString(supplier.approvalStatus).toUpperCase() : 'N/A')),
+                  _buildDetailRow(Icons.check_circle, AppLocalizations.of(context)!.supplierApprovalStatus, (_safeString(supplier.approvalStatus).isNotEmpty ? _localizedApprovalStatus(context, supplier.approvalStatus) : 'N/A')),
                   const SizedBox(height: 16),
                   // Try to find the full model to show additional fields like Code Fournisseur
                   Builder(
@@ -690,11 +703,11 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          if (code.isNotEmpty) ...[
-                            _buildDetailRow(Icons.tag, 'Code fournisseur', code),
+                            if (code.isNotEmpty) ...[
+                            _buildDetailRow(Icons.tag, AppLocalizations.of(context)!.supplierCodeFournisseur, code),
                             const SizedBox(height: 16),
                           ],
-                          _buildDetailRow(Icons.tag, 'ID', supplier.id.toString()),
+                          _buildDetailRow(Icons.tag, AppLocalizations.of(context)!.supplierID, supplier.id.toString()),
                         ],
                       );
                     },
@@ -711,7 +724,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(backgroundColor: Colors.deepPurple),
                     onPressed: isSubmitting ? null : () => Navigator.of(context).pop(),
-                    child: const Text('Back', style: TextStyle(color: Colors.white)),
+                    child: Text(AppLocalizations.of(context)!.supplierBack, style: const TextStyle(color: Colors.white)),
                   ),
                   if (supplier.approvalStatus == 'pending')
                     Row(
@@ -729,7 +742,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                           },
                           child: isSubmitting
                               ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(Colors.white)))
-                              : const Text('Reject', style: TextStyle(color: Colors.white)),
+                              : Text(AppLocalizations.of(context)!.supplierReject, style: const TextStyle(color: Colors.white)),
                         ),
                         const SizedBox(width: 8),
                         ElevatedButton(
@@ -745,7 +758,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                           },
                           child: isSubmitting
                               ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(Colors.white)))
-                              : const Text('Approve', style: TextStyle(color: Colors.white)),
+                              : Text(AppLocalizations.of(context)!.supplierApprove, style: const TextStyle(color: Colors.white)),
                         ),
                       ],
                     ),
@@ -758,7 +771,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                   ElevatedButton(
                     style: ElevatedButton.styleFrom(backgroundColor: Colors.deepPurple),
                     onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Back', style: TextStyle(color: Colors.white)),
+                    child: Text(AppLocalizations.of(context)!.supplierBack, style: const TextStyle(color: Colors.white)),
                   ),
                 ],
               ),
@@ -786,7 +799,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Supplier status updated to ${newStatus.toUpperCase()}')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.supplierStatusUpdated(_localizedApprovalStatus(context, newStatus)))),
         );
         // Refresh suppliers list to update the UI
         await controller.fetchSuppliers();
@@ -794,7 +807,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error updating supplier: $e'), backgroundColor: Colors.red),
+          SnackBar(content: Text(AppLocalizations.of(context)!.supplierError(e.toString())), backgroundColor: Colors.red),
         );
       }
     }
@@ -851,7 +864,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
     final paginatedFiltered = filtered.sublist(startIndex, endIndex);
 
     return Scaffold(
-      appBar: StandardHeader(title: AppLocalizations.of(context)!.supplier + ' Registration'),
+      appBar: StandardHeader(title: AppLocalizations.of(context)!.supplierRegistrationTitle),
       body: Column(
         children: [
           Padding(
@@ -866,7 +879,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                         child: TextField(
                           controller: _searchCtrl,
                           decoration: InputDecoration(
-                            hintText: 'Search supplier name, email, phone, matricule, cin ...',
+                            hintText: AppLocalizations.of(context)!.supplierSearchHint,
                             prefixIcon: const Icon(Icons.search),
                             filled: true,
                             fillColor: const Color(0xFFF7F3FF),
@@ -909,18 +922,18 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                     backgroundColor: Colors.grey.shade200,
                     foregroundColor: Colors.black87,
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
-                      Icon(Icons.refresh),
-                      SizedBox(width: 6),
-                      Text('Reset'),
+                      const Icon(Icons.refresh),
+                      const SizedBox(width: 6),
+                      Text(AppLocalizations.of(context)!.supplierReset),
                     ],
                   ),
                 ),
                 const SizedBox(width: 12),
                 ElevatedButton.icon(
                   icon: const Icon(Icons.add),
-                  label: const Text('Add Supplier'),
+                  label: Text(AppLocalizations.of(context)!.supplierAdd),
                   onPressed: () async {
                     await _openAddSupplierDialog();
                   },
@@ -953,7 +966,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                               const SizedBox(height: 16),
                               ElevatedButton(
                                 onPressed: () => controller.fetchSuppliers(),
-                                child: const Text('Retry'),
+                                child: Text(AppLocalizations.of(context)!.supplierRetry),
                               ),
                             ],
                           ),
@@ -970,47 +983,47 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                                   sortAscending: _sortAsc,
                                   columns: [
                                     DataColumn(
-                                      label: const Text('ID', style: TextStyle(fontWeight: FontWeight.w600)),
+                                      label: Text(AppLocalizations.of(context)!.supplierID, style: const TextStyle(fontWeight: FontWeight.w600)),
                                       onSort: (i, asc) => _sortByColumn(0, asc),
                                     ),
                                     DataColumn(
-                                      label: const Text('Email', style: TextStyle(fontWeight: FontWeight.w600)),
+                                      label: Text(AppLocalizations.of(context)!.supplierEmail, style: const TextStyle(fontWeight: FontWeight.w600)),
                                       onSort: (i, asc) => _sortByColumn(1, asc),
                                     ),
                                     DataColumn(
-                                      label: const Text('Name', style: TextStyle(fontWeight: FontWeight.w600)),
+                                      label: Text(AppLocalizations.of(context)!.supplierName, style: const TextStyle(fontWeight: FontWeight.w600)),
                                       onSort: (i, asc) => _sortByColumn(2, asc),
                                     ),
                                     DataColumn(
-                                      label: const Text('Phone', style: TextStyle(fontWeight: FontWeight.w600)),
+                                      label: Text(AppLocalizations.of(context)!.supplierPhoneNumber, style: const TextStyle(fontWeight: FontWeight.w600)),
                                       onSort: (i, asc) => _sortByColumn(3, asc),
                                     ),
                                     DataColumn(
-                                      label: const Text('Matricule fiscale', style: TextStyle(fontWeight: FontWeight.w600)),
+                                      label: Text(AppLocalizations.of(context)!.supplierMatriculeFiscale, style: const TextStyle(fontWeight: FontWeight.w600)),
                                       onSort: (i, asc) => _sortByColumn(4, asc),
                                     ),
                                     DataColumn(
-                                      label: const Text('CIN', style: TextStyle(fontWeight: FontWeight.w600)),
+                                      label: Text(AppLocalizations.of(context)!.supplierCIN, style: const TextStyle(fontWeight: FontWeight.w600)),
                                       onSort: (i, asc) => _sortByColumn(5, asc),
                                     ),
                                     DataColumn(
-                                      label: const Text('Code fournisseur', style: TextStyle(fontWeight: FontWeight.w600)),
+                                      label: Text(AppLocalizations.of(context)!.supplierCodeLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
                                       onSort: (i, asc) => _sortByColumn(6, asc),
                                     ),
                                     DataColumn(
-                                      label: const Text('Group Name', style: TextStyle(fontWeight: FontWeight.w600)),
+                                      label: Text(AppLocalizations.of(context)!.supplierGroupName, style: const TextStyle(fontWeight: FontWeight.w600)),
                                       onSort: (i, asc) => _sortByColumn(7, asc),
                                     ),
                                     DataColumn(
-                                      label: const Text('Contact Name', style: TextStyle(fontWeight: FontWeight.w600)),
+                                      label: Text(AppLocalizations.of(context)!.supplierContactName, style: const TextStyle(fontWeight: FontWeight.w600)),
                                       onSort: (i, asc) => _sortByColumn(8, asc),
                                     ),
                                     DataColumn(
-                                      label: const Text('Address', style: TextStyle(fontWeight: FontWeight.w600)),
+                                      label: Text(AppLocalizations.of(context)!.supplierAddress, style: const TextStyle(fontWeight: FontWeight.w600)),
                                       onSort: (i, asc) => _sortByColumn(9, asc),
                                     ),
                                     DataColumn(
-                                      label: const Text('Status', style: TextStyle(fontWeight: FontWeight.w600)),
+                                      label: Text(AppLocalizations.of(context)!.supplierStatusLabel, style: const TextStyle(fontWeight: FontWeight.w600)),
                                     ),
                                     const DataColumn(label: Text('')),
                                   ],
@@ -1053,17 +1066,17 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                                         DataCell(Row(mainAxisSize: MainAxisSize.min, children: [
                                           IconButton(
                                             icon: const Icon(Icons.visibility, color: Colors.blue),
-                                            tooltip: 'View',
+                                            tooltip: AppLocalizations.of(context)!.supplierView,
                                             onPressed: () => _showViewSupplierDialog(supplier),
                                           ),
                                           IconButton(
                                             icon: const Icon(Icons.edit, color: Colors.teal),
-                                            tooltip: 'Edit',
+                                            tooltip: AppLocalizations.of(context)!.supplierEdit,
                                             onPressed: () => _showEditDialog(supplier: supplier, index: index),
                                           ),
                                           IconButton(
                                             icon: const Icon(Icons.delete, color: Colors.red),
-                                            tooltip: 'Delete',
+                                            tooltip: AppLocalizations.of(context)!.supplierDelete,
                                             onPressed: () => _confirmDelete(index),
                                           ),
                                         ])),
@@ -1082,7 +1095,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                                       icon: const Icon(Icons.chevron_left),
                                       onPressed: _currentPage > 1 ? () => setState(() => _currentPage--) : null,
                                     ),
-                                    Text('Page $_currentPage of $totalPages'),
+                                    Text(AppLocalizations.of(context)!.supplierPageOf(_currentPage, totalPages)),
                                     IconButton(
                                       icon: const Icon(Icons.chevron_right),
                                       onPressed: _currentPage < totalPages ? () => setState(() => _currentPage++) : null,
