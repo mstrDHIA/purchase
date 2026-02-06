@@ -172,8 +172,8 @@ class _ModifyUserPageState extends State<ModifyUserPage> {
                     }
                   } : null,
                   icon: loading
-                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Color(0xFF6F4DBF), strokeWidth: 2))
-                    : const Icon(Icons.save, size: 18),
+                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Color.fromARGB(255, 242, 241, 245), strokeWidth: 2))
+                    : const Icon(Icons.save, size: 18,),
                   label: Text(loading ? 'Saving...' : 'Save'),
                 ),
               );

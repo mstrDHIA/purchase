@@ -7,11 +7,10 @@ import 'package:flutter_application_1/screens/Purchase Request/purchase_request_
 import 'package:flutter_application_1/screens/Purchase order/pushase_order_screen.dart';
 import 'package:flutter_application_1/screens/Supplier/Supplier_registration_screen.dart';
 import 'package:flutter_application_1/screens/Reject reason/reject_reason_list.dart';
-import 'package:flutter_application_1/screens/Supplier/Add_supplier_screen.dart';
-import 'package:flutter_application_1/screens/Supplier/View_supplier_screen.dart';
+
 import 'package:flutter_application_1/screens/Department/department_list_screen.dart';
 import 'package:flutter_application_1/screens/auth/login_screen.dart';
-import 'package:flutter_application_1/screens/stats/stats_screen.dart';
+import 'package:flutter_application_1/screens/stats/stats_screen_new.dart';
 import 'package:flutter_application_1/screens/profile/profile_user.dart';
 import 'package:flutter_application_1/screens/users/password_screen.dart';
 import 'package:flutter_application_1/screens/Role/Role_screen.dart';
@@ -77,7 +76,7 @@ final GoRouter router = GoRouter(
         ),
         GoRoute(
           path: '/stats',
-          builder: (context, state) => const StatsScreen(),
+          builder: (context, state) => const StatsScreenNew(),
         ),
 
         GoRoute(
@@ -99,15 +98,9 @@ final GoRouter router = GoRouter(
           },
         ),
 
-        GoRoute(
-          path: '/add_supplier',
-          builder: (context, state) => AddSupplierPage(),
-        ),
+        
 
-        GoRoute(
-          path: '/view_supplier',
-          builder: (context, state) => ViewSupplierPage(),
-        ),
+        
 
         GoRoute(
           path: '/password',

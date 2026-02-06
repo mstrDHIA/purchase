@@ -1052,7 +1052,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                                               borderRadius: BorderRadius.circular(4),
                                             ),
                                             child: Text(
-                                              _safeString(supplier.approvalStatus).toLowerCase(),
+                                              _localizedApprovalStatus(context, supplier.approvalStatus),
                                               style: TextStyle(
                                                 fontSize: 12,
                                                 fontWeight: FontWeight.w600,

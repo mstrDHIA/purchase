@@ -222,7 +222,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                     alignment: Alignment.centerLeft,
                     child: IconButton(
                       icon: const Icon(Icons.arrow_back, color: Colors.black87),
-                      tooltip: 'Back',
+                      tooltip: AppLocalizations.of(context)!.back,
                       onPressed: () {
                         Navigator.pop(context);
                       },
@@ -232,9 +232,9 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text(
-                          'Purchase Request',
-                          style: TextStyle(
+                        Text(
+                          AppLocalizations.of(context)!.purchaseRequest,
+                          style: const TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
                             color: Colors.black87,
@@ -249,7 +249,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                             border: Border.all(color: Colors.grey.shade300),
                           ),
                           child: Text(
-                            'ID: ${widget.purchaseRequest.id?.toString() ?? '-'}',
+                            AppLocalizations.of(context)!.idLabel(widget.purchaseRequest.id?.toString() ?? '-'),
                             style: const TextStyle(fontWeight: FontWeight.w600),
                           ),
                         ),
@@ -353,10 +353,10 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
               if (_loadingFamilies) const LinearProgressIndicator(minHeight: 3),
               if (_familiesError != null) ...[
                 const SizedBox(height: 8),
-                Text('Failed to load product families: $_familiesError', style: const TextStyle(color: Colors.red)),
+                Text(AppLocalizations.of(context)!.failedToLoadFamilies(_familiesError ?? ''), style: const TextStyle(color: Colors.red)),
               ],
               // Products section
-              const Text('Products', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text(AppLocalizations.of(context)!.products, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               if (products.isNotEmpty)
                 ListView.separated(
@@ -410,8 +410,8 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                   child: TextField(
                                     controller: TextEditingController(text: familyText),
                                     readOnly: true,
-                                    decoration: InputDecoration(
-                                      labelText: 'Family',
+                                      decoration: InputDecoration(
+                                      labelText: AppLocalizations.of(context)!.familyLabel,
                                       filled: true,
                                       fillColor: Colors.white,
                                       enabledBorder: OutlineInputBorder(
@@ -432,7 +432,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                     controller: TextEditingController(text: subfamilyText),
                                     readOnly: true,
                                     decoration: InputDecoration(
-                                      labelText: 'Subfamily',
+                                      labelText: AppLocalizations.of(context)!.subfamilyLabel,
                                       filled: true,
                                       fillColor: Colors.white,
                                       enabledBorder: OutlineInputBorder(
@@ -458,7 +458,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                     controller: TextEditingController(text: productText),
                                     readOnly: true,
                                     decoration: InputDecoration(
-                                      labelText: 'Product',
+                                      labelText: AppLocalizations.of(context)!.product,
                                       filled: true,
                                       fillColor: Colors.white,
                                       enabledBorder: OutlineInputBorder(
@@ -480,7 +480,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                     controller: TextEditingController(text: quantityText),
                                     readOnly: true,
                                     decoration: InputDecoration(
-                                      labelText: 'Quantity',
+                                      labelText: AppLocalizations.of(context)!.quantity,
                                       filled: true,
                                       fillColor: Colors.white,
                                       enabledBorder: OutlineInputBorder(
@@ -512,7 +512,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Due Date'),
+                        Text(AppLocalizations.of(context)!.dueDate),
                         const SizedBox(height: 4),
                         TextField(
                           controller: TextEditingController(text: formatDate(widget.purchaseRequest.endDate)),
@@ -541,7 +541,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Priority'),
+                        Text(AppLocalizations.of(context)!.priority),
                         const SizedBox(height: 4),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -577,7 +577,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
               ),
               const SizedBox(height: 24),
               // Description
-              const Text('Description'),
+              Text(AppLocalizations.of(context)!.description),
               const SizedBox(height: 4),
               TextField(
                 readOnly: true,
@@ -628,7 +628,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           
-                          const Text('Status'),
+                          Text(AppLocalizations.of(context)!.status),
                           const SizedBox(width: 12),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -677,16 +677,16 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                 final shouldCreate = await showDialog<bool>(
                                   context: context,
                                   builder: (context) => AlertDialog(
-                                    title: const Text('Create Purchase Order?'),
-                                    content: const Text('Do you want to create a new purchase order from this purchase request?'),
+                                    title: Text(AppLocalizations.of(context)!.createPurchaseOrderTitle),
+                                    content: Text(AppLocalizations.of(context)!.createPurchaseOrderContent),
                                     actions: [
                                       TextButton(
                                         onPressed: () => Navigator.of(context).pop(false),
-                                        child: const Text('No'),
+                                        child: Text(AppLocalizations.of(context)!.no),
                                       ),
                                       ElevatedButton(
                                         onPressed: () => Navigator.of(context).pop(true),
-                                        child: const Text('Yes'),
+                                        child: Text(AppLocalizations.of(context)!.yes),
                                       ),
                                     ],
                                   ),
@@ -764,8 +764,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                                 });
                                                 Navigator.of(ctx).pop(); // close editor dialog
                                                 ScaffoldMessenger.of(context).showSnackBar(
-                                                  const SnackBar(content: Text('Purchase Order created successfully!'), backgroundColor: Colors.green),
-                                                  
+                                                  SnackBar(content: Text(AppLocalizations.of(context)!.purchaseOrderCreatedSuccessfully), backgroundColor: Colors.green),
                                                 );
                                               }
                                             } catch (e) {
@@ -798,7 +797,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                       
                                       if (mounted) {
                                         ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(content: Text('Purchase Request marked as converted!'), backgroundColor: Colors.green),
+                                          SnackBar(content: Text(AppLocalizations.of(context)!.purchaseRequestMarkedConverted), backgroundColor: Colors.green),
                                         );
                                         // Refresh the controller to get the latest PR list
                                         final prController = Provider.of<PurchaseRequestController>(context, listen: false);
@@ -1016,7 +1015,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                               }
 
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(backgroundColor: Color.fromARGB(255, 243, 5, 5), content: Text('rejected!')),
+                                SnackBar(backgroundColor: const Color.fromARGB(255, 243, 5, 5), content: Text(AppLocalizations.of(context)!.rejected)),
                               );
                             },
                             child: Text(AppLocalizations.of(context)?.reject ?? 'Reject'),

@@ -48,6 +48,10 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final poController = context.read<PurchaseOrderController>();
       poController.fetchOrders();
+      // Ensure users are loaded so requester names can be resolved immediately
+      try {
+        context.read<UserController>().getUsers();
+      } catch (_) {}
       _startAutoRefresh();
 
       // Register reset listener
@@ -441,6 +445,10 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
       Future.microtask(() {
         poController.fetchOrders();
         supplierController.fetchSuppliers();
+        // Also load users so requester names are available on first render
+        try {
+          userController.getUsers();
+        } catch (_) {}
       });
     }
 

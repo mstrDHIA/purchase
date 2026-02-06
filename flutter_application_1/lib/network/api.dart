@@ -29,7 +29,7 @@ class APIS {
       responseHeader: false,
       error: true,
     ));
-  static String token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzNjM0MjgzLCJpYXQiOjE3NjMwMjk0ODMsImp0aSI6IjVhNjYyZTAwYThmZTRjZTBiZDdjMWM1NmExMDc4MmRkIiwidXNlcl9pZCI6MX0.5OE58vMoA6sA0HLKQc5lt-6FFw49VAKn3_5H3LWKC6U';
+  static String token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcwOTkyMzEyLCJpYXQiOjE3NzAzODc1MTIsImp0aSI6IjYyYzYyOWRkMWIzNDQ3OThhYTc2NGEwNWZiMWQ1MzRlIiwidXNlcl9pZCI6MX0.BiJINN-vjreadIR-LD54ZctQThfwrNOSVVl9VIsGE3s';
 
   // APIS() {
   //   dio.interceptors.add(LogInterceptor(
@@ -77,6 +77,9 @@ class APIS {
   static const String viewPurchaseOrderById = "purchase_order/purchaseOrders/";
   static const String updatePurchaseOrderById = "purchase_order/purchaseOrders/";
   static const String deletePurchaseOrderById = "purchase_order/purchaseOrders/";
+  // Stats endpoints
+  static const String poTotals = "stats/po/totals/";
+  static const String poRejectionRate = "stats/po/rejection-rate/";
   static const String fetchCategories = "category/category/";
   static const String createCategories = "category/category/";
   static const String editCategory = "category/category/";

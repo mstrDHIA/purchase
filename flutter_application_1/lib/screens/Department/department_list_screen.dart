@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/department_controller.dart';
 import 'package:flutter_application_1/widgets/standard_header.dart';
+import 'package:flutter_application_1/l10n/app_localizations.dart';
 // import 'add_department_screen.dart';
 
 /// Department item model used by the screen.
@@ -35,7 +36,7 @@ class DepartmentListScreen extends StatefulWidget {
     this.departments,
     this.initialId,
     required this.onSelect,
-    this.title = 'Select Department',
+    this.title = '',
   });
 
   @override
@@ -102,17 +103,17 @@ class _DepartmentListScreenState extends State<DepartmentListScreen>
               children: [
                 Row(
                   children: [
-                    Expanded(child: Text('Department', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
+                    Expanded(child: Text(AppLocalizations.of(context)!.department, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
                     IconButton(
-                      tooltip: 'Copy name',
+                      tooltip: AppLocalizations.of(context)!.copyName,
                       onPressed: () {
                         Clipboard.setData(ClipboardData(text: d.name));
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Name copied')));
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.nameCopied)));
                       },
                       icon: const Icon(Icons.copy, size: 20),
                     ),
                     IconButton(
-                      tooltip: 'Edit',
+                      tooltip: AppLocalizations.of(context)!.edit,
                       onPressed: () {
                         Navigator.of(context).pop();
                         _showEditDialog(d);
@@ -133,23 +134,23 @@ class _DepartmentListScreenState extends State<DepartmentListScreen>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Description', style: TextStyle(fontWeight: FontWeight.w600)),
+                      Text(AppLocalizations.of(context)!.description, style: const TextStyle(fontWeight: FontWeight.w600)),
                       const SizedBox(height: 6),
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
                             child: d.description != null && d.description!.isNotEmpty
-                                ? SelectableText(d.description!)
-                                : Text('(No description)', style: TextStyle(color: Colors.grey.shade600)),
+                              ? SelectableText(d.description!)
+                              : Text(AppLocalizations.of(context)!.noDescription, style: TextStyle(color: Colors.grey.shade600)),
                           ),
                           if (d.description != null && d.description!.isNotEmpty)
                             IconButton(
-                              tooltip: 'Copy description',
+                              tooltip: AppLocalizations.of(context)!.copyDescription,
                               onPressed: () {
                                 final text = d.description ?? '';
                                 Clipboard.setData(ClipboardData(text: text));
-                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Description copied')));
+                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.descriptionCopied)));
                               },
                               icon: const Icon(Icons.copy, size: 18),
                             ),
@@ -162,7 +163,7 @@ class _DepartmentListScreenState extends State<DepartmentListScreen>
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Close'),
+                    child: Text(AppLocalizations.of(context)!.close),
                   ),
                 )
               ],
@@ -199,7 +200,7 @@ class _DepartmentListScreenState extends State<DepartmentListScreen>
                     children: [
                       Row(
                         children: [
-                          Expanded(child: Text(isNew ? 'Add Department' : 'Edit Department', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
+                          Expanded(child: Text(isNew ? AppLocalizations.of(context)!.addDepartment : AppLocalizations.of(context)!.editDepartment, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
                           if (isSaving) const SizedBox(width: 8),
                           if (isSaving) const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
                         ],
@@ -210,13 +211,13 @@ class _DepartmentListScreenState extends State<DepartmentListScreen>
                         autofocus: true,
                         textInputAction: TextInputAction.next,
                         maxLength: 100,
-                        decoration: const InputDecoration(labelText: 'Department name', prefixIcon: Icon(Icons.business)),
-                        validator: (val) => val == null || val.trim().isEmpty ? 'Please enter a name' : null,
+                        decoration: InputDecoration(labelText: AppLocalizations.of(context)!.departmentName, prefixIcon: const Icon(Icons.business)),
+                        validator: (val) => val == null || val.trim().isEmpty ? AppLocalizations.of(context)!.pleaseEnterName : null,
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
                         controller: descriptionController,
-                        decoration: const InputDecoration(labelText: 'Description (optional)', prefixIcon: Icon(Icons.description)),
+                        decoration: InputDecoration(labelText: AppLocalizations.of(context)!.descriptionOptional, prefixIcon: const Icon(Icons.description)),
                         maxLines: 3,
                         maxLength: 500,
                       ),
@@ -226,7 +227,7 @@ class _DepartmentListScreenState extends State<DepartmentListScreen>
                         children: [
                           TextButton(
                             onPressed: isSaving ? null : () => Navigator.of(context).pop(),
-                            child: const Text('Cancel'),
+                            child: Text(AppLocalizations.of(context)!.cancel),
                           ),
                           const SizedBox(width: 12),
                           ElevatedButton(
@@ -246,7 +247,7 @@ class _DepartmentListScreenState extends State<DepartmentListScreen>
                                           _filtered = _all.where((e) => e.name.toLowerCase().contains(_query.toLowerCase())).toList();
                                         });
                                         Navigator.of(context).pop();
-                                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Department added')));
+                                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.departmentAdded)));
                                       } else {
                                         final updated = await deptCtrl.updateDepartment(id: d.id!, name: newName, description: newDescription);
                                         setState(() {
@@ -255,7 +256,7 @@ class _DepartmentListScreenState extends State<DepartmentListScreen>
                                           _filtered = _all.where((e) => e.name.toLowerCase().contains(_query.toLowerCase())).toList();
                                         });
                                         Navigator.of(context).pop();
-                                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Department updated')));
+                                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.departmentUpdated)));
                                       }
                                     } catch (e) {
                                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
@@ -283,11 +284,11 @@ class _DepartmentListScreenState extends State<DepartmentListScreen>
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Department'),
-        content: Text('Are you sure you want to delete "${d.name}"?'),
+        title: Text(AppLocalizations.of(context)!.deleteDepartment),
+        content: Text(AppLocalizations.of(context)!.confirmDeleteDepartment(d.name)),
         actions: [
-          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancel')),
-          ElevatedButton(onPressed: () => Navigator.of(context).pop(true), style: ElevatedButton.styleFrom(backgroundColor: Colors.red), child: const Text('Delete')),
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(AppLocalizations.of(context)!.cancel)),
+          ElevatedButton(onPressed: () => Navigator.of(context).pop(true), style: ElevatedButton.styleFrom(backgroundColor: Colors.red), child: Text(AppLocalizations.of(context)!.delete)),
         ],
       ),
     );
@@ -298,7 +299,7 @@ class _DepartmentListScreenState extends State<DepartmentListScreen>
           _all.removeWhere((e) => e.id == d.id);
           _filtered.removeWhere((e) => e.id == d.id);
         });
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Deleted "${d.name}"')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.deletedDepartment(d.name))));
       }).catchError((e) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
       });
@@ -462,7 +463,7 @@ class _DepartmentListScreenState extends State<DepartmentListScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: StandardHeader(
-        title: widget.title,
+        title: widget.title.isNotEmpty ? widget.title : AppLocalizations.of(context)!.selectDepartment,
       ),
       // floatingActionButton: FloatingActionButton(
       //   onPressed: () => _showEditDialog(DepartmentItem(id: null, name: '')),
@@ -503,8 +504,8 @@ class _DepartmentListScreenState extends State<DepartmentListScreen>
                         ),
                         child: TextField(
                           onChanged: _onSearchChanged,
-                          decoration: InputDecoration(
-                            hintText: 'Search departments...',
+                            decoration: InputDecoration(
+                            hintText: AppLocalizations.of(context)!.searchDepartments,
                             hintStyle: TextStyle(color: Colors.grey.shade500),
                             prefixIcon: Icon(Icons.search, color: Colors.deepPurple.shade300),
                             suffixIcon: _query.isNotEmpty
@@ -528,7 +529,7 @@ class _DepartmentListScreenState extends State<DepartmentListScreen>
                     child: ElevatedButton.icon(
                       onPressed: () => _showEditDialog(DepartmentItem(id: null, name: '')),
                       icon: const Icon(Icons.add, color: Colors.white),
-                      label: const Text('Add department'),
+                      label: Text(AppLocalizations.of(context)!.addDepartment),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.deepPurple,
                         foregroundColor: Colors.white,
@@ -545,7 +546,7 @@ class _DepartmentListScreenState extends State<DepartmentListScreen>
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Text(
-                  '${_filtered.length} result${_filtered.length != 1 ? 's' : ''} found',
+                  AppLocalizations.of(context)!.resultsFound(_filtered.length),
                   style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
                 ),
               ),
@@ -565,14 +566,14 @@ class _DepartmentListScreenState extends State<DepartmentListScreen>
                           Icon(Icons.inbox, size: 80, color: Colors.grey.shade300),
                           const SizedBox(height: 16),
                           Text(
-                            _query.isEmpty ? 'No departments available' : 'No departments found',
+                            _query.isEmpty ? AppLocalizations.of(context)!.noDepartmentsAvailable : AppLocalizations.of(context)!.noDepartmentsFound,
                             style: TextStyle(color: Colors.grey.shade600, fontSize: 16),
                           ),
                           if (_query.isNotEmpty)
                             Padding(
                               padding: const EdgeInsets.only(top: 8),
                               child: Text(
-                                'Try a different search term',
+                                AppLocalizations.of(context)!.tryDifferentSearch,
                                 style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
                               ),
                             ),
@@ -598,17 +599,17 @@ class _DepartmentListScreenState extends State<DepartmentListScreen>
                               children: [
                                 IconButton(
                                   icon: const Icon(Icons.remove_red_eye_outlined),
-                                  tooltip: 'View',
+                                  tooltip: AppLocalizations.of(context)!.view,
                                   onPressed: () => _showViewDialog(d),
                                 ),
                                 IconButton(
                                   icon: const Icon(Icons.edit_outlined),
-                                  tooltip: 'Edit',
+                                  tooltip: AppLocalizations.of(context)!.edit,
                                   onPressed: () => _showEditDialog(d),
                                 ),
                                 IconButton(
                                   icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                                  tooltip: 'Delete',
+                                  tooltip: AppLocalizations.of(context)!.delete,
                                   onPressed: () => _confirmDelete(d),
                                 ),
                               ],
@@ -632,7 +633,7 @@ class _DepartmentListScreenState extends State<DepartmentListScreen>
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    'Selected: ${_all.firstWhere((e) => e.id == _selectedId).name}',
+                    AppLocalizations.of(context)!.selected(_all.firstWhere((e) => e.id == _selectedId).name),
                     style: TextStyle(
                       color: Colors.deepPurple.shade700,
                       fontWeight: FontWeight.w600,

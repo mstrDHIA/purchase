@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/controllers/locale_controller.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
+import 'package:flutter_application_1/screens/users/modify_user_screen.dart';
 import 'package:flutter_application_1/l10n/app_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -178,7 +179,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   leading: const Icon(Icons.person),
                   title: Text(loc.editProfile),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                  onTap: () {},
+                  onTap: () {
+                    // Navigate to the ModifyUserPage to edit the current user's profile
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => ModifyUserPage(user: userData)),
+                    );
+                  },
                 ),
                 const Divider(height: 1),
                 ListTile(

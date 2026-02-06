@@ -7,6 +7,7 @@ import 'package:flutter_application_1/controllers/purchase_request_controller.da
 import 'package:flutter_application_1/controllers/supplier_controller.dart';
 import 'package:flutter_application_1/controllers/reject_reason_controller.dart';
 import 'package:flutter_application_1/controllers/department_controller.dart';
+import 'package:flutter_application_1/controllers/stats_controller.dart';
 
 import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter_application_1/controllers/role_controller.dart';
@@ -68,6 +69,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (context) => ProductController()),
         ChangeNotifierProvider(create: (_) => RejectReasonController()),
         ChangeNotifierProvider(create: (_) => DepartmentController()),
+        ChangeNotifierProvider(create: (_) => StatsController()),
         // ChangeNotifierProvider(create: (_) => ProductController()),
         ChangeNotifierProvider(create: (_) => LocaleProvider()),
         ChangeNotifierProvider(create: (_) => ResetNotifier()),

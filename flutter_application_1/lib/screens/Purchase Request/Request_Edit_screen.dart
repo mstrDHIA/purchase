@@ -265,7 +265,7 @@ class _RequestEditPageState extends State<RequestEditPage> {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
-                              'ID: ${widget.purchaseRequest.id}',
+                              AppLocalizations.of(context)!.idLabel(widget.purchaseRequest.id?.toString() ?? '-'),
                               style: const TextStyle(fontSize: 12, color: Colors.black87),
                             ),
                           ),
@@ -305,7 +305,7 @@ class _RequestEditPageState extends State<RequestEditPage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('Family'),
+                                Text(AppLocalizations.of(context)!.familyLabel),
                                 const SizedBox(height: 4),
                                 DropdownButtonFormField<String>(
                                   value: prod.family,
@@ -336,7 +336,7 @@ class _RequestEditPageState extends State<RequestEditPage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('Subfamily'),
+                                Text(AppLocalizations.of(context)!.subfamilyLabel),
                                 const SizedBox(height: 4),
                                 DropdownButtonFormField<String>(
                                   value: prod.subFamily,
@@ -371,7 +371,7 @@ class _RequestEditPageState extends State<RequestEditPage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('Product ${productLines.length > 1 ? idx + 1 : ''}'),
+                                Text('${AppLocalizations.of(context)!.product}${productLines.length > 1 ? ' ${idx + 1}' : ''}'),
                                 const SizedBox(height: 4),
                                 TextFormField(
                                   initialValue: prod.product,
@@ -399,7 +399,7 @@ class _RequestEditPageState extends State<RequestEditPage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('Quantity'),
+                                Text(AppLocalizations.of(context)!.quantity),
                                 const SizedBox(height: 4),
                                 TextFormField(
                                   initialValue: prod.quantity.toString(),
@@ -422,11 +422,11 @@ class _RequestEditPageState extends State<RequestEditPage> {
                               ],
                             ),
                           ),
-                          if (productLines.length > 1)
+                            if (productLines.length > 1)
                             IconButton(
                               icon: const Icon(Icons.remove_circle, color: Colors.red),
                               onPressed: () => _removeProduct(idx),
-                              tooltip: 'Remove product',
+                              tooltip: AppLocalizations.of(context)!.removeProductLine,
                             ),
                         ],
                       ),
@@ -439,7 +439,7 @@ class _RequestEditPageState extends State<RequestEditPage> {
                 alignment: Alignment.centerLeft,
                 child: TextButton.icon(
                   icon: const Icon(Icons.add),
-                  label: const Text('Add Product'),
+                  label: Text(AppLocalizations.of(context)!.addProduct),
                   onPressed: _addProduct,
                 ),
               ),
@@ -452,7 +452,7 @@ class _RequestEditPageState extends State<RequestEditPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Due Date'),
+                        Text(AppLocalizations.of(context)!.dueDate),
                         const SizedBox(height: 4),
                         TextField(
                           controller: dueDateController,
@@ -480,7 +480,7 @@ class _RequestEditPageState extends State<RequestEditPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Priority'),
+                        Text(AppLocalizations.of(context)!.priority),
                         const SizedBox(height: 4),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -517,7 +517,7 @@ class _RequestEditPageState extends State<RequestEditPage> {
               ),
               const SizedBox(height: 24),
               // Note (full width)
-              const Text('Note'),
+              Text(AppLocalizations.of(context)!.noteLabel),
               const SizedBox(height: 4),
               TextField(
                 controller: noteController,
@@ -539,38 +539,51 @@ class _RequestEditPageState extends State<RequestEditPage> {
               ),
               const SizedBox(height: 24),
               // Status badge
-              Row(mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  const Text('Status'),
-                  SizedBox(width: 8),
+              Builder(builder: (context) {
+                final lv = status.toLowerCase();
+                final displayStatus = lv == 'pending'
+                    ? AppLocalizations.of(context)!.pending
+                    : lv == 'approved'
+                        ? AppLocalizations.of(context)!.approved
+                        : lv == 'rejected'
+                            ? AppLocalizations.of(context)!.rejected
+                            : lv == 'transformed'
+                                ? AppLocalizations.of(context)!.transformed
+                                : lv == 'edited'
+                                    ? AppLocalizations.of(context)!.edited
+                                    : status;
+
+                return Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+                  Text(AppLocalizations.of(context)!.status),
+                  const SizedBox(width: 8),
                   Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: status.toLowerCase() == 'approved'
-                      ? Colors.green.shade100
-                      : status.toLowerCase() == 'pending'
-                          ? Colors.orange.shade100
-                          : Colors.red.shade100,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  status.toLowerCase(),
-                  style: TextStyle(
-                    color: status.toLowerCase() == 'approved'
-                        ? Colors.green
-                        : status.toLowerCase() == 'pending'
-                            ? Colors.orange
-                            : Colors.red,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 16,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: lv == 'approved'
+                          ? Colors.green.shade100
+                          : lv == 'pending'
+                              ? Colors.orange.shade100
+                              : Colors.red.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      displayStatus,
+                      style: TextStyle(
+                        color: lv == 'approved'
+                            ? Colors.green
+                            : lv == 'pending'
+                                ? Colors.orange
+                                : Colors.red,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                      ),
+                    ),
                   ),
-                ),
-              ),
-                ],
-              ),
+                ]);
+              }),
               // const SizedBox(height: 4),
               
-              const SizedBox(height: 32),
+                  const SizedBox(height: 32),
               // Save button (unchanged)
               SizedBox(
                 width: double.infinity,
@@ -602,8 +615,9 @@ class _RequestEditPageState extends State<RequestEditPage> {
                             await controller.updateRequest(widget.purchaseRequest.id!, updateData, context);
                             if (!mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(backgroundColor: Colors.blue, 
-                              content: Text('Purchase request updated successfully!')
+                              SnackBar(
+                                backgroundColor: Colors.blue,
+                                content: Text(AppLocalizations.of(context)!.purchaseRequestUpdated),
                               ),
                             );
                             Navigator.pop(context, updateData);
@@ -631,9 +645,9 @@ class _RequestEditPageState extends State<RequestEditPage> {
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
-                  child: _isLoading
+                    child: _isLoading
                       ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white))
-                      : const Text('Save Changes'),
+                      : Text(AppLocalizations.of(context)!.saveBtn),
                 ),
               ),
             ],

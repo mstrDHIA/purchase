@@ -577,6 +577,18 @@ class AppLocalizationsAr extends AppLocalizations {
   String get roleDescription => 'وصف الدور';
 
   @override
+  String get noName => '(بدون اسم)';
+
+  @override
+  String get noDescription => '(لا يوجد وصف)';
+
+  @override
+  String get invalidRoleId => 'معرّف الدور غير صالح';
+
+  @override
+  String get errorLoadingRole => 'خطأ أثناء تحميل الدور';
+
+  @override
   String get roleCreatedSuccessfully => 'تم إنشاء الدور بنجاح!';
 
   @override
@@ -1035,6 +1047,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get purchaseOrderSaved => 'تم حفظ أمر الشراء!';
 
   @override
+  String get purchaseRequestUpdated => 'تم تحديث طلب الشراء بنجاح!';
+
+  @override
   String get poDashboardTitle => 'لوحة أوامر الشراء';
 
   @override
@@ -1050,7 +1065,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get date => 'التاريخ';
 
   @override
-  String get requester => 'طالب';
+  String get requester => 'الطالب';
 
   @override
   String get fromDate => 'من تاريخ';
@@ -1109,6 +1124,18 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get close => 'إغلاق';
+
+  @override
+  String get createPurchaseOrderTitle => 'إنشاء أمر شراء؟';
+
+  @override
+  String get createPurchaseOrderContent => 'هل تريد إنشاء أمر شراء جديد من طلب الشراء هذا؟';
+
+  @override
+  String get createPO => 'إنشاء PO';
+
+  @override
+  String get purchaseRequestMarkedConverted => 'تم وضع علامة على طلب الشراء كمحول!';
 
   @override
   String get retry => 'إعادة المحاولة';
@@ -1227,6 +1254,80 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String get selectDepartment => 'اختر القسم';
+
+  @override
+  String get department => 'القسم';
+
+  @override
+  String get copyName => 'نسخ الاسم';
+
+  @override
+  String get nameCopied => 'تم نسخ الاسم';
+
+  @override
+  String get copyDescription => 'نسخ الوصف';
+
+  @override
+  String get descriptionCopied => 'تم نسخ الوصف';
+
+  @override
+  String get addDepartment => 'إضافة قسم';
+
+  @override
+  String get editDepartment => 'تعديل القسم';
+
+  @override
+  String get departmentName => 'اسم القسم';
+
+  @override
+  String get pleaseEnterName => 'يرجى إدخال اسم';
+
+  @override
+  String get descriptionOptional => 'الوصف (اختياري)';
+
+  @override
+  String get departmentAdded => 'تمت إضافة القسم';
+
+  @override
+  String get departmentUpdated => 'تم تحديث القسم';
+
+  @override
+  String get deleteDepartment => 'حذف القسم';
+
+  @override
+  String confirmDeleteDepartment(Object name) {
+    return 'هل أنت متأكد من رغبتك في حذف \"$name\"؟';
+  }
+
+  @override
+  String deletedDepartment(Object name) {
+    return 'تم الحذف \"$name\"';
+  }
+
+  @override
+  String get noDepartmentsAvailable => 'لا توجد أقسام متاحة';
+
+  @override
+  String get noDepartmentsFound => 'لم يتم العثور على أقسام';
+
+  @override
+  String get tryDifferentSearch => 'حاول مصطلح بحث مختلف';
+
+  @override
+  String get searchDepartments => 'بحث الأقسام...';
+
+  @override
+  String resultsFound(Object count) {
+    return '$count نتيجة(نت) تم العثور عليها';
+  }
+
+  @override
+  String selected(Object name) {
+    return 'المحدد: $name';
+  }
+
+  @override
   String get supplierRegistrationTitle => 'تسجيل المورد';
 
   @override
@@ -1269,4 +1370,76 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get statusRejected => 'مرفوض';
+
+  @override
+  String get poStatistics => 'إحصائيات الطلبات';
+
+  @override
+  String get rejectionStatistics => 'إحصائيات الرفض';
+
+  @override
+  String get poTotalsByDept => 'إجماليات الطلبات حسب القسم';
+
+  @override
+  String get poTotalsByRequester => 'إجماليات الطلبات حسب الطالب';
+
+  @override
+  String get poTotalsByCategory => 'إجماليات الطلبات حسب الفئة';
+
+  @override
+  String get poTotalsBySubcategory => 'إجماليات الطلبات حسب الفئة الفرعية';
+
+  @override
+  String get poTotalsBySupplier => 'إجماليات الطلبات حسب المورد';
+
+  @override
+  String get rejectionRateByRequester => 'معدل الرفض حسب الطالب';
+
+  @override
+  String get rejectionRate => 'معدل الرفض (%)';
+
+  @override
+  String get filters => 'المرشحات';
+
+  @override
+  String get startDate => 'تاريخ البدء';
+
+  @override
+  String get endDate => 'تاريخ الانتهاء';
+
+  @override
+  String get apply => 'تطبيق';
+
+  @override
+  String get exportCSV => 'تصدير CSV';
+
+  @override
+  String get filtersApplied => 'تم تطبيق المرشحات';
+
+  @override
+  String get generatingCSV => 'جاري إنشاء CSV...';
+
+  @override
+  String get exportedTo => 'تم التصدير إلى';
+
+  @override
+  String get category => 'الفئة';
+
+  @override
+  String get subcategory => 'الفئة الفرعية';
+
+  @override
+  String get total => 'المجموع';
+
+  @override
+  String get userNotLoggedInError => 'المستخدم غير مسجل دخول';
+
+  @override
+  String get pleaseAddAtLeastOneProduct => 'يرجى إضافة منتج واحد على الأقل';
+
+  @override
+  String get eachProductMustHaveNameAndQuantity => 'يجب أن يكون لكل منتج اسم وكمية';
+
+  @override
+  String get requestSavedAddAnother => 'تم حفظ الطلب. إضافة آخر؟';
 }

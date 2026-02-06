@@ -1225,6 +1225,30 @@ abstract class AppLocalizations {
   /// **'Role Description'**
   String get roleDescription;
 
+  /// No description provided for @noName.
+  ///
+  /// In en, this message translates to:
+  /// **'(No name)'**
+  String get noName;
+
+  /// No description provided for @noDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'(No description)'**
+  String get noDescription;
+
+  /// No description provided for @invalidRoleId.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid role ID'**
+  String get invalidRoleId;
+
+  /// No description provided for @errorLoadingRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading role'**
+  String get errorLoadingRole;
+
   /// No description provided for @roleCreatedSuccessfully.
   ///
   /// In en, this message translates to:
@@ -2017,6 +2041,12 @@ abstract class AppLocalizations {
   /// **'Purchase order saved!'**
   String get purchaseOrderSaved;
 
+  /// No description provided for @purchaseRequestUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchase request updated successfully!'**
+  String get purchaseRequestUpdated;
+
   /// No description provided for @poDashboardTitle.
   ///
   /// In en, this message translates to:
@@ -2148,6 +2178,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Close'**
   String get close;
+
+  /// No description provided for @createPurchaseOrderTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Purchase Order?'**
+  String get createPurchaseOrderTitle;
+
+  /// No description provided for @createPurchaseOrderContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you want to create a new purchase order from this purchase request?'**
+  String get createPurchaseOrderContent;
+
+  /// No description provided for @createPO.
+  ///
+  /// In en, this message translates to:
+  /// **'Create PO'**
+  String get createPO;
+
+  /// No description provided for @purchaseRequestMarkedConverted.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchase Request marked as converted!'**
+  String get purchaseRequestMarkedConverted;
 
   /// No description provided for @retry.
   ///
@@ -2365,6 +2419,138 @@ abstract class AppLocalizations {
   /// **'Supplier status updated to {status}'**
   String supplierStatusUpdated(Object status);
 
+  /// No description provided for @selectDepartment.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Department'**
+  String get selectDepartment;
+
+  /// No description provided for @department.
+  ///
+  /// In en, this message translates to:
+  /// **'Department'**
+  String get department;
+
+  /// No description provided for @copyName.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy name'**
+  String get copyName;
+
+  /// No description provided for @nameCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Name copied'**
+  String get nameCopied;
+
+  /// No description provided for @copyDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy description'**
+  String get copyDescription;
+
+  /// No description provided for @descriptionCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Description copied'**
+  String get descriptionCopied;
+
+  /// No description provided for @addDepartment.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Department'**
+  String get addDepartment;
+
+  /// No description provided for @editDepartment.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Department'**
+  String get editDepartment;
+
+  /// No description provided for @departmentName.
+  ///
+  /// In en, this message translates to:
+  /// **'Department name'**
+  String get departmentName;
+
+  /// No description provided for @pleaseEnterName.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a name'**
+  String get pleaseEnterName;
+
+  /// No description provided for @descriptionOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Description (optional)'**
+  String get descriptionOptional;
+
+  /// No description provided for @departmentAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Department added'**
+  String get departmentAdded;
+
+  /// No description provided for @departmentUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Department updated'**
+  String get departmentUpdated;
+
+  /// No description provided for @deleteDepartment.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Department'**
+  String get deleteDepartment;
+
+  /// No description provided for @confirmDeleteDepartment.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete \"{name}\"?'**
+  String confirmDeleteDepartment(Object name);
+
+  /// No description provided for @deletedDepartment.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted \"{name}\"'**
+  String deletedDepartment(Object name);
+
+  /// No description provided for @noDepartmentsAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No departments available'**
+  String get noDepartmentsAvailable;
+
+  /// No description provided for @noDepartmentsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No departments found'**
+  String get noDepartmentsFound;
+
+  /// No description provided for @tryDifferentSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Try a different search term'**
+  String get tryDifferentSearch;
+
+  /// No description provided for @searchDepartments.
+  ///
+  /// In en, this message translates to:
+  /// **'Search departments...'**
+  String get searchDepartments;
+
+  /// No description provided for @resultsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} result(s) found'**
+  String resultsFound(Object count);
+
+  /// No description provided for @selected.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected: {name}'**
+  String selected(Object name);
+
   /// No description provided for @supplierRegistrationTitle.
   ///
   /// In en, this message translates to:
@@ -2448,6 +2634,150 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Rejected'**
   String get statusRejected;
+
+  /// No description provided for @poStatistics.
+  ///
+  /// In en, this message translates to:
+  /// **'PO Statistics'**
+  String get poStatistics;
+
+  /// No description provided for @rejectionStatistics.
+  ///
+  /// In en, this message translates to:
+  /// **'Rejection Statistics'**
+  String get rejectionStatistics;
+
+  /// No description provided for @poTotalsByDept.
+  ///
+  /// In en, this message translates to:
+  /// **'PO Totals by Department'**
+  String get poTotalsByDept;
+
+  /// No description provided for @poTotalsByRequester.
+  ///
+  /// In en, this message translates to:
+  /// **'PO Totals by Requester'**
+  String get poTotalsByRequester;
+
+  /// No description provided for @poTotalsByCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'PO Totals by Category'**
+  String get poTotalsByCategory;
+
+  /// No description provided for @poTotalsBySubcategory.
+  ///
+  /// In en, this message translates to:
+  /// **'PO Totals by Subcategory'**
+  String get poTotalsBySubcategory;
+
+  /// No description provided for @poTotalsBySupplier.
+  ///
+  /// In en, this message translates to:
+  /// **'PO Totals by Supplier'**
+  String get poTotalsBySupplier;
+
+  /// No description provided for @rejectionRateByRequester.
+  ///
+  /// In en, this message translates to:
+  /// **'Rejection Rate by Requester'**
+  String get rejectionRateByRequester;
+
+  /// No description provided for @rejectionRate.
+  ///
+  /// In en, this message translates to:
+  /// **'Rejection Rate (%)'**
+  String get rejectionRate;
+
+  /// No description provided for @filters.
+  ///
+  /// In en, this message translates to:
+  /// **'Filters'**
+  String get filters;
+
+  /// No description provided for @startDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Date'**
+  String get startDate;
+
+  /// No description provided for @endDate.
+  ///
+  /// In en, this message translates to:
+  /// **'End Date'**
+  String get endDate;
+
+  /// No description provided for @apply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get apply;
+
+  /// No description provided for @exportCSV.
+  ///
+  /// In en, this message translates to:
+  /// **'Export CSV'**
+  String get exportCSV;
+
+  /// No description provided for @filtersApplied.
+  ///
+  /// In en, this message translates to:
+  /// **'Filters applied'**
+  String get filtersApplied;
+
+  /// No description provided for @generatingCSV.
+  ///
+  /// In en, this message translates to:
+  /// **'Generating CSV...'**
+  String get generatingCSV;
+
+  /// No description provided for @exportedTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Exported to'**
+  String get exportedTo;
+
+  /// No description provided for @category.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get category;
+
+  /// No description provided for @subcategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Subcategory'**
+  String get subcategory;
+
+  /// No description provided for @total.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get total;
+
+  /// No description provided for @userNotLoggedInError.
+  ///
+  /// In en, this message translates to:
+  /// **'User is not logged in'**
+  String get userNotLoggedInError;
+
+  /// No description provided for @pleaseAddAtLeastOneProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Please add at least one product'**
+  String get pleaseAddAtLeastOneProduct;
+
+  /// No description provided for @eachProductMustHaveNameAndQuantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Each product must have a name and quantity'**
+  String get eachProductMustHaveNameAndQuantity;
+
+  /// No description provided for @requestSavedAddAnother.
+  ///
+  /// In en, this message translates to:
+  /// **'Request saved. Add another?'**
+  String get requestSavedAddAnother;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

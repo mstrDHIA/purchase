@@ -577,6 +577,18 @@ class AppLocalizationsFr extends AppLocalizations {
   String get roleDescription => 'Description du rôle';
 
   @override
+  String get noName => '(Sans nom)';
+
+  @override
+  String get noDescription => '(Aucune description)';
+
+  @override
+  String get invalidRoleId => 'ID du rôle invalide';
+
+  @override
+  String get errorLoadingRole => 'Erreur lors du chargement du rôle';
+
+  @override
   String get roleCreatedSuccessfully => 'Rôle créé avec succès !';
 
   @override
@@ -1035,6 +1047,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get purchaseOrderSaved => 'Bon de commande enregistré !';
 
   @override
+  String get purchaseRequestUpdated => 'La demande d\'achat a été mise à jour avec succès !';
+
+  @override
   String get poDashboardTitle => 'Tableau de bord PO';
 
   @override
@@ -1109,6 +1124,18 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get close => 'Fermer';
+
+  @override
+  String get createPurchaseOrderTitle => 'Créer une commande d\'achat ?';
+
+  @override
+  String get createPurchaseOrderContent => 'Voulez-vous créer un nouveau bon de commande à partir de cette demande d\'achat ?';
+
+  @override
+  String get createPO => 'Créer BC';
+
+  @override
+  String get purchaseRequestMarkedConverted => 'La demande d\'achat a été marquée comme convertie !';
 
   @override
   String get retry => 'Réessayer';
@@ -1227,6 +1254,80 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get selectDepartment => 'Sélectionner un département';
+
+  @override
+  String get department => 'Département';
+
+  @override
+  String get copyName => 'Copier le nom';
+
+  @override
+  String get nameCopied => 'Nom copié';
+
+  @override
+  String get copyDescription => 'Copier la description';
+
+  @override
+  String get descriptionCopied => 'Description copiée';
+
+  @override
+  String get addDepartment => 'Ajouter un département';
+
+  @override
+  String get editDepartment => 'Modifier le département';
+
+  @override
+  String get departmentName => 'Nom du département';
+
+  @override
+  String get pleaseEnterName => 'Veuillez entrer un nom';
+
+  @override
+  String get descriptionOptional => 'Description (optionnelle)';
+
+  @override
+  String get departmentAdded => 'Département ajouté';
+
+  @override
+  String get departmentUpdated => 'Département mis à jour';
+
+  @override
+  String get deleteDepartment => 'Supprimer le département';
+
+  @override
+  String confirmDeleteDepartment(Object name) {
+    return 'Êtes-vous sûr de vouloir supprimer \"$name\" ?';
+  }
+
+  @override
+  String deletedDepartment(Object name) {
+    return 'Supprimé \"$name\"';
+  }
+
+  @override
+  String get noDepartmentsAvailable => 'Aucun département disponible';
+
+  @override
+  String get noDepartmentsFound => 'Aucun département trouvé';
+
+  @override
+  String get tryDifferentSearch => 'Essayez un terme de recherche différent';
+
+  @override
+  String get searchDepartments => 'Rechercher des départements...';
+
+  @override
+  String resultsFound(Object count) {
+    return '$count résultat(s) trouvé(s)';
+  }
+
+  @override
+  String selected(Object name) {
+    return 'Sélectionné : $name';
+  }
+
+  @override
   String get supplierRegistrationTitle => 'Enregistrement Fournisseur';
 
   @override
@@ -1269,4 +1370,76 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get statusRejected => 'Rejeté';
+
+  @override
+  String get poStatistics => 'Statistiques des PO';
+
+  @override
+  String get rejectionStatistics => 'Statistiques de rejet';
+
+  @override
+  String get poTotalsByDept => 'Totaux des PO par département';
+
+  @override
+  String get poTotalsByRequester => 'Totaux des PO par demandeur';
+
+  @override
+  String get poTotalsByCategory => 'Totaux des PO par catégorie';
+
+  @override
+  String get poTotalsBySubcategory => 'Totaux des PO par sous-catégorie';
+
+  @override
+  String get poTotalsBySupplier => 'Totaux des PO par fournisseur';
+
+  @override
+  String get rejectionRateByRequester => 'Taux de rejet par demandeur';
+
+  @override
+  String get rejectionRate => 'Taux de rejet (%)';
+
+  @override
+  String get filters => 'Filtres';
+
+  @override
+  String get startDate => 'Date de début';
+
+  @override
+  String get endDate => 'Date de fin';
+
+  @override
+  String get apply => 'Appliquer';
+
+  @override
+  String get exportCSV => 'Exporter en CSV';
+
+  @override
+  String get filtersApplied => 'Filtres appliqués';
+
+  @override
+  String get generatingCSV => 'Génération du CSV...';
+
+  @override
+  String get exportedTo => 'Exporté vers';
+
+  @override
+  String get category => 'Catégorie';
+
+  @override
+  String get subcategory => 'Sous-catégorie';
+
+  @override
+  String get total => 'Total';
+
+  @override
+  String get userNotLoggedInError => 'L\'utilisateur n\'est pas connecté';
+
+  @override
+  String get pleaseAddAtLeastOneProduct => 'Veuillez ajouter au moins un produit';
+
+  @override
+  String get eachProductMustHaveNameAndQuantity => 'Chaque produit doit avoir un nom et une quantité';
+
+  @override
+  String get requestSavedAddAnother => 'Demande enregistrée. Ajouter une autre?';
 }

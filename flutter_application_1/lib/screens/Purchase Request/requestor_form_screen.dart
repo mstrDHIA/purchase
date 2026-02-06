@@ -96,7 +96,7 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to fetch product families: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.failedToLoadFamilies(e.toString()))),
         );
       }
     }
@@ -132,14 +132,14 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
   Future<void> _save({bool addAnother = false}) async {
     if (userController.currentUser.id == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Erreur: utilisateur non connecté ou id manquant')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.userNotLoggedInError)),
       );
       return;
     }
 
     if (products.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please add at least one product')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.pleaseAddAtLeastOneProduct)),
       );
       return;
     }
@@ -148,7 +148,7 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
       if ((p['product'] == null || p['product'].toString().isEmpty) ||
           (p['quantity'] == null || p['quantity'].toString().isEmpty)) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Each product must have a name and a quantity')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.eachProductMustHaveNameAndQuantity)),
         );
         return;
       }
@@ -156,14 +156,14 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
 
     if (selectedDueDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a due date')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.invalidDueDate)),
       );
       return;
     }
 
     if (selectedPriority == null || selectedPriority!.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a priority')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.fieldRequired)),
       );
       return;
     }
@@ -202,7 +202,7 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
         });
 
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Request saved! You can now add another.')),
+          SnackBar(content: Text(AppLocalizations.of(context)!.requestSavedAddAnother)),
         );
       } else {
         Navigator.of(context).pop();
@@ -297,9 +297,9 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
                     children: [
                       DropdownButtonFormField<String>(
                         value: selectedFamily,
-                        decoration: const InputDecoration(
-                          labelText: 'Famille',
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: AppLocalizations.of(context)!.familyLabel,
+                          border: const OutlineInputBorder(),
                           filled: true,
                           fillColor: Colors.white,
                         ),
@@ -316,9 +316,9 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
                       const SizedBox(height: 12),
                       DropdownButtonFormField<String>(
                         value: selectedSubFamily,
-                        decoration: const InputDecoration(
-                          labelText: 'Sous-famille',
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: AppLocalizations.of(context)!.subfamilyLabel,
+                          border: const OutlineInputBorder(),
                           filled: true,
                           fillColor: Colors.white,
                         ),
@@ -336,9 +336,9 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
                       const SizedBox(height: 12),
                       TextField(
                         controller: productController,
-                        decoration: const InputDecoration(
-                          labelText: 'Description du produit',
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: AppLocalizations.of(context)!.product,
+                          border: const OutlineInputBorder(),
                           filled: true,
                           fillColor: Colors.white,
                         ),
@@ -347,9 +347,9 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
                       TextField(
                         controller: quantityController,
                         keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Quantité',
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: AppLocalizations.of(context)!.quantity,
+                          border: const OutlineInputBorder(),
                           filled: true,
                           fillColor: Colors.white,
                         ),
@@ -358,7 +358,7 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
                       ElevatedButton.icon(
                         onPressed: _addProduct,
                         icon: const Icon(Icons.check, color: Colors.white),
-                        label: const Text('Confirm Product', style: TextStyle(color: Colors.white)),
+                        label: Text(AppLocalizations.of(context)!.confirm, style: const TextStyle(color: Colors.white)),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green,
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
@@ -369,7 +369,7 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
                       const SizedBox(height: 16),
 
                       if (products.isNotEmpty) ...[
-                        const Text('Products:', style: TextStyle(fontWeight: FontWeight.bold)),
+                        Text(AppLocalizations.of(context)!.products + ':', style: const TextStyle(fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
                         Expanded(
                           child: ListView.builder(
@@ -397,7 +397,7 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
                                           ),
                                           const SizedBox(height: 6),
                                           Text(
-                                            'Famille: ${item['family'] ?? ''} • Sous-famille: ${item['subFamily'] ?? ''}',
+                                            '${AppLocalizations.of(context)!.familyLabel}: ${item['family'] ?? ''} • ${AppLocalizations.of(context)!.subfamilyLabel}: ${item['subFamily'] ?? ''}',
                                             style: TextStyle(color: Colors.grey[600], fontSize: 13),
                                           ),
                                           if ((item['product'] ?? '') != (item['subFamily'] ?? '')) ...[
@@ -416,7 +416,7 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
                                             color: Colors.blue[50],
                                             borderRadius: BorderRadius.circular(16),
                                           ),
-                                          child: Text('Quantité: ${item['quantity'] ?? ''}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                          child: Text('${AppLocalizations.of(context)!.quantity}: ${item['quantity'] ?? ''}', style: const TextStyle(fontWeight: FontWeight.bold)),
                                         ),
                                         const SizedBox(height: 6),
                                         IconButton(
@@ -465,12 +465,12 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
                       TextField(
                         controller: dueDateController,
                         readOnly: true,
-                        decoration: const InputDecoration(
-                          labelText: 'Due date',
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: AppLocalizations.of(context)!.dueDate,
+                          border: const OutlineInputBorder(),
                           filled: true,
                           fillColor: Colors.white,
-                          suffixIcon: Icon(Icons.calendar_today),
+                          suffixIcon: const Icon(Icons.calendar_today),
                         ),
                         onTap: _pickDueDate,
                       ),
@@ -478,9 +478,9 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
 
                       DropdownButtonFormField<String>(
                         value: selectedPriority,
-                        decoration: const InputDecoration(
-                          labelText: 'Priority',
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: AppLocalizations.of(context)!.priority,
+                          border: const OutlineInputBorder(),
                           filled: true,
                           fillColor: Colors.white,
                         ),
@@ -491,7 +491,7 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
                       ),
 
                       const SizedBox(height: 16),
-                      const Text('Note', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                      Text(AppLocalizations.of(context)!.noteLabel, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                       const SizedBox(height: 8),
 
                       Expanded(
@@ -531,19 +531,19 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
                                 final shouldCancel = await showDialog<bool>(
                                   context: context,
                                   builder: (context) => AlertDialog(
-                                    title: const Text('Cancel Request'),
+                                    title: Text(AppLocalizations.of(context)!.cancel),
                                     content: Text(AppLocalizations.of(context)!.confirmCancelUnsavedChanges),
                                     actions: [
                                       TextButton(
                                         onPressed: () => Navigator.of(context).pop(false),
-                                        child: const Text('No'),
+                                        child: Text(AppLocalizations.of(context)!.no),
                                       ),
                                       ElevatedButton(
                                         onPressed: () => Navigator.of(context).pop(true),
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: Colors.red,
                                         ),
-                                        child: const Text('Yes'),
+                                        child: Text(AppLocalizations.of(context)!.yes),
                                       ),
                                     ],
                                   ),
@@ -557,7 +557,7 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
                                 foregroundColor: Colors.black54,
                                 backgroundColor: const Color(0xFFF3F3F3),
                               ),
-                              child: const Text('Cancel', style: TextStyle(fontSize: 14)),
+                              child: Text(AppLocalizations.of(context)!.cancel, style: const TextStyle(fontSize: 14)),
                             ),
                           ),
                           SizedBox(
@@ -570,7 +570,7 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                 elevation: 0,
                               ),
-                              child: const Text('Save', style: TextStyle(fontSize: 14, color: Colors.white)),
+                              child: Text(AppLocalizations.of(context)!.saveBtn, style: const TextStyle(fontSize: 14, color: Colors.white)),
                             ),
                           ),
                         ],

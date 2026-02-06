@@ -6,6 +6,7 @@ import 'package:flutter_application_1/screens/Role/edit_Role_screen.dart';
 import 'package:flutter_application_1/screens/Role/view_Role_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/widgets/standard_header.dart';
+import 'package:flutter_application_1/l10n/app_localizations.dart';
 
 class RolePage extends StatefulWidget {
   const RolePage({super.key});
@@ -33,7 +34,7 @@ class _RolePageState extends State<RolePage> {
         return Scaffold(
           backgroundColor: const Color(0xFFF8F8FB),
           appBar: StandardHeader(
-            title: 'Roles',
+            title: AppLocalizations.of(context)!.roles,
           ),
           body: SafeArea(
             child: Column(
@@ -62,7 +63,7 @@ class _RolePageState extends State<RolePage> {
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                         ),
-                        label: const Text('Create new role'),
+                        label: Text(AppLocalizations.of(context)!.createNewRole),
                       ),
                     ),
                   ],
@@ -101,18 +102,18 @@ class _RolePageState extends State<RolePage> {
                                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                                     color: const Color(0xFFF4F4F6),
                                     child: Row(
-                                      children: const [
+                                      children: [
                                         Expanded(
                                           flex: 3,
                                           child: Row(
                                             children: [
-                                              Icon(Icons.groups, size: 18, color: Colors.black54),
-                                              SizedBox(width: 8),
-                                              Text('Roles', style: TextStyle(fontWeight: FontWeight.bold)),
+                                              const Icon(Icons.groups, size: 18, color: Colors.black54),
+                                              const SizedBox(width: 8),
+                                              Text(AppLocalizations.of(context)!.roles, style: const TextStyle(fontWeight: FontWeight.bold)),
                                             ],
                                           ),
                                         ),
-                                        SizedBox(width: 120),
+                                        const SizedBox(width: 120),
                                       ],
                                     ),
                                   );
@@ -132,16 +133,16 @@ class _RolePageState extends State<RolePage> {
                                           crossAxisAlignment: CrossAxisAlignment.start,
                                           children: [
                                             Text(
-                                              title.isNotEmpty ? title : '(Sans nom)',
+                                              title.isNotEmpty ? title : AppLocalizations.of(context)!.noName,
                                               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                                             ),
                                             const SizedBox(height: 4),
                                             Text(
-                                              desc.isNotEmpty ? desc : '(Aucune description)',
+                                              desc.isNotEmpty ? desc : AppLocalizations.of(context)!.noDescription,
                                               style: const TextStyle(fontSize: 14, color: Colors.black87),
                                             ),
                                             Text(
-                                              'ID: ${role.id}',
+                                              AppLocalizations.of(context)!.idLabel(role.id?.toString() ?? '-'),
                                               style: const TextStyle(fontSize: 12, color: Colors.grey),
                                             ),
                                           ],
@@ -149,15 +150,15 @@ class _RolePageState extends State<RolePage> {
                                       ),
                                       Row(
                                         children: [
-                                          _actionIcon(
+                                            _actionIcon(
                                             context,
                                             icon: Icons.remove_red_eye,
-                                            tooltip: 'View',
+                                            tooltip: AppLocalizations.of(context)!.view,
                                             onTap: () async {
                                               final roleId = role.id;
                                               if (roleId == null) {
                                                 ScaffoldMessenger.of(context).showSnackBar(
-                                                  const SnackBar(content: Text('ID du rôle invalide'), backgroundColor: Colors.red),
+                                                  SnackBar(content: Text(AppLocalizations.of(context)!.invalidRoleId), backgroundColor: Colors.red),
                                                 );
                                                 return;
                                               }
@@ -170,7 +171,7 @@ class _RolePageState extends State<RolePage> {
                                               Navigator.of(context, rootNavigator: true).pop();
                                               if (roleData == null) {
                                                 ScaffoldMessenger.of(context).showSnackBar(
-                                                  const SnackBar(content: Text('Erreur lors du chargement du rôle'), backgroundColor: Colors.red),
+                                                  SnackBar(content: Text(AppLocalizations.of(context)!.errorLoadingRole), backgroundColor: Colors.red),
                                                 );
                                                 return;
                                               }
@@ -192,7 +193,7 @@ class _RolePageState extends State<RolePage> {
                                           _actionIcon(
                                             context,
                                             icon: Icons.edit,
-                                            tooltip: 'Edit',
+                                            tooltip: AppLocalizations.of(context)!.edit,
                                             onTap: () async {
                                               final roleData = role;
                                               final result = await showDialog(
