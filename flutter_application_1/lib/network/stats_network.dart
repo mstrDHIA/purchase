@@ -13,8 +13,15 @@ class StatsNetwork {
     if (department != null) params['department'] = department;
     if (requester != null) params['requester'] = requester;
     if (excludeNullDept != null) params['exclude_null_dept'] = excludeNullDept ? 'true' : 'false';
-    if (category != null) params['category'] = category;
-    if (subcategory != null) params['subcategory'] = subcategory;
+    if (category != null) {
+      // Some backends expect family/subfamily parameter names — include both to be compatible
+      params['category'] = category;
+      params['family'] = category;
+    }
+    if (subcategory != null) {
+      params['subcategory'] = subcategory;
+      params['subfamily'] = subcategory;
+    }
     if (supplier != null) params['supplier'] = supplier;
 
     print('StatsNetwork DEBUG: Calling $totalsEndpoint with params: $params');

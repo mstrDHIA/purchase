@@ -23,15 +23,10 @@ class _StatsScreenNewState extends State<StatsScreenNew> {
   DateTime _startDate = DateTime.now().subtract(const Duration(days: 90));
   DateTime _endDate = DateTime.now();
 
-  // Statistics data structures
-  Map<String, int> _poTotalsByDepartment = {};
-  Map<String, int> _poTotalsByRequester = {};
-  Map<String, int> _poTotalsByCategory = {};
-  Map<String, int> _poTotalsBySubcategory = {};
-  Map<String, int> _poTotalsBySupplier = {};
-
-  Map<String, double> _rejectionRateByDepartment = {};
-  Map<String, double> _rejectionRateByRequester = {};
+  // Statistics data structures (summary after applying filters)
+  int _totalPO = 0;
+  int _totalRejected = 0;
+  double _rejectionRate = 0.0;
 
   bool _loading = true;
   // Filter UI state
@@ -113,15 +108,6 @@ class _StatsScreenNewState extends State<StatsScreenNew> {
 
       await statsCtrl.fetchAll(start: _startDate, end: _endDate, excludeNullDept: _excludeNullDept);
       setState(() {
-        // copy values locally for backward compatibility with existing UI
-        _poTotalsByDepartment = Map.from(statsCtrl.poTotalsByDepartment);
-        _poTotalsByRequester = Map.from(statsCtrl.poTotalsByRequester);
-        _poTotalsByCategory = Map.from(statsCtrl.poTotalsByCategory);
-        _poTotalsBySubcategory = Map.from(statsCtrl.poTotalsBySubcategory);
-        _poTotalsBySupplier = Map.from(statsCtrl.poTotalsBySupplier);
-
-        _rejectionRateByDepartment = Map.from(statsCtrl.rejectionRateByDepartment);
-        _rejectionRateByRequester = Map.from(statsCtrl.rejectionRateByRequester);
         _loading = statsCtrl.loading;
       });
     });
@@ -169,46 +155,9 @@ class _StatsScreenNewState extends State<StatsScreenNew> {
       );
 
       final buffer = StringBuffer();
-
-      // PO Totals by Department
-      buffer.writeln('${loc?.poTotalsByDept ?? "PO Totals by Department"}');
-        buffer.writeln('${loc?.department ?? "Department"},${loc?.total ?? "Total"}');
-        final deptEntries = _poTotalsByDepartment.entries.toList();
-        deptEntries.sort((a, b) => b.value.compareTo(a.value));
-        for (final e in deptEntries) buffer.writeln('${e.key},${e.value}');
-      buffer.writeln();
-
-      // PO Totals by Requester
-      buffer.writeln('${loc?.poTotalsByRequester ?? "PO Totals by Requester"}');
-        buffer.writeln('${loc?.requester ?? "Requester"},${loc?.total ?? "Total"}');
-        final requesterEntries = _poTotalsByRequester.entries.toList();
-        requesterEntries.sort((a, b) => b.value.compareTo(a.value));
-        for (final e in requesterEntries) buffer.writeln('${e.key},${e.value}');
-      buffer.writeln();
-
-      // PO Totals by Category
-      buffer.writeln('${loc?.poTotalsByCategory ?? "PO Totals by Category"}');
-        buffer.writeln('${loc?.category ?? "Category"},${loc?.total ?? "Total"}');
-        final categoryEntries = _poTotalsByCategory.entries.toList();
-        categoryEntries.sort((a, b) => b.value.compareTo(a.value));
-        for (final e in categoryEntries) buffer.writeln('${e.key},${e.value}');
-      buffer.writeln();
-
-      // PO Totals by Supplier
-      buffer.writeln('${loc?.poTotalsBySupplier ?? "PO Totals by Supplier"}');
-        buffer.writeln('${loc?.supplier ?? "Supplier"},${loc?.total ?? "Total"}');
-        final supplierEntries = _poTotalsBySupplier.entries.toList();
-        supplierEntries.sort((a, b) => b.value.compareTo(a.value));
-        for (final e in supplierEntries) buffer.writeln('${e.key},${e.value}');
-      buffer.writeln();
-
-      // Rejection Rates by Requester
-      buffer.writeln('${loc?.rejectionRateByRequester ?? "Rejection Rate by Requester"}');
-      buffer.writeln('${loc?.requester ?? "Requester"},${loc?.rejectionRate ?? "Rejection Rate (%)"}');
-        final rejEntries = _rejectionRateByRequester.entries.toList();
-        rejEntries.sort((a, b) => b.value.compareTo(a.value));
-        for (final e in rejEntries) buffer.writeln('${e.key},${e.value.toStringAsFixed(2)}');
-      buffer.writeln();
+      buffer.writeln('Statistics Summary');
+      buffer.writeln('Total PO,Total Rejected,Rejection Rate (%)');
+      buffer.writeln('$_totalPO,$_totalRejected,${(_rejectionRate * 100).toStringAsFixed(2)}');
 
       final bytes = utf8.encode(buffer.toString());
       final fname =
@@ -445,6 +394,7 @@ class _StatsScreenNewState extends State<StatsScreenNew> {
                             title: const Text('Exclude PO without department'),
                             onChanged: (v) => setState(() => _excludeNullDept = v ?? false),
                           ),
+                          const SizedBox(height: 12),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
@@ -461,21 +411,21 @@ class _StatsScreenNewState extends State<StatsScreenNew> {
 
                                   if (_selectedCategory != null && _selectedCategory!.isNotEmpty) {
                                     final fam = _familyList.firstWhere(
-                                        (f) => (f['id']?.toString() ?? '') == _selectedCategory,
-                                        orElse: () => {});
+                                      (f) => (f['id']?.toString() ?? '') == _selectedCategory,
+                                      orElse: () => <String, dynamic>{});
                                     categoryParam = fam is Map && fam.isNotEmpty ? fam['name']?.toString() : _selectedCategory;
                                   }
 
                                   if (_selectedSubcategory != null && _selectedSubcategory!.isNotEmpty && _selectedCategory != null) {
                                     final subs = _categoryFamilies[_selectedCategory] ?? [];
-                                    final sub = subs.firstWhere((s) => (s['id']?.toString() ?? '') == _selectedSubcategory, orElse: () => {});
+                                    final sub = subs.firstWhere((s) => (s['id']?.toString() ?? '') == _selectedSubcategory, orElse: () => <String, dynamic>{});
                                     subcategoryParam = sub is Map && sub.isNotEmpty ? sub['name']?.toString() : _selectedSubcategory;
                                   }
 
                                   if (_selectedSupplier != null && _selectedSupplier!.isNotEmpty) {
                                     final sup = _supplierList.firstWhere(
-                                        (s) => (s['id']?.toString() ?? '') == _selectedSupplier || (s['name']?.toString() ?? '') == _selectedSupplier,
-                                        orElse: () => {});
+                                      (s) => (s['id']?.toString() ?? '') == _selectedSupplier || (s['name']?.toString() ?? '') == _selectedSupplier,
+                                      orElse: () => <String, dynamic>{});
                                     // Backend filters on supplier name, not id
                                     supplierParam = sup is Map && sup.isNotEmpty ? sup['name']?.toString() : _selectedSupplier;
                                   }
@@ -491,13 +441,10 @@ class _StatsScreenNewState extends State<StatsScreenNew> {
                                     excludeNullDept: _excludeNullDept,
                                   );
                                   setState(() {
-                                    _poTotalsByDepartment = Map.from(statsCtrl.poTotalsByDepartment);
-                                    _poTotalsByRequester = Map.from(statsCtrl.poTotalsByRequester);
-                                    _poTotalsByCategory = Map.from(statsCtrl.poTotalsByCategory);
-                                    _poTotalsBySubcategory = Map.from(statsCtrl.poTotalsBySubcategory);
-                                    _poTotalsBySupplier = Map.from(statsCtrl.poTotalsBySupplier);
-                                    _rejectionRateByDepartment = Map.from(statsCtrl.rejectionRateByDepartment);
-                                    _rejectionRateByRequester = Map.from(statsCtrl.rejectionRateByRequester);
+                                    // Use summary totals extracted directly from API response (backend already calculated)
+                                    _totalPO = statsCtrl.summaryTotal;
+                                    _totalRejected = statsCtrl.summaryRejected;
+                                    _rejectionRate = statsCtrl.summaryRejectionRate;
                                   });
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(content: Text(loc?.filtersApplied ?? 'Filters applied')),
@@ -518,65 +465,109 @@ class _StatsScreenNewState extends State<StatsScreenNew> {
                   ),
                   const SizedBox(height: 24),
 
-                  // PO Totals Tables
+                  // Summary Results
                   Text(
-                    loc?.poStatistics ?? 'PO Statistics',
+                    loc?.poStatistics ?? 'Summary Results',
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
-                  const SizedBox(height: 12),
-
-                  _buildStatTable(
-                    loc?.poTotalsByDept ?? 'PO Totals by Department',
-                    _poTotalsByDepartment,
-                    loc?.total ?? 'Total',
-                  ),
                   const SizedBox(height: 16),
 
-                  _buildStatTable(
-                    loc?.poTotalsByRequester ?? 'PO Totals by Requester',
-                    _poTotalsByRequester,
-                    loc?.total ?? 'Total',
-                  ),
-                  const SizedBox(height: 16),
-
-                  _buildStatTable(
-                    loc?.poTotalsByCategory ?? 'PO Totals by Category',
-                    _poTotalsByCategory,
-                    loc?.total ?? 'Total',
-                  ),
-                  const SizedBox(height: 16),
-
-                  _buildStatTable(
-                    loc?.poTotalsBySubcategory ?? 'PO Totals by Subcategory',
-                    _poTotalsBySubcategory,
-                    loc?.total ?? 'Total',
-                  ),
-                  const SizedBox(height: 16),
-
-                  _buildStatTable(
-                    loc?.poTotalsBySupplier ?? 'PO Totals by Supplier',
-                    _poTotalsBySupplier,
-                    loc?.total ?? 'Total',
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Rejection Rates
-                  Text(
-                    loc?.rejectionStatistics ?? 'Rejection Statistics',
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  const SizedBox(height: 12),
-
-                  _buildStatTable(
-                    loc?.rejectionRateByRequester ?? 'Rejection Rate by Requester',
-                    _rejectionRateByRequester,
-                    loc?.rejectionRate ?? 'Rejection Rate (%)',
-                  ),
-                  const SizedBox(height: 16),
-                  _buildStatTable(
-                    'Rejection Rate by Department',
-                    _rejectionRateByDepartment,
-                    loc?.rejectionRate ?? 'Rejection Rate (%)',
+                  // Results cards
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Card(
+                          color: Colors.blue.shade50,
+                          child: Padding(
+                            padding: const EdgeInsets.all(24.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Total PO',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey.shade700,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  _totalPO.toString(),
+                                  style: TextStyle(
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blue.shade900,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Card(
+                          color: Colors.orange.shade50,
+                          child: Padding(
+                            padding: const EdgeInsets.all(24.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Total Rejected',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey.shade700,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  _totalRejected.toString(),
+                                  style: TextStyle(
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.orange.shade900,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Card(
+                          color: Colors.red.shade50,
+                          child: Padding(
+                            padding: const EdgeInsets.all(24.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Rejection Rate',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey.shade700,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  '${(_rejectionRate * 100).toStringAsFixed(2)}%',
+                                  style: TextStyle(
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.red.shade900,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 24),
                 ],

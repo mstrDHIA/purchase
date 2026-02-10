@@ -29,7 +29,7 @@ class APIS {
       responseHeader: false,
       error: true,
     ));
-  static String token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcwOTkyMzEyLCJpYXQiOjE3NzAzODc1MTIsImp0aSI6IjYyYzYyOWRkMWIzNDQ3OThhYTc2NGEwNWZiMWQ1MzRlIiwidXNlcl9pZCI6MX0.BiJINN-vjreadIR-LD54ZctQThfwrNOSVVl9VIsGE3s';
+  static String token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcxMzE3NDYzLCJpYXQiOjE3NzA3MTI2NjMsImp0aSI6IjEwZWNiZTU2NmUyMzRjN2M5Y2Y5Y2MyNGJiN2Y4YzUxIiwidXNlcl9pZCI6Njl9.Opvg1jf6WdWwy2K8f25yDLjyGdwjIoKTvIf0xo1kGMM';
 
   // APIS() {
   //   dio.interceptors.add(LogInterceptor(
