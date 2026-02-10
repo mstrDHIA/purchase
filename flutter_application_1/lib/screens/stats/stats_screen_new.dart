@@ -410,24 +410,35 @@ class _StatsScreenNewState extends State<StatsScreenNew> {
                                   String? supplierParam;
 
                                   if (_selectedCategory != null && _selectedCategory!.isNotEmpty) {
-                                    final fam = _familyList.firstWhere(
-                                      (f) => (f['id']?.toString() ?? '') == _selectedCategory,
-                                      orElse: () => <String, dynamic>{});
-                                    categoryParam = fam is Map && fam.isNotEmpty ? fam['name']?.toString() : _selectedCategory;
+                                    Map<String, dynamic> fam;
+                                    try {
+                                      fam = _familyList.firstWhere((f) => (f['id']?.toString() ?? '') == _selectedCategory);
+                                    } catch (_) {
+                                      fam = <String, dynamic>{};
+                                    }
+                                    categoryParam = fam.isNotEmpty ? fam['name']?.toString() : _selectedCategory;
                                   }
 
                                   if (_selectedSubcategory != null && _selectedSubcategory!.isNotEmpty && _selectedCategory != null) {
                                     final subs = _categoryFamilies[_selectedCategory] ?? [];
-                                    final sub = subs.firstWhere((s) => (s['id']?.toString() ?? '') == _selectedSubcategory, orElse: () => <String, dynamic>{});
-                                    subcategoryParam = sub is Map && sub.isNotEmpty ? sub['name']?.toString() : _selectedSubcategory;
+                                    Map<String, dynamic> sub;
+                                    try {
+                                      sub = subs.firstWhere((s) => (s['id']?.toString() ?? '') == _selectedSubcategory);
+                                    } catch (_) {
+                                      sub = <String, dynamic>{};
+                                    }
+                                    subcategoryParam = sub.isNotEmpty ? sub['name']?.toString() : _selectedSubcategory;
                                   }
 
                                   if (_selectedSupplier != null && _selectedSupplier!.isNotEmpty) {
-                                    final sup = _supplierList.firstWhere(
-                                      (s) => (s['id']?.toString() ?? '') == _selectedSupplier || (s['name']?.toString() ?? '') == _selectedSupplier,
-                                      orElse: () => <String, dynamic>{});
+                                    Map<String, dynamic> sup;
+                                    try {
+                                      sup = _supplierList.firstWhere((s) => (s['id']?.toString() ?? '') == _selectedSupplier || (s['name']?.toString() ?? '') == _selectedSupplier);
+                                    } catch (_) {
+                                      sup = <String, dynamic>{};
+                                    }
                                     // Backend filters on supplier name, not id
-                                    supplierParam = sup is Map && sup.isNotEmpty ? sup['name']?.toString() : _selectedSupplier;
+                                    supplierParam = sup.isNotEmpty ? sup['name']?.toString() : _selectedSupplier;
                                   }
 
                                   await statsCtrl.fetchAll(
