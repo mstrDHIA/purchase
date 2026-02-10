@@ -60,7 +60,9 @@ class _StatsScreenNewState extends State<StatsScreenNew> {
 
       // build simple lists for dropdowns
       _departmentList = dc.departments.map((d) => {'id': d.id?.toString() ?? '', 'name': d.name}).toList();
-      _userList = uc.users.map((u) => {'id': u.id?.toString() ?? '', 'name': u.username ?? u.name ?? 'Unknown'}).toList();
+      // Show only users with role id == 2 in the requester dropdown
+      final filteredUsers = uc.users.where((u) => (u.role_id == 2) || (u.role != null && u.role!.id == 2)).toList();
+      _userList = filteredUsers.map((u) => {'id': u.id?.toString() ?? '', 'name': u.username ?? u.name ?? 'Unknown'}).toList();
 
       // Fetch categories (families + subcategories)
       try {
