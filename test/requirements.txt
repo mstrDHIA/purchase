@@ -1,0 +1,11 @@
+pandas 
+python-dotenv
+scikit-learn
+google-genai
+langchain
+jinja2
+streamlit
+pytest 
+pytest-cov
+google-generativeai
+faiss-cpu
