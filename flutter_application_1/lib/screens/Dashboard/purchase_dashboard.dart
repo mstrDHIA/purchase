@@ -7,6 +7,8 @@ import 'package:open_file/open_file.dart';
 import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
 import 'package:flutter_application_1/controllers/supplier_controller.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
+import 'package:flutter_application_1/controllers/department_controller.dart';
+import 'package:flutter_application_1/controllers/stats_controller.dart';
 import 'package:flutter_application_1/controllers/reset_notifier.dart';
 import 'package:flutter_application_1/models/user_model.dart';
 import '../../l10n/app_localizations.dart';
@@ -20,15 +22,16 @@ class PurchaseDashboardPage extends StatefulWidget {
   State<PurchaseDashboardPage> createState() => _PurchaseDashboardPageState();
 }
 
-class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with WidgetsBindingObserver {
+class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
+    with WidgetsBindingObserver {
   final TextEditingController _searchCtrl = TextEditingController();
   bool _initialLoadDone = false;
   Timer? _refreshTimer;
-  
+
   // Pagination state
   int _currentPage = 1;
   final int _itemsPerPage = 10;
-  
+
   // Sorting state
   String _sortBy = 'id'; // Default sort by ID
   bool _sortAscending = false; // Default descending
@@ -39,19 +42,28 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
   String? _selectedSubFamily;
   DateTime? _startDate;
   DateTime? _endDate;
+  // Shared stats filters
+  String? _selectedDepartment;
+  String? _selectedRequester;
+  bool _excludeNullDept = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     // Load orders immediately on init
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final poController = context.read<PurchaseOrderController>();
       poController.fetchOrders();
-      // Ensure users are loaded so requester names can be resolved immediately
+      // Ensure users and departments are loaded for filter dropdowns
       try {
-        context.read<UserController>().getUsers();
+        await Future.wait<dynamic>([
+          context.read<UserController>().getUsers(),
+          context.read<DepartmentController>().fetchDepartments(),
+        ]);
       } catch (_) {}
+      // Trigger initial stats load with defaults
+      await _applySharedFilters();
       _startAutoRefresh();
 
       // Register reset listener
@@ -75,6 +87,32 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
     });
   }
 
+  // Apply shared filters: refresh stats and update UI
+  Future<void> _applySharedFilters() async {
+    // trigger stats fetch
+    try {
+      final statsCtrl = context.read<StatsController>();
+      final start =
+          _startDate ?? DateTime.now().subtract(const Duration(days: 90));
+      final end = _endDate ?? DateTime.now();
+      await statsCtrl.fetchAll(
+        start: start,
+        end: end,
+        department: _selectedDepartment,
+        requester: _selectedRequester,
+        category: _selectedFamily,
+        subcategory: _selectedSubFamily,
+        supplier: _selectedSupplier,
+        excludeNullDept: _excludeNullDept,
+      );
+    } catch (e) {
+      debugPrint('Stats fetch failed: $e');
+    }
+    // PO list is filtered locally; simply rebuild
+    setState(() {
+      _currentPage = 1;
+    });
+  }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
@@ -89,7 +127,12 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
   String _currencySymbol(String? currencyRaw) {
     if (currencyRaw == null || currencyRaw.isEmpty) return '';
     final code = currencyRaw.toUpperCase();
-    final Map<String, String> codeToSymbol = {'USD': '\$', 'EUR': '€', 'TND': 'DT', 'DZD': 'DT'};
+    final Map<String, String> codeToSymbol = {
+      'USD': '\$',
+      'EUR': '€',
+      'TND': 'DT',
+      'DZD': 'DT'
+    };
     if (codeToSymbol.containsKey(code)) return codeToSymbol[code]!;
     final low = currencyRaw.toLowerCase();
     if (low.contains('dinar')) return 'DT';
@@ -134,19 +177,22 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
     return status ?? '-';
   }
 
-  void _showOrderDetailsDialog(BuildContext context, dynamic order, UserController userController) {
+  void _showOrderDetailsDialog(
+      BuildContext context, dynamic order, UserController userController) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Container(
             constraints: const BoxConstraints(maxWidth: 600, maxHeight: 700),
             child: Column(
               children: [
                 // Header
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                   decoration: BoxDecoration(
                     color: Colors.deepPurple.withOpacity(0.1),
                     borderRadius: const BorderRadius.only(
@@ -158,7 +204,8 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        AppLocalizations.of(context)!.viewPurchaseOrder(order.id),
+                        AppLocalizations.of(context)!
+                            .viewPurchaseOrder(order.id),
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -180,21 +227,25 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Order Info
-                        _buildInfoRow(AppLocalizations.of(context)!.id, order.id.toString()),
-                        _buildInfoRow(AppLocalizations.of(context)!.title, _safeString(order.title)),
+                        _buildInfoRow(AppLocalizations.of(context)!.id,
+                            order.id.toString()),
+                        _buildInfoRow(AppLocalizations.of(context)!.title,
+                            _safeString(order.title)),
                         _buildInfoRow(
                           AppLocalizations.of(context)!.date,
                           order.startDate != null
-                              ? DateFormat('yyyy-MM-dd').format(order.startDate!)
+                              ? DateFormat('yyyy-MM-dd')
+                                  .format(order.startDate!)
                               : '-',
                         ),
                         _buildInfoRow(
                           AppLocalizations.of(context)!.requester,
                           _getRequesterName(order, userController),
                         ),
-                        _buildStatusRow(AppLocalizations.of(context)!.status, _localizedStatus(context, order.status)),
+                        _buildStatusRow(AppLocalizations.of(context)!.status,
+                            _localizedStatus(context, order.status)),
                         const SizedBox(height: 20),
-                        
+
                         // Products Section
                         Text(
                           AppLocalizations.of(context)!.products,
@@ -205,7 +256,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                           ),
                         ),
                         const SizedBox(height: 12),
-                        
+
                         if (order.products == null || order.products!.isEmpty)
                           Padding(
                             padding: const EdgeInsets.symmetric(vertical: 16),
@@ -217,26 +268,49 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                         else
                           Column(
                             children: order.products!.map<Widget>((product) {
-                              final unitPrice = product.unitPrice ?? product.price ?? 0;
+                              final unitPrice =
+                                  product.unitPrice ?? product.price ?? 0;
                               final quantity = product.quantity ?? 0;
-                              final totalAmount = (quantity is int ? quantity.toDouble() : quantity as double) *
-                                  (unitPrice is int ? unitPrice.toDouble() : unitPrice as double);
-                              
+                              final totalAmount = (quantity is int
+                                      ? quantity.toDouble()
+                                      : quantity as double) *
+                                  (unitPrice is int
+                                      ? unitPrice.toDouble()
+                                      : unitPrice as double);
+
                               return Container(
                                 margin: const EdgeInsets.only(bottom: 12),
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.grey.shade300),
+                                  border:
+                                      Border.all(color: Colors.grey.shade300),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    _buildInfoRow(AppLocalizations.of(context)!.product, _safeString(product.product)),
-                                    _buildInfoRow(AppLocalizations.of(context)!.supplier, _safeString(product.supplier)),
-                                    _buildInfoRow(AppLocalizations.of(context)!.unitPrice, unitPrice.toString()),
-                                    _buildInfoRow(AppLocalizations.of(context)!.quantity, quantity.toString()),
-                                    _buildInfoRow(AppLocalizations.of(context)!.totalPrice, totalAmount.toStringAsFixed(2) + (_currencySymbol(order.currency).isNotEmpty ? ' ' + _currencySymbol(order.currency) : '')),
+                                    _buildInfoRow(
+                                        AppLocalizations.of(context)!.product,
+                                        _safeString(product.product)),
+                                    _buildInfoRow(
+                                        AppLocalizations.of(context)!.supplier,
+                                        _safeString(product.supplier)),
+                                    _buildInfoRow(
+                                        AppLocalizations.of(context)!.unitPrice,
+                                        unitPrice.toString()),
+                                    _buildInfoRow(
+                                        AppLocalizations.of(context)!.quantity,
+                                        quantity.toString()),
+                                    _buildInfoRow(
+                                        AppLocalizations.of(context)!
+                                            .totalPrice,
+                                        totalAmount.toStringAsFixed(2) +
+                                            (_currencySymbol(order.currency)
+                                                    .isNotEmpty
+                                                ? ' ' +
+                                                    _currencySymbol(
+                                                        order.currency)
+                                                : '')),
                                   ],
                                 ),
                               );
@@ -248,14 +322,17 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                 ),
                 // Footer
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                   child: ElevatedButton(
                     onPressed: () => Navigator.pop(context),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.deepPurple,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
                     ),
-                    child: Text(AppLocalizations.of(context)!.close, style: const TextStyle(color: Colors.white)),
+                    child: Text(AppLocalizations.of(context)!.close,
+                        style: const TextStyle(color: Colors.white)),
                   ),
                 ),
               ],
@@ -353,7 +430,8 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
       if (order.products != null) {
         for (var product in order.products!) {
           final f = product.family;
-          if (f != null && f.toString().trim().isNotEmpty) families.add(f.toString().trim());
+          if (f != null && f.toString().trim().isNotEmpty)
+            families.add(f.toString().trim());
         }
       }
     }
@@ -369,7 +447,8 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
           final sf = product.subFamily;
           final f = product.family;
           if (sf != null && sf.toString().trim().isNotEmpty) {
-            if (family == null || (f != null && f.toString().trim() == family)) {
+            if (family == null ||
+                (f != null && f.toString().trim() == family)) {
               sub.add(sf.toString().trim());
             }
           }
@@ -382,7 +461,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
   void _sortOrders(List orders, String sortBy, bool ascending) {
     orders.sort((a, b) {
       int comparison = 0;
-      
+
       switch (sortBy) {
         case 'id':
           comparison = (a.id ?? 0).compareTo(b.id ?? 0);
@@ -390,7 +469,8 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
         case 'date':
           final dateA = a.startDate;
           final dateB = b.startDate;
-          comparison = (dateA ?? DateTime(2000)).compareTo(dateB ?? DateTime(2000));
+          comparison =
+              (dateA ?? DateTime(2000)).compareTo(dateB ?? DateTime(2000));
           break;
         case 'status':
           comparison = _safeString(a.status).compareTo(_safeString(b.status));
@@ -400,35 +480,55 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
           break;
         case 'product':
           // Sort by product name from first product
-          final prodA = a.products?.isNotEmpty == true ? _safeString(a.products!.first.product) : '';
-          final prodB = b.products?.isNotEmpty == true ? _safeString(b.products!.first.product) : '';
+          final prodA = a.products?.isNotEmpty == true
+              ? _safeString(a.products!.first.product)
+              : '';
+          final prodB = b.products?.isNotEmpty == true
+              ? _safeString(b.products!.first.product)
+              : '';
           comparison = prodA.compareTo(prodB);
           break;
         case 'supplier':
           // Sort by supplier from first product
-          final supA = a.products?.isNotEmpty == true ? _safeString(a.products!.first.supplier) : '';
-          final supB = b.products?.isNotEmpty == true ? _safeString(b.products!.first.supplier) : '';
+          final supA = a.products?.isNotEmpty == true
+              ? _safeString(a.products!.first.supplier)
+              : '';
+          final supB = b.products?.isNotEmpty == true
+              ? _safeString(b.products!.first.supplier)
+              : '';
           comparison = supA.compareTo(supB);
           break;
         case 'quantity':
-          final qtyA = a.products?.isNotEmpty == true ? a.products!.first.quantity ?? 0 : 0;
-          final qtyB = b.products?.isNotEmpty == true ? b.products!.first.quantity ?? 0 : 0;
+          final qtyA = a.products?.isNotEmpty == true
+              ? a.products!.first.quantity ?? 0
+              : 0;
+          final qtyB = b.products?.isNotEmpty == true
+              ? b.products!.first.quantity ?? 0
+              : 0;
           comparison = qtyA.compareTo(qtyB);
           break;
         case 'totalAmount':
           // Calculate total amount for first product
-          final amountA = a.products?.isNotEmpty == true 
-              ? ((a.products!.first.quantity ?? 0) * (a.products!.first.unitPrice ?? a.products!.first.price ?? 0)).toDouble()
+          final amountA = a.products?.isNotEmpty == true
+              ? ((a.products!.first.quantity ?? 0) *
+                      (a.products!.first.unitPrice ??
+                          a.products!.first.price ??
+                          0))
+                  .toDouble()
               : 0.0;
           final amountB = b.products?.isNotEmpty == true
-              ? ((b.products!.first.quantity ?? 0) * (b.products!.first.unitPrice ?? b.products!.first.price ?? 0)).toDouble()
+              ? ((b.products!.first.quantity ?? 0) *
+                      (b.products!.first.unitPrice ??
+                          b.products!.first.price ??
+                          0))
+                  .toDouble()
               : 0.0;
           comparison = amountA.compareTo(amountB);
           break;
         default:
           comparison = 0;
       }
-      
+
       return ascending ? comparison : -comparison;
     });
   }
@@ -440,7 +540,9 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
     // Use watch so the UI rebuilds when the users list is loaded/updated
     final userController = context.watch<UserController>();
 
-    if (!_initialLoadDone && poController.orders.isEmpty && !poController.isLoading) {
+    if (!_initialLoadDone &&
+        poController.orders.isEmpty &&
+        !poController.isLoading) {
       _initialLoadDone = true;
       Future.microtask(() {
         poController.fetchOrders();
@@ -460,11 +562,14 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
     // Get suppliers list for dropdown
     // Combine suppliers present in approved orders with suppliers from SupplierController
     final controllerApproved = supplierController.suppliers
-        .where((s) => (s.approvalStatus ?? '').toLowerCase() == 'approved' && (s.name?.isNotEmpty ?? false))
+        .where((s) =>
+            (s.approvalStatus ?? '').toLowerCase() == 'approved' &&
+            (s.name?.isNotEmpty ?? false))
         .map((s) => s.name!.trim())
         .toSet();
     final ordersSuppliers = _getSuppliers(approvedOrders).toSet();
-    final suppliers = (controllerApproved..addAll(ordersSuppliers)).toList()..sort();
+    final suppliers = (controllerApproved..addAll(ordersSuppliers)).toList()
+      ..sort();
 
     // Families and Subfamilies for filters
     final families = _getFamilies(approvedOrders);
@@ -477,25 +582,33 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
       final title = _safeString(order.title).toLowerCase();
       final status = _safeString(order.status).toLowerCase();
       final id = order.id.toString().toLowerCase();
-      if (!title.contains(filter) && !status.contains(filter) && !id.contains(filter)) {
+      if (!title.contains(filter) &&
+          !status.contains(filter) &&
+          !id.contains(filter)) {
         return false;
       }
 
       // Filter by supplier if selected
       if (_selectedSupplier != null && _selectedSupplier!.isNotEmpty) {
-        final hasSupplier = order.products?.any((p) => p.supplier == _selectedSupplier) ?? false;
+        final hasSupplier =
+            order.products?.any((p) => p.supplier == _selectedSupplier) ??
+                false;
         if (!hasSupplier) return false;
       }
 
       // Filter by family if selected
       if (_selectedFamily != null && _selectedFamily!.isNotEmpty) {
-        final hasFamily = order.products?.any((p) => (p.family ?? '').toString().trim() == _selectedFamily) ?? false;
+        final hasFamily = order.products?.any(
+                (p) => (p.family ?? '').toString().trim() == _selectedFamily) ??
+            false;
         if (!hasFamily) return false;
       }
 
       // Filter by subfamily if selected
       if (_selectedSubFamily != null && _selectedSubFamily!.isNotEmpty) {
-        final hasSub = order.products?.any((p) => (p.subFamily ?? '').toString().trim() == _selectedSubFamily) ?? false;
+        final hasSub = order.products?.any((p) =>
+                (p.subFamily ?? '').toString().trim() == _selectedSubFamily) ??
+            false;
         if (!hasSub) return false;
       }
 
@@ -514,7 +627,9 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
     _sortOrders(filteredOrders, _sortBy, _sortAscending);
 
     // Calculate pagination
-    final totalPages = (filteredOrders.isEmpty) ? 1 : (filteredOrders.length / _itemsPerPage).ceil();
+    final totalPages = (filteredOrders.isEmpty)
+        ? 1
+        : (filteredOrders.length / _itemsPerPage).ceil();
     if (_currentPage > totalPages) _currentPage = totalPages;
     final startIndex = (_currentPage - 1) * _itemsPerPage;
     final endIndex = (startIndex + _itemsPerPage) > filteredOrders.length
@@ -523,11 +638,202 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
     final paginatedOrders = filteredOrders.sublist(startIndex, endIndex);
 
     return Scaffold(
-      appBar: StandardHeader(title: AppLocalizations.of(context)!.poDashboardTitle),
+      appBar:
+          StandardHeader(title: AppLocalizations.of(context)!.poDashboardTitle),
       backgroundColor: const Color(0xFFF6F7FB),
       body: Column(
         children: [
-          // Search and Filter bar
+          // ========== STATS FILTERS (top) ==========
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Filters row
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    // Date range
+                    SizedBox(
+                      width: 180,
+                      child: OutlinedButton(
+                        onPressed: () async {
+                          final picked = await showDatePicker(
+                            context: context,
+                            initialDate: _startDate ??
+                                DateTime.now()
+                                    .subtract(const Duration(days: 90)),
+                            firstDate: DateTime(2020),
+                            lastDate: DateTime.now(),
+                          );
+                          if (picked != null) {
+                            setState(() => _startDate = picked);
+                          }
+                        },
+                        child: Text(_startDate != null
+                            ? DateFormat('dd/MM/yyyy').format(_startDate!)
+                            : AppLocalizations.of(context)!.fromDate),
+                      ),
+                    ),
+                    SizedBox(
+                      width: 180,
+                      child: OutlinedButton(
+                        onPressed: () async {
+                          final picked = await showDatePicker(
+                            context: context,
+                            initialDate: _endDate ?? DateTime.now(),
+                            firstDate: DateTime(2020),
+                            lastDate: DateTime.now(),
+                          );
+                          if (picked != null) setState(() => _endDate = picked);
+                        },
+                        child: Text(_endDate != null
+                            ? DateFormat('dd/MM/yyyy').format(_endDate!)
+                            : AppLocalizations.of(context)!.toDate),
+                      ),
+                    ),
+                    // Department dropdown
+                    SizedBox(
+                      width: 200,
+                      child: Consumer<DepartmentController>(
+                          builder: (context, dc, _) {
+                        final depts = dc.departments
+                            .map((d) =>
+                                {'id': d.id?.toString() ?? '', 'name': d.name})
+                            .toList();
+                        return DropdownButton<String>(
+                          isExpanded: true,
+                          value: _selectedDepartment,
+                          hint: Text(AppLocalizations.of(context)!.department),
+                          items: [
+                            DropdownMenuItem(
+                                value: null,
+                                child: Text(AppLocalizations.of(context)!.all)),
+                            ...depts.map((dept) => DropdownMenuItem(
+                                value: dept['id'] as String,
+                                child: Text(dept['name'] as String))),
+                          ],
+                          onChanged: (val) =>
+                              setState(() => _selectedDepartment = val),
+                        );
+                      }),
+                    ),
+                    // Requester dropdown
+                    SizedBox(
+                      width: 200,
+                      child:
+                          Consumer<UserController>(builder: (context, uc, _) {
+                        final users = uc.users
+                            .where((u) =>
+                                (u.role_id == 2) ||
+                                (u.role != null && u.role!.id == 2))
+                            .toList();
+                        return DropdownButton<String>(
+                          isExpanded: true,
+                          value: _selectedRequester,
+                          hint: const Text('Requester'),
+                          items: [
+                            DropdownMenuItem(
+                                value: null,
+                                child: Text(AppLocalizations.of(context)!.all)),
+                            ...users.map((u) => DropdownMenuItem(
+                                value: u.id?.toString(),
+                                child:
+                                    Text(u.username ?? u.name ?? 'Unknown'))),
+                          ],
+                          onChanged: (val) =>
+                              setState(() => _selectedRequester = val),
+                        );
+                      }),
+                    ),
+                    // Supplier (shared)
+                    SizedBox(
+                      width: 200,
+                      child: DropdownButton<String?>(
+                        isExpanded: true,
+                        value: _selectedSupplier,
+                        hint:
+                            Text(AppLocalizations.of(context)!.selectSupplier),
+                        items: [
+                          DropdownMenuItem<String?>(
+                              value: null,
+                              child: Text(
+                                  AppLocalizations.of(context)!.allSuppliers)),
+                          ...suppliers.map((s) => DropdownMenuItem<String>(
+                              value: s, child: Text(s))),
+                        ],
+                        onChanged: (val) =>
+                            setState(() => _selectedSupplier = val),
+                      ),
+                    ),
+                    ElevatedButton.icon(
+                        onPressed: _applySharedFilters,
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Apply')),
+                    ElevatedButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            _excludeNullDept = !_excludeNullDept;
+                          });
+                          _applySharedFilters();
+                        },
+                        icon: const Icon(Icons.filter_alt),
+                        label: Text(_excludeNullDept
+                            ? 'Exclude Null Dept'
+                            : 'Include Null Dept')),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                // Stats summary cards
+                Consumer<StatsController>(builder: (context, statsCtrl, _) {
+                  return Row(
+                    children: [
+                      Expanded(
+                          child: Card(
+                              child: Padding(
+                                  padding: const EdgeInsets.all(12),
+                                  child: Column(children: [
+                                    Text('Total PO'),
+                                    const SizedBox(height: 8),
+                                    Text(statsCtrl.summaryTotal.toString(),
+                                        style: const TextStyle(
+                                            fontSize: 18, color: Colors.blue))
+                                  ])))),
+                      const SizedBox(width: 12),
+                      Expanded(
+                          child: Card(
+                              child: Padding(
+                                  padding: const EdgeInsets.all(12),
+                                  child: Column(children: [
+                                    Text('Rejected'),
+                                    const SizedBox(height: 8),
+                                    Text(statsCtrl.summaryRejected.toString(),
+                                        style: const TextStyle(
+                                            fontSize: 18, color: Colors.red))
+                                  ])))),
+                      const SizedBox(width: 12),
+                      Expanded(
+                          child: Card(
+                              child: Padding(
+                                  padding: const EdgeInsets.all(12),
+                                  child: Column(children: [
+                                    Text('Rejection Rate'),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                        '${(statsCtrl.summaryRejectionRate * 100).toStringAsFixed(2)}%',
+                                        style: const TextStyle(
+                                            fontSize: 18, color: Colors.orange))
+                                  ])))),
+                    ],
+                  );
+                }),
+              ],
+            ),
+          ),
+          const Divider(height: 8),
+
+          // Search and Filter bar (PO filters)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             color: Colors.white,
@@ -543,7 +849,8 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                       prefixIcon: const Icon(Icons.search),
                       filled: true,
                       fillColor: const Color(0xFFF7F3FF),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(22),
                         borderSide: BorderSide.none,
@@ -569,16 +876,19 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                   child: DropdownButton<String?>(
                     isExpanded: true,
                     value: _selectedSupplier,
-                    hint: Text(AppLocalizations.of(context)!.selectSupplier, style: const TextStyle(fontSize: 13, color: Color(0xFF999999))),
+                    hint: Text(AppLocalizations.of(context)!.selectSupplier,
+                        style: const TextStyle(
+                            fontSize: 13, color: Color(0xFF999999))),
                     items: [
                       DropdownMenuItem<String?>(
                         value: null,
-                        child: Text(AppLocalizations.of(context)!.allSuppliers, style: const TextStyle(fontSize: 13)),
+                        child: Text(AppLocalizations.of(context)!.allSuppliers,
+                            style: const TextStyle(fontSize: 13)),
                       ),
-                      ...suppliers.map((supplier) =>
-                          DropdownMenuItem<String>(
+                      ...suppliers.map((supplier) => DropdownMenuItem<String>(
                             value: supplier,
-                            child: Text(supplier, style: const TextStyle(fontSize: 13)),
+                            child: Text(supplier,
+                                style: const TextStyle(fontSize: 13)),
                           )),
                     ],
                     onChanged: (value) {
@@ -597,18 +907,25 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                   child: DropdownButton<String?>(
                     isExpanded: true,
                     value: _selectedFamily,
-                    hint: Text(AppLocalizations.of(context)!.familyLabel, style: const TextStyle(fontSize: 13, color: Color(0xFF999999))),
+                    hint: Text(AppLocalizations.of(context)!.familyLabel,
+                        style: const TextStyle(
+                            fontSize: 13, color: Color(0xFF999999))),
                     items: [
                       DropdownMenuItem<String?>(
                         value: null,
-                        child: Text(AppLocalizations.of(context)!.allFamilies, style: const TextStyle(fontSize: 13)),
+                        child: Text(AppLocalizations.of(context)!.allFamilies,
+                            style: const TextStyle(fontSize: 13)),
                       ),
-                      ...families.map((f) => DropdownMenuItem<String>(value: f, child: Text(f, style: const TextStyle(fontSize: 13)))),
+                      ...families.map((f) => DropdownMenuItem<String>(
+                          value: f,
+                          child:
+                              Text(f, style: const TextStyle(fontSize: 13)))),
                     ],
                     onChanged: (value) {
                       setState(() {
                         _selectedFamily = value;
-                        _selectedSubFamily = null; // reset subfamily when family changes
+                        _selectedSubFamily =
+                            null; // reset subfamily when family changes
                         _currentPage = 1;
                       });
                     },
@@ -622,13 +939,20 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                   child: DropdownButton<String?>(
                     isExpanded: true,
                     value: _selectedSubFamily,
-                    hint: Text(AppLocalizations.of(context)!.subfamilyLabel, style: const TextStyle(fontSize: 13, color: Color(0xFF999999))),
+                    hint: Text(AppLocalizations.of(context)!.subfamilyLabel,
+                        style: const TextStyle(
+                            fontSize: 13, color: Color(0xFF999999))),
                     items: [
                       DropdownMenuItem<String?>(
                         value: null,
-                        child: Text(AppLocalizations.of(context)!.allSubfamilies, style: const TextStyle(fontSize: 13)),
+                        child: Text(
+                            AppLocalizations.of(context)!.allSubfamilies,
+                            style: const TextStyle(fontSize: 13)),
                       ),
-                      ...subfamilies.map((sf) => DropdownMenuItem<String>(value: sf, child: Text(sf, style: const TextStyle(fontSize: 13)))),
+                      ...subfamilies.map((sf) => DropdownMenuItem<String>(
+                          value: sf,
+                          child:
+                              Text(sf, style: const TextStyle(fontSize: 13)))),
                     ],
                     onChanged: (value) {
                       setState(() {
@@ -645,7 +969,8 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                   flex: 1,
                   child: OutlinedButton(
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 8),
                     ),
                     onPressed: () async {
                       final picked = await showDatePicker(
@@ -662,7 +987,10 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                         });
 
                         // Automatically open To Date picker after selecting From Date
-                        final endInitial = (_endDate != null && !_endDate!.isBefore(picked)) ? _endDate! : picked;
+                        final endInitial =
+                            (_endDate != null && !_endDate!.isBefore(picked))
+                                ? _endDate!
+                                : picked;
                         final pickedEnd = await showDatePicker(
                           context: context,
                           initialDate: endInitial,
@@ -679,8 +1007,9 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                       }
                     },
                     child: Text(
-                      _startDate != null 
-                          ? AppLocalizations.of(context)!.fromPrefix + DateFormat('yyyy-MM-dd').format(_startDate!)
+                      _startDate != null
+                          ? AppLocalizations.of(context)!.fromPrefix +
+                              DateFormat('yyyy-MM-dd').format(_startDate!)
                           : AppLocalizations.of(context)!.fromDate,
                       style: const TextStyle(fontSize: 13),
                     ),
@@ -693,7 +1022,8 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                   flex: 1,
                   child: OutlinedButton(
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 8),
                     ),
                     onPressed: () async {
                       final picked = await showDatePicker(
@@ -701,7 +1031,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                         initialDate: _endDate ?? DateTime.now(),
                         firstDate: DateTime(2020),
                         lastDate: DateTime.now(),
-                          helpText: AppLocalizations.of(context)!.selectToDate,
+                        helpText: AppLocalizations.of(context)!.selectToDate,
                       );
                       if (picked != null) {
                         setState(() {
@@ -712,7 +1042,8 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                     },
                     child: Text(
                       _endDate != null
-                          ? AppLocalizations.of(context)!.toPrefix + DateFormat('yyyy-MM-dd').format(_endDate!)
+                          ? AppLocalizations.of(context)!.toPrefix +
+                              DateFormat('yyyy-MM-dd').format(_endDate!)
                           : AppLocalizations.of(context)!.toDate,
                       style: const TextStyle(fontSize: 13),
                     ),
@@ -753,18 +1084,30 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                     onPressed: () async {
                       final ordersToExport = filteredOrders;
                       if (ordersToExport.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.noOrdersToExportForCurrentFilters)));
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            content: Text(AppLocalizations.of(context)!
+                                .noOrdersToExportForCurrentFilters)));
                         return;
                       }
 
                       final confirm = await showDialog<bool>(
                         context: context,
                         builder: (context) => AlertDialog(
-                          title: Text(AppLocalizations.of(context)!.exportConfirmTitle(ordersToExport.length)),
-                          content: Text(AppLocalizations.of(context)!.exportConfirmContent(ordersToExport.length)),
+                          title: Text(AppLocalizations.of(context)!
+                              .exportConfirmTitle(ordersToExport.length)),
+                          content: Text(AppLocalizations.of(context)!
+                              .exportConfirmContent(ordersToExport.length)),
                           actions: [
-                            TextButton(onPressed: () => Navigator.of(context).pop(false), child: Text(AppLocalizations.of(context)!.cancel)),
-                            ElevatedButton(onPressed: () => Navigator.of(context).pop(true), child: Text(AppLocalizations.of(context)!.export)),
+                            TextButton(
+                                onPressed: () =>
+                                    Navigator.of(context).pop(false),
+                                child:
+                                    Text(AppLocalizations.of(context)!.cancel)),
+                            ElevatedButton(
+                                onPressed: () =>
+                                    Navigator.of(context).pop(true),
+                                child:
+                                    Text(AppLocalizations.of(context)!.export)),
                           ],
                         ),
                       );
@@ -782,7 +1125,6 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                 ),
 
                 // Reset button
-                
               ],
             ),
           ),
@@ -826,210 +1168,355 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                                     columnSpacing: 97,
                                     horizontalMargin: 12,
                                     columns: [
-                                    DataColumn(
-                                      label: GestureDetector(
-                                        onTap: () => setState(() {
-                                          if (_sortBy == 'id') {
-                                            _sortAscending = !_sortAscending;
-                                          } else {
-                                            _sortBy = 'id';
-                                            _sortAscending = false;
-                                          }
-                                        }),
-                                        child: Row(
-                                          children: [
-                                            Text(AppLocalizations.of(context)!.id),
-                                            if (_sortBy == 'id')
-                                              Icon(_sortAscending ? Icons.arrow_upward : Icons.arrow_downward, size: 14),
-                                          ],
+                                      DataColumn(
+                                        label: GestureDetector(
+                                          onTap: () => setState(() {
+                                            if (_sortBy == 'id') {
+                                              _sortAscending = !_sortAscending;
+                                            } else {
+                                              _sortBy = 'id';
+                                              _sortAscending = false;
+                                            }
+                                          }),
+                                          child: Row(
+                                            children: [
+                                              Text(AppLocalizations.of(context)!
+                                                  .id),
+                                              if (_sortBy == 'id')
+                                                Icon(
+                                                    _sortAscending
+                                                        ? Icons.arrow_upward
+                                                        : Icons.arrow_downward,
+                                                    size: 14),
+                                            ],
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    DataColumn(
-                                      label: GestureDetector(
-                                        onTap: () => setState(() {
-                                          if (_sortBy == 'title') {
-                                            _sortAscending = !_sortAscending;
-                                          } else {
-                                            _sortBy = 'title';
-                                            _sortAscending = false;
-                                          }
-                                        }),
-                                        child: Row(
-                                          children: [
-                                            Text(AppLocalizations.of(context)!.title),
-                                            if (_sortBy == 'title')
-                                              Icon(_sortAscending ? Icons.arrow_upward : Icons.arrow_downward, size: 14),
-                                          ],
+                                      DataColumn(
+                                        label: GestureDetector(
+                                          onTap: () => setState(() {
+                                            if (_sortBy == 'title') {
+                                              _sortAscending = !_sortAscending;
+                                            } else {
+                                              _sortBy = 'title';
+                                              _sortAscending = false;
+                                            }
+                                          }),
+                                          child: Row(
+                                            children: [
+                                              Text(AppLocalizations.of(context)!
+                                                  .title),
+                                              if (_sortBy == 'title')
+                                                Icon(
+                                                    _sortAscending
+                                                        ? Icons.arrow_upward
+                                                        : Icons.arrow_downward,
+                                                    size: 14),
+                                            ],
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    DataColumn(
-                                      label: GestureDetector(
-                                        onTap: () => setState(() {
-                                          if (_sortBy == 'product') {
-                                            _sortAscending = !_sortAscending;
-                                          } else {
-                                            _sortBy = 'product';
-                                            _sortAscending = false;
-                                          }
-                                        }),
-                                        child: Row(
-                                          children: [
-                                            Text(AppLocalizations.of(context)!.product),
-                                            if (_sortBy == 'product')
-                                              Icon(_sortAscending ? Icons.arrow_upward : Icons.arrow_downward, size: 14),
-                                          ],
+                                      DataColumn(
+                                        label: GestureDetector(
+                                          onTap: () => setState(() {
+                                            if (_sortBy == 'product') {
+                                              _sortAscending = !_sortAscending;
+                                            } else {
+                                              _sortBy = 'product';
+                                              _sortAscending = false;
+                                            }
+                                          }),
+                                          child: Row(
+                                            children: [
+                                              Text(AppLocalizations.of(context)!
+                                                  .product),
+                                              if (_sortBy == 'product')
+                                                Icon(
+                                                    _sortAscending
+                                                        ? Icons.arrow_upward
+                                                        : Icons.arrow_downward,
+                                                    size: 14),
+                                            ],
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    DataColumn(
-                                      label: GestureDetector(
-                                        onTap: () => setState(() {
-                                          if (_sortBy == 'supplier') {
-                                            _sortAscending = !_sortAscending;
-                                          } else {
-                                            _sortBy = 'supplier';
-                                            _sortAscending = false;
-                                          }
-                                        }),
-                                        child: Row(
-                                          children: [
-                                            Text(AppLocalizations.of(context)!.supplier),
-                                            if (_sortBy == 'supplier')
-                                              Icon(_sortAscending ? Icons.arrow_upward : Icons.arrow_downward, size: 14),
-                                          ],
+                                      DataColumn(
+                                        label: GestureDetector(
+                                          onTap: () => setState(() {
+                                            if (_sortBy == 'supplier') {
+                                              _sortAscending = !_sortAscending;
+                                            } else {
+                                              _sortBy = 'supplier';
+                                              _sortAscending = false;
+                                            }
+                                          }),
+                                          child: Row(
+                                            children: [
+                                              Text(AppLocalizations.of(context)!
+                                                  .supplier),
+                                              if (_sortBy == 'supplier')
+                                                Icon(
+                                                    _sortAscending
+                                                        ? Icons.arrow_upward
+                                                        : Icons.arrow_downward,
+                                                    size: 14),
+                                            ],
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    DataColumn(
-                                      label: GestureDetector(
-                                        onTap: () => setState(() {
-                                          if (_sortBy == 'quantity') {
-                                            _sortAscending = !_sortAscending;
-                                          } else {
-                                            _sortBy = 'quantity';
-                                            _sortAscending = false;
-                                          }
-                                        }),
-                                        child: Row(
-                                          children: [
-                                            Text(AppLocalizations.of(context)!.quantity),
-                                            if (_sortBy == 'quantity')
-                                              Icon(_sortAscending ? Icons.arrow_upward : Icons.arrow_downward, size: 14),
-                                          ],
+                                      DataColumn(
+                                        label: GestureDetector(
+                                          onTap: () => setState(() {
+                                            if (_sortBy == 'quantity') {
+                                              _sortAscending = !_sortAscending;
+                                            } else {
+                                              _sortBy = 'quantity';
+                                              _sortAscending = false;
+                                            }
+                                          }),
+                                          child: Row(
+                                            children: [
+                                              Text(AppLocalizations.of(context)!
+                                                  .quantity),
+                                              if (_sortBy == 'quantity')
+                                                Icon(
+                                                    _sortAscending
+                                                        ? Icons.arrow_upward
+                                                        : Icons.arrow_downward,
+                                                    size: 14),
+                                            ],
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    DataColumn(
-                                      label: GestureDetector(
-                                        onTap: () => setState(() {
-                                          if (_sortBy == 'unitPrice') {
-                                            _sortAscending = !_sortAscending;
-                                          } else {
-                                            _sortBy = 'unitPrice';
-                                            _sortAscending = false;
-                                          }
-                                        }),
-                                        child: Row(
-                                          children: [
-                                            Text(AppLocalizations.of(context)!.unitPrice),
-                                            if (_sortBy == 'unitPrice')
-                                              Icon(_sortAscending ? Icons.arrow_upward : Icons.arrow_downward, size: 14),
-                                          ],
+                                      DataColumn(
+                                        label: GestureDetector(
+                                          onTap: () => setState(() {
+                                            if (_sortBy == 'unitPrice') {
+                                              _sortAscending = !_sortAscending;
+                                            } else {
+                                              _sortBy = 'unitPrice';
+                                              _sortAscending = false;
+                                            }
+                                          }),
+                                          child: Row(
+                                            children: [
+                                              Text(AppLocalizations.of(context)!
+                                                  .unitPrice),
+                                              if (_sortBy == 'unitPrice')
+                                                Icon(
+                                                    _sortAscending
+                                                        ? Icons.arrow_upward
+                                                        : Icons.arrow_downward,
+                                                    size: 14),
+                                            ],
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    DataColumn(
-                                      label: GestureDetector(
-                                        onTap: () => setState(() {
-                                          if (_sortBy == 'totalAmount') {
-                                            _sortAscending = !_sortAscending;
-                                          } else {
-                                            _sortBy = 'totalAmount';
-                                            _sortAscending = false;
-                                          }
-                                        }),
-                                        child: Row(
-                                          children: [
-                                            Text(AppLocalizations.of(context)!.totalPrice),
-                                            if (_sortBy == 'totalAmount')
-                                              Icon(_sortAscending ? Icons.arrow_upward : Icons.arrow_downward, size: 14),
-                                          ],
+                                      DataColumn(
+                                        label: GestureDetector(
+                                          onTap: () => setState(() {
+                                            if (_sortBy == 'totalAmount') {
+                                              _sortAscending = !_sortAscending;
+                                            } else {
+                                              _sortBy = 'totalAmount';
+                                              _sortAscending = false;
+                                            }
+                                          }),
+                                          child: Row(
+                                            children: [
+                                              Text(AppLocalizations.of(context)!
+                                                  .totalPrice),
+                                              if (_sortBy == 'totalAmount')
+                                                Icon(
+                                                    _sortAscending
+                                                        ? Icons.arrow_upward
+                                                        : Icons.arrow_downward,
+                                                    size: 14),
+                                            ],
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    DataColumn(
-                                      label: GestureDetector(
-                                        onTap: () => setState(() {
-                                          if (_sortBy == 'date') {
-                                            _sortAscending = !_sortAscending;
-                                          } else {
-                                            _sortBy = 'date';
-                                            _sortAscending = false;
-                                          }
-                                        }),
-                                        child: Row(
-                                          children: [
-                                            Text(AppLocalizations.of(context)!.date),
-                                            if (_sortBy == 'date')
-                                              Icon(_sortAscending ? Icons.arrow_upward : Icons.arrow_downward, size: 14),
-                                          ],
+                                      DataColumn(
+                                        label: GestureDetector(
+                                          onTap: () => setState(() {
+                                            if (_sortBy == 'date') {
+                                              _sortAscending = !_sortAscending;
+                                            } else {
+                                              _sortBy = 'date';
+                                              _sortAscending = false;
+                                            }
+                                          }),
+                                          child: Row(
+                                            children: [
+                                              Text(AppLocalizations.of(context)!
+                                                  .date),
+                                              if (_sortBy == 'date')
+                                                Icon(
+                                                    _sortAscending
+                                                        ? Icons.arrow_upward
+                                                        : Icons.arrow_downward,
+                                                    size: 14),
+                                            ],
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    DataColumn(label: Text(AppLocalizations.of(context)!.requester)),
-                                    DataColumn(
-                                      label: GestureDetector(
-                                        onTap: () => setState(() {
-                                          if (_sortBy == 'status') {
-                                            _sortAscending = !_sortAscending;
-                                          } else {
-                                            _sortBy = 'status';
-                                            _sortAscending = false;
-                                          }
-                                        }),
-                                        child: Row(
-                                          children: [
-                                            Text(AppLocalizations.of(context)!.status),
-                                            if (_sortBy == 'status')
-                                              Icon(_sortAscending ? Icons.arrow_upward : Icons.arrow_downward, size: 14),
-                                          ],
+                                      DataColumn(
+                                          label: Text(
+                                              AppLocalizations.of(context)!
+                                                  .requester)),
+                                      DataColumn(
+                                        label: GestureDetector(
+                                          onTap: () => setState(() {
+                                            if (_sortBy == 'status') {
+                                              _sortAscending = !_sortAscending;
+                                            } else {
+                                              _sortBy = 'status';
+                                              _sortAscending = false;
+                                            }
+                                          }),
+                                          child: Row(
+                                            children: [
+                                              Text(AppLocalizations.of(context)!
+                                                  .status),
+                                              if (_sortBy == 'status')
+                                                Icon(
+                                                    _sortAscending
+                                                        ? Icons.arrow_upward
+                                                        : Icons.arrow_downward,
+                                                    size: 14),
+                                            ],
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                    DataColumn(label: Text('')),
-                                  ],
-                                  rows: paginatedOrders.expand((order) {
-                                    // Create a row for each product in the order
-                                    if (order.products == null || order.products!.isEmpty) {
-                                      // If no products, show one empty row for the order
-                                      return [
-                                        DataRow(cells: [
+                                      DataColumn(label: Text('')),
+                                    ],
+                                    rows: paginatedOrders.expand((order) {
+                                      // Create a row for each product in the order
+                                      if (order.products == null ||
+                                          order.products!.isEmpty) {
+                                        // If no products, show one empty row for the order
+                                        return [
+                                          DataRow(cells: [
+                                            DataCell(Text(order.id.toString())),
+                                            DataCell(Text(_safeString(
+                                                order.title ?? ''))),
+                                            DataCell(const Text('-')),
+                                            DataCell(const Text('-')),
+                                            DataCell(const Text('-')),
+                                            DataCell(const Text('-')),
+                                            DataCell(const Text('-')),
+                                            DataCell(Text(order.startDate !=
+                                                    null
+                                                ? DateFormat('yyyy-MM-dd')
+                                                    .format(order.startDate!)
+                                                : '-')),
+                                            DataCell(Text(_getRequesterName(
+                                                order, userController))),
+                                            DataCell(
+                                              Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 12,
+                                                        vertical: 4),
+                                                decoration: BoxDecoration(
+                                                  color:
+                                                      order.status == 'approved'
+                                                          ? Colors.green
+                                                              .withOpacity(0.2)
+                                                          : Colors.orange
+                                                              .withOpacity(0.2),
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                ),
+                                                child: Text(
+                                                  _localizedStatus(
+                                                      context, order.status),
+                                                  style: TextStyle(
+                                                    color: order.status ==
+                                                            'approved'
+                                                        ? Colors.green
+                                                        : Colors.orange,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            DataCell(
+                                              IconButton(
+                                                icon: const Icon(
+                                                    Icons.visibility,
+                                                    color: Colors.blue),
+                                                onPressed: () =>
+                                                    _showOrderDetailsDialog(
+                                                        context,
+                                                        order,
+                                                        userController),
+                                              ),
+                                            ),
+                                          ]),
+                                        ];
+                                      }
+
+                                      return order.products!.map((product) {
+                                        final unitPrice = product.unitPrice ??
+                                            product.price ??
+                                            0;
+                                        final quantity = product.quantity ?? 0;
+                                        final totalAmount = (quantity is int
+                                                ? quantity.toDouble()
+                                                : quantity as double) *
+                                            (unitPrice is int
+                                                ? unitPrice.toDouble()
+                                                : unitPrice as double);
+
+                                        return DataRow(cells: [
                                           DataCell(Text(order.id.toString())),
-                                          DataCell(Text(_safeString(order.title ?? ''))),
-                                          DataCell(const Text('-')),
-                                          DataCell(const Text('-')),
-                                          DataCell(const Text('-')),
-                                          DataCell(const Text('-')),
-                                          DataCell(const Text('-')),
+                                          DataCell(Text(
+                                              _safeString(order.title ?? ''))),
+                                          DataCell(Text(_safeString(
+                                              product.product ?? ''))),
+                                          DataCell(Text(_safeString(
+                                              product.supplier ?? '-'))),
+                                          DataCell(Text(quantity.toString())),
+                                          DataCell(Text(unitPrice.toString())),
+                                          DataCell(Text(totalAmount
+                                                  .toStringAsFixed(2) +
+                                              (_currencySymbol(order.currency)
+                                                      .isNotEmpty
+                                                  ? ' ' +
+                                                      _currencySymbol(
+                                                          order.currency)
+                                                  : ''))),
                                           DataCell(Text(order.startDate != null
-                                              ? DateFormat('yyyy-MM-dd').format(order.startDate!)
+                                              ? DateFormat('yyyy-MM-dd')
+                                                  .format(order.startDate!)
                                               : '-')),
-                                          DataCell(Text(_getRequesterName(order, userController))),
+                                          DataCell(Text(_getRequesterName(
+                                              order, userController))),
                                           DataCell(
                                             Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 4),
                                               decoration: BoxDecoration(
-                                                color: order.status == 'approved'
-                                                    ? Colors.green.withOpacity(0.2)
-                                                    : Colors.orange.withOpacity(0.2),
-                                                borderRadius: BorderRadius.circular(12),
+                                                color:
+                                                    order.status == 'approved'
+                                                        ? Colors.green
+                                                            .withOpacity(0.2)
+                                                        : Colors.orange
+                                                            .withOpacity(0.2),
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
                                               ),
                                               child: Text(
-                                                _localizedStatus(context, order.status),
+                                                _localizedStatus(
+                                                    context, order.status),
                                                 style: TextStyle(
-                                                  color: order.status == 'approved' ? Colors.green : Colors.orange,
+                                                  color:
+                                                      order.status == 'approved'
+                                                          ? Colors.green
+                                                          : Colors.orange,
                                                   fontWeight: FontWeight.bold,
                                                 ),
                                               ),
@@ -1037,59 +1524,20 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
                                           ),
                                           DataCell(
                                             IconButton(
-                                              icon: const Icon(Icons.visibility, color: Colors.blue),
-                                              onPressed: () => _showOrderDetailsDialog(context, order, userController),
+                                              icon: const Icon(Icons.visibility,
+                                                  color: Colors.blue),
+                                              onPressed: () =>
+                                                  _showOrderDetailsDialog(
+                                                      context,
+                                                      order,
+                                                      userController),
                                             ),
                                           ),
-                                        ]),
-                                      ];
-                                    }
-                                    
-                                    return order.products!.map((product) {
-                                      final unitPrice = product.unitPrice ?? product.price ?? 0;
-                                      final quantity = product.quantity ?? 0;
-                                      final totalAmount = (quantity is int ? quantity.toDouble() : quantity as double) * 
-                                          (unitPrice is int ? unitPrice.toDouble() : unitPrice as double);
-                                      
-                                      return DataRow(cells: [
-                                        DataCell(Text(order.id.toString())),
-                                        DataCell(Text(_safeString(order.title ?? ''))),
-                                        DataCell(Text(_safeString(product.product ?? ''))),
-                                        DataCell(Text(_safeString(product.supplier ?? '-'))),
-                                        DataCell(Text(quantity.toString())),
-                                        DataCell(Text(unitPrice.toString())),
-                                        DataCell(Text(totalAmount.toStringAsFixed(2) + (_currencySymbol(order.currency).isNotEmpty ? ' ' + _currencySymbol(order.currency) : ''))),
-                                        DataCell(Text(order.startDate != null
-                                            ? DateFormat('yyyy-MM-dd').format(order.startDate!)
-                                            : '-')),
-                                        DataCell(Text(_getRequesterName(order, userController))),
-                                        DataCell(
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                                            decoration: BoxDecoration(
-                                              color: order.status == 'approved'
-                                                  ? Colors.green.withOpacity(0.2)
-                                                  : Colors.orange.withOpacity(0.2),
-                                              borderRadius: BorderRadius.circular(12),
-                                            ),
-                                            child: Text(
-                                                _localizedStatus(context, order.status),
-                                              style: TextStyle(
-                                                color: order.status == 'approved' ? Colors.green : Colors.orange,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        DataCell(
-                                          IconButton(
-                                            icon: const Icon(Icons.visibility, color: Colors.blue),
-                                            onPressed: () => _showOrderDetailsDialog(context, order, userController),
-                                          ),
-                                        ),
-                                      ]);
-                                    }).toList();
-                                  }).toList(),                                  ),                                ),
+                                        ]);
+                                      }).toList();
+                                    }).toList(),
+                                  ),
+                                ),
                               ),
                             ),
                             Padding(
@@ -1126,7 +1574,10 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
     // Build excel file with same columns as the datatable
     try {
       if (orders.isEmpty) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.noOrdersToExportForSelectedRange)));
+        if (mounted)
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text(AppLocalizations.of(context)!
+                  .noOrdersToExportForSelectedRange)));
         return;
       }
 
@@ -1134,8 +1585,10 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
       final sheet = excel[AppLocalizations.of(context)!.poDashboardTitle];
 
       // Header row (styled)
-      final headerStyle = ex.CellStyle(bold: true, backgroundColorHex: "#6A1B9A", fontColorHex: "#FFFFFF");
-      final idCellStyle = ex.CellStyle(bold: true, backgroundColorHex: "#EDE7F6", fontColorHex: "#4A148C");
+      final headerStyle = ex.CellStyle(
+          bold: true, backgroundColorHex: "#6A1B9A", fontColorHex: "#FFFFFF");
+      final idCellStyle = ex.CellStyle(
+          bold: true, backgroundColorHex: "#EDE7F6", fontColorHex: "#4A148C");
       final titleCellStyle = ex.CellStyle(fontColorHex: "#1E88E5");
 
       final loc = AppLocalizations.of(context)!;
@@ -1154,12 +1607,17 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
 
       // Apply header style and set column widths for readability
       for (var c = 0; c < 10; c++) {
-        final cell = sheet.cell(ex.CellIndex.indexByColumnRow(columnIndex: c, rowIndex: 0));
+        final cell = sheet
+            .cell(ex.CellIndex.indexByColumnRow(columnIndex: c, rowIndex: 0));
         cell.cellStyle = headerStyle;
       }
       // Override ID and Title header styles for improved readability
-      sheet.cell(ex.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0)).cellStyle = idCellStyle;
-      sheet.cell(ex.CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: 0)).cellStyle = titleCellStyle;
+      sheet
+          .cell(ex.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0))
+          .cellStyle = idCellStyle;
+      sheet
+          .cell(ex.CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: 0))
+          .cellStyle = titleCellStyle;
       // Set some reasonable column widths
       sheet.setColWidth(0, 8); // ID
       sheet.setColWidth(1, 30); // Title
@@ -1172,11 +1630,11 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
       sheet.setColWidth(8, 18); // Requester
       sheet.setColWidth(9, 12); // Status
 
-
-
       for (var order in orders) {
         final products = order.products;
-        final orderDate = order.startDate != null ? DateFormat('yyyy-MM-dd').format(order.startDate!) : '-';
+        final orderDate = order.startDate != null
+            ? DateFormat('yyyy-MM-dd').format(order.startDate!)
+            : '-';
 
         if (products == null || products.isEmpty) {
           // Single row when no products
@@ -1196,7 +1654,11 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
           for (var product in products) {
             final unitPrice = product.unitPrice ?? product.price ?? 0;
             final quantity = product.quantity ?? 0;
-            final totalAmount = ((quantity is int ? quantity.toDouble() : quantity as double) * (unitPrice is int ? unitPrice.toDouble() : unitPrice as double));
+            final totalAmount =
+                ((quantity is int ? quantity.toDouble() : quantity as double) *
+                    (unitPrice is int
+                        ? unitPrice.toDouble()
+                        : unitPrice as double));
             // Each product line repeats the PO ID and Title (previous behavior)
             sheet.appendRow([
               order.id?.toString() ?? '-',
@@ -1225,7 +1687,8 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
 
       if (mounted) {
         if (saved == 'downloaded') {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(loc.downloadedFile(fileName))));
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(loc.downloadedFile(fileName))));
         } else {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text(loc.exportedToPath(saved)),
@@ -1239,7 +1702,10 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage> with Widg
         }
       }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.exportFailed(e.toString()))));
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(
+                AppLocalizations.of(context)!.exportFailed(e.toString()))));
     }
   }
 

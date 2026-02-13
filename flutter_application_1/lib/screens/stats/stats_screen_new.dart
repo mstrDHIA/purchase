@@ -59,10 +59,19 @@ class _StatsScreenNewState extends State<StatsScreenNew> {
       }
 
       // build simple lists for dropdowns
-      _departmentList = dc.departments.map((d) => {'id': d.id?.toString() ?? '', 'name': d.name}).toList();
+      _departmentList = dc.departments
+          .map((d) => {'id': d.id?.toString() ?? '', 'name': d.name})
+          .toList();
       // Show only users with role id == 2 in the requester dropdown
-      final filteredUsers = uc.users.where((u) => (u.role_id == 2) || (u.role != null && u.role!.id == 2)).toList();
-      _userList = filteredUsers.map((u) => {'id': u.id?.toString() ?? '', 'name': u.username ?? u.name ?? 'Unknown'}).toList();
+      final filteredUsers = uc.users
+          .where((u) => (u.role_id == 2) || (u.role != null && u.role!.id == 2))
+          .toList();
+      _userList = filteredUsers
+          .map((u) => {
+                'id': u.id?.toString() ?? '',
+                'name': u.username ?? u.name ?? 'Unknown'
+              })
+          .toList();
 
       // Fetch categories (families + subcategories)
       try {
@@ -70,7 +79,8 @@ class _StatsScreenNewState extends State<StatsScreenNew> {
         final categories = await pc.getCategoriesWithoutQuery();
         if (categories is List) {
           final allCats = categories.cast<Map<String, dynamic>>();
-          final parents = allCats.where((c) => c['parent_category'] == null).toList();
+          final parents =
+              allCats.where((c) => c['parent_category'] == null).toList();
           final families = <String, List<Map<String, dynamic>>>{};
           final familyListTmp = <Map<String, dynamic>>[];
           for (final p in parents) {
@@ -79,10 +89,17 @@ class _StatsScreenNewState extends State<StatsScreenNew> {
             familyListTmp.add({'id': familyId, 'name': familyName});
             final subs = allCats
                 .where((c) => c['parent_category'] == p['id'])
-                .map((c) => {'id': c['id']?.toString() ?? '', 'name': c['name']?.toString() ?? ''})
+                .map((c) => {
+                      'id': c['id']?.toString() ?? '',
+                      'name': c['name']?.toString() ?? ''
+                    })
                 .where((m) => (m['name'] as String).isNotEmpty)
                 .toList();
-            families[familyId] = subs.isNotEmpty ? subs : [{'id': familyId, 'name': familyName}];
+            families[familyId] = subs.isNotEmpty
+                ? subs
+                : [
+                    {'id': familyId, 'name': familyName}
+                  ];
           }
           _categoryFamilies = families;
           _familyList = familyListTmp;
@@ -99,7 +116,10 @@ class _StatsScreenNewState extends State<StatsScreenNew> {
           if (s is Map) return Map<String, dynamic>.from(s as Map);
           // Supplier model -> convert
           try {
-            return {'id': s.id?.toString() ?? '', 'name': s.name ?? s.toString()};
+            return {
+              'id': s.id?.toString() ?? '',
+              'name': s.name ?? s.toString()
+            };
           } catch (_) {
             return {'id': '', 'name': s.toString()};
           }
@@ -108,7 +128,8 @@ class _StatsScreenNewState extends State<StatsScreenNew> {
         // ignore supplier errors
       }
 
-      await statsCtrl.fetchAll(start: _startDate, end: _endDate, excludeNullDept: _excludeNullDept);
+      await statsCtrl.fetchAll(
+          start: _startDate, end: _endDate, excludeNullDept: _excludeNullDept);
       setState(() {
         _loading = statsCtrl.loading;
       });
@@ -159,7 +180,8 @@ class _StatsScreenNewState extends State<StatsScreenNew> {
       final buffer = StringBuffer();
       buffer.writeln('Statistics Summary');
       buffer.writeln('Total PO,Total Rejected,Rejection Rate (%)');
-      buffer.writeln('$_totalPO,$_totalRejected,${(_rejectionRate * 100).toStringAsFixed(2)}');
+      buffer.writeln(
+          '$_totalPO,$_totalRejected,${(_rejectionRate * 100).toStringAsFixed(2)}');
 
       final bytes = utf8.encode(buffer.toString());
       final fname =
@@ -176,7 +198,8 @@ class _StatsScreenNewState extends State<StatsScreenNew> {
     }
   }
 
-  Widget _buildStatTable(String title, Map<String, dynamic> data, String valueLabel) {
+  Widget _buildStatTable(
+      String title, Map<String, dynamic> data, String valueLabel) {
     final entries = data.entries.toList()
       ..sort((a, b) {
         final aVal = a.value is int ? a.value : (a.value as double).toInt();
@@ -196,13 +219,22 @@ class _StatsScreenNewState extends State<StatsScreenNew> {
             ),
             const SizedBox(height: 16),
             if (entries.isEmpty)
-              Text(AppLocalizations.of(context)?.noDataAvailable ?? 'No data available')
+              Text(AppLocalizations.of(context)?.noDataAvailable ??
+                  'No data available')
             else
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: DataTable(
                   columns: [
-                    DataColumn(label: Text(entries[0].key.runtimeType.toString().contains('Department') ? (AppLocalizations.of(context)?.department ?? 'Department') : (AppLocalizations.of(context)?.name ?? 'Name'))),
+                    DataColumn(
+                        label: Text(entries[0]
+                                .key
+                                .runtimeType
+                                .toString()
+                                .contains('Department')
+                            ? (AppLocalizations.of(context)?.department ??
+                                'Department')
+                            : (AppLocalizations.of(context)?.name ?? 'Name'))),
                     DataColumn(label: Text(valueLabel)),
                   ],
                   rows: entries
@@ -234,358 +266,471 @@ class _StatsScreenNewState extends State<StatsScreenNew> {
           : Consumer<StatsController>(
               builder: (context, statsCtrl, _) {
                 return SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Show error message if any
-                  if (statsCtrl.error != null)
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      margin: const EdgeInsets.only(bottom: 16),
-                      decoration: BoxDecoration(
-                        color: Colors.red.shade100,
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: Colors.red),
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Show error message if any
+                      if (statsCtrl.error != null)
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          margin: const EdgeInsets.only(bottom: 16),
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade100,
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: Colors.red),
+                          ),
+                          child: Text(
+                            'Error: ${statsCtrl.error}',
+                            style: TextStyle(color: Colors.red.shade900),
+                          ),
+                        ),
+                      // Filters Card
+                      Card(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                loc?.filters ?? 'Filters',
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                              const SizedBox(height: 12),
+                              // Dates row
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(loc?.startDate ?? 'Start Date'),
+                                        const SizedBox(height: 4),
+                                        InkWell(
+                                          onTap: _selectStartDate,
+                                          child: Container(
+                                            padding: const EdgeInsets.all(8),
+                                            decoration: BoxDecoration(
+                                              border: Border.all(),
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
+                                            ),
+                                            child: Text(
+                                              DateFormat('yyyy-MM-dd')
+                                                  .format(_startDate),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(loc?.endDate ?? 'End Date'),
+                                        const SizedBox(height: 4),
+                                        InkWell(
+                                          onTap: _selectEndDate,
+                                          child: Container(
+                                            padding: const EdgeInsets.all(8),
+                                            decoration: BoxDecoration(
+                                              border: Border.all(),
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
+                                            ),
+                                            child: Text(
+                                              DateFormat('yyyy-MM-dd')
+                                                  .format(_endDate),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+
+                              // Department & Requester filters
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: DropdownButtonFormField<String>(
+                                      value: _selectedDepartment ?? '',
+                                      decoration: InputDecoration(
+                                          labelText:
+                                              loc?.department ?? 'Department'),
+                                      items: [
+                                        const DropdownMenuItem<String>(
+                                            value: '', child: Text('All')),
+                                        ..._departmentList.map((d) =>
+                                            DropdownMenuItem<String>(
+                                                value:
+                                                    d['id']?.toString() ?? '',
+                                                child: Text(
+                                                    d['name'] ?? 'Unknown'))),
+                                      ],
+                                      onChanged: (v) => setState(() =>
+                                          _selectedDepartment =
+                                              (v == '' ? null : v)),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: DropdownButtonFormField<String>(
+                                      value: _selectedRequester ?? '',
+                                      decoration: InputDecoration(
+                                          labelText:
+                                              loc?.requester ?? 'Requester'),
+                                      items: [
+                                        const DropdownMenuItem<String>(
+                                            value: '', child: Text('All')),
+                                        ..._userList.map((u) =>
+                                            DropdownMenuItem<String>(
+                                                value:
+                                                    u['id']?.toString() ?? '',
+                                                child: Text(
+                                                    u['name'] ?? 'Unknown'))),
+                                      ],
+                                      onChanged: (v) => setState(() =>
+                                          _selectedRequester =
+                                              (v == '' ? null : v)),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+
+                              // Category & Subcategory & Supplier filters
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: DropdownButtonFormField<String>(
+                                      value: _selectedCategory ?? '',
+                                      decoration: InputDecoration(
+                                          labelText:
+                                              loc?.category ?? 'Category'),
+                                      items: [
+                                        const DropdownMenuItem<String>(
+                                            value: '', child: Text('All')),
+                                        ..._familyList.map((c) =>
+                                            DropdownMenuItem<String>(
+                                                value:
+                                                    c['id']?.toString() ?? '',
+                                                child: Text(
+                                                    c['name']?.toString() ??
+                                                        'Unknown'))),
+                                      ],
+                                      onChanged: (v) => setState(() {
+                                        _selectedCategory =
+                                            (v == '' ? null : v);
+                                        // reset subcategory when family changes
+                                        _selectedSubcategory = null;
+                                      }),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: DropdownButtonFormField<String>(
+                                      value: _selectedSubcategory ?? '',
+                                      decoration: InputDecoration(
+                                          labelText: loc?.subcategory ??
+                                              'Subcategory'),
+                                      items: [
+                                        const DropdownMenuItem<String>(
+                                            value: '', child: Text('All')),
+                                        ...((_selectedCategory != null &&
+                                                    _categoryFamilies
+                                                        .containsKey(
+                                                            _selectedCategory))
+                                                ? _categoryFamilies[
+                                                    _selectedCategory]!
+                                                : [])
+                                            .map((s) =>
+                                                DropdownMenuItem<String>(
+                                                    value:
+                                                        s['id']?.toString() ??
+                                                            '',
+                                                    child: Text(
+                                                        s['name']?.toString() ??
+                                                            ''))),
+                                      ],
+                                      onChanged: (v) => setState(() =>
+                                          _selectedSubcategory =
+                                              (v == '' ? null : v)),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              DropdownButtonFormField<String>(
+                                value: _selectedSupplier ?? '',
+                                decoration: InputDecoration(
+                                    labelText: loc?.supplier ?? 'Supplier'),
+                                items: [
+                                  const DropdownMenuItem<String>(
+                                      value: '', child: Text('All')),
+                                  ..._supplierList.map((s) => DropdownMenuItem<
+                                          String>(
+                                      value: s['id']?.toString() ?? s['name'],
+                                      child: Text(
+                                          s['name']?.toString() ?? 'Unknown'))),
+                                ],
+                                onChanged: (v) => setState(() =>
+                                    _selectedSupplier = (v == '' ? null : v)),
+                              ),
+                              const SizedBox(height: 12),
+                              CheckboxListTile(
+                                contentPadding: EdgeInsets.zero,
+                                value: _excludeNullDept,
+                                title:
+                                    const Text('Exclude PO without department'),
+                                onChanged: (v) => setState(
+                                    () => _excludeNullDept = v ?? false),
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  ElevatedButton.icon(
+                                    icon: const Icon(Icons.refresh),
+                                    label: Text(loc?.apply ?? 'Apply'),
+                                    onPressed: () async {
+                                      final statsCtrl =
+                                          Provider.of<StatsController>(context,
+                                              listen: false);
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(SnackBar(
+                                              content: Text(
+                                                  loc?.filtersApplied ??
+                                                      'Applying filters...')));
+                                      // Map selected ids to the parameter values expected by the API
+                                      String? categoryParam;
+                                      String? subcategoryParam;
+                                      String? supplierParam;
+
+                                      if (_selectedCategory != null &&
+                                          _selectedCategory!.isNotEmpty) {
+                                        Map<String, dynamic> fam;
+                                        try {
+                                          fam = _familyList.firstWhere((f) =>
+                                              (f['id']?.toString() ?? '') ==
+                                              _selectedCategory);
+                                        } catch (_) {
+                                          fam = <String, dynamic>{};
+                                        }
+                                        categoryParam = fam.isNotEmpty
+                                            ? fam['name']?.toString()
+                                            : _selectedCategory;
+                                      }
+
+                                      if (_selectedSubcategory != null &&
+                                          _selectedSubcategory!.isNotEmpty &&
+                                          _selectedCategory != null) {
+                                        final subs = _categoryFamilies[
+                                                _selectedCategory] ??
+                                            [];
+                                        Map<String, dynamic> sub;
+                                        try {
+                                          sub = subs.firstWhere((s) =>
+                                              (s['id']?.toString() ?? '') ==
+                                              _selectedSubcategory);
+                                        } catch (_) {
+                                          sub = <String, dynamic>{};
+                                        }
+                                        subcategoryParam = sub.isNotEmpty
+                                            ? sub['name']?.toString()
+                                            : _selectedSubcategory;
+                                      }
+
+                                      if (_selectedSupplier != null &&
+                                          _selectedSupplier!.isNotEmpty) {
+                                        Map<String, dynamic> sup;
+                                        try {
+                                          sup = _supplierList.firstWhere((s) =>
+                                              (s['id']?.toString() ?? '') ==
+                                                  _selectedSupplier ||
+                                              (s['name']?.toString() ?? '') ==
+                                                  _selectedSupplier);
+                                        } catch (_) {
+                                          sup = <String, dynamic>{};
+                                        }
+                                        // Backend filters on supplier name, not id
+                                        supplierParam = sup.isNotEmpty
+                                            ? sup['name']?.toString()
+                                            : _selectedSupplier;
+                                      }
+
+                                      await statsCtrl.fetchAll(
+                                        start: _startDate,
+                                        end: _endDate,
+                                        department: (_selectedDepartment !=
+                                                    null &&
+                                                _selectedDepartment!.isNotEmpty)
+                                            ? _selectedDepartment
+                                            : null,
+                                        requester: (_selectedRequester !=
+                                                    null &&
+                                                _selectedRequester!.isNotEmpty)
+                                            ? _selectedRequester
+                                            : null,
+                                        category: (categoryParam != null &&
+                                                categoryParam.isNotEmpty)
+                                            ? categoryParam
+                                            : null,
+                                        subcategory:
+                                            (subcategoryParam != null &&
+                                                    subcategoryParam.isNotEmpty)
+                                                ? subcategoryParam
+                                                : null,
+                                        supplier: (supplierParam != null &&
+                                                supplierParam.isNotEmpty)
+                                            ? supplierParam
+                                            : null,
+                                        excludeNullDept: _excludeNullDept,
+                                      );
+                                      setState(() {
+                                        // Use summary totals extracted directly from API response (backend already calculated)
+                                        _totalPO = statsCtrl.summaryTotal;
+                                        _totalRejected =
+                                            statsCtrl.summaryRejected;
+                                        _rejectionRate =
+                                            statsCtrl.summaryRejectionRate;
+                                      });
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                            content: Text(loc?.filtersApplied ??
+                                                'Filters applied')),
+                                      );
+                                    },
+                                  ),
+                                  const SizedBox(width: 8),
+                                  ElevatedButton.icon(
+                                    icon: const Icon(Icons.download),
+                                    label: Text(loc?.exportCSV ?? 'Export CSV'),
+                                    onPressed: _exportCsv,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      child: Text(
-                        'Error: ${statsCtrl.error}',
-                        style: TextStyle(color: Colors.red.shade900),
+                      const SizedBox(height: 24),
+
+                      // Summary Results
+                      Text(
+                        loc?.poStatistics ?? 'Summary Results',
+                        style: Theme.of(context).textTheme.headlineSmall,
                       ),
-                    ),
-                  // Filters Card
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      const SizedBox(height: 16),
+
+                      // Results cards
+                      Row(
                         children: [
-                          Text(
-                            loc?.filters ?? 'Filters',
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          const SizedBox(height: 12),
-                          // Dates row
-                          Row(
-                            children: [
-                              Expanded(
+                          Expanded(
+                            child: Card(
+                              color: Colors.blue.shade50,
+                              child: Padding(
+                                padding: const EdgeInsets.all(24.0),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(loc?.startDate ?? 'Start Date'),
-                                    const SizedBox(height: 4),
-                                    InkWell(
-                                      onTap: _selectStartDate,
-                                      child: Container(
-                                        padding: const EdgeInsets.all(8),
-                                        decoration: BoxDecoration(
-                                          border: Border.all(),
-                                          borderRadius: BorderRadius.circular(4),
-                                        ),
-                                        child: Text(
-                                          DateFormat('yyyy-MM-dd').format(_startDate),
-                                        ),
+                                    Text(
+                                      'Total PO',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey.shade700,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      _totalPO.toString(),
+                                      style: TextStyle(
+                                        fontSize: 32,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.blue.shade900,
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
-                              const SizedBox(width: 16),
-                              Expanded(
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Card(
+                              color: Colors.orange.shade50,
+                              child: Padding(
+                                padding: const EdgeInsets.all(24.0),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(loc?.endDate ?? 'End Date'),
-                                    const SizedBox(height: 4),
-                                    InkWell(
-                                      onTap: _selectEndDate,
-                                      child: Container(
-                                        padding: const EdgeInsets.all(8),
-                                        decoration: BoxDecoration(
-                                          border: Border.all(),
-                                          borderRadius: BorderRadius.circular(4),
-                                        ),
-                                        child: Text(
-                                          DateFormat('yyyy-MM-dd').format(_endDate),
-                                        ),
+                                    Text(
+                                      'Total Rejected',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey.shade700,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      _totalRejected.toString(),
+                                      style: TextStyle(
+                                        fontSize: 32,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.orange.shade900,
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
-                            ],
+                            ),
                           ),
-                          const SizedBox(height: 12),
-
-                          // Department & Requester filters
-                          Row(
-                            children: [
-                              Expanded(
-                                child: DropdownButtonFormField<String>(
-                                  value: _selectedDepartment ?? '',
-                                  decoration: InputDecoration(labelText: loc?.department ?? 'Department'),
-                                  items: [
-                                    const DropdownMenuItem<String>(value: '', child: Text('All')),
-                                    ..._departmentList.map((d) => DropdownMenuItem<String>(value: d['id']?.toString() ?? '', child: Text(d['name'] ?? 'Unknown'))),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Card(
+                              color: Colors.red.shade50,
+                              child: Padding(
+                                padding: const EdgeInsets.all(24.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Rejection Rate',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey.shade700,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      '${(_rejectionRate * 100).toStringAsFixed(2)}%',
+                                      style: TextStyle(
+                                        fontSize: 32,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.red.shade900,
+                                      ),
+                                    ),
                                   ],
-                                  onChanged: (v) => setState(() => _selectedDepartment = (v == '' ? null : v)),
                                 ),
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: DropdownButtonFormField<String>(
-                                  value: _selectedRequester ?? '',
-                                  decoration: InputDecoration(labelText: loc?.requester ?? 'Requester'),
-                                  items: [
-                                    const DropdownMenuItem<String>(value: '', child: Text('All')),
-                                    ..._userList.map((u) => DropdownMenuItem<String>(value: u['id']?.toString() ?? '', child: Text(u['name'] ?? 'Unknown'))),
-                                  ],
-                                  onChanged: (v) => setState(() => _selectedRequester = (v == '' ? null : v)),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-
-                          // Category & Subcategory & Supplier filters
-                          Row(
-                            children: [
-                              Expanded(
-                                child: DropdownButtonFormField<String>(
-                                  value: _selectedCategory ?? '',
-                                  decoration: InputDecoration(labelText: loc?.category ?? 'Category'),
-                                  items: [
-                                    const DropdownMenuItem<String>(value: '', child: Text('All')),
-                                    ..._familyList.map((c) => DropdownMenuItem<String>(value: c['id']?.toString() ?? '', child: Text(c['name']?.toString() ?? 'Unknown'))),
-                                  ],
-                                  onChanged: (v) => setState(() {
-                                    _selectedCategory = (v == '' ? null : v);
-                                    // reset subcategory when family changes
-                                    _selectedSubcategory = null;
-                                  }),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: DropdownButtonFormField<String>(
-                                  value: _selectedSubcategory ?? '',
-                                  decoration: InputDecoration(labelText: loc?.subcategory ?? 'Subcategory'),
-                                  items: [
-                                    const DropdownMenuItem<String>(value: '', child: Text('All')),
-                                    ...((_selectedCategory != null && _categoryFamilies.containsKey(_selectedCategory)) ? _categoryFamilies[_selectedCategory]! : []).map((s) => DropdownMenuItem<String>(value: s['id']?.toString() ?? '', child: Text(s['name']?.toString() ?? ''))),
-                                  ],
-                                  onChanged: (v) => setState(() => _selectedSubcategory = (v == '' ? null : v)),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          DropdownButtonFormField<String>(
-                            value: _selectedSupplier ?? '',
-                            decoration: InputDecoration(labelText: loc?.supplier ?? 'Supplier'),
-                            items: [
-                              const DropdownMenuItem<String>(value: '', child: Text('All')),
-                              ..._supplierList.map((s) => DropdownMenuItem<String>(value: s['id']?.toString() ?? s['name'], child: Text(s['name']?.toString() ?? 'Unknown'))),
-                            ],
-                            onChanged: (v) => setState(() => _selectedSupplier = (v == '' ? null : v)),
-                          ),
-                          const SizedBox(height: 12),
-                          CheckboxListTile(
-                            contentPadding: EdgeInsets.zero,
-                            value: _excludeNullDept,
-                            title: const Text('Exclude PO without department'),
-                            onChanged: (v) => setState(() => _excludeNullDept = v ?? false),
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              ElevatedButton.icon(
-                                icon: const Icon(Icons.refresh),
-                                label: Text(loc?.apply ?? 'Apply'),
-                                onPressed: () async {
-                                  final statsCtrl = Provider.of<StatsController>(context, listen: false);
-                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(loc?.filtersApplied ?? 'Applying filters...')));
-                                  // Map selected ids to the parameter values expected by the API
-                                  String? categoryParam;
-                                  String? subcategoryParam;
-                                  String? supplierParam;
-
-                                  if (_selectedCategory != null && _selectedCategory!.isNotEmpty) {
-                                    Map<String, dynamic> fam;
-                                    try {
-                                      fam = _familyList.firstWhere((f) => (f['id']?.toString() ?? '') == _selectedCategory);
-                                    } catch (_) {
-                                      fam = <String, dynamic>{};
-                                    }
-                                    categoryParam = fam.isNotEmpty ? fam['name']?.toString() : _selectedCategory;
-                                  }
-
-                                  if (_selectedSubcategory != null && _selectedSubcategory!.isNotEmpty && _selectedCategory != null) {
-                                    final subs = _categoryFamilies[_selectedCategory] ?? [];
-                                    Map<String, dynamic> sub;
-                                    try {
-                                      sub = subs.firstWhere((s) => (s['id']?.toString() ?? '') == _selectedSubcategory);
-                                    } catch (_) {
-                                      sub = <String, dynamic>{};
-                                    }
-                                    subcategoryParam = sub.isNotEmpty ? sub['name']?.toString() : _selectedSubcategory;
-                                  }
-
-                                  if (_selectedSupplier != null && _selectedSupplier!.isNotEmpty) {
-                                    Map<String, dynamic> sup;
-                                    try {
-                                      sup = _supplierList.firstWhere((s) => (s['id']?.toString() ?? '') == _selectedSupplier || (s['name']?.toString() ?? '') == _selectedSupplier);
-                                    } catch (_) {
-                                      sup = <String, dynamic>{};
-                                    }
-                                    // Backend filters on supplier name, not id
-                                    supplierParam = sup.isNotEmpty ? sup['name']?.toString() : _selectedSupplier;
-                                  }
-
-                                  await statsCtrl.fetchAll(
-                                    start: _startDate,
-                                    end: _endDate,
-                                    department: (_selectedDepartment != null && _selectedDepartment!.isNotEmpty) ? _selectedDepartment : null,
-                                    requester: (_selectedRequester != null && _selectedRequester!.isNotEmpty) ? _selectedRequester : null,
-                                    category: (categoryParam != null && categoryParam.isNotEmpty) ? categoryParam : null,
-                                    subcategory: (subcategoryParam != null && subcategoryParam.isNotEmpty) ? subcategoryParam : null,
-                                    supplier: (supplierParam != null && supplierParam.isNotEmpty) ? supplierParam : null,
-                                    excludeNullDept: _excludeNullDept,
-                                  );
-                                  setState(() {
-                                    // Use summary totals extracted directly from API response (backend already calculated)
-                                    _totalPO = statsCtrl.summaryTotal;
-                                    _totalRejected = statsCtrl.summaryRejected;
-                                    _rejectionRate = statsCtrl.summaryRejectionRate;
-                                  });
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text(loc?.filtersApplied ?? 'Filters applied')),
-                                  );
-                                },
-                              ),
-                              const SizedBox(width: 8),
-                              ElevatedButton.icon(
-                                icon: const Icon(Icons.download),
-                                label: Text(loc?.exportCSV ?? 'Export CSV'),
-                                onPressed: _exportCsv,
-                              ),
-                            ],
+                            ),
                           ),
                         ],
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Summary Results
-                  Text(
-                    loc?.poStatistics ?? 'Summary Results',
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Results cards
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Card(
-                          color: Colors.blue.shade50,
-                          child: Padding(
-                            padding: const EdgeInsets.all(24.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Total PO',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey.shade700,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  _totalPO.toString(),
-                                  style: TextStyle(
-                                    fontSize: 32,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.blue.shade900,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Card(
-                          color: Colors.orange.shade50,
-                          child: Padding(
-                            padding: const EdgeInsets.all(24.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Total Rejected',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey.shade700,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  _totalRejected.toString(),
-                                  style: TextStyle(
-                                    fontSize: 32,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.orange.shade900,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Card(
-                          color: Colors.red.shade50,
-                          child: Padding(
-                            padding: const EdgeInsets.all(24.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Rejection Rate',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey.shade700,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  '${(_rejectionRate * 100).toStringAsFixed(2)}%',
-                                  style: TextStyle(
-                                    fontSize: 32,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.red.shade900,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
+                      const SizedBox(height: 24),
                     ],
                   ),
-                  const SizedBox(height: 24),
-                ],
-              ),
-            );
+                );
               },
             ),
     );
