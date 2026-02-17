@@ -53,8 +53,6 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
     WidgetsBinding.instance.addObserver(this);
     // Load orders immediately on init
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final poController = context.read<PurchaseOrderController>();
-      poController.fetchOrders();
       // Ensure users and departments are loaded for filter dropdowns
       try {
         await Future.wait<dynamic>([
@@ -62,8 +60,14 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
           context.read<DepartmentController>().fetchDepartments(),
         ]);
       } catch (_) {}
-      // Trigger initial stats load with defaults
+
+      if (!mounted) return;
+
+      // Trigger initial stats load with defaults (also fetches PO with filters)
       await _applySharedFilters();
+
+      if (!mounted) return;
+
       _startAutoRefresh();
 
       // Register reset listener
@@ -71,54 +75,134 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
       resetNotifier.addListener(() {
         final target = resetNotifier.lastTarget;
         if (target == 'PO Dashboard') {
-          _resetToInitial();
-          resetNotifier.clear();
+          if (mounted) {
+            _resetToInitial();
+            resetNotifier.clear();
+          }
         }
       });
     });
   }
 
   void _startAutoRefresh() {
-    // Refresh purchase orders every 30 seconds
+    // Refresh purchase orders every 30 seconds with current filters
     _refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
       if (mounted) {
-        context.read<PurchaseOrderController>().fetchOrders();
+        final start =
+            _startDate ?? DateTime.now().subtract(const Duration(days: 90));
+        final end = _endDate ?? DateTime.now();
+        final startStr = DateTime(start.year, start.month, start.day)
+            .toIso8601String()
+            .split('T')
+            .first;
+        final endStr = DateTime(end.year, end.month, end.day)
+            .toIso8601String()
+            .split('T')
+            .first;
+
+        context.read<PurchaseOrderController>().fetchOrders(
+              startDate: startStr,
+              endDate: endStr,
+              department: _selectedDepartment,
+              requester: _selectedRequester,
+              family: _selectedFamily,
+              subfamily: _selectedSubFamily,
+              supplier: _selectedSupplier,
+              excludeNullDept: _excludeNullDept,
+            );
       }
     });
   }
 
   // Apply shared filters: refresh stats and update UI
   Future<void> _applySharedFilters() async {
-    // trigger stats fetch
+    if (!mounted) return;
+
     try {
       final statsCtrl = context.read<StatsController>();
+      final poCtrl = context.read<PurchaseOrderController>();
+
       final start =
           _startDate ?? DateTime.now().subtract(const Duration(days: 90));
       final end = _endDate ?? DateTime.now();
-      await statsCtrl.fetchAll(
-        start: start,
-        end: end,
-        department: _selectedDepartment,
-        requester: _selectedRequester,
-        category: _selectedFamily,
-        subcategory: _selectedSubFamily,
-        supplier: _selectedSupplier,
-        excludeNullDept: _excludeNullDept,
-      );
+
+      debugPrint('🔍 ========== APPLY SHARED FILTERS START ==========');
+      debugPrint('🔍 DEBUG _applySharedFilters:');
+      debugPrint('   family: $_selectedFamily');
+      debugPrint('   subfamily: $_selectedSubFamily');
+      debugPrint('   department: $_selectedDepartment');
+      debugPrint('   requester: $_selectedRequester');
+      debugPrint('   🔴 supplier: $_selectedSupplier ← CRITICAL FOR FILTERING');
+      debugPrint('   excludeNullDept: $_excludeNullDept');
+      debugPrint('   start: $start, end: $end');
+
+      // Prepare date strings
+      final startStr = DateTime(start.year, start.month, start.day).toIso8601String().split('T').first;
+      final endStr = DateTime(end.year, end.month, end.day).toIso8601String().split('T').first;
+
+      debugPrint('📋 Calling stats and PO fetch with:');
+      debugPrint('   startStr: $startStr');
+      debugPrint('   endStr: $endStr');
+      debugPrint('   family: $_selectedFamily');
+      debugPrint('   subfamily: $_selectedSubFamily');
+      debugPrint('   🔴 supplier being passed: $_selectedSupplier');
+
+      // Fetch stats - don't re-throw, just log error
+      try {
+        debugPrint('📊 Calling statsCtrl.fetchAll with supplier=$_selectedSupplier');
+        await statsCtrl.fetchAll(
+          start: start,
+          end: end,
+          department: _selectedDepartment,
+          requester: _selectedRequester,
+          family: _selectedFamily,
+          subfamily: _selectedSubFamily,
+          supplier: _selectedSupplier,
+          excludeNullDept: _excludeNullDept,
+        );
+        debugPrint('✅ Stats fetched successfully');
+      } catch (statsError) {
+        debugPrint('⚠️ Stats fetch error (continuing with PO): $statsError');
+      }
+
+      if (!mounted) return;
+
+      // Fetch PO list with same filters - continue even if stats failed
+      try {
+        debugPrint('📦 Calling poCtrl.fetchOrders with supplier=$_selectedSupplier');
+        await poCtrl.fetchOrders(
+          startDate: startStr,
+          endDate: endStr,
+          department: _selectedDepartment,
+          requester: _selectedRequester,
+          family: _selectedFamily,
+          subfamily: _selectedSubFamily,
+          supplier: _selectedSupplier,
+          excludeNullDept: _excludeNullDept,
+        );
+        debugPrint('✅ PO orders fetched successfully');
+        debugPrint('📦 Total orders received: ${poCtrl.orders.length}');
+      } catch (poError) {
+        debugPrint('❌ PO fetch error: $poError');
+      }
+
     } catch (e) {
-      debugPrint('Stats fetch failed: $e');
+      debugPrint('❌ Error in _applySharedFilters: $e');
     }
-    // PO list is filtered locally; simply rebuild
+
+    if (!mounted) return;
+
     setState(() {
       _currentPage = 1;
     });
+    debugPrint('🔍 ========== APPLY SHARED FILTERS END ==========');
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      // Refresh orders when returning to this screen
-      context.read<PurchaseOrderController>().fetchOrders();
+      // Re-apply current filters when returning to this screen
+      if (mounted) _applySharedFilters();
     }
   }
 
@@ -545,39 +629,36 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
         !poController.isLoading) {
       _initialLoadDone = true;
       Future.microtask(() {
-        poController.fetchOrders();
+        // Fetch suppliers and users only; orders will be fetched via _applySharedFilters()
         supplierController.fetchSuppliers();
-        // Also load users so requester names are available on first render
         try {
           userController.getUsers();
         } catch (_) {}
       });
     }
 
-    // Filter approved orders only
-    final approvedOrders = poController.orders
-        .where((order) => order.status == 'approved')
-        .toList();
+    // Backend now returns only approved/rejected orders, so use them directly
+    final ordersFromServer = poController.orders;
 
     // Get suppliers list for dropdown
-    // Combine suppliers present in approved orders with suppliers from SupplierController
+    // Combine suppliers present in orders with suppliers from SupplierController
     final controllerApproved = supplierController.suppliers
         .where((s) =>
             (s.approvalStatus ?? '').toLowerCase() == 'approved' &&
             (s.name?.isNotEmpty ?? false))
         .map((s) => s.name!.trim())
         .toSet();
-    final ordersSuppliers = _getSuppliers(approvedOrders).toSet();
+    final ordersSuppliers = _getSuppliers(ordersFromServer).toSet();
     final suppliers = (controllerApproved..addAll(ordersSuppliers)).toList()
       ..sort();
 
     // Families and Subfamilies for filters
-    final families = _getFamilies(approvedOrders);
-    final subfamilies = _getSubFamilies(approvedOrders, _selectedFamily);
+    final families = _getFamilies(ordersFromServer);
+    final subfamilies = _getSubFamilies(ordersFromServer, _selectedFamily);
 
     // Apply filters (search, supplier and date range)
     final filter = _searchCtrl.text.toLowerCase();
-    final filteredOrders = approvedOrders.where((order) {
+    final filteredOrders = ordersFromServer.where((order) {
       // Filter by search text
       final title = _safeString(order.title).toLowerCase();
       final status = _safeString(order.status).toLowerCase();
@@ -626,16 +707,41 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
     // Apply sorting
     _sortOrders(filteredOrders, _sortBy, _sortAscending);
 
-    // Calculate pagination
-    final totalPages = (filteredOrders.isEmpty)
+    // Build flat list of product rows (one row per product line)
+    final List<Map<String, dynamic>> productRows = [];
+    for (final order in filteredOrders) {
+      if (order.products == null || order.products!.isEmpty) {
+        productRows.add({'order': order, 'product': null});
+      } else {
+        for (final product in order.products!) {
+          // Apply product-level filters
+          bool matchesFamily = true;
+          bool matchesSubfamily = true;
+
+          if (_selectedFamily != null && _selectedFamily!.isNotEmpty) {
+            matchesFamily = (product.family ?? '').toString().trim() == _selectedFamily;
+          }
+          if (_selectedSubFamily != null && _selectedSubFamily!.isNotEmpty) {
+            matchesSubfamily = (product.subFamily ?? '').toString().trim() == _selectedSubFamily;
+          }
+
+          if (matchesFamily && matchesSubfamily) {
+            productRows.add({'order': order, 'product': product});
+          }
+        }
+      }
+    }
+
+    // Apply pagination on product rows (not orders)
+    final totalPages = (productRows.isEmpty)
         ? 1
-        : (filteredOrders.length / _itemsPerPage).ceil();
+        : (productRows.length / _itemsPerPage).ceil();
     if (_currentPage > totalPages) _currentPage = totalPages;
     final startIndex = (_currentPage - 1) * _itemsPerPage;
-    final endIndex = (startIndex + _itemsPerPage) > filteredOrders.length
-        ? filteredOrders.length
+    final endIndex = (startIndex + _itemsPerPage) > productRows.length
+        ? productRows.length
         : (startIndex + _itemsPerPage);
-    final paginatedOrders = filteredOrders.sublist(startIndex, endIndex);
+    final paginatedProductRows = productRows.sublist(startIndex, endIndex);
 
     return Scaffold(
       appBar:
@@ -696,8 +802,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                     // Department dropdown
                     SizedBox(
                       width: 200,
-                      child: Consumer<DepartmentController>(
-                          builder: (context, dc, _) {
+                      child: Consumer<DepartmentController>(builder: (context, dc, _) {
                         final depts = dc.departments
                             .map((d) =>
                                 {'id': d.id?.toString() ?? '', 'name': d.name})
@@ -730,6 +835,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                 (u.role != null && u.role!.id == 2))
                             .toList();
                         return DropdownButton<String>(
+
                           isExpanded: true,
                           value: _selectedRequester,
                           hint: const Text('Requester'),
@@ -763,8 +869,55 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                           ...suppliers.map((s) => DropdownMenuItem<String>(
                               value: s, child: Text(s))),
                         ],
-                        onChanged: (val) =>
-                            setState(() => _selectedSupplier = val),
+                        onChanged: (val) {
+                          setState(() => _selectedSupplier = val);
+                          _applySharedFilters();
+                        },
+                      ),
+                    ),
+                    // Family filter for stats
+                    SizedBox(
+                      width: 200,
+                      child: DropdownButton<String?>(
+                        isExpanded: true,
+                        value: _selectedFamily,
+                        hint: Text(AppLocalizations.of(context)!.familyLabel),
+                        items: [
+                          DropdownMenuItem<String?>(
+                              value: null,
+                              child: Text(
+                                  AppLocalizations.of(context)!.allFamilies)),
+                          ...families.map((f) => DropdownMenuItem<String>(
+                              value: f, child: Text(f))),
+                        ],
+                        onChanged: (val) {
+                          setState(() {
+                            _selectedFamily = val;
+                            _selectedSubFamily = null; // Reset subfamily when family changes
+                          });
+                          _applySharedFilters();
+                        },
+                      ),
+                    ),
+                    // Subfamily filter for stats
+                    SizedBox(
+                      width: 200,
+                      child: DropdownButton<String?>(
+                        isExpanded: true,
+                        value: _selectedSubFamily,
+                        hint: Text(AppLocalizations.of(context)!.subfamilyLabel),
+                        items: [
+                          DropdownMenuItem<String?>(
+                              value: null,
+                              child: Text(AppLocalizations.of(context)!
+                                  .allSubfamilies)),
+                          ...subfamilies.map((sf) => DropdownMenuItem<String>(
+                              value: sf, child: Text(sf))),
+                        ],
+                        onChanged: (val) {
+                          setState(() => _selectedSubFamily = val);
+                          _applySharedFilters();
+                        },
                       ),
                     ),
                     ElevatedButton.icon(
@@ -870,7 +1023,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                 ),
                 const SizedBox(width: 8),
 
-                // Supplier Filter
+                // Supplier Filter (PO filters)
                 Expanded(
                   flex: 1,
                   child: DropdownButton<String?>(
@@ -896,12 +1049,13 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                         _selectedSupplier = value;
                         _currentPage = 1;
                       });
+                      _applySharedFilters();
                     },
                   ),
                 ),
                 const SizedBox(width: 8),
 
-                // Family Filter
+                // Family Filter (PO filters)
                 Expanded(
                   flex: 1,
                   child: DropdownButton<String?>(
@@ -928,12 +1082,13 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                             null; // reset subfamily when family changes
                         _currentPage = 1;
                       });
+                      _applySharedFilters();
                     },
                   ),
                 ),
                 const SizedBox(width: 8),
 
-                // Subfamily Filter
+                // Subfamily Filter (PO filters)
                 Expanded(
                   flex: 1,
                   child: DropdownButton<String?>(
@@ -950,15 +1105,15 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                             style: const TextStyle(fontSize: 13)),
                       ),
                       ...subfamilies.map((sf) => DropdownMenuItem<String>(
-                          value: sf,
-                          child:
-                              Text(sf, style: const TextStyle(fontSize: 13)))),
+                          value: sf, child: Text(sf))),
                     ],
                     onChanged: (value) {
                       setState(() {
                         _selectedSubFamily = value;
+                        _selectedFamily = null; // Reset family when subfamily is selected
                         _currentPage = 1;
                       });
+                      _applySharedFilters();
                     },
                   ),
                 ),
@@ -1148,7 +1303,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                               ),
                               const SizedBox(height: 16),
                               ElevatedButton(
-                                onPressed: () => poController.fetchOrders(),
+                                onPressed: () => _applySharedFilters(),
                                 child: const Text('Retry'),
                               ),
                             ],
@@ -1390,151 +1545,61 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                       ),
                                       DataColumn(label: Text('')),
                                     ],
-                                    rows: paginatedOrders.expand((order) {
-                                      // Create a row for each product in the order
-                                      if (order.products == null ||
-                                          order.products!.isEmpty) {
-                                        // If no products, show one empty row for the order
-                                        return [
-                                          DataRow(cells: [
-                                            DataCell(Text(order.id.toString())),
-                                            DataCell(Text(_safeString(
-                                                order.title ?? ''))),
-                                            DataCell(const Text('-')),
-                                            DataCell(const Text('-')),
-                                            DataCell(const Text('-')),
-                                            DataCell(const Text('-')),
-                                            DataCell(const Text('-')),
-                                            DataCell(Text(order.startDate !=
-                                                    null
-                                                ? DateFormat('yyyy-MM-dd')
-                                                    .format(order.startDate!)
-                                                : '-')),
-                                            DataCell(Text(_getRequesterName(
-                                                order, userController))),
-                                            DataCell(
-                                              Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        horizontal: 12,
-                                                        vertical: 4),
-                                                decoration: BoxDecoration(
-                                                  color:
-                                                      order.status == 'approved'
-                                                          ? Colors.green
-                                                              .withOpacity(0.2)
-                                                          : Colors.orange
-                                                              .withOpacity(0.2),
-                                                  borderRadius:
-                                                      BorderRadius.circular(12),
-                                                ),
-                                                child: Text(
-                                                  _localizedStatus(
-                                                      context, order.status),
-                                                  style: TextStyle(
-                                                    color: order.status ==
-                                                            'approved'
-                                                        ? Colors.green
-                                                        : Colors.orange,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            DataCell(
-                                              IconButton(
-                                                icon: const Icon(
-                                                    Icons.visibility,
-                                                    color: Colors.blue),
-                                                onPressed: () =>
-                                                    _showOrderDetailsDialog(
-                                                        context,
-                                                        order,
-                                                        userController),
-                                              ),
-                                            ),
-                                          ]),
-                                        ];
-                                      }
+                                    rows: paginatedProductRows.map((row) {
+                                      final order = row['order'];
+                                      final product = row['product'];
 
-                                      return order.products!.map((product) {
-                                        final unitPrice = product.unitPrice ??
-                                            product.price ??
-                                            0;
-                                        final quantity = product.quantity ?? 0;
-                                        final totalAmount = (quantity is int
-                                                ? quantity.toDouble()
-                                                : quantity as double) *
-                                            (unitPrice is int
-                                                ? unitPrice.toDouble()
-                                                : unitPrice as double);
-
+                                      if (product == null) {
                                         return DataRow(cells: [
                                           DataCell(Text(order.id.toString())),
-                                          DataCell(Text(
-                                              _safeString(order.title ?? ''))),
-                                          DataCell(Text(_safeString(
-                                              product.product ?? ''))),
-                                          DataCell(Text(_safeString(
-                                              product.supplier ?? '-'))),
-                                          DataCell(Text(quantity.toString())),
-                                          DataCell(Text(unitPrice.toString())),
-                                          DataCell(Text(totalAmount
-                                                  .toStringAsFixed(2) +
-                                              (_currencySymbol(order.currency)
-                                                      .isNotEmpty
-                                                  ? ' ' +
-                                                      _currencySymbol(
-                                                          order.currency)
-                                                  : ''))),
-                                          DataCell(Text(order.startDate != null
-                                              ? DateFormat('yyyy-MM-dd')
-                                                  .format(order.startDate!)
-                                              : '-')),
-                                          DataCell(Text(_getRequesterName(
-                                              order, userController))),
+                                          DataCell(Text(_safeString(order.title ?? ''))),
+                                          DataCell(const Text('-')),
+                                          DataCell(const Text('-')),
+                                          DataCell(const Text('-')),
+                                          DataCell(const Text('-')),
+                                          DataCell(const Text('-')),
+                                          DataCell(Text(order.startDate != null ? DateFormat('yyyy-MM-dd').format(order.startDate!) : '-')),
+                                          DataCell(Text(_getRequesterName(order, userController))),
                                           DataCell(
                                             Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 12,
-                                                      vertical: 4),
+                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                                               decoration: BoxDecoration(
-                                                color:
-                                                    order.status == 'approved'
-                                                        ? Colors.green
-                                                            .withOpacity(0.2)
-                                                        : Colors.orange
-                                                            .withOpacity(0.2),
-                                                borderRadius:
-                                                    BorderRadius.circular(12),
+                                                color: order.status == 'approved' ? Colors.green.withOpacity(0.2) : Colors.orange.withOpacity(0.2),
+                                                borderRadius: BorderRadius.circular(12),
                                               ),
-                                              child: Text(
-                                                _localizedStatus(
-                                                    context, order.status),
-                                                style: TextStyle(
-                                                  color:
-                                                      order.status == 'approved'
-                                                          ? Colors.green
-                                                          : Colors.orange,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
+                                              child: Text(_localizedStatus(context, order.status), style: TextStyle(color: order.status == 'approved' ? Colors.green : Colors.orange, fontWeight: FontWeight.bold)),
                                             ),
                                           ),
-                                          DataCell(
-                                            IconButton(
-                                              icon: const Icon(Icons.visibility,
-                                                  color: Colors.blue),
-                                              onPressed: () =>
-                                                  _showOrderDetailsDialog(
-                                                      context,
-                                                      order,
-                                                      userController),
-                                            ),
-                                          ),
+                                          DataCell(IconButton(icon: const Icon(Icons.visibility, color: Colors.blue), onPressed: () => _showOrderDetailsDialog(context, order, userController))),
                                         ]);
-                                      }).toList();
+                                      }
+
+                                      final unitPrice = product.unitPrice ?? product.price ?? 0;
+                                      final quantity = product.quantity ?? 0;
+                                      final totalAmount = (quantity is int ? quantity.toDouble() : quantity as double) * (unitPrice is int ? unitPrice.toDouble() : unitPrice as double);
+
+                                      return DataRow(cells: [
+                                        DataCell(Text(order.id.toString())),
+                                        DataCell(Text(_safeString(order.title ?? ''))),
+                                        DataCell(Text(_safeString(product.product ?? ''))),
+                                        DataCell(Text(_safeString(product.supplier ?? '-'))),
+                                        DataCell(Text(quantity.toString())),
+                                        DataCell(Text(unitPrice.toString())),
+                                        DataCell(Text(totalAmount.toStringAsFixed(2) + (_currencySymbol(order.currency).isNotEmpty ? ' ' + _currencySymbol(order.currency) : ''))),
+                                        DataCell(Text(order.startDate != null ? DateFormat('yyyy-MM-dd').format(order.startDate!) : '-')),
+                                        DataCell(Text(_getRequesterName(order, userController))),
+                                        DataCell(
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: order.status == 'approved' ? Colors.green.withOpacity(0.2) : Colors.orange.withOpacity(0.2),
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                            child: Text(_localizedStatus(context, order.status), style: TextStyle(color: order.status == 'approved' ? Colors.green : Colors.orange, fontWeight: FontWeight.bold)),
+                                          ),
+                                        ),
+                                        DataCell(IconButton(icon: const Icon(Icons.visibility, color: Colors.blue), onPressed: () => _showOrderDetailsDialog(context, order, userController))),
+                                      ]);
                                     }).toList(),
                                   ),
                                 ),
@@ -1576,8 +1641,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
       if (orders.isEmpty) {
         if (mounted)
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text(AppLocalizations.of(context)!
-                  .noOrdersToExportForSelectedRange)));
+              content: Text(AppLocalizations.of(context)!.noOrdersToExportForSelectedRange)));
         return;
       }
 
@@ -1722,7 +1786,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
       _endDate = null;
     });
     try {
-      context.read<PurchaseOrderController>().fetchOrders();
+      _applySharedFilters();
     } catch (_) {}
   }
 

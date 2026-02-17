@@ -1,3 +1,4 @@
+// File: lib/network/stats_network.dart
 import 'package:dio/dio.dart';
 import 'api.dart';
 
@@ -6,27 +7,45 @@ class StatsNetwork {
   static String get totalsEndpoint => APIS.baseUrl + APIS.poTotals;
   static String get rejectionEndpoint => APIS.baseUrl + APIS.poRejectionRate;
 
-  Future<dynamic> fetchTotals({required String groupBy, String? start, String? end, String? department, String? requester, bool? excludeNullDept, String? category, String? subcategory, String? supplier}) async {
+  Future<dynamic> fetchTotals({
+    required String groupBy,
+    String? start,
+    String? end,
+    String? department,
+    String? requester,
+    bool? excludeNullDept,
+    String? category,
+    String? subcategory,
+    String? supplier,
+    String? family,
+    String? subfamily,
+  }) async {
     final params = <String, dynamic>{'group_by': groupBy};
-    if (start != null) params['start_date'] = start;
-    if (end != null) params['end_date'] = end;
-    if (department != null) params['department'] = department;
-    if (requester != null) params['requester'] = requester;
+    if (start != null && start.isNotEmpty) params['start_date'] = start;
+    if (end != null && end.isNotEmpty) params['end_date'] = end;
+    if (department != null && department.isNotEmpty) params['department'] = department;
+    if (requester != null && requester.isNotEmpty) params['requester'] = requester;
     if (excludeNullDept != null) params['exclude_null_dept'] = excludeNullDept ? 'true' : 'false';
-    if (category != null) {
-      // Some backends expect family/subfamily parameter names — include both to be compatible
-      params['category'] = category;
-      params['family'] = category;
-    }
-    if (subcategory != null) {
-      params['subcategory'] = subcategory;
-      params['subfamily'] = subcategory;
-    }
-    if (supplier != null) params['supplier'] = supplier;
 
-    print('StatsNetwork DEBUG: Calling $totalsEndpoint with params: $params');
+    // Respect both keys if provided; backend supports filtering by any of these
+    if (category != null && category.isNotEmpty) params['category'] = category;
+    if (family != null && family.isNotEmpty) params['family'] = family;
+    if (subcategory != null && subcategory.isNotEmpty) params['subcategory'] = subcategory;
+    if (subfamily != null && subfamily.isNotEmpty) params['subfamily'] = subfamily;
 
-    final response = await dio.get(totalsEndpoint,
+    if (supplier != null && supplier.isNotEmpty) {
+      print('🔴 SUPPLIER FILTER: Adding supplier=$supplier to params');
+      params['supplier'] = supplier;
+    } else {
+      print('🟡 SUPPLIER FILTER: supplier is null or empty, not adding to params');
+    }
+
+    print('🌐 StatsNetwork: Calling $totalsEndpoint');
+    print('📤 Query params: $params');
+    print('🔥 SUPPLIER DEBUG: supplier parameter in request = ${params['supplier']}');
+
+    final response = await dio.get(
+      totalsEndpoint,
       queryParameters: params,
       options: Options(headers: {
         'Authorization': 'Bearer ${APIS.token}',
@@ -34,26 +53,34 @@ class StatsNetwork {
       }),
     );
 
-    print('StatsNetwork DEBUG: Response status: ${response.statusCode}');
-    
+    print('📥 Response status: ${response.statusCode}');
+    print('📥 Response data length: ${response.data.toString().length}');
+    print('📥 Response data: ${response.data}');
+
     if (response.statusCode == 200) {
-      // Response can be either a list or a single object depending on whether a specific filter was applied
       return response.data;
     }
 
     throw Exception('Failed to fetch stats totals: ${response.statusCode}');
   }
 
-  Future<dynamic> fetchRejectionRates({required String groupBy, String? start, String? end, String? department, String? requester}) async {
+  Future<dynamic> fetchRejectionRates({
+    required String groupBy,
+    String? start,
+    String? end,
+    String? department,
+    String? requester,
+  }) async {
     final params = <String, dynamic>{'group_by': groupBy};
-    if (start != null) params['start_date'] = start;
-    if (end != null) params['end_date'] = end;
-    if (department != null) params['department'] = department;
-    if (requester != null) params['requester'] = requester;
+    if (start != null && start.isNotEmpty) params['start_date'] = start;
+    if (end != null && end.isNotEmpty) params['end_date'] = end;
+    if (department != null && department.isNotEmpty) params['department'] = department;
+    if (requester != null && requester.isNotEmpty) params['requester'] = requester;
 
     print('StatsNetwork DEBUG: Calling $rejectionEndpoint with params: $params');
 
-    final response = await dio.get(rejectionEndpoint,
+    final response = await dio.get(
+      rejectionEndpoint,
       queryParameters: params,
       options: Options(headers: {
         'Authorization': 'Bearer ${APIS.token}',
@@ -62,9 +89,9 @@ class StatsNetwork {
     );
 
     print('StatsNetwork DEBUG: Response status: ${response.statusCode}');
-    
+    print('StatsNetwork DEBUG: Response data: ${response.data}');
+
     if (response.statusCode == 200) {
-      // Response can be either a list or a single object depending on whether a specific filter was applied
       return response.data;
     }
 

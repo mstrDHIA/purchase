@@ -1,3 +1,4 @@
+// File: lib/controllers/stats_controller.dart
 import 'package:flutter/material.dart';
 import '../network/stats_network.dart';
 
@@ -10,6 +11,8 @@ class StatsController extends ChangeNotifier {
   Map<String, int> poTotalsByCategory = {};
   Map<String, int> poTotalsBySubcategory = {};
   Map<String, int> poTotalsBySupplier = {};
+  Map<String, int> poTotalsByFamily = {};
+  Map<String, int> poTotalsBySubfamily = {};
 
   // Rejection counts (actual number of rejected items per group)
   Map<String, int> rejectedCountByDepartment = {};
@@ -17,12 +20,16 @@ class StatsController extends ChangeNotifier {
   Map<String, int> rejectedCountByCategory = {};
   Map<String, int> rejectedCountBySubcategory = {};
   Map<String, int> rejectedCountBySupplier = {};
+  Map<String, int> rejectedCountByFamily = {};
+  Map<String, int> rejectedCountBySubfamily = {};
 
   // Rejection rates (percent)
   Map<String, double> rejectionRateByDepartment = {};
   Map<String, double> rejectionRateByRequester = {};
+  Map<String, double> rejectionRateByFamily = {};
+  Map<String, double> rejectionRateBySubfamily = {};
 
-  // Summary totals (extracted directly from first API response entry)
+  // Summary totals
   int summaryTotal = 0;
   int summaryRejected = 0;
   double summaryRejectionRate = 0.0;
@@ -30,7 +37,20 @@ class StatsController extends ChangeNotifier {
   bool loading = false;
   String? error;
 
-  Future<void> fetchAll({required DateTime start, required DateTime end, String? department, String? requester, String? category, String? subcategory, String? supplier, bool? excludeNullDept, String? groupBy, List<String>? groupByList}) async {
+  Future<void> fetchAll({
+    required DateTime start,
+    required DateTime end,
+    String? department,
+    String? requester,
+    String? category,
+    String? subcategory,
+    String? supplier,
+    String? family,
+    String? subfamily,
+    bool? excludeNullDept,
+    String? groupBy,
+    List<String>? groupByList,
+  }) async {
     loading = true;
     error = null;
     notifyListeners();
@@ -51,28 +71,26 @@ class StatsController extends ChangeNotifier {
     rejectedCountBySubcategory = {};
     poTotalsBySupplier = {};
     rejectedCountBySupplier = {};
+    poTotalsByFamily = {};
+    rejectedCountByFamily = {};
+    rejectionRateByFamily = {};
+    poTotalsBySubfamily = {};
+    rejectedCountBySubfamily = {};
+    rejectionRateBySubfamily = {};
     summaryTotal = 0;
     summaryRejected = 0;
     summaryRejectionRate = 0.0;
 
     try {
-      // Determine group_by: use custom if provided, otherwise auto-detect
-      String finalGroupBy = 'department'; // default
+      // Determine group_by: use custom if provided, otherwise default to summary
+      String finalGroupBy = 'summary';
       if (groupBy != null && groupBy.isNotEmpty) {
         finalGroupBy = groupBy;
       } else if (groupByList != null && groupByList.isNotEmpty) {
         finalGroupBy = groupByList.join(',');
-      } else if (supplier != null && supplier.isNotEmpty) {
-        finalGroupBy = 'supplier';
-      } else if (subcategory != null && subcategory.isNotEmpty) {
-        finalGroupBy = 'subcategory';
-      } else if (category != null && category.isNotEmpty) {
-        finalGroupBy = 'category';
-      } else if (requester != null && requester.isNotEmpty) {
-        finalGroupBy = 'requester';
       }
+      final primaryGroup = finalGroupBy.split(',').first.trim();
 
-      // Make a single optimized API call
       final response = await _network.fetchTotals(
         groupBy: finalGroupBy,
         start: startStr,
@@ -82,88 +100,93 @@ class StatsController extends ChangeNotifier {
         category: category,
         subcategory: subcategory,
         supplier: supplier,
+        family: family,
+        subfamily: subfamily,
         excludeNullDept: excludeNullDept,
       );
 
-      // Parse response and populate the appropriate map(s) based on final group_by
-      try {
-        final dataList = response is List ? response : (response is Map ? [response] : []);
-        
-        // Extract summary from first entry (backend already calculated)
-        if (dataList.isNotEmpty && dataList[0] is Map) {
-          summaryTotal = ((dataList[0]['total'] as num?) ?? 0).toInt();
-          summaryRejected = ((dataList[0]['rejected'] as num?) ?? 0).toInt();
-          summaryRejectionRate = (((dataList[0]['rejection_rate'] as num?)?.toDouble()) ?? 0.0);
-        }
-        
-        for (var e in dataList) {
-          if (e is! Map) continue;
-          final total = ((e['total'] as num?) ?? 0).toInt();
-          final rejected = ((e['rejected'] as num?) ?? 0).toInt();
-          final rejRate = (((e['rejection_rate'] as num?)?.toDouble()) ?? 0.0);
-          
-          // Build composite key for multi-criteria group_by
-          String compositeKey = '';
-          if (finalGroupBy.contains(',')) {
-            // Multiple grouping criteria
-            final criteria = finalGroupBy.split(',').map((s) => s.trim()).toList();
-            final keyParts = <String>[];
-            for (final criterion in criteria) {
-              if (criterion == 'department') {
-                keyParts.add(e['department']?.toString() ?? 'Unknown');
-              } else if (criterion == 'requester') {
-                keyParts.add(e['requester']?.toString() ?? 'Unknown');
-              } else if (criterion == 'supplier') {
-                keyParts.add(e['supplier']?.toString() ?? 'Unknown');
-              } else if (criterion == 'category') {
-                keyParts.add(e['category']?.toString() ?? e['name']?.toString() ?? 'Unknown');
-              } else if (criterion == 'subcategory') {
-                keyParts.add(e['subcategory']?.toString() ?? e['name']?.toString() ?? 'Unknown');
-              }
-            }
-            compositeKey = keyParts.join(' - ');
+      final dataList = response is List ? response : (response is Map ? [response] : []);
+      debugPrint('📊 StatsController: Parsed response length=${dataList.length}, primaryGroup=$primaryGroup');
+
+      if (dataList.isEmpty) {
+        summaryTotal = 0;
+        summaryRejected = 0;
+        summaryRejectionRate = 0.0;
+      } else {
+        summaryTotal = ((dataList[0]['total'] as num?) ?? 0).toInt();
+        summaryRejected = ((dataList[0]['rejected'] as num?) ?? 0).toInt();
+        summaryRejectionRate = (((dataList[0]['rejection_rate'] as num?)?.toDouble()) ?? 0.0);
+      }
+
+      for (var e in dataList) {
+        if (e is! Map) continue;
+        final total = ((e['total'] as num?) ?? 0).toInt();
+        final rejected = ((e['rejected'] as num?) ?? 0).toInt();
+        final rejRate = (((e['rejection_rate'] as num?)?.toDouble()) ?? 0.0);
+
+        // Safe key extraction
+        String extractKey(Map m) {
+          final candidates = <String>[
+            primaryGroup,
+            '${primaryGroup}_id',
+            '${primaryGroup}_name',
+            'name',
+            'department',
+            'requester',
+            'supplier',
+            'family',
+            'subfamily',
+          ];
+          for (var k in candidates) {
+            final v = m[k];
+            if (v != null) return v.toString();
           }
-          
-          if (finalGroupBy == 'department') {
-            final key = (e['department'] ?? e['name'] ?? 'Unknown').toString();
+          return 'Unknown';
+        }
+
+        final key = extractKey(e);
+
+        switch (primaryGroup) {
+          case 'department':
             poTotalsByDepartment[key] = total;
             rejectedCountByDepartment[key] = rejected;
             rejectionRateByDepartment[key] = rejRate;
-          } else if (finalGroupBy == 'requester') {
-            final key = (e['requester'] ?? e['name'] ?? 'Unknown').toString();
+            break;
+          case 'requester':
             poTotalsByRequester[key] = total;
             rejectedCountByRequester[key] = rejected;
             rejectionRateByRequester[key] = rejRate;
-          } else if (finalGroupBy == 'category') {
-            final key = (e['name'] ?? 'Unknown').toString();
+            break;
+          case 'category':
             poTotalsByCategory[key] = total;
             rejectedCountByCategory[key] = rejected;
-          } else if (finalGroupBy == 'subcategory') {
-            final key = (e['name'] ?? 'Unknown').toString();
+            break;
+          case 'subcategory':
             poTotalsBySubcategory[key] = total;
             rejectedCountBySubcategory[key] = rejected;
-          } else if (finalGroupBy == 'supplier') {
-            final key = (e['name'] ?? e['supplier'] ?? 'Unknown').toString();
+            break;
+          case 'family':
+            poTotalsByFamily[key] = total;
+            rejectedCountByFamily[key] = rejected;
+            rejectionRateByFamily[key] = rejRate;
+            break;
+          case 'subfamily':
+            poTotalsBySubfamily[key] = total;
+            rejectedCountBySubfamily[key] = rejected;
+            rejectionRateBySubfamily[key] = rejRate;
+            break;
+          case 'supplier':
             poTotalsBySupplier[key] = total;
             rejectedCountBySupplier[key] = rejected;
-          } else if (finalGroupBy.contains(',')) {
-            // Multi-criteria: store in the most relevant map
-            if (finalGroupBy.contains('supplier')) {
-              poTotalsBySupplier[compositeKey] = total;
-              rejectedCountBySupplier[compositeKey] = rejected;
-            } else if (finalGroupBy.contains('department')) {
-              poTotalsByDepartment[compositeKey] = total;
-              rejectedCountByDepartment[compositeKey] = rejected;
-            }
-          }
+            break;
+          default:
+            // summary or unknown -> already handled above
+            break;
         }
-      } catch (e) {
-        print('Error parsing stats data: $e');
       }
-
     } catch (e) {
       error = e.toString();
-      print('StatsController Error: $error');
+      debugPrint('StatsController Error: $error');
     } finally {
       loading = false;
       notifyListeners();

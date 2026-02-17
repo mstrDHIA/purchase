@@ -7,13 +7,49 @@ class PurchaseOrderNetwork {
 	final Dio dio = APIS().dio;
 	static String get endpoint => APIS.baseUrl + APIS.purchaseOrderList;
 
-		Future<List<PurchaseOrder>> fetchPurchaseOrders() async {
+		Future<List<PurchaseOrder>> fetchPurchaseOrders({
+			String? startDate,
+			String? endDate,
+			String? department,
+			String? requester,
+			String? family,
+			String? subfamily,
+			String? supplier,
+			bool? excludeNullDept,
+			String? search,
+		}) async {
+			final params = <String, dynamic>{};
+			if (startDate != null) params['start_date'] = startDate;
+			if (endDate != null) params['end_date'] = endDate;
+			if (department != null) params['department'] = department;
+			if (requester != null) params['requester'] = requester;
+			if (family != null) params['family'] = family;
+			if (subfamily != null) params['subfamily'] = subfamily;
+			if (supplier != null) {
+				print('🔴 PO SUPPLIER FILTER: Adding supplier=$supplier to params');
+				params['supplier'] = supplier;
+			} else {
+				print('🟡 PO SUPPLIER FILTER: supplier is null, not adding to params');
+			}
+			if (excludeNullDept != null) params['exclude_null_dept'] = excludeNullDept ? 'true' : 'false';
+			if (search != null) params['search'] = search;
+
+			print('🌐 PO Network: Calling $endpoint');
+			print('📤 Query params: $params');
+			print('🔥 PO SUPPLIER DEBUG: supplier parameter in request = ${params['supplier']}');
+
 			final response = await dio.get(endpoint,
+				queryParameters: params.isEmpty ? null : params,
 				options: Options(headers: {
 					'Authorization': 'Bearer ${APIS.token}',
 					'ngrok-skip-browser-warning': 'true',
 				}),
 			);
+			
+			print('📥 PO Response status: ${response.statusCode}');
+			print('📥 PO Response items: ${(response.data as List?)?.length ?? 0}');
+			print('🔥 PO RESPONSE DEBUG: Full response = ${response.data}');
+			
 			if (response.statusCode == 200) {
 				final List<dynamic> data = response.data;
 				return data.map((json) => PurchaseOrder.fromJson(json)).toList();

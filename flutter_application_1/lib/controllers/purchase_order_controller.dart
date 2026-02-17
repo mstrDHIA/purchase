@@ -17,18 +17,38 @@ class PurchaseOrderController extends ChangeNotifier {
     notifyListeners();
   }
 
-	Future<void> fetchOrders() async {
-		_isLoading = true;
-		_error = null;
-		notifyListeners();
-		try {
-			_orders = await _network.fetchPurchaseOrders();
-		} catch (e) {
-			_error = e.toString();
+	Future<void> fetchOrders({
+			String? startDate,
+			String? endDate,
+			String? department,
+			String? requester,
+			String? family,
+			String? subfamily,
+			String? supplier,
+			bool? excludeNullDept,
+			String? search,
+		}) async {
+			_isLoading = true;
+			_error = null;
+			notifyListeners();
+			try {
+				_orders = await _network.fetchPurchaseOrders(
+					startDate: startDate,
+					endDate: endDate,
+					department: department,
+					requester: requester,
+					family: family,
+					subfamily: subfamily,
+					supplier: supplier,
+					excludeNullDept: excludeNullDept,
+					search: search,
+				);
+			} catch (e) {
+				_error = e.toString();
+			}
+			_isLoading = false;
+			notifyListeners();
 		}
-		_isLoading = false;
-		notifyListeners();
-	}
 
 	Future<void> addOrder(dynamic orderOrJson) async {
 		try {
