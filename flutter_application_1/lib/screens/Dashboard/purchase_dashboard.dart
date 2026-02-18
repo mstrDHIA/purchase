@@ -109,6 +109,8 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
               subfamily: _selectedSubFamily,
               supplier: _selectedSupplier,
               excludeNullDept: _excludeNullDept,
+            page: _currentPage,
+            pageSize: _itemsPerPage,
             );
       }
     });
@@ -179,6 +181,8 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
           subfamily: _selectedSubFamily,
           supplier: _selectedSupplier,
           excludeNullDept: _excludeNullDept,
+            page: _currentPage,
+            pageSize: _itemsPerPage,
         );
         debugPrint('✅ PO orders fetched successfully');
         debugPrint('📦 Total orders received: ${poCtrl.orders.length}');

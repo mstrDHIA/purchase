@@ -26,7 +26,9 @@ class PurchaseOrderController extends ChangeNotifier {
 			String? subfamily,
 			String? supplier,
 			bool? excludeNullDept,
-			String? search,
+				String? search,
+				int? page,
+				int? pageSize,
 		}) async {
 			_isLoading = true;
 			_error = null;
@@ -42,6 +44,8 @@ class PurchaseOrderController extends ChangeNotifier {
 					supplier: supplier,
 					excludeNullDept: excludeNullDept,
 					search: search,
+					page: page,
+					pageSize: pageSize,
 				);
 			} catch (e) {
 				_error = e.toString();

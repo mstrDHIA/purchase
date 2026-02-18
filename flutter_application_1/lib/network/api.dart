@@ -10,6 +10,8 @@ class APIS {
 
  
   static const String purchaseOrderList = "purchase_order/purchaseOrders/";
+  // New datatable endpoint for paginated PO lists provided by the backend app `datatable`
+  static const String datatablePoList = "datatable/po/list/";
   
   
   // Configure Dio with sensible defaults for debugging and to avoid
@@ -42,6 +44,7 @@ class APIS {
   // }
 
   static const String baseUrl = "http://72.60.90.60:8000/";
+  // static const String baseUrl = "http://127.0.0.1:8000/";
     // static const String httpbaseUrl = "72.60.90.60:8000/";
 
 
