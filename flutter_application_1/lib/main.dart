@@ -7,12 +7,13 @@ import 'package:flutter_application_1/controllers/purchase_request_controller.da
 import 'package:flutter_application_1/controllers/supplier_controller.dart';
 import 'package:flutter_application_1/controllers/reject_reason_controller.dart';
 import 'package:flutter_application_1/controllers/department_controller.dart';
-import 'package:flutter_application_1/controllers/stats_controller.dart';
+// import 'package:flutter_application_1/controllers/stats_controller.dart';
 
 import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter_application_1/controllers/role_controller.dart';
 import 'package:flutter_application_1/controllers/reset_notifier.dart';
 import 'package:flutter_application_1/providers/theme_provider.dart';
+import 'package:flutter_application_1/controllers/stats_controller.dart';
 import 'package:flutter_application_1/screens/Product/family_screen.dart';
 import 'package:flutter_application_1/screens/Dashboard/purchase_dashboard.dart';
 // import 'package:flutter_application_1/screens/Product/product_screen.dart';
@@ -32,21 +33,23 @@ import 'widgets/sidebar.dart';
 
 void main() {
   runApp(
-    const MyApp(),
-    // MultiProvider(
-    //   providers: [
-    //     ChangeNotifierProvider(create: (_) => ThemeProvider()), 
-    //     ChangeNotifierProvider(create: (_) => UserController()),
-    //     ChangeNotifierProvider(create: (_) => RoleController()),
-    //     ChangeNotifierProvider(create: (_) => SupplierController()),
-    //     ChangeNotifierProvider(create: (context) => PurchaseRequestController(context)),
-    //     ChangeNotifierProvider(create: (context) => PurchaseOrderController()),
-    //     ChangeNotifierProvider(create: (context) => ProductController()),
-    //     // ChangeNotifierProvider(create: (_) => ProductController()),
-    //     ChangeNotifierProvider(create: (_) => LocaleProvider()),
-    //   ],
-    //   child: const MyApp(),
-    // ),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => UserController()),
+        ChangeNotifierProvider(create: (_) => RoleController()),
+        ChangeNotifierProvider(create: (_) => SupplierController()),
+        ChangeNotifierProvider(create: (context) => PurchaseRequestController(context)),
+        ChangeNotifierProvider(create: (context) => PurchaseOrderController()),
+        ChangeNotifierProvider(create: (context) => ProductController()),
+        ChangeNotifierProvider(create: (_) => RejectReasonController()),
+        ChangeNotifierProvider(create: (_) => DepartmentController()),
+        ChangeNotifierProvider(create: (_) => LocaleProvider()),
+        ChangeNotifierProvider(create: (_) => ResetNotifier()),
+        ChangeNotifierProvider(create: (_) => StatsController()),
+      ],
+      child: const MyApp(),
+    ),
   );
 }
 
@@ -69,7 +72,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (context) => ProductController()),
         ChangeNotifierProvider(create: (_) => RejectReasonController()),
         ChangeNotifierProvider(create: (_) => DepartmentController()),
-        ChangeNotifierProvider(create: (_) => StatsController()),
+        // ChangeNotifierProvider(create: (_) => StatsController()),
         // ChangeNotifierProvider(create: (_) => ProductController()),
         ChangeNotifierProvider(create: (_) => LocaleProvider()),
         ChangeNotifierProvider(create: (_) => ResetNotifier()),

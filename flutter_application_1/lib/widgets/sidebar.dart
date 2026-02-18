@@ -159,7 +159,7 @@ class _AppSidebarState extends State<AppSidebar> {
     if(roleId == 1){
       items.addAll([
       {'label': 'PO Dashboard', 'icon': Icons.dashboard},
-      {'label': 'Statistics', 'icon': Icons.insert_chart_outlined},
+      // {'label': 'Statistics', 'icon': Icons.insert_chart_outlined},
       {'label': 'PurchaseRequest', 'icon': Icons.note_add},
       {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
       {'label': 'Supplier', 'icon': Icons.store},
@@ -204,7 +204,7 @@ class _AppSidebarState extends State<AppSidebar> {
      else if((roleId == 4)){
       items.addAll([
         {'label': 'PO Dashboard', 'icon': Icons.dashboard},
-        {'label': 'Statistics', 'icon': Icons.insert_chart_outlined},
+        // {'label': 'Statistics', 'icon': Icons.insert_chart_outlined},
       {'label': 'PurchaseRequest', 'icon': Icons.note_add},
       {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
       {'label': 'Supplier', 'icon': Icons.store},
@@ -221,7 +221,7 @@ class _AppSidebarState extends State<AppSidebar> {
     else if((roleId == 6)){
       items.addAll([
         {'label': 'PO Dashboard', 'icon': Icons.dashboard},
-        {'label': 'Statistics', 'icon': Icons.insert_chart_outlined},
+        // {'label': 'Statistics', 'icon': Icons.insert_chart_outlined},
         {'label': 'Purchase Order', 'icon': Icons.shopping_cart},
       {'label': 'Supplier', 'icon': Icons.store},
       {'label': 'Profile', 'icon': Icons.account_circle},

@@ -109,8 +109,6 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
               subfamily: _selectedSubFamily,
               supplier: _selectedSupplier,
               excludeNullDept: _excludeNullDept,
-            page: _currentPage,
-            pageSize: _itemsPerPage,
             );
       }
     });
@@ -181,8 +179,6 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
           subfamily: _selectedSubFamily,
           supplier: _selectedSupplier,
           excludeNullDept: _excludeNullDept,
-            page: _currentPage,
-            pageSize: _itemsPerPage,
         );
         debugPrint('✅ PO orders fetched successfully');
         debugPrint('📦 Total orders received: ${poCtrl.orders.length}');
@@ -296,121 +292,124 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                             .viewPurchaseOrder(order.id),
                         style: const TextStyle(
                           fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF2C3E50),
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ],
-                  ),
-                ),
-                // Content
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Order Info
-                        _buildInfoRow(AppLocalizations.of(context)!.id,
-                            order.id.toString()),
-                        _buildInfoRow(AppLocalizations.of(context)!.title,
-                            _safeString(order.title)),
-                        _buildInfoRow(
-                          AppLocalizations.of(context)!.date,
-                          order.startDate != null
-                              ? DateFormat('yyyy-MM-dd')
-                                  .format(order.startDate!)
-                              : '-',
-                        ),
-                        _buildInfoRow(
-                          AppLocalizations.of(context)!.requester,
-                          _getRequesterName(order, userController),
-                        ),
-                        _buildStatusRow(AppLocalizations.of(context)!.status,
-                            _localizedStatus(context, order.status)),
-                        const SizedBox(height: 20),
-
-                        // Products Section
-                        Text(
-                          AppLocalizations.of(context)!.products,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF2C3E50),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-
-                        if (order.products == null || order.products!.isEmpty)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            child: Text(
-                              AppLocalizations.of(context)!.noProducts,
-                              style: const TextStyle(color: Colors.grey),
+                          ElevatedButton.icon(
+                              onPressed: _applySharedFilters,
+                              icon: const Icon(Icons.refresh),
+                              label: const Text('Apply')),
+                          ElevatedButton.icon(
+                              onPressed: () {
+                                setState(() {
+                                  _excludeNullDept = !_excludeNullDept;
+                                });
+                                _applySharedFilters();
+                              },
+                              icon: const Icon(Icons.filter_alt),
+                              label: Text(_excludeNullDept
+                                  ? 'Exclude Null Dept'
+                                  : 'Include Null Dept')),
+                          ElevatedButton(
+                            onPressed: () {
+                              setState(() {
+                                _startDate = null;
+                                _endDate = null;
+                                _selectedDepartment = null;
+                                _selectedRequester = null;
+                                _selectedSupplier = null;
+                                _selectedFamily = null;
+                                _selectedSubFamily = null;
+                                _excludeNullDept = false;
+                              });
+                              _applySharedFilters();
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.grey.shade200,
+                              foregroundColor: Colors.black87,
+                              minimumSize: const Size(40, 40),
+                              padding: EdgeInsets.zero,
                             ),
-                          )
-                        else
-                          Column(
-                            children: order.products!.map<Widget>((product) {
-                              final unitPrice =
-                                  product.unitPrice ?? product.price ?? 0;
-                              final quantity = product.quantity ?? 0;
-                              final totalAmount = (quantity is int
-                                      ? quantity.toDouble()
-                                      : quantity as double) *
-                                  (unitPrice is int
-                                      ? unitPrice.toDouble()
-                                      : unitPrice as double);
-
-                              return Container(
-                                margin: const EdgeInsets.only(bottom: 12),
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  border:
-                                      Border.all(color: Colors.grey.shade300),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    _buildInfoRow(
-                                        AppLocalizations.of(context)!.product,
-                                        _safeString(product.product)),
-                                    _buildInfoRow(
-                                        AppLocalizations.of(context)!.supplier,
-                                        _safeString(product.supplier)),
-                                    _buildInfoRow(
-                                        AppLocalizations.of(context)!.unitPrice,
-                                        unitPrice.toString()),
-                                    _buildInfoRow(
-                                        AppLocalizations.of(context)!.quantity,
-                                        quantity.toString()),
-                                    _buildInfoRow(
-                                        AppLocalizations.of(context)!
-                                            .totalPrice,
-                                        totalAmount.toStringAsFixed(2) +
-                                            (_currencySymbol(order.currency)
-                                                    .isNotEmpty
-                                                ? ' ' +
-                                                    _currencySymbol(
-                                                        order.currency)
-                                                : '')),
+                            child: const Icon(Icons.clear),
+                          ),
+                          Builder(
+                            builder: (context) => ElevatedButton(
+                              onPressed: () async {
+                                final ordersToExport = filteredOrders;
+                                if (ordersToExport.isEmpty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                      content: Text(AppLocalizations.of(context)!.noOrdersToExportForSelectedRange)));
+                                  return;
+                                }
+                                final confirm = await showDialog<bool>(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: Text(AppLocalizations.of(context)!.exportConfirmTitle(ordersToExport.length)),
+                                    content: Text(AppLocalizations.of(context)!.exportConfirmContent(ordersToExport.length)),
+                                    actions: [
+                                      TextButton(
+                                          onPressed: () => Navigator.of(context).pop(false),
+                                          child: Text(AppLocalizations.of(context)!.cancel)),
+                                      ElevatedButton(
+                                          onPressed: () => Navigator.of(context).pop(true),
+                                          child: Text(AppLocalizations.of(context)!.export)),
+                                    ],
+                                  ),
+                                );
+                                if (confirm == true) {
+                                  await _exportOrdersToExcel(ordersToExport);
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green[700],
+                                foregroundColor: Colors.white,
+                              ),
+                              child: const Text('Export'),
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.grey.shade200,
+                            foregroundColor: Colors.black87,
+                            minimumSize: const Size(40, 40),
+                            padding: EdgeInsets.zero,
+                          ),
+                          child: const Icon(Icons.clear),
+                        ),
+                        Builder(
+                          builder: (context) => ElevatedButton(
+                            onPressed: () async {
+                              final ordersToExport = filteredOrders;
+                              if (ordersToExport.isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                    content: Text(AppLocalizations.of(context)!.noOrdersToExportForSelectedRange)));
+                                return;
+                              }
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: Text(AppLocalizations.of(context)!.exportConfirmTitle(ordersToExport.length)),
+                                  content: Text(AppLocalizations.of(context)!.exportConfirmContent(ordersToExport.length)),
+                                  actions: [
+                                    TextButton(
+                                        onPressed: () => Navigator.of(context).pop(false),
+                                        child: Text(AppLocalizations.of(context)!.cancel)),
+                                    ElevatedButton(
+                                        onPressed: () => Navigator.of(context).pop(true),
+                                        child: Text(AppLocalizations.of(context)!.export)),
                                   ],
                                 ),
                               );
-                            }).toList(),
+                              if (confirm == true) {
+                                await _exportOrdersToExcel(ordersToExport);
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green[700],
+                              foregroundColor: Colors.white,
+                            ),
+                            child: const Text('Export'),
                           ),
+                        ),
                       ],
                     ),
-                  ),
-                ),
-                // Footer
-                Container(
-                  padding:
+                    const SizedBox(height: 12),
                       const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                   child: ElevatedButton(
                     onPressed: () => Navigator.pop(context),
@@ -763,6 +762,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                 Wrap(
                   spacing: 12,
                   runSpacing: 12,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     // Date range
                     SizedBox(
@@ -771,14 +771,27 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                         onPressed: () async {
                           final picked = await showDatePicker(
                             context: context,
-                            initialDate: _startDate ??
-                                DateTime.now()
-                                    .subtract(const Duration(days: 90)),
+                            initialDate: _startDate ?? DateTime.now(),
                             firstDate: DateTime(2020),
                             lastDate: DateTime.now(),
                           );
                           if (picked != null) {
                             setState(() => _startDate = picked);
+                            // Ouvre automatiquement le calendrier To Date
+                            final endInitial =
+                                (_endDate != null && !_endDate!.isBefore(picked))
+                                    ? _endDate!
+                                    : picked;
+                            final pickedEnd = await showDatePicker(
+                              context: context,
+                              initialDate: endInitial,
+                              firstDate: picked,
+                              lastDate: DateTime.now(),
+                              helpText: AppLocalizations.of(context)!.selectToDate,
+                            );
+                            if (pickedEnd != null) {
+                              setState(() => _endDate = pickedEnd);
+                            }
                           }
                         },
                         child: Text(_startDate != null
@@ -814,11 +827,11 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                         return DropdownButton<String>(
                           isExpanded: true,
                           value: _selectedDepartment,
-                          hint: Text(AppLocalizations.of(context)!.department),
+                          hint: const Text('All Department'),
                           items: [
-                            DropdownMenuItem(
+                            const DropdownMenuItem(
                                 value: null,
-                                child: Text(AppLocalizations.of(context)!.all)),
+                                child: Text('All Department')),
                             ...depts.map((dept) => DropdownMenuItem(
                                 value: dept['id'] as String,
                                 child: Text(dept['name'] as String))),
@@ -839,21 +852,20 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                 (u.role != null && u.role!.id == 2))
                             .toList();
                         return DropdownButton<String>(
-
                           isExpanded: true,
                           value: _selectedRequester,
-                          hint: const Text('Requester'),
+                          hint: const Text('All Requester'),
                           items: [
-                            DropdownMenuItem(
-                                value: null,
-                                child: Text(AppLocalizations.of(context)!.all)),
-                            ...users.map((u) => DropdownMenuItem(
-                                value: u.id?.toString(),
-                                child:
-                                    Text(u.username ?? u.name ?? 'Unknown'))),
+                          const DropdownMenuItem(
+                            value: null,
+                            child: Text('All Requester')),
+                          ...users.map((u) => DropdownMenuItem(
+                            value: u.id?.toString(),
+                            child:
+                              Text(u.username ?? u.name ?? 'Unknown'))),
                           ],
                           onChanged: (val) =>
-                              setState(() => _selectedRequester = val),
+                            setState(() => _selectedRequester = val),
                         );
                       }),
                     ),
@@ -936,11 +948,137 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                           _applySharedFilters();
                         },
                         icon: const Icon(Icons.filter_alt),
-                        label: Text(_excludeNullDept
-                            ? 'Exclude Null Dept'
-                            : 'Include Null Dept')),
-                  ],
-                ),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            setState(() {
+                              _excludeNullDept = !_excludeNullDept;
+                            });
+                            _applySharedFilters();
+                          },
+                          icon: const Icon(Icons.filter_alt),
+                          label: Text(_excludeNullDept
+                              ? 'Exclude Null Dept'
+                              : 'Include Null Dept'),
+                        ),
+                        ElevatedButton(
+                          onPressed: () {
+                            setState(() {
+                              _startDate = null;
+                              _endDate = null;
+                              _selectedDepartment = null;
+                              _selectedRequester = null;
+                              _selectedSupplier = null;
+                              _selectedFamily = null;
+                              _selectedSubFamily = null;
+                              _excludeNullDept = false;
+                            });
+                            _applySharedFilters();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.grey.shade200,
+                            foregroundColor: Colors.black87,
+                            minimumSize: const Size(40, 40),
+                            padding: EdgeInsets.zero,
+                          ),
+                          child: const Icon(Icons.clear),
+                        ),
+                        Builder(
+                          builder: (context) => ElevatedButton(
+                            onPressed: () async {
+                              final ordersToExport = filteredOrders;
+                              if (ordersToExport.isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                    content: Text(AppLocalizations.of(context)!.noOrdersToExportForSelectedRange)));
+                                return;
+                              }
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: Text(AppLocalizations.of(context)!.exportConfirmTitle(ordersToExport.length)),
+                                  content: Text(AppLocalizations.of(context)!.exportConfirmContent(ordersToExport.length)),
+                                  actions: [
+                                    TextButton(
+                                        onPressed: () => Navigator.of(context).pop(false),
+                                        child: Text(AppLocalizations.of(context)!.cancel)),
+                                    ElevatedButton(
+                                        onPressed: () => Navigator.of(context).pop(true),
+                                        child: Text(AppLocalizations.of(context)!.export)),
+                                  ],
+                                ),
+                              );
+                              if (confirm == true) {
+                                await _exportOrdersToExcel(ordersToExport);
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green[700],
+                              foregroundColor: Colors.white,
+                            ),
+                            child: const Text('Export'),
+                          ),
+                        ),
+                        ],
+                      ),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          _startDate = null;
+                          _endDate = null;
+                          _selectedDepartment = null;
+                          _selectedRequester = null;
+                          _selectedSupplier = null;
+                          _selectedFamily = null;
+                          _selectedSubFamily = null;
+                          _excludeNullDept = false;
+                        });
+                        _applySharedFilters();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey.shade200,
+                        foregroundColor: Colors.black87,
+                        minimumSize: const Size(40, 40),
+                        padding: EdgeInsets.zero,
+                      ),
+                      child: const Icon(Icons.clear),
+                    ),
+                    Builder(
+                      builder: (context) => ElevatedButton(
+                        onPressed: () async {
+                          final ordersToExport = filteredOrders;
+                          if (ordersToExport.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                content: Text(AppLocalizations.of(context)!.noOrdersToExportForSelectedRange)));
+                            return;
+                          }
+                          final confirm = await showDialog<bool>(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: Text(AppLocalizations.of(context)!.exportConfirmTitle(ordersToExport.length)),
+                              content: Text(AppLocalizations.of(context)!.exportConfirmContent(ordersToExport.length)),
+                              actions: [
+                                TextButton(
+                                    onPressed: () => Navigator.of(context).pop(false),
+                                    child: Text(AppLocalizations.of(context)!.cancel)),
+                                ElevatedButton(
+                                    onPressed: () => Navigator.of(context).pop(true),
+                                    child: Text(AppLocalizations.of(context)!.export)),
+                              ],
+                            ),
+                          );
+                          if (confirm == true) {
+                            await _exportOrdersToExcel(ordersToExport);
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green[700],
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text('Export'),
+                      ),
+                    ),
+                  ], // fin children de Wrap
+                ), // fin Wrap
                 const SizedBox(height: 12),
                 // Stats summary cards
                 Consumer<StatsController>(builder: (context, statsCtrl, _) {
@@ -988,305 +1126,8 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
               ],
             ),
           ),
+
           const Divider(height: 8),
-
-          // Search and Filter bar (PO filters)
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            color: Colors.white,
-            child: Row(
-              children: [
-                // Search bar
-                Expanded(
-                  flex: 2,
-                  child: TextField(
-                    controller: _searchCtrl,
-                    decoration: InputDecoration(
-                      hintText: AppLocalizations.of(context)!.search,
-                      prefixIcon: const Icon(Icons.search),
-                      filled: true,
-                      fillColor: const Color(0xFFF7F3FF),
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 8),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(22),
-                        borderSide: BorderSide.none,
-                      ),
-                      suffixIcon: _searchCtrl.text.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear, size: 18),
-                              onPressed: () {
-                                _searchCtrl.clear();
-                                setState(() => _currentPage = 1);
-                              },
-                            )
-                          : null,
-                    ),
-                    onChanged: (_) => setState(() => _currentPage = 1),
-                  ),
-                ),
-                const SizedBox(width: 8),
-
-                // Supplier Filter (PO filters)
-                Expanded(
-                  flex: 1,
-                  child: DropdownButton<String?>(
-                    isExpanded: true,
-                    value: _selectedSupplier,
-                    hint: Text(AppLocalizations.of(context)!.selectSupplier,
-                        style: const TextStyle(
-                            fontSize: 13, color: Color(0xFF999999))),
-                    items: [
-                      DropdownMenuItem<String?>(
-                        value: null,
-                        child: Text(AppLocalizations.of(context)!.allSuppliers,
-                            style: const TextStyle(fontSize: 13)),
-                      ),
-                      ...suppliers.map((supplier) => DropdownMenuItem<String>(
-                            value: supplier,
-                            child: Text(supplier,
-                                style: const TextStyle(fontSize: 13)),
-                          )),
-                    ],
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedSupplier = value;
-                        _currentPage = 1;
-                      });
-                      _applySharedFilters();
-                    },
-                  ),
-                ),
-                const SizedBox(width: 8),
-
-                // Family Filter (PO filters)
-                Expanded(
-                  flex: 1,
-                  child: DropdownButton<String?>(
-                    isExpanded: true,
-                    value: _selectedFamily,
-                    hint: Text(AppLocalizations.of(context)!.familyLabel,
-                        style: const TextStyle(
-                            fontSize: 13, color: Color(0xFF999999))),
-                    items: [
-                      DropdownMenuItem<String?>(
-                        value: null,
-                        child: Text(AppLocalizations.of(context)!.allFamilies,
-                            style: const TextStyle(fontSize: 13)),
-                      ),
-                      ...families.map((f) => DropdownMenuItem<String>(
-                          value: f,
-                          child:
-                              Text(f, style: const TextStyle(fontSize: 13)))),
-                    ],
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedFamily = value;
-                        _selectedSubFamily =
-                            null; // reset subfamily when family changes
-                        _currentPage = 1;
-                      });
-                      _applySharedFilters();
-                    },
-                  ),
-                ),
-                const SizedBox(width: 8),
-
-                // Subfamily Filter (PO filters)
-                Expanded(
-                  flex: 1,
-                  child: DropdownButton<String?>(
-                    isExpanded: true,
-                    value: _selectedSubFamily,
-                    hint: Text(AppLocalizations.of(context)!.subfamilyLabel,
-                        style: const TextStyle(
-                            fontSize: 13, color: Color(0xFF999999))),
-                    items: [
-                      DropdownMenuItem<String?>(
-                        value: null,
-                        child: Text(
-                            AppLocalizations.of(context)!.allSubfamilies,
-                            style: const TextStyle(fontSize: 13)),
-                      ),
-                      ...subfamilies.map((sf) => DropdownMenuItem<String>(
-                          value: sf, child: Text(sf))),
-                    ],
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedSubFamily = value;
-                        _selectedFamily = null; // Reset family when subfamily is selected
-                        _currentPage = 1;
-                      });
-                      _applySharedFilters();
-                    },
-                  ),
-                ),
-                const SizedBox(width: 8),
-
-                // Start Date Filter
-                Expanded(
-                  flex: 1,
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 8),
-                    ),
-                    onPressed: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: _startDate ?? DateTime.now(),
-                        firstDate: DateTime(2020),
-                        lastDate: DateTime.now(),
-                        helpText: AppLocalizations.of(context)!.selectFromDate,
-                      );
-                      if (picked != null) {
-                        setState(() {
-                          _startDate = picked;
-                          _currentPage = 1;
-                        });
-
-                        // Automatically open To Date picker after selecting From Date
-                        final endInitial =
-                            (_endDate != null && !_endDate!.isBefore(picked))
-                                ? _endDate!
-                                : picked;
-                        final pickedEnd = await showDatePicker(
-                          context: context,
-                          initialDate: endInitial,
-                          firstDate: picked,
-                          lastDate: DateTime.now(),
-                          helpText: 'Select To Date',
-                        );
-                        if (pickedEnd != null) {
-                          setState(() {
-                            _endDate = pickedEnd;
-                            _currentPage = 1;
-                          });
-                        }
-                      }
-                    },
-                    child: Text(
-                      _startDate != null
-                          ? AppLocalizations.of(context)!.fromPrefix +
-                              DateFormat('yyyy-MM-dd').format(_startDate!)
-                          : AppLocalizations.of(context)!.fromDate,
-                      style: const TextStyle(fontSize: 13),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-
-                // End Date Filter
-                Expanded(
-                  flex: 1,
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 8),
-                    ),
-                    onPressed: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: _endDate ?? DateTime.now(),
-                        firstDate: DateTime(2020),
-                        lastDate: DateTime.now(),
-                        helpText: AppLocalizations.of(context)!.selectToDate,
-                      );
-                      if (picked != null) {
-                        setState(() {
-                          _endDate = picked;
-                          _currentPage = 1;
-                        });
-                      }
-                    },
-                    child: Text(
-                      _endDate != null
-                          ? AppLocalizations.of(context)!.toPrefix +
-                              DateFormat('yyyy-MM-dd').format(_endDate!)
-                          : AppLocalizations.of(context)!.toDate,
-                      style: const TextStyle(fontSize: 13),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-
-                // Export button (exports current filtered PO list)
-                SizedBox(
-                  height: 40,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      _searchCtrl.clear();
-                      setState(() {
-                        _currentPage = 1;
-                        _selectedSupplier = null;
-                        _selectedFamily = null;
-                        _selectedSubFamily = null;
-                        _startDate = null;
-                        _endDate = null;
-                        _sortBy = 'id';
-                        _sortAscending = false;
-                      });
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey.shade200,
-                      foregroundColor: Colors.black87,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                    ),
-                    child: const Icon(Icons.close, size: 18),
-                  ),
-                ),
-                SizedBox(
-                  height: 40,
-                  child: ElevatedButton.icon(
-                    icon: const Icon(Icons.file_download, size: 18),
-                    label: Text(AppLocalizations.of(context)!.exportExcel),
-                    onPressed: () async {
-                      final ordersToExport = filteredOrders;
-                      if (ordersToExport.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                            content: Text(AppLocalizations.of(context)!
-                                .noOrdersToExportForCurrentFilters)));
-                        return;
-                      }
-
-                      final confirm = await showDialog<bool>(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: Text(AppLocalizations.of(context)!
-                              .exportConfirmTitle(ordersToExport.length)),
-                          content: Text(AppLocalizations.of(context)!
-                              .exportConfirmContent(ordersToExport.length)),
-                          actions: [
-                            TextButton(
-                                onPressed: () =>
-                                    Navigator.of(context).pop(false),
-                                child:
-                                    Text(AppLocalizations.of(context)!.cancel)),
-                            ElevatedButton(
-                                onPressed: () =>
-                                    Navigator.of(context).pop(true),
-                                child:
-                                    Text(AppLocalizations.of(context)!.export)),
-                          ],
-                        ),
-                      );
-
-                      if (confirm == true) {
-                        await _exportOrdersToExcel(ordersToExport);
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green[700],
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                    ),
-                  ),
-                ),
-
-                // Reset button
-              ],
-            ),
-          ),
 
           // Table
           Expanded(
