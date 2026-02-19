@@ -40,6 +40,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
   String? _selectedSupplier;
   String? _selectedFamily;
   String? _selectedSubFamily;
+  String? _tableSupplierFilter; // Separate filter for table only
   DateTime? _startDate;
   DateTime? _endDate;
   // Shared stats filters
@@ -105,6 +106,21 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
         supplier: _selectedSupplier,
         excludeNullDept: _excludeNullDept,
       );
+      // Also fetch matching purchase orders from server so table matches stats
+      try {
+        final poCtrl = context.read<PurchaseOrderController>();
+        await poCtrl.fetchOrdersFiltered(
+          department: _selectedDepartment,
+          requester: _selectedRequester,
+          supplier: _selectedSupplier,
+          category: _selectedFamily,
+          subcategory: _selectedSubFamily,
+          start: start,
+          end: end,
+        );
+      } catch (e) {
+        debugPrint('Failed to fetch filtered POs: $e');
+      }
     } catch (e) {
       debugPrint('Stats fetch failed: $e');
     }
@@ -554,30 +570,24 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
       });
     }
 
-    // Filter approved orders only
-    final approvedOrders = poController.orders
-        .where((order) => order.status == 'approved')
-        .toList();
+    // Deduplicate all PO by id first (not just approved/rejected from server)
+    final allOrders = poController.orders;
+    final Map<int, dynamic> ordersById = {};
+    for (var o in allOrders) {
+      if (o.id != null) {
+        ordersById[o.id as int] = o;
+      }
+    }
+    
+    // Filter only approved or rejected status
+    final statusFiltered = ordersById.values.where((o) {
+      final s = (o.status ?? '').toString().toLowerCase();
+      return s == 'approved' || s == 'rejected';
+    }).toList();
 
-    // Get suppliers list for dropdown
-    // Combine suppliers present in approved orders with suppliers from SupplierController
-    final controllerApproved = supplierController.suppliers
-        .where((s) =>
-            (s.approvalStatus ?? '').toLowerCase() == 'approved' &&
-            (s.name?.isNotEmpty ?? false))
-        .map((s) => s.name!.trim())
-        .toSet();
-    final ordersSuppliers = _getSuppliers(approvedOrders).toSet();
-    final suppliers = (controllerApproved..addAll(ordersSuppliers)).toList()
-      ..sort();
-
-    // Families and Subfamilies for filters
-    final families = _getFamilies(approvedOrders);
-    final subfamilies = _getSubFamilies(approvedOrders, _selectedFamily);
-
-    // Apply filters (search, supplier and date range)
+    // Apply all filters locally: department, requester, supplier, family, subfamily, dates + search
     final filter = _searchCtrl.text.toLowerCase();
-    final filteredOrders = approvedOrders.where((order) {
+    final filteredOrders = statusFiltered.where((order) {
       // Filter by search text
       final title = _safeString(order.title).toLowerCase();
       final status = _safeString(order.status).toLowerCase();
@@ -588,10 +598,40 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
         return false;
       }
 
-      // Filter by supplier if selected
+      // Filter by department (via requester user's depId)
+      if (_selectedDepartment != null && _selectedDepartment!.isNotEmpty) {
+        final reqId = order.requestedByUser;
+        if (reqId == null) return false;
+        if (userController.users.isNotEmpty) {
+          final matched =
+              userController.users.where((u) => u.id == reqId).toList();
+          if (matched.isEmpty) return false;
+          final reqUser = matched.first;
+          final userDepId = reqUser.depId;
+          if (userDepId == null || userDepId.toString() != _selectedDepartment)
+            return false;
+        }
+      }
+
+      // Filter by requester if selected
+      if (_selectedRequester != null && _selectedRequester!.isNotEmpty) {
+        if (order.requestedByUser == null) return false;
+        if (order.requestedByUser.toString() != _selectedRequester)
+          return false;
+      }
+
+      // Filter by supplier if selected (from stats filter)
       if (_selectedSupplier != null && _selectedSupplier!.isNotEmpty) {
         final hasSupplier =
             order.products?.any((p) => p.supplier == _selectedSupplier) ??
+                false;
+        if (!hasSupplier) return false;
+      }
+
+      // Filter by supplier for table only (independent filter)
+      if (_tableSupplierFilter != null && _tableSupplierFilter!.isNotEmpty) {
+        final hasSupplier =
+            order.products?.any((p) => p.supplier == _tableSupplierFilter) ??
                 false;
         if (!hasSupplier) return false;
       }
@@ -622,6 +662,22 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
 
       return true;
     }).toList();
+
+    // Get suppliers list for dropdown from filtered orders
+    // Combine suppliers present in status-filtered orders with suppliers from SupplierController
+    final controllerApproved = supplierController.suppliers
+        .where((s) =>
+            (s.approvalStatus ?? '').toLowerCase() == 'approved' &&
+            (s.name?.isNotEmpty ?? false))
+        .map((s) => s.name!.trim())
+        .toSet();
+    final ordersSuppliers = _getSuppliers(statusFiltered).toSet();
+    final suppliers = (controllerApproved..addAll(ordersSuppliers)).toList()
+      ..sort();
+
+    // Families and Subfamilies for filters
+    final families = _getFamilies(statusFiltered);
+    final subfamilies = _getSubFamilies(statusFiltered, _selectedFamily);
 
     // Apply sorting
     _sortOrders(filteredOrders, _sortBy, _sortAscending);
@@ -669,6 +725,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                           );
                           if (picked != null) {
                             setState(() => _startDate = picked);
+                            _applySharedFilters();
                           }
                         },
                         child: Text(_startDate != null
@@ -686,7 +743,10 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                             firstDate: DateTime(2020),
                             lastDate: DateTime.now(),
                           );
-                          if (picked != null) setState(() => _endDate = picked);
+                          if (picked != null) {
+                            setState(() => _endDate = picked);
+                            _applySharedFilters();
+                          }
                         },
                         child: Text(_endDate != null
                             ? DateFormat('dd/MM/yyyy').format(_endDate!)
@@ -714,8 +774,10 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                 value: dept['id'] as String,
                                 child: Text(dept['name'] as String))),
                           ],
-                          onChanged: (val) =>
-                              setState(() => _selectedDepartment = val),
+                          onChanged: (val) {
+                            setState(() => _selectedDepartment = val);
+                            _applySharedFilters();
+                          },
                         );
                       }),
                     ),
@@ -742,8 +804,10 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                 child:
                                     Text(u.username ?? u.name ?? 'Unknown'))),
                           ],
-                          onChanged: (val) =>
-                              setState(() => _selectedRequester = val),
+                          onChanged: (val) {
+                            setState(() => _selectedRequester = val);
+                            _applySharedFilters();
+                          },
                         );
                       }),
                     ),
@@ -763,8 +827,56 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                           ...suppliers.map((s) => DropdownMenuItem<String>(
                               value: s, child: Text(s))),
                         ],
-                        onChanged: (val) =>
-                            setState(() => _selectedSupplier = val),
+                        onChanged: (val) {
+                          setState(() => _selectedSupplier = val);
+                          _applySharedFilters();
+                        },
+                      ),
+                    ),
+                    // Family dropdown
+                    SizedBox(
+                      width: 200,
+                      child: DropdownButton<String?>(
+                        isExpanded: true,
+                        value: _selectedFamily,
+                        hint: Text(AppLocalizations.of(context)!.familyLabel),
+                        items: [
+                          DropdownMenuItem<String?>(
+                              value: null,
+                              child: Text(
+                                  AppLocalizations.of(context)!.allFamilies)),
+                          ...families.map((f) => DropdownMenuItem<String>(
+                              value: f, child: Text(f))),
+                        ],
+                        onChanged: (val) {
+                          setState(() {
+                            _selectedFamily = val;
+                            _selectedSubFamily = null;
+                          });
+                          _applySharedFilters();
+                        },
+                      ),
+                    ),
+                    // Subfamily dropdown
+                    SizedBox(
+                      width: 200,
+                      child: DropdownButton<String?>(
+                        isExpanded: true,
+                        value: _selectedSubFamily,
+                        hint:
+                            Text(AppLocalizations.of(context)!.subfamilyLabel),
+                        items: [
+                          DropdownMenuItem<String?>(
+                              value: null,
+                              child: Text(AppLocalizations.of(context)!
+                                  .allSubfamilies)),
+                          ...subfamilies.map((sf) => DropdownMenuItem<String>(
+                              value: sf, child: Text(sf))),
+                        ],
+                        onChanged: (val) {
+                          setState(() => _selectedSubFamily = val);
+                          _applySharedFilters();
+                        },
                       ),
                     ),
                     ElevatedButton.icon(
@@ -870,185 +982,26 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                 ),
                 const SizedBox(width: 8),
 
-                // Supplier Filter
-                Expanded(
-                  flex: 1,
+                // Table Supplier Filter dropdown
+                SizedBox(
+                  width: 150,
                   child: DropdownButton<String?>(
                     isExpanded: true,
-                    value: _selectedSupplier,
-                    hint: Text(AppLocalizations.of(context)!.selectSupplier,
-                        style: const TextStyle(
-                            fontSize: 13, color: Color(0xFF999999))),
+                    value: _tableSupplierFilter,
+                    hint: const Text('Supplier'),
                     items: [
                       DropdownMenuItem<String?>(
-                        value: null,
-                        child: Text(AppLocalizations.of(context)!.allSuppliers,
-                            style: const TextStyle(fontSize: 13)),
-                      ),
-                      ...suppliers.map((supplier) => DropdownMenuItem<String>(
-                            value: supplier,
-                            child: Text(supplier,
-                                style: const TextStyle(fontSize: 13)),
-                          )),
+                          value: null,
+                          child: Text(AppLocalizations.of(context)!.allSuppliers)),
+                      ...suppliers.map((s) => DropdownMenuItem<String>(
+                          value: s, child: Text(s))),
                     ],
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedSupplier = value;
-                        _currentPage = 1;
-                      });
+                    onChanged: (val) {
+                      setState(() => _tableSupplierFilter = val);
                     },
                   ),
                 ),
-                const SizedBox(width: 8),
 
-                // Family Filter
-                Expanded(
-                  flex: 1,
-                  child: DropdownButton<String?>(
-                    isExpanded: true,
-                    value: _selectedFamily,
-                    hint: Text(AppLocalizations.of(context)!.familyLabel,
-                        style: const TextStyle(
-                            fontSize: 13, color: Color(0xFF999999))),
-                    items: [
-                      DropdownMenuItem<String?>(
-                        value: null,
-                        child: Text(AppLocalizations.of(context)!.allFamilies,
-                            style: const TextStyle(fontSize: 13)),
-                      ),
-                      ...families.map((f) => DropdownMenuItem<String>(
-                          value: f,
-                          child:
-                              Text(f, style: const TextStyle(fontSize: 13)))),
-                    ],
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedFamily = value;
-                        _selectedSubFamily =
-                            null; // reset subfamily when family changes
-                        _currentPage = 1;
-                      });
-                    },
-                  ),
-                ),
-                const SizedBox(width: 8),
-
-                // Subfamily Filter
-                Expanded(
-                  flex: 1,
-                  child: DropdownButton<String?>(
-                    isExpanded: true,
-                    value: _selectedSubFamily,
-                    hint: Text(AppLocalizations.of(context)!.subfamilyLabel,
-                        style: const TextStyle(
-                            fontSize: 13, color: Color(0xFF999999))),
-                    items: [
-                      DropdownMenuItem<String?>(
-                        value: null,
-                        child: Text(
-                            AppLocalizations.of(context)!.allSubfamilies,
-                            style: const TextStyle(fontSize: 13)),
-                      ),
-                      ...subfamilies.map((sf) => DropdownMenuItem<String>(
-                          value: sf,
-                          child:
-                              Text(sf, style: const TextStyle(fontSize: 13)))),
-                    ],
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedSubFamily = value;
-                        _currentPage = 1;
-                      });
-                    },
-                  ),
-                ),
-                const SizedBox(width: 8),
-
-                // Start Date Filter
-                Expanded(
-                  flex: 1,
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 8),
-                    ),
-                    onPressed: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: _startDate ?? DateTime.now(),
-                        firstDate: DateTime(2020),
-                        lastDate: DateTime.now(),
-                        helpText: AppLocalizations.of(context)!.selectFromDate,
-                      );
-                      if (picked != null) {
-                        setState(() {
-                          _startDate = picked;
-                          _currentPage = 1;
-                        });
-
-                        // Automatically open To Date picker after selecting From Date
-                        final endInitial =
-                            (_endDate != null && !_endDate!.isBefore(picked))
-                                ? _endDate!
-                                : picked;
-                        final pickedEnd = await showDatePicker(
-                          context: context,
-                          initialDate: endInitial,
-                          firstDate: picked,
-                          lastDate: DateTime.now(),
-                          helpText: 'Select To Date',
-                        );
-                        if (pickedEnd != null) {
-                          setState(() {
-                            _endDate = pickedEnd;
-                            _currentPage = 1;
-                          });
-                        }
-                      }
-                    },
-                    child: Text(
-                      _startDate != null
-                          ? AppLocalizations.of(context)!.fromPrefix +
-                              DateFormat('yyyy-MM-dd').format(_startDate!)
-                          : AppLocalizations.of(context)!.fromDate,
-                      style: const TextStyle(fontSize: 13),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-
-                // End Date Filter
-                Expanded(
-                  flex: 1,
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 8),
-                    ),
-                    onPressed: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: _endDate ?? DateTime.now(),
-                        firstDate: DateTime(2020),
-                        lastDate: DateTime.now(),
-                        helpText: AppLocalizations.of(context)!.selectToDate,
-                      );
-                      if (picked != null) {
-                        setState(() {
-                          _endDate = picked;
-                          _currentPage = 1;
-                        });
-                      }
-                    },
-                    child: Text(
-                      _endDate != null
-                          ? AppLocalizations.of(context)!.toPrefix +
-                              DateFormat('yyyy-MM-dd').format(_endDate!)
-                          : AppLocalizations.of(context)!.toDate,
-                      style: const TextStyle(fontSize: 13),
-                    ),
-                  ),
-                ),
                 const SizedBox(width: 8),
 
                 // Export button (exports current filtered PO list)
@@ -1390,151 +1343,91 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                       ),
                                       DataColumn(label: Text('')),
                                     ],
-                                    rows: paginatedOrders.expand((order) {
-                                      // Create a row for each product in the order
-                                      if (order.products == null ||
-                                          order.products!.isEmpty) {
-                                        // If no products, show one empty row for the order
-                                        return [
-                                          DataRow(cells: [
-                                            DataCell(Text(order.id.toString())),
-                                            DataCell(Text(_safeString(
-                                                order.title ?? ''))),
-                                            DataCell(const Text('-')),
-                                            DataCell(const Text('-')),
-                                            DataCell(const Text('-')),
-                                            DataCell(const Text('-')),
-                                            DataCell(const Text('-')),
-                                            DataCell(Text(order.startDate !=
-                                                    null
-                                                ? DateFormat('yyyy-MM-dd')
-                                                    .format(order.startDate!)
-                                                : '-')),
-                                            DataCell(Text(_getRequesterName(
-                                                order, userController))),
-                                            DataCell(
-                                              Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        horizontal: 12,
-                                                        vertical: 4),
-                                                decoration: BoxDecoration(
-                                                  color:
-                                                      order.status == 'approved'
-                                                          ? Colors.green
-                                                              .withOpacity(0.2)
-                                                          : Colors.orange
-                                                              .withOpacity(0.2),
-                                                  borderRadius:
-                                                      BorderRadius.circular(12),
-                                                ),
-                                                child: Text(
-                                                  _localizedStatus(
-                                                      context, order.status),
-                                                  style: TextStyle(
-                                                    color: order.status ==
-                                                            'approved'
-                                                        ? Colors.green
-                                                        : Colors.orange,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            DataCell(
-                                              IconButton(
-                                                icon: const Icon(
-                                                    Icons.visibility,
-                                                    color: Colors.blue),
-                                                onPressed: () =>
-                                                    _showOrderDetailsDialog(
-                                                        context,
-                                                        order,
-                                                        userController),
-                                              ),
-                                            ),
-                                          ]),
-                                        ];
-                                      }
+                                    rows: paginatedOrders.map((order) {
+                                      // One row per Purchase Order (use first product for product/supplier/amount preview)
+                                      final hasProducts =
+                                          order.products != null &&
+                                              order.products!.isNotEmpty;
+                                      final product = hasProducts
+                                          ? order.products!.first
+                                          : null;
+                                      final unitPrice = hasProducts
+                                          ? (product.unitPrice ??
+                                              product.price ??
+                                              0)
+                                          : 0;
+                                      final quantity = hasProducts
+                                          ? (product.quantity ?? 0)
+                                          : 0;
+                                      final totalAmount = (quantity is int
+                                              ? quantity.toDouble()
+                                              : quantity as double) *
+                                          (unitPrice is int
+                                              ? unitPrice.toDouble()
+                                              : unitPrice as double);
 
-                                      return order.products!.map((product) {
-                                        final unitPrice = product.unitPrice ??
-                                            product.price ??
-                                            0;
-                                        final quantity = product.quantity ?? 0;
-                                        final totalAmount = (quantity is int
-                                                ? quantity.toDouble()
-                                                : quantity as double) *
-                                            (unitPrice is int
-                                                ? unitPrice.toDouble()
-                                                : unitPrice as double);
-
-                                        return DataRow(cells: [
-                                          DataCell(Text(order.id.toString())),
-                                          DataCell(Text(
-                                              _safeString(order.title ?? ''))),
-                                          DataCell(Text(_safeString(
-                                              product.product ?? ''))),
-                                          DataCell(Text(_safeString(
-                                              product.supplier ?? '-'))),
-                                          DataCell(Text(quantity.toString())),
-                                          DataCell(Text(unitPrice.toString())),
-                                          DataCell(Text(totalAmount
-                                                  .toStringAsFixed(2) +
-                                              (_currencySymbol(order.currency)
-                                                      .isNotEmpty
-                                                  ? ' ' +
-                                                      _currencySymbol(
-                                                          order.currency)
-                                                  : ''))),
-                                          DataCell(Text(order.startDate != null
-                                              ? DateFormat('yyyy-MM-dd')
-                                                  .format(order.startDate!)
-                                              : '-')),
-                                          DataCell(Text(_getRequesterName(
-                                              order, userController))),
-                                          DataCell(
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 12,
-                                                      vertical: 4),
-                                              decoration: BoxDecoration(
+                                      return DataRow(cells: [
+                                        DataCell(Text(order.id.toString())),
+                                        DataCell(Text(
+                                            _safeString(order.title ?? ''))),
+                                        DataCell(Text(_safeString(hasProducts
+                                            ? (product.product ?? '-')
+                                            : '-'))),
+                                        DataCell(Text(_safeString(hasProducts
+                                            ? (product.supplier ?? '-')
+                                            : '-'))),
+                                        DataCell(Text(quantity.toString())),
+                                        DataCell(Text(unitPrice.toString())),
+                                        DataCell(Text(
+                                            totalAmount.toStringAsFixed(2) +
+                                                (_currencySymbol(order.currency)
+                                                        .isNotEmpty
+                                                    ? ' ' +
+                                                        _currencySymbol(
+                                                            order.currency)
+                                                    : ''))),
+                                        DataCell(Text(order.startDate != null
+                                            ? DateFormat('yyyy-MM-dd')
+                                                .format(order.startDate!)
+                                            : '-')),
+                                        DataCell(Text(_getRequesterName(
+                                            order, userController))),
+                                        DataCell(
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 12, vertical: 4),
+                                            decoration: BoxDecoration(
+                                              color: order.status == 'approved'
+                                                  ? Colors.green
+                                                      .withOpacity(0.2)
+                                                  : Colors.orange
+                                                      .withOpacity(0.2),
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                            ),
+                                            child: Text(
+                                              _localizedStatus(
+                                                  context, order.status),
+                                              style: TextStyle(
                                                 color:
                                                     order.status == 'approved'
                                                         ? Colors.green
-                                                            .withOpacity(0.2)
-                                                        : Colors.orange
-                                                            .withOpacity(0.2),
-                                                borderRadius:
-                                                    BorderRadius.circular(12),
-                                              ),
-                                              child: Text(
-                                                _localizedStatus(
-                                                    context, order.status),
-                                                style: TextStyle(
-                                                  color:
-                                                      order.status == 'approved'
-                                                          ? Colors.green
-                                                          : Colors.orange,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
+                                                        : Colors.orange,
+                                                fontWeight: FontWeight.bold,
                                               ),
                                             ),
                                           ),
-                                          DataCell(
-                                            IconButton(
-                                              icon: const Icon(Icons.visibility,
-                                                  color: Colors.blue),
-                                              onPressed: () =>
-                                                  _showOrderDetailsDialog(
-                                                      context,
-                                                      order,
-                                                      userController),
-                                            ),
+                                        ),
+                                        DataCell(
+                                          IconButton(
+                                            icon: const Icon(Icons.visibility,
+                                                color: Colors.blue),
+                                            onPressed: () =>
+                                                _showOrderDetailsDialog(context,
+                                                    order, userController),
                                           ),
-                                        ]);
-                                      }).toList();
+                                        ),
+                                      ]);
                                     }).toList(),
                                   ),
                                 ),
