@@ -7,14 +7,29 @@ class StatsNetwork {
       required String token,
       required String startDate,
       required String endDate,
+      String? department,
+      String? requester,
+      String? supplier,
+      String? family,
+      String? subfamily,
+      bool? excludeNullDept,
     }) async {
       try {
+        final queryParams = {
+          'start_date': startDate,
+          'end_date': endDate,
+        };
+        if (department != null && department.isNotEmpty) queryParams['department'] = department;
+        if (requester != null && requester.isNotEmpty) queryParams['requester'] = requester;
+        if (supplier != null && supplier.isNotEmpty) queryParams['supplier'] = supplier;
+        if (family != null && family.isNotEmpty) queryParams['family'] = family;
+        if (subfamily != null && subfamily.isNotEmpty) queryParams['subfamily'] = subfamily;
+        if (excludeNullDept != null) queryParams['exclude_null_dept'] = excludeNullDept ? 'true' : 'false';
+        print('🔎 fetchTotalPriceDinar: URL=http://72.60.90.60:8000/stats/po/total-price-dinar/');
+        print('🔎 fetchTotalPriceDinar: queryParams=$queryParams');
         final response = await dio.get(
           'http://72.60.90.60:8000/stats/po/total-price-dinar/',
-          queryParameters: {
-            'start_date': startDate,
-            'end_date': endDate,
-          },
+          queryParameters: queryParams,
           options: Options(
             headers: {
               "Content-Type": "application/json",

@@ -123,15 +123,12 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
       final statsCtrl = context.read<StatsController>();
       final poCtrl = context.read<PurchaseOrderController>();
 
-      final start =
-          _startDate ?? DateTime.now().subtract(const Duration(days: 90));
+      final start = _startDate ?? DateTime.now().subtract(const Duration(days: 90));
       final end = _endDate ?? DateTime.now();
-
-      // Prepare date strings
       final startStr = DateTime(start.year, start.month, start.day).toIso8601String().split('T').first;
       final endStr = DateTime(end.year, end.month, end.day).toIso8601String().split('T').first;
 
-      // Fetch stats - don't re-throw, just log error
+      // Fetch stats (other than total dinar)
       try {
         await statsCtrl.fetchAll(
           start: start,
@@ -145,6 +142,23 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
         );
       } catch (statsError) {
         debugPrint('⚠️ Stats fetch error (continuing with PO): $statsError');
+      }
+
+      // Force refresh of totalPriceDinar
+      try {
+        await statsCtrl.fetchTotalPriceDinar(
+          token: APIS.token,
+          startDate: startStr,
+          endDate: endStr,
+          department: _selectedDepartment,
+          requester: _selectedRequester,
+          supplier: _selectedSupplier,
+          family: _selectedFamily,
+          subfamily: _selectedSubFamily,
+          excludeNullDept: _excludeNullDept,
+        );
+      } catch (totalError) {
+        debugPrint('❌ Total Dinar fetch error: $totalError');
       }
 
       if (!mounted) return;
@@ -1069,6 +1083,12 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                       token: token,
                       startDate: startStr,
                       endDate: endStr,
+                      department: _selectedDepartment,
+                      requester: _selectedRequester,
+                      supplier: _selectedSupplier,
+                      family: _selectedFamily,
+                      subfamily: _selectedSubFamily,
+                      excludeNullDept: _excludeNullDept,
                     ));
                   }
                   return Row(
