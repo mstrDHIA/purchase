@@ -3,6 +3,33 @@ import 'package:flutter/material.dart';
 import '../network/stats_network.dart';
 
 class StatsController extends ChangeNotifier {
+
+    // Total price dinar
+    double? totalPriceDinar;
+    bool loadingTotalPriceDinar = false;
+    String? errorTotalPriceDinar;
+
+    Future<void> fetchTotalPriceDinar({
+      required String token,
+      required String startDate,
+      required String endDate,
+    }) async {
+      loadingTotalPriceDinar = true;
+      errorTotalPriceDinar = null;
+      notifyListeners();
+      try {
+        totalPriceDinar = await _network.fetchTotalPriceDinar(
+          token: token,
+          startDate: startDate,
+          endDate: endDate,
+        );
+      } catch (e) {
+        errorTotalPriceDinar = e.toString();
+        totalPriceDinar = null;
+      }
+      loadingTotalPriceDinar = false;
+      notifyListeners();
+    }
   final StatsNetwork _network = StatsNetwork();
 
   // PO totals

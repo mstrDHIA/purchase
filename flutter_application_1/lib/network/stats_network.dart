@@ -3,6 +3,40 @@ import 'package:dio/dio.dart';
 import 'api.dart';
 
 class StatsNetwork {
+    Future<double> fetchTotalPriceDinar({
+      required String token,
+      required String startDate,
+      required String endDate,
+    }) async {
+      try {
+        final response = await dio.get(
+          'http://72.60.90.60:8000/stats/po/total-price-dinar/',
+          queryParameters: {
+            'start_date': startDate,
+            'end_date': endDate,
+          },
+          options: Options(
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer $token",
+            },
+          ),
+        );
+        if (response.statusCode == 200) {
+          if (response.data is Map && response.data.containsKey('total_price_dinar')) {
+            return (response.data['total_price_dinar'] as num).toDouble();
+          } else if (response.data is num) {
+            return (response.data as num).toDouble();
+          } else {
+            throw Exception('Format de réponse inattendu: ${response.data}');
+          }
+        } else {
+          throw Exception('Erreur lors de la récupération du total price dinar');
+        }
+      } catch (e) {
+        throw Exception('Erreur lors de la récupération du total price dinar: $e');
+      }
+    }
   final Dio dio = APIS().dio;
   static String get totalsEndpoint => APIS.baseUrl + APIS.poTotals;
   static String get rejectionEndpoint => APIS.baseUrl + APIS.poRejectionRate;

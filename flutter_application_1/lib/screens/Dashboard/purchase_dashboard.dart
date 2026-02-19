@@ -11,6 +11,7 @@ import 'package:flutter_application_1/controllers/department_controller.dart';
 import 'package:flutter_application_1/controllers/stats_controller.dart';
 import 'package:flutter_application_1/controllers/reset_notifier.dart';
 import 'package:flutter_application_1/models/user_model.dart';
+import 'package:flutter_application_1/network/api.dart';
 import '../../l10n/app_localizations.dart';
 import 'package:flutter_application_1/widgets/standard_header.dart';
 import 'package:flutter_application_1/utils/file_download.dart' show saveFile;
@@ -1056,45 +1057,85 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                 
                 const SizedBox(height: 12),
                 // Stats summary cards
-                Consumer<StatsController>(builder: (context, statsCtrl, _) {
+                Consumer2<StatsController, UserController>(builder: (context, statsCtrl, userCtrl, _) {
+                  // Appel du total price dinar si besoin
+                  if (statsCtrl.totalPriceDinar == null && !statsCtrl.loadingTotalPriceDinar) {
+                    final token = APIS.token;
+                    final start = _startDate ?? DateTime.now().subtract(const Duration(days: 90));
+                    final end = _endDate ?? DateTime.now();
+                    final startStr = DateTime(start.year, start.month, start.day).toIso8601String().split('T').first;
+                    final endStr = DateTime(end.year, end.month, end.day).toIso8601String().split('T').first;
+                    Future.microtask(() => statsCtrl.fetchTotalPriceDinar(
+                      token: token,
+                      startDate: startStr,
+                      endDate: endStr,
+                    ));
+                  }
                   return Row(
                     children: [
                       Expanded(
-                          child: Card(
-                              child: Padding(
-                                  padding: const EdgeInsets.all(12),
-                                  child: Column(children: [
-                                    Text('Total PO'),
-                                    const SizedBox(height: 8),
-                                    Text(statsCtrl.summaryTotal.toString(),
-                                        style: const TextStyle(
-                                            fontSize: 18, color: Colors.blue))
-                                  ])))),
+                        child: Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(children: [
+                              Text('Total PO'),
+                              const SizedBox(height: 8),
+                              Text(statsCtrl.summaryTotal.toString(),
+                                  style: const TextStyle(fontSize: 18, color: Colors.blue))
+                            ]),
+                          ),
+                        ),
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
-                          child: Card(
-                              child: Padding(
-                                  padding: const EdgeInsets.all(12),
-                                  child: Column(children: [
-                                    Text('Rejected'),
-                                    const SizedBox(height: 8),
-                                    Text(statsCtrl.summaryRejected.toString(),
-                                        style: const TextStyle(
-                                            fontSize: 18, color: Colors.red))
-                                  ])))),
+                        child: Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(children: [
+                              Text('Rejected'),
+                              const SizedBox(height: 8),
+                              Text(statsCtrl.summaryRejected.toString(),
+                                  style: const TextStyle(fontSize: 18, color: Colors.red))
+                            ]),
+                          ),
+                        ),
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
-                          child: Card(
-                              child: Padding(
-                                  padding: const EdgeInsets.all(12),
-                                  child: Column(children: [
-                                    Text('Rejection Rate'),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                        '${(statsCtrl.summaryRejectionRate * 100).toStringAsFixed(2)}%',
-                                        style: const TextStyle(
-                                            fontSize: 18, color: Colors.orange))
-                                  ])))),
+                        child: Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(children: [
+                              Text('Rejection Rate'),
+                              const SizedBox(height: 8),
+                              Text('${(statsCtrl.summaryRejectionRate * 100).toStringAsFixed(2)}%',
+                                  style: const TextStyle(fontSize: 18, color: Colors.orange))
+                            ]),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Card(
+                          color: Colors.green[50],
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(children: [
+                              Text('Total en Dinar (TND)', style: TextStyle(color: Colors.green[900])),
+                              const SizedBox(height: 8),
+                              if (statsCtrl.loadingTotalPriceDinar)
+                                const CircularProgressIndicator(strokeWidth: 2)
+                              else if (statsCtrl.errorTotalPriceDinar != null)
+                                Text('Erreur', style: TextStyle(color: Colors.red[700]))
+                              else if (statsCtrl.totalPriceDinar != null)
+                                Text('${statsCtrl.totalPriceDinar!.toStringAsFixed(2)} DT',
+                                    style: const TextStyle(fontSize: 18, color: Colors.green))
+                              else
+                                const Text('-', style: TextStyle(fontSize: 18)),
+                            ]),
+                          ),
+                        ),
+                      ),
                     ],
                   );
                 }),
