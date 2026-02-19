@@ -126,30 +126,12 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
           _startDate ?? DateTime.now().subtract(const Duration(days: 90));
       final end = _endDate ?? DateTime.now();
 
-      debugPrint('🔍 ========== APPLY SHARED FILTERS START ==========');
-      debugPrint('🔍 DEBUG _applySharedFilters:');
-      debugPrint('   family: $_selectedFamily');
-      debugPrint('   subfamily: $_selectedSubFamily');
-      debugPrint('   department: $_selectedDepartment');
-      debugPrint('   requester: $_selectedRequester');
-      debugPrint('   🔴 supplier: $_selectedSupplier ← CRITICAL FOR FILTERING');
-      debugPrint('   excludeNullDept: $_excludeNullDept');
-      debugPrint('   start: $start, end: $end');
-
       // Prepare date strings
       final startStr = DateTime(start.year, start.month, start.day).toIso8601String().split('T').first;
       final endStr = DateTime(end.year, end.month, end.day).toIso8601String().split('T').first;
 
-      debugPrint('📋 Calling stats and PO fetch with:');
-      debugPrint('   startStr: $startStr');
-      debugPrint('   endStr: $endStr');
-      debugPrint('   family: $_selectedFamily');
-      debugPrint('   subfamily: $_selectedSubFamily');
-      debugPrint('   🔴 supplier being passed: $_selectedSupplier');
-
       // Fetch stats - don't re-throw, just log error
       try {
-        debugPrint('📊 Calling statsCtrl.fetchAll with supplier=$_selectedSupplier');
         await statsCtrl.fetchAll(
           start: start,
           end: end,
@@ -160,7 +142,6 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
           supplier: _selectedSupplier,
           excludeNullDept: _excludeNullDept,
         );
-        debugPrint('✅ Stats fetched successfully');
       } catch (statsError) {
         debugPrint('⚠️ Stats fetch error (continuing with PO): $statsError');
       }
@@ -169,7 +150,6 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
 
       // Fetch PO list with same filters - continue even if stats failed
       try {
-        debugPrint('📦 Calling poCtrl.fetchOrders with supplier=$_selectedSupplier');
         await poCtrl.fetchOrders(
           startDate: startStr,
           endDate: endStr,
@@ -180,8 +160,6 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
           supplier: _selectedSupplier,
           excludeNullDept: _excludeNullDept,
         );
-        debugPrint('✅ PO orders fetched successfully');
-        debugPrint('📦 Total orders received: ${poCtrl.orders.length}');
       } catch (poError) {
         debugPrint('❌ PO fetch error: $poError');
       }
@@ -190,12 +168,8 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
       debugPrint('❌ Error in _applySharedFilters: $e');
     }
 
-    if (!mounted) return;
-
-    setState(() {
-      _currentPage = 1;
-    });
-    debugPrint('🔍 ========== APPLY SHARED FILTERS END ==========');
+    // Ne pas appeler setState ici pour éviter de bloquer l'UI :
+    // L'UI sera rafraîchie automatiquement via Provider/Consumer quand les données changent.
   }
 
   @override
@@ -292,124 +266,121 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                             .viewPurchaseOrder(order.id),
                         style: const TextStyle(
                           fontSize: 18,
-                          ElevatedButton.icon(
-                              onPressed: _applySharedFilters,
-                              icon: const Icon(Icons.refresh),
-                              label: const Text('Apply')),
-                          ElevatedButton.icon(
-                              onPressed: () {
-                                setState(() {
-                                  _excludeNullDept = !_excludeNullDept;
-                                });
-                                _applySharedFilters();
-                              },
-                              icon: const Icon(Icons.filter_alt),
-                              label: Text(_excludeNullDept
-                                  ? 'Exclude Null Dept'
-                                  : 'Include Null Dept')),
-                          ElevatedButton(
-                            onPressed: () {
-                              setState(() {
-                                _startDate = null;
-                                _endDate = null;
-                                _selectedDepartment = null;
-                                _selectedRequester = null;
-                                _selectedSupplier = null;
-                                _selectedFamily = null;
-                                _selectedSubFamily = null;
-                                _excludeNullDept = false;
-                              });
-                              _applySharedFilters();
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.grey.shade200,
-                              foregroundColor: Colors.black87,
-                              minimumSize: const Size(40, 40),
-                              padding: EdgeInsets.zero,
-                            ),
-                            child: const Icon(Icons.clear),
-                          ),
-                          Builder(
-                            builder: (context) => ElevatedButton(
-                              onPressed: () async {
-                                final ordersToExport = filteredOrders;
-                                if (ordersToExport.isEmpty) {
-                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                      content: Text(AppLocalizations.of(context)!.noOrdersToExportForSelectedRange)));
-                                  return;
-                                }
-                                final confirm = await showDialog<bool>(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                    title: Text(AppLocalizations.of(context)!.exportConfirmTitle(ordersToExport.length)),
-                                    content: Text(AppLocalizations.of(context)!.exportConfirmContent(ordersToExport.length)),
-                                    actions: [
-                                      TextButton(
-                                          onPressed: () => Navigator.of(context).pop(false),
-                                          child: Text(AppLocalizations.of(context)!.cancel)),
-                                      ElevatedButton(
-                                          onPressed: () => Navigator.of(context).pop(true),
-                                          child: Text(AppLocalizations.of(context)!.export)),
-                                    ],
-                                  ),
-                                );
-                                if (confirm == true) {
-                                  await _exportOrdersToExcel(ordersToExport);
-                                }
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.green[700],
-                                foregroundColor: Colors.white,
-                              ),
-                              child: const Text('Export'),
-                            ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.grey.shade200,
-                            foregroundColor: Colors.black87,
-                            minimumSize: const Size(40, 40),
-                            padding: EdgeInsets.zero,
-                          ),
-                          child: const Icon(Icons.clear),
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF2C3E50),
                         ),
-                        Builder(
-                          builder: (context) => ElevatedButton(
-                            onPressed: () async {
-                              final ordersToExport = filteredOrders;
-                              if (ordersToExport.isEmpty) {
-                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                    content: Text(AppLocalizations.of(context)!.noOrdersToExportForSelectedRange)));
-                                return;
-                              }
-                              final confirm = await showDialog<bool>(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  title: Text(AppLocalizations.of(context)!.exportConfirmTitle(ordersToExport.length)),
-                                  content: Text(AppLocalizations.of(context)!.exportConfirmContent(ordersToExport.length)),
-                                  actions: [
-                                    TextButton(
-                                        onPressed: () => Navigator.of(context).pop(false),
-                                        child: Text(AppLocalizations.of(context)!.cancel)),
-                                    ElevatedButton(
-                                        onPressed: () => Navigator.of(context).pop(true),
-                                        child: Text(AppLocalizations.of(context)!.export)),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                ),
+                // Content
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Order Info
+                        _buildInfoRow(AppLocalizations.of(context)!.id,
+                            order.id.toString()),
+                        _buildInfoRow(AppLocalizations.of(context)!.title,
+                            _safeString(order.title)),
+                        _buildInfoRow(
+                          AppLocalizations.of(context)!.date,
+                          order.startDate != null
+                              ? DateFormat('yyyy-MM-dd')
+                                  .format(order.startDate!)
+                              : '-',
+                        ),
+                        _buildInfoRow(
+                          AppLocalizations.of(context)!.requester,
+                          _getRequesterName(order, userController),
+                        ),
+                        _buildStatusRow(AppLocalizations.of(context)!.status,
+                            _localizedStatus(context, order.status)),
+                        const SizedBox(height: 20),
+
+                        // Products Section
+                        Text(
+                          AppLocalizations.of(context)!.products,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2C3E50),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+
+                        if (order.products == null || order.products!.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            child: Text(
+                              AppLocalizations.of(context)!.noProducts,
+                              style: const TextStyle(color: Colors.grey),
+                            ),
+                          )
+                        else
+                          Column(
+                            children: order.products!.map<Widget>((product) {
+                              final unitPrice =
+                                  product.unitPrice ?? product.price ?? 0;
+                              final quantity = product.quantity ?? 0;
+                              final totalAmount = (quantity is int
+                                      ? quantity.toDouble()
+                                      : quantity as double) *
+                                  (unitPrice is int
+                                      ? unitPrice.toDouble()
+                                      : unitPrice as double);
+
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  border:
+                                      Border.all(color: Colors.grey.shade300),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildInfoRow(
+                                        AppLocalizations.of(context)!.product,
+                                        _safeString(product.product)),
+                                    _buildInfoRow(
+                                        AppLocalizations.of(context)!.supplier,
+                                        _safeString(product.supplier)),
+                                    _buildInfoRow(
+                                        AppLocalizations.of(context)!.unitPrice,
+                                        unitPrice.toString()),
+                                    _buildInfoRow(
+                                        AppLocalizations.of(context)!.quantity,
+                                        quantity.toString()),
+                                    _buildInfoRow(
+                                        AppLocalizations.of(context)!
+                                            .totalPrice,
+                                        totalAmount.toStringAsFixed(2) +
+                                            (_currencySymbol(order.currency)
+                                                    .isNotEmpty
+                                                ? ' ' +
+                                                    _currencySymbol(
+                                                        order.currency)
+                                                : '')),
                                   ],
                                 ),
                               );
-                              if (confirm == true) {
-                                await _exportOrdersToExcel(ordersToExport);
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green[700],
-                              foregroundColor: Colors.white,
-                            ),
-                            child: const Text('Export'),
+                            }).toList(),
                           ),
-                        ),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                  ),
+                ),
+                // Footer
+                Container(
+                  padding:
                       const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                   child: ElevatedButton(
                     onPressed: () => Navigator.pop(context),
@@ -758,327 +729,331 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Filters row
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  crossAxisAlignment: WrapCrossAlignment.center,
+                // Première ligne : tous les filtres principaux
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Date range
-                    SizedBox(
-                      width: 180,
-                      child: OutlinedButton(
-                        onPressed: () async {
-                          final picked = await showDatePicker(
-                            context: context,
-                            initialDate: _startDate ?? DateTime.now(),
-                            firstDate: DateTime(2020),
-                            lastDate: DateTime.now(),
-                          );
-                          if (picked != null) {
-                            setState(() => _startDate = picked);
-                            // Ouvre automatiquement le calendrier To Date
-                            final endInitial =
-                                (_endDate != null && !_endDate!.isBefore(picked))
-                                    ? _endDate!
-                                    : picked;
-                            final pickedEnd = await showDatePicker(
-                              context: context,
-                              initialDate: endInitial,
-                              firstDate: picked,
-                              lastDate: DateTime.now(),
-                              helpText: AppLocalizations.of(context)!.selectToDate,
-                            );
-                            if (pickedEnd != null) {
-                              setState(() => _endDate = pickedEnd);
-                            }
-                          }
-                        },
-                        child: Text(_startDate != null
-                            ? DateFormat('dd/MM/yyyy').format(_startDate!)
-                            : AppLocalizations.of(context)!.fromDate),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 180,
-                      child: OutlinedButton(
-                        onPressed: () async {
-                          final picked = await showDatePicker(
-                            context: context,
-                            initialDate: _endDate ?? DateTime.now(),
-                            firstDate: DateTime(2020),
-                            lastDate: DateTime.now(),
-                          );
-                          if (picked != null) setState(() => _endDate = picked);
-                        },
-                        child: Text(_endDate != null
-                            ? DateFormat('dd/MM/yyyy').format(_endDate!)
-                            : AppLocalizations.of(context)!.toDate),
-                      ),
-                    ),
-                    // Department dropdown
-                    SizedBox(
-                      width: 200,
-                      child: Consumer<DepartmentController>(builder: (context, dc, _) {
-                        final depts = dc.departments
-                            .map((d) =>
-                                {'id': d.id?.toString() ?? '', 'name': d.name})
-                            .toList();
-                        return DropdownButton<String>(
-                          isExpanded: true,
-                          value: _selectedDepartment,
-                          hint: const Text('All Department'),
-                          items: [
-                            const DropdownMenuItem(
-                                value: null,
-                                child: Text('All Department')),
-                            ...depts.map((dept) => DropdownMenuItem(
-                                value: dept['id'] as String,
-                                child: Text(dept['name'] as String))),
-                          ],
-                          onChanged: (val) =>
-                              setState(() => _selectedDepartment = val),
-                        );
-                      }),
-                    ),
-                    // Requester dropdown
-                    SizedBox(
-                      width: 200,
-                      child:
-                          Consumer<UserController>(builder: (context, uc, _) {
-                        final users = uc.users
-                            .where((u) =>
-                                (u.role_id == 2) ||
-                                (u.role != null && u.role!.id == 2))
-                            .toList();
-                        return DropdownButton<String>(
-                          isExpanded: true,
-                          value: _selectedRequester,
-                          hint: const Text('All Requester'),
-                          items: [
-                          const DropdownMenuItem(
-                            value: null,
-                            child: Text('All Requester')),
-                          ...users.map((u) => DropdownMenuItem(
-                            value: u.id?.toString(),
-                            child:
-                              Text(u.username ?? u.name ?? 'Unknown'))),
-                          ],
-                          onChanged: (val) =>
-                            setState(() => _selectedRequester = val),
-                        );
-                      }),
-                    ),
-                    // Supplier (shared)
-                    SizedBox(
-                      width: 200,
-                      child: DropdownButton<String?>(
-                        isExpanded: true,
-                        value: _selectedSupplier,
-                        hint:
-                            Text(AppLocalizations.of(context)!.selectSupplier),
-                        items: [
-                          DropdownMenuItem<String?>(
-                              value: null,
-                              child: Text(
-                                  AppLocalizations.of(context)!.allSuppliers)),
-                          ...suppliers.map((s) => DropdownMenuItem<String>(
-                              value: s, child: Text(s))),
-                        ],
-                        onChanged: (val) {
-                          setState(() => _selectedSupplier = val);
-                          _applySharedFilters();
-                        },
-                      ),
-                    ),
-                    // Family filter for stats
-                    SizedBox(
-                      width: 200,
-                      child: DropdownButton<String?>(
-                        isExpanded: true,
-                        value: _selectedFamily,
-                        hint: Text(AppLocalizations.of(context)!.familyLabel),
-                        items: [
-                          DropdownMenuItem<String?>(
-                              value: null,
-                              child: Text(
-                                  AppLocalizations.of(context)!.allFamilies)),
-                          ...families.map((f) => DropdownMenuItem<String>(
-                              value: f, child: Text(f))),
-                        ],
-                        onChanged: (val) {
-                          setState(() {
-                            _selectedFamily = val;
-                            _selectedSubFamily = null; // Reset subfamily when family changes
-                          });
-                          _applySharedFilters();
-                        },
-                      ),
-                    ),
-                    // Subfamily filter for stats
-                    SizedBox(
-                      width: 200,
-                      child: DropdownButton<String?>(
-                        isExpanded: true,
-                        value: _selectedSubFamily,
-                        hint: Text(AppLocalizations.of(context)!.subfamilyLabel),
-                        items: [
-                          DropdownMenuItem<String?>(
-                              value: null,
-                              child: Text(AppLocalizations.of(context)!
-                                  .allSubfamilies)),
-                          ...subfamilies.map((sf) => DropdownMenuItem<String>(
-                              value: sf, child: Text(sf))),
-                        ],
-                        onChanged: (val) {
-                          setState(() => _selectedSubFamily = val);
-                          _applySharedFilters();
-                        },
-                      ),
-                    ),
-                    ElevatedButton.icon(
-                        onPressed: _applySharedFilters,
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Apply')),
-                    ElevatedButton.icon(
-                        onPressed: () {
-                          setState(() {
-                            _excludeNullDept = !_excludeNullDept;
-                          });
-                          _applySharedFilters();
-                        },
-                        icon: const Icon(Icons.filter_alt),
-                        ElevatedButton.icon(
-                          onPressed: () {
-                            setState(() {
-                              _excludeNullDept = !_excludeNullDept;
-                            });
-                            _applySharedFilters();
-                          },
-                          icon: const Icon(Icons.filter_alt),
-                          label: Text(_excludeNullDept
-                              ? 'Exclude Null Dept'
-                              : 'Include Null Dept'),
-                        ),
-                        ElevatedButton(
-                          onPressed: () {
-                            setState(() {
-                              _startDate = null;
-                              _endDate = null;
-                              _selectedDepartment = null;
-                              _selectedRequester = null;
-                              _selectedSupplier = null;
-                              _selectedFamily = null;
-                              _selectedSubFamily = null;
-                              _excludeNullDept = false;
-                            });
-                            _applySharedFilters();
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.grey.shade200,
-                            foregroundColor: Colors.black87,
-                            minimumSize: const Size(40, 40),
-                            padding: EdgeInsets.zero,
-                          ),
-                          child: const Icon(Icons.clear),
-                        ),
-                        Builder(
-                          builder: (context) => ElevatedButton(
-                            onPressed: () async {
-                              final ordersToExport = filteredOrders;
-                              if (ordersToExport.isEmpty) {
-                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                    content: Text(AppLocalizations.of(context)!.noOrdersToExportForSelectedRange)));
-                                return;
-                              }
-                              final confirm = await showDialog<bool>(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  title: Text(AppLocalizations.of(context)!.exportConfirmTitle(ordersToExport.length)),
-                                  content: Text(AppLocalizations.of(context)!.exportConfirmContent(ordersToExport.length)),
-                                  actions: [
-                                    TextButton(
-                                        onPressed: () => Navigator.of(context).pop(false),
-                                        child: Text(AppLocalizations.of(context)!.cancel)),
-                                    ElevatedButton(
-                                        onPressed: () => Navigator.of(context).pop(true),
-                                        child: Text(AppLocalizations.of(context)!.export)),
-                                  ],
-                                ),
-                              );
-                              if (confirm == true) {
-                                await _exportOrdersToExcel(ordersToExport);
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green[700],
-                              foregroundColor: Colors.white,
+                    // Left side - all filter dropdowns in a SingleChildScrollView
+                    Expanded(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            // Date range
+                            SizedBox(
+                              width: 180,
+                              child: OutlinedButton(
+                                onPressed: () async {
+                                  final picked = await showDatePicker(
+                                    context: context,
+                                    initialDate: _startDate ?? DateTime.now(),
+                                    firstDate: DateTime(2020),
+                                    lastDate: DateTime.now(),
+                                  );
+                                  if (picked != null) {
+                                    setState(() => _startDate = picked);
+                                    // Ouvre automatiquement le calendrier To Date
+                                    final endInitial =
+                                        (_endDate != null && !_endDate!.isBefore(picked))
+                                            ? _endDate!
+                                            : picked;
+                                    final pickedEnd = await showDatePicker(
+                                      context: context,
+                                      initialDate: endInitial,
+                                      firstDate: picked,
+                                      lastDate: DateTime.now(),
+                                      helpText: AppLocalizations.of(context)!.selectToDate,
+                                    );
+                                    if (pickedEnd != null) {
+                                      setState(() => _endDate = pickedEnd);
+                                    }
+                                  }
+                                },
+                                child: Text(_startDate != null
+                                    ? DateFormat('dd/MM/yyyy').format(_startDate!)
+                                    : AppLocalizations.of(context)!.fromDate),
+                              ),
                             ),
-                            child: const Text('Export'),
-                          ),
+                            const SizedBox(width: 12),
+                            SizedBox(
+                              width: 180,
+                              child: OutlinedButton(
+                                onPressed: () async {
+                                  final picked = await showDatePicker(
+                                    context: context,
+                                    initialDate: _endDate ?? DateTime.now(),
+                                    firstDate: DateTime(2020),
+                                    lastDate: DateTime.now(),
+                                  );
+                                  if (picked != null) setState(() => _endDate = picked);
+                                },
+                                child: Text(_endDate != null
+                                    ? DateFormat('dd/MM/yyyy').format(_endDate!)
+                                    : AppLocalizations.of(context)!.toDate),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            // Department dropdown
+                            SizedBox(
+                              width: 200,
+                              child: Consumer<DepartmentController>(builder: (context, dc, _) {
+                                final depts = dc.departments
+                                    .map((d) =>
+                                        {'id': d.id?.toString() ?? '', 'name': d.name})
+                                    .toList();
+                                return DropdownButton<String>(
+                                  isExpanded: true,
+                                  value: _selectedDepartment,
+                                  hint: const Text('All Department'),
+                                  items: [
+                                    const DropdownMenuItem(
+                                        value: null,
+                                        child: Text('All Department')),
+                                    ...depts.map((dept) => DropdownMenuItem(
+                                        value: dept['id'] as String,
+                                        child: Text(dept['name'] as String))),
+                                  ],
+                                  onChanged: (val) =>
+                                      setState(() => _selectedDepartment = val),
+                                );
+                              }),
+                            ),
+                            const SizedBox(width: 12),
+                            // Requester dropdown
+                            SizedBox(
+                              width: 200,
+                              child:
+                                  Consumer<UserController>(builder: (context, uc, _) {
+                                final users = uc.users
+                                    .where((u) =>
+                                        (u.role_id == 2) ||
+                                        (u.role != null && u.role!.id == 2))
+                                    .toList();
+                                return DropdownButton<String>(
+                                  isExpanded: true,
+                                  value: _selectedRequester,
+                                  hint: const Text('All Requester'),
+                                  items: [
+                                  const DropdownMenuItem(
+                                    value: null,
+                                    child: Text('All Requester')),
+                                  ...users.map((u) => DropdownMenuItem(
+                                    value: u.id?.toString(),
+                                    child:
+                                      Text(u.username ?? u.name ?? 'Unknown'))),
+                                  ],
+                                  onChanged: (val) =>
+                                    setState(() => _selectedRequester = val),
+                                );
+                              }),
+                            ),
+                            const SizedBox(width: 12),
+                            // Supplier (shared)
+                            SizedBox(
+                              width: 200,
+                              child: DropdownButton<String?>(
+                                isExpanded: true,
+                                value: _selectedSupplier,
+                                hint:
+                                    Text(AppLocalizations.of(context)!.selectSupplier),
+                                items: [
+                                  DropdownMenuItem<String?>(
+                                      value: null,
+                                      child: Text(
+                                          AppLocalizations.of(context)!.allSuppliers)),
+                                  ...suppliers.map((s) => DropdownMenuItem<String>(
+                                      value: s, child: Text(s))),
+                                ],
+                                onChanged: (val) {
+                                  setState(() => _selectedSupplier = val);
+                                  _applySharedFilters();
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            // Family filter for stats
+                            SizedBox(
+                              width: 200,
+                              child: DropdownButton<String?>(
+                                isExpanded: true,
+                                value: _selectedFamily,
+                                hint: Text(AppLocalizations.of(context)!.familyLabel),
+                                items: [
+                                  DropdownMenuItem<String?>(
+                                      value: null,
+                                      child: Text(
+                                          AppLocalizations.of(context)!.allFamilies)),
+                                  ...families.map((f) => DropdownMenuItem<String>(
+                                      value: f, child: Text(f))),
+                                ],
+                                onChanged: (val) {
+                                  setState(() {
+                                    _selectedFamily = val;
+                                    _selectedSubFamily = null; // Reset subfamily when family changes
+                                  });
+                                  _applySharedFilters();
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            // Subfamily filter for stats
+                            SizedBox(
+                              width: 200,
+                              child: DropdownButton<String?>(
+                                isExpanded: true,
+                                value: _selectedSubFamily,
+                                hint: Text(AppLocalizations.of(context)!.subfamilyLabel),
+                                items: [
+                                  DropdownMenuItem<String?>(
+                                      value: null,
+                                      child: Text(AppLocalizations.of(context)!
+                                          .allSubfamilies)),
+                                  ...subfamilies.map((sf) => DropdownMenuItem<String>(
+                                      value: sf, child: Text(sf))),
+                                ],
+                                onChanged: (val) {
+                                  setState(() => _selectedSubFamily = val);
+                                  _applySharedFilters();
+                                },
+                              ),
+                            ),
+                          ],
                         ),
-                        ],
                       ),
                     ),
-                    ElevatedButton(
+                    
+                    const SizedBox(width: 16),
+                    
+                    // Right side - action buttons
+                    Column(
+                      children: [
+                        Row(
+                          children: [
+                            // Apply button
+                            ElevatedButton.icon(
+                              onPressed: _applySharedFilters,
+                              icon: const Icon(Icons.refresh),
+                              label: const Text('Apply'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.deepPurple,
+                                foregroundColor: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            // Clear Filters button - seulement l'icône X
+                            ElevatedButton(
+                              onPressed: () {
+                                setState(() {
+                                  _startDate = null;
+                                  _endDate = null;
+                                  _selectedDepartment = null;
+                                  _selectedRequester = null;
+                                  _selectedSupplier = null;
+                                  _selectedFamily = null;
+                                  _selectedSubFamily = null;
+                                  _excludeNullDept = false;
+                                });
+                                _applySharedFilters();
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.grey.shade200,
+                                foregroundColor: Colors.black87,
+                                padding: const EdgeInsets.all(12),
+                                minimumSize: const Size(48, 48),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              child: const Icon(Icons.clear, size: 20),
+                            ),
+                            const SizedBox(width: 8),
+                            // Export Excel button - seulement le texte
+                            Builder(
+                              builder: (context) => ElevatedButton(
+                                onPressed: () async {
+                                  final ordersToExport = filteredOrders;
+                                  if (ordersToExport.isEmpty) {
+                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                        content: Text(AppLocalizations.of(context)!.noOrdersToExportForSelectedRange)));
+                                    return;
+                                  }
+                                  final confirm = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: Text(AppLocalizations.of(context)!.exportConfirmTitle(ordersToExport.length)),
+                                      content: Text(AppLocalizations.of(context)!.exportConfirmContent(ordersToExport.length)),
+                                      actions: [
+                                        TextButton(
+                                            onPressed: () => Navigator.of(context).pop(false),
+                                            child: Text(AppLocalizations.of(context)!.cancel)),
+                                        ElevatedButton(
+                                            onPressed: () => Navigator.of(context).pop(true),
+                                            child: Text(AppLocalizations.of(context)!.export)),
+                                      ],
+                                    ),
+                                  );
+                                  if (confirm == true) {
+                                    await _exportOrdersToExcel(ordersToExport);
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green[700],
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                ),
+                                child: const Text('Export'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                
+                // Deuxième ligne : bouton Include/Exclude Null Dept tout seul
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    // Exclude Null Dept toggle
+                    ElevatedButton.icon(
                       onPressed: () {
                         setState(() {
-                          _startDate = null;
-                          _endDate = null;
-                          _selectedDepartment = null;
-                          _selectedRequester = null;
-                          _selectedSupplier = null;
-                          _selectedFamily = null;
-                          _selectedSubFamily = null;
-                          _excludeNullDept = false;
+                          _excludeNullDept = !_excludeNullDept;
                         });
                         _applySharedFilters();
                       },
+                      icon: Icon(
+                        _excludeNullDept ? Icons.filter_alt_off : Icons.filter_alt,
+                        size: 18,
+                      ),
+                      label: Text(_excludeNullDept
+                          ? 'Exclude PO without Department'
+                          : 'Include PO without Department'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey.shade200,
-                        foregroundColor: Colors.black87,
-                        minimumSize: const Size(40, 40),
-                        padding: EdgeInsets.zero,
+                        backgroundColor: _excludeNullDept ? Colors.orange.shade100 : Colors.grey.shade100,
+                        foregroundColor: _excludeNullDept ? Colors.orange.shade900 : Colors.black87,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       ),
-                      child: const Icon(Icons.clear),
                     ),
-                    Builder(
-                      builder: (context) => ElevatedButton(
-                        onPressed: () async {
-                          final ordersToExport = filteredOrders;
-                          if (ordersToExport.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                content: Text(AppLocalizations.of(context)!.noOrdersToExportForSelectedRange)));
-                            return;
-                          }
-                          final confirm = await showDialog<bool>(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: Text(AppLocalizations.of(context)!.exportConfirmTitle(ordersToExport.length)),
-                              content: Text(AppLocalizations.of(context)!.exportConfirmContent(ordersToExport.length)),
-                              actions: [
-                                TextButton(
-                                    onPressed: () => Navigator.of(context).pop(false),
-                                    child: Text(AppLocalizations.of(context)!.cancel)),
-                                ElevatedButton(
-                                    onPressed: () => Navigator.of(context).pop(true),
-                                    child: Text(AppLocalizations.of(context)!.export)),
-                              ],
-                            ),
-                          );
-                          if (confirm == true) {
-                            await _exportOrdersToExcel(ordersToExport);
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green[700],
-                          foregroundColor: Colors.white,
+                    const SizedBox(width: 12),
+                    // Petit texte d'information
+                    if (_excludeNullDept)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.shade50,
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: Colors.orange.shade200),
                         ),
-                        child: const Text('Export'),
+                        child: Text(
+                          'Les PO sans département sont exclus',
+                          style: TextStyle(fontSize: 12, color: Colors.orange.shade900),
+                        ),
                       ),
-                    ),
-                  ], // fin children de Wrap
-                ), // fin Wrap
+                  ],
+                ),
+                
                 const SizedBox(height: 12),
                 // Stats summary cards
                 Consumer<StatsController>(builder: (context, statsCtrl, _) {
@@ -1165,205 +1140,207 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                     headingRowColor: MaterialStateProperty.all(
                                       Colors.deepPurple.withOpacity(0.1),
                                     ),
-                                    columnSpacing: 97,
-                                    horizontalMargin: 12,
+                                    columnSpacing: 60,
+                                    horizontalMargin: 6,
                                     columns: [
                                       DataColumn(
-                                        label: GestureDetector(
-                                          onTap: () => setState(() {
-                                            if (_sortBy == 'id') {
-                                              _sortAscending = !_sortAscending;
-                                            } else {
-                                              _sortBy = 'id';
-                                              _sortAscending = false;
-                                            }
-                                          }),
-                                          child: Row(
-                                            children: [
-                                              Text(AppLocalizations.of(context)!
-                                                  .id),
-                                              if (_sortBy == 'id')
-                                                Icon(
-                                                    _sortAscending
-                                                        ? Icons.arrow_upward
-                                                        : Icons.arrow_downward,
+                                        label: SizedBox(
+                                          width: 40,
+                                          child: GestureDetector(
+                                            onTap: () => setState(() {
+                                              if (_sortBy == 'id') {
+                                                _sortAscending = !_sortAscending;
+                                              } else {
+                                                _sortBy = 'id';
+                                                _sortAscending = false;
+                                              }
+                                            }),
+                                            child: Row(
+                                              children: [
+                                                Text(AppLocalizations.of(context)!.id),
+                                                if (_sortBy == 'id')
+                                                  Icon(
+                                                    _sortAscending ? Icons.arrow_upward : Icons.arrow_downward,
                                                     size: 14),
-                                            ],
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       ),
                                       DataColumn(
-                                        label: GestureDetector(
-                                          onTap: () => setState(() {
-                                            if (_sortBy == 'title') {
-                                              _sortAscending = !_sortAscending;
-                                            } else {
-                                              _sortBy = 'title';
-                                              _sortAscending = false;
-                                            }
-                                          }),
-                                          child: Row(
-                                            children: [
-                                              Text(AppLocalizations.of(context)!
-                                                  .title),
-                                              if (_sortBy == 'title')
-                                                Icon(
-                                                    _sortAscending
-                                                        ? Icons.arrow_upward
-                                                        : Icons.arrow_downward,
+                                        label: SizedBox(
+                                          width: 90,
+                                          child: GestureDetector(
+                                            onTap: () => setState(() {
+                                              if (_sortBy == 'title') {
+                                                _sortAscending = !_sortAscending;
+                                              } else {
+                                                _sortBy = 'title';
+                                                _sortAscending = false;
+                                              }
+                                            }),
+                                            child: Row(
+                                              children: [
+                                                Text(AppLocalizations.of(context)!.title),
+                                                if (_sortBy == 'title')
+                                                  Icon(
+                                                    _sortAscending ? Icons.arrow_upward : Icons.arrow_downward,
                                                     size: 14),
-                                            ],
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       ),
                                       DataColumn(
-                                        label: GestureDetector(
-                                          onTap: () => setState(() {
-                                            if (_sortBy == 'product') {
-                                              _sortAscending = !_sortAscending;
-                                            } else {
-                                              _sortBy = 'product';
-                                              _sortAscending = false;
-                                            }
-                                          }),
-                                          child: Row(
-                                            children: [
-                                              Text(AppLocalizations.of(context)!
-                                                  .product),
-                                              if (_sortBy == 'product')
-                                                Icon(
-                                                    _sortAscending
-                                                        ? Icons.arrow_upward
-                                                        : Icons.arrow_downward,
+                                        label: SizedBox(
+                                          width: 125,
+                                          child: GestureDetector(
+                                            onTap: () => setState(() {
+                                              if (_sortBy == 'product') {
+                                                _sortAscending = !_sortAscending;
+                                              } else {
+                                                _sortBy = 'product';
+                                                _sortAscending = false;
+                                              }
+                                            }),
+                                            child: Row(
+                                              children: [
+                                                Text(AppLocalizations.of(context)!.product),
+                                                if (_sortBy == 'product')
+                                                  Icon(
+                                                    _sortAscending ? Icons.arrow_upward : Icons.arrow_downward,
                                                     size: 14),
-                                            ],
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       ),
                                       DataColumn(
-                                        label: GestureDetector(
-                                          onTap: () => setState(() {
-                                            if (_sortBy == 'supplier') {
-                                              _sortAscending = !_sortAscending;
-                                            } else {
-                                              _sortBy = 'supplier';
-                                              _sortAscending = false;
-                                            }
-                                          }),
-                                          child: Row(
-                                            children: [
-                                              Text(AppLocalizations.of(context)!
-                                                  .supplier),
-                                              if (_sortBy == 'supplier')
-                                                Icon(
-                                                    _sortAscending
-                                                        ? Icons.arrow_upward
-                                                        : Icons.arrow_downward,
+                                        label: SizedBox(
+                                          width: 123,
+                                          child: GestureDetector(
+                                            onTap: () => setState(() {
+                                              if (_sortBy == 'supplier') {
+                                                _sortAscending = !_sortAscending;
+                                              } else {
+                                                _sortBy = 'supplier';
+                                                _sortAscending = false;
+                                              }
+                                            }),
+                                            child: Row(
+                                              children: [
+                                                Text(AppLocalizations.of(context)!.supplier),
+                                                if (_sortBy == 'supplier')
+                                                  Icon(
+                                                    _sortAscending ? Icons.arrow_upward : Icons.arrow_downward,
                                                     size: 14),
-                                            ],
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       ),
                                       DataColumn(
-                                        label: GestureDetector(
-                                          onTap: () => setState(() {
-                                            if (_sortBy == 'quantity') {
-                                              _sortAscending = !_sortAscending;
-                                            } else {
-                                              _sortBy = 'quantity';
-                                              _sortAscending = false;
-                                            }
-                                          }),
-                                          child: Row(
-                                            children: [
-                                              Text(AppLocalizations.of(context)!
-                                                  .quantity),
-                                              if (_sortBy == 'quantity')
-                                                Icon(
-                                                    _sortAscending
-                                                        ? Icons.arrow_upward
-                                                        : Icons.arrow_downward,
+                                        label: SizedBox(
+                                          width: 125,
+                                          child: GestureDetector(
+                                            onTap: () => setState(() {
+                                              if (_sortBy == 'quantity') {
+                                                _sortAscending = !_sortAscending;
+                                              } else {
+                                                _sortBy = 'quantity';
+                                                _sortAscending = false;
+                                              }
+                                            }),
+                                            child: Row(
+                                              children: [
+                                                Text(AppLocalizations.of(context)!.quantity),
+                                                if (_sortBy == 'quantity')
+                                                  Icon(
+                                                    _sortAscending ? Icons.arrow_upward : Icons.arrow_downward,
                                                     size: 14),
-                                            ],
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       ),
                                       DataColumn(
-                                        label: GestureDetector(
-                                          onTap: () => setState(() {
-                                            if (_sortBy == 'unitPrice') {
-                                              _sortAscending = !_sortAscending;
-                                            } else {
-                                              _sortBy = 'unitPrice';
-                                              _sortAscending = false;
-                                            }
-                                          }),
-                                          child: Row(
-                                            children: [
-                                              Text(AppLocalizations.of(context)!
-                                                  .unitPrice),
-                                              if (_sortBy == 'unitPrice')
-                                                Icon(
-                                                    _sortAscending
-                                                        ? Icons.arrow_upward
-                                                        : Icons.arrow_downward,
+                                        label: SizedBox(
+                                          width: 125,
+                                          child: GestureDetector(
+                                            onTap: () => setState(() {
+                                              if (_sortBy == 'unitPrice') {
+                                                _sortAscending = !_sortAscending;
+                                              } else {
+                                                _sortBy = 'unitPrice';
+                                                _sortAscending = false;
+                                              }
+                                            }),
+                                            child: Row(
+                                              children: [
+                                                Text(AppLocalizations.of(context)!.unitPrice),
+                                                if (_sortBy == 'unitPrice')
+                                                  Icon(
+                                                    _sortAscending ? Icons.arrow_upward : Icons.arrow_downward,
                                                     size: 14),
-                                            ],
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       ),
                                       DataColumn(
-                                        label: GestureDetector(
-                                          onTap: () => setState(() {
-                                            if (_sortBy == 'totalAmount') {
-                                              _sortAscending = !_sortAscending;
-                                            } else {
-                                              _sortBy = 'totalAmount';
-                                              _sortAscending = false;
-                                            }
-                                          }),
-                                          child: Row(
-                                            children: [
-                                              Text(AppLocalizations.of(context)!
-                                                  .totalPrice),
-                                              if (_sortBy == 'totalAmount')
-                                                Icon(
-                                                    _sortAscending
-                                                        ? Icons.arrow_upward
-                                                        : Icons.arrow_downward,
+                                        label: SizedBox(
+                                          width: 125,
+                                          child: GestureDetector(
+                                            onTap: () => setState(() {
+                                              if (_sortBy == 'totalAmount') {
+                                                _sortAscending = !_sortAscending;
+                                              } else {
+                                                _sortBy = 'totalAmount';
+                                                _sortAscending = false;
+                                              }
+                                            }),
+                                            child: Row(
+                                              children: [
+                                                Text(AppLocalizations.of(context)!.totalPrice),
+                                                if (_sortBy == 'totalAmount')
+                                                  Icon(
+                                                    _sortAscending ? Icons.arrow_upward : Icons.arrow_downward,
                                                     size: 14),
-                                            ],
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       ),
                                       DataColumn(
-                                        label: GestureDetector(
-                                          onTap: () => setState(() {
-                                            if (_sortBy == 'date') {
-                                              _sortAscending = !_sortAscending;
-                                            } else {
-                                              _sortBy = 'date';
-                                              _sortAscending = false;
-                                            }
-                                          }),
-                                          child: Row(
-                                            children: [
-                                              Text(AppLocalizations.of(context)!
-                                                  .date),
-                                              if (_sortBy == 'date')
-                                                Icon(
-                                                    _sortAscending
-                                                        ? Icons.arrow_upward
-                                                        : Icons.arrow_downward,
+                                        label: SizedBox(
+                                          width: 125,
+                                          child: GestureDetector(
+                                            onTap: () => setState(() {
+                                              if (_sortBy == 'date') {
+                                                _sortAscending = !_sortAscending;
+                                              } else {
+                                                _sortBy = 'date';
+                                                _sortAscending = false;
+                                              }
+                                            }),
+                                            child: Row(
+                                              children: [
+                                                Text(AppLocalizations.of(context)!.date),
+                                                if (_sortBy == 'date')
+                                                  Icon(
+                                                    _sortAscending ? Icons.arrow_upward : Icons.arrow_downward,
                                                     size: 14),
-                                            ],
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       ),
                                       DataColumn(
-                                          label: Text(
-                                              AppLocalizations.of(context)!
-                                                  .requester)),
+                                        label: SizedBox(
+                                          width: 125,
+                                          child: Text(AppLocalizations.of(context)!.requester),
+                                        ),
+                                      ),
                                       DataColumn(
                                         label: GestureDetector(
                                           onTap: () => setState(() {
@@ -1409,10 +1386,24 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                             Container(
                                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                                               decoration: BoxDecoration(
-                                                color: order.status == 'approved' ? Colors.green.withOpacity(0.2) : Colors.orange.withOpacity(0.2),
+                                                color: order.status == 'approved'
+                                                    ? const Color.fromARGB(255, 233, 236, 233).withOpacity(0.2)
+                                                    : order.status == 'rejected'
+                                                        ? Colors.red[400]
+                                                        : Colors.orange.withOpacity(0.2),
                                                 borderRadius: BorderRadius.circular(12),
                                               ),
-                                              child: Text(_localizedStatus(context, order.status), style: TextStyle(color: order.status == 'approved' ? Colors.green : Colors.orange, fontWeight: FontWeight.bold)),
+                                              child: Text(
+                                                _localizedStatus(context, order.status),
+                                                style: TextStyle(
+                                                  color: order.status == 'approved'
+                                                      ? const Color.fromARGB(255, 255, 255, 255)
+                                                      : order.status == 'rejected'
+                                                          ? Colors.white
+                                                          : Colors.orange,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
                                             ),
                                           ),
                                           DataCell(IconButton(icon: const Icon(Icons.visibility, color: Colors.blue), onPressed: () => _showOrderDetailsDialog(context, order, userController))),
@@ -1437,10 +1428,24 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                                             decoration: BoxDecoration(
-                                              color: order.status == 'approved' ? Colors.green.withOpacity(0.2) : Colors.orange.withOpacity(0.2),
+                                                color: order.status == 'approved'
+                                                  ? Colors.green
+                                                  : order.status == 'rejected'
+                                                    ? Colors.red[400]
+                                                    : Colors.orange.withOpacity(0.2),
                                               borderRadius: BorderRadius.circular(12),
                                             ),
-                                            child: Text(_localizedStatus(context, order.status), style: TextStyle(color: order.status == 'approved' ? Colors.green : Colors.orange, fontWeight: FontWeight.bold)),
+                                            child: Text(
+                                              _localizedStatus(context, order.status),
+                                              style: TextStyle(
+                                                  color: order.status == 'approved'
+                                                    ? Colors.white
+                                                    : order.status == 'rejected'
+                                                      ? Colors.white
+                                                      : Colors.orange,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
                                           ),
                                         ),
                                         DataCell(IconButton(icon: const Icon(Icons.visibility, color: Colors.blue), onPressed: () => _showOrderDetailsDialog(context, order, userController))),
