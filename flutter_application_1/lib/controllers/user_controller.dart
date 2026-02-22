@@ -11,7 +11,7 @@ import 'dart:convert';
 
 class UserController extends ChangeNotifier {
   bool displaySnackBar = false;
-    bool isLoading = false;
+  bool isLoading = false;
   List<User> users = [];
   String searchText = '';
   String? selectedPermission;
@@ -55,7 +55,6 @@ class UserController extends ChangeNotifier {
   //   }
   // }
 
-
   UserNetwork userNetwork = UserNetwork();
 
   List<User> get filteredUsers {
@@ -63,13 +62,14 @@ class UserController extends ChangeNotifier {
       final matchesSearch = searchText.isEmpty ||
           user.email!.toLowerCase().contains(searchText.toLowerCase()) ||
           user.username!.toLowerCase().contains(searchText.toLowerCase());
-      final matchesPermission = selectedPermission == null || user.permission == selectedPermission;
-      
+      final matchesPermission =
+          selectedPermission == null || user.permission == selectedPermission;
+
       // Fix: Compare boolean isActive with string selectedStatus
-      final statusMatches = selectedStatus == null || 
+      final statusMatches = selectedStatus == null ||
           (user.isActive == true && selectedStatus == 'Active') ||
           (user.isActive == false && selectedStatus == 'Inactive');
-      
+
       return matchesSearch && matchesPermission && statusMatches;
     }).toList();
 
@@ -100,7 +100,7 @@ class UserController extends ChangeNotifier {
     return filtered;
   }
 
-   getUsers() async {
+  getUsers() async {
     users.clear();
     isLoading = true;
     safeNotify();
@@ -109,12 +109,12 @@ class UserController extends ChangeNotifier {
       Response response = await userNetwork.uesresList();
       print('✅ Response received: Status ${response.statusCode}');
       print('📋 Response data: ${response.data}');
-      
+
       if (response.statusCode == 200) {
         if (response.data is List) {
-          users  =  (response.data as List).map((user) {
+          users = (response.data as List).map((user) {
             print('👤 Parsing user: $user');
-            
+
             return User.fromJson(user);
           }).toList();
           isLoading = false;
@@ -122,7 +122,9 @@ class UserController extends ChangeNotifier {
           print('✅ Successfully loaded ${users.length} users');
         } else if (response.data is Map && response.data['results'] is List) {
           // Handle paginated response
-          users = (response.data['results'] as List).map((user) => User.fromJson(user)).toList();
+          users = (response.data['results'] as List)
+              .map((user) => User.fromJson(user))
+              .toList();
           isLoading = false;
           safeNotify();
           print('✅ Successfully loaded ${users.length} users (paginated)');
@@ -184,8 +186,7 @@ class UserController extends ChangeNotifier {
     );
   }
 
-
-  void logout(BuildContext context){
+  void logout(BuildContext context) {
     isLoading = true;
     notifyListeners();
     currentUser = User();
@@ -198,22 +199,25 @@ class UserController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> login(String email, String password,BuildContext context,GlobalKey<FormState>? _formKey) async {
+  Future<void> login(String email, String password, BuildContext context,
+      GlobalKey<FormState>? _formKey) async {
     try {
       // if ((!(_formKey!.currentState!.validate()))&&_formKey!=null) {
-        isLoading = true;
+      isLoading = true;
       notifyListeners();
       Response? response = await userNetwork.login(email, password);
       if (response!.statusCode == 200) {
-        Map<String, dynamic> decodedToken = JwtDecoder.decode(response.data['access']);
+        Map<String, dynamic> decodedToken =
+            JwtDecoder.decode(response.data['access']);
         currentUserId = decodedToken['user_id'];
         selectedUserId = currentUserId;
         currentUser = User.fromJson(response.data['user']);
-        
+
         // Sauvegarder les données utilisateur, token d'accès et refresh token
         final refreshToken = response.data['refresh'];
-        await saveUserData(response.data['access'], response.data['user'], refreshToken: refreshToken);
-        
+        await saveUserData(response.data['access'], response.data['user'],
+            refreshToken: refreshToken);
+
         // navigation decided by role id
         final int? roleId = currentUser.role?.id;
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -238,8 +242,7 @@ class UserController extends ChangeNotifier {
           content: Text('Invalid email or password. Please try again.'),
         );
         ScaffoldMessenger.of(context).showSnackBar(snackBar);
-      }
-      else {
+      } else {
         isLoading = false;
         notifyListeners();
         SnackBar snackBar = SnackBar(
@@ -247,15 +250,14 @@ class UserController extends ChangeNotifier {
           content: Text('An error occurred during login. Please try again.'),
         );
         ScaffoldMessenger.of(context).showSnackBar(snackBar);
-        }
-        isLoading = false;
-        notifyListeners();
-        // return;
+      }
+      isLoading = false;
+      notifyListeners();
+      // return;
       // }
       // else{
 
       // }
-      
     } catch (e) {
       print('Login error: $e');
       isLoading = false;
@@ -270,7 +272,8 @@ class UserController extends ChangeNotifier {
   }
 
   // Sauvegarder les données utilisateur dans SharedPreferences
-  Future<void> saveUserData(String token, Map<String, dynamic> userData, {String? refreshToken}) async {
+  Future<void> saveUserData(String token, Map<String, dynamic> userData,
+      {String? refreshToken}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('auth_token', token);
@@ -294,12 +297,12 @@ class UserController extends ChangeNotifier {
         try {
           // Vérifier si le token est expiré
           bool isExpired = JwtDecoder.isExpired(token);
-          
+
           if (!isExpired) {
             Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
             currentUserId = decodedToken['user_id'];
             selectedUserId = currentUserId;
-            
+
             Map<String, dynamic> userData = jsonDecode(userDataJson);
             if (userData.isNotEmpty) {
               currentUser = User.fromJson(userData);
@@ -344,12 +347,12 @@ class UserController extends ChangeNotifier {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('auth_token', newToken);
           APIS.token = newToken;
-          
+
           // Si un nouveau refresh token est fourni
           if (response.data['refresh'] != null) {
             await prefs.setString('refresh_token', response.data['refresh']);
           }
-          
+
           print('Token refreshed successfully');
           notifyListeners();
           return true;
@@ -381,11 +384,13 @@ class UserController extends ChangeNotifier {
     }
   }
 
-  Future<bool> register(String email, String password, BuildContext context, {bool autoLogin = true}) async {
+  Future<bool> register(String email, String password, BuildContext context,
+      {bool autoLogin = true}) async {
     try {
       isLoading = true;
       notifyListeners();
-      Response response = await userNetwork.register(username: email, password: password);
+      Response response =
+          await userNetwork.register(username: email, password: password);
       if (response.statusCode == 201) {
         isLoading = false;
         notifyListeners();
@@ -393,7 +398,9 @@ class UserController extends ChangeNotifier {
           await login(email, password, context, null);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Registration successful. Please sign in.'), backgroundColor: Colors.green),
+            const SnackBar(
+                content: Text('Registration successful. Please sign in.'),
+                backgroundColor: Colors.green),
           );
         }
         return true;
@@ -420,52 +427,50 @@ class UserController extends ChangeNotifier {
     }
   }
 
-    Future<void> addUser(String email, String password,BuildContext context) async {
-    try{
+  Future<void> addUser(
+      String email, String password, BuildContext context) async {
+    try {
       isLoading = true;
-    notifyListeners();
-    Response response = await userNetwork.register(username: email, password: password);
-    if (response.statusCode == 201) {
-      displaySnackBar = true;
       notifyListeners();
+      Response response =
+          await userNetwork.register(username: email, password: password);
+      if (response.statusCode == 201) {
+        displaySnackBar = true;
+        notifyListeners();
 
-      
-      context.pop();
- 
-    } 
-   
-    // }
-    else {
-      isLoading = false;
-      notifyListeners();
-      SnackBar snackBar = SnackBar(
-        backgroundColor: Colors.red,
-        content: Text('An error occurred during adding user. Please try again.'),
-      );
-      ScaffoldMessenger.of(context).showSnackBar(snackBar);
+        context.pop();
+      }
+
+      // }
+      else {
+        isLoading = false;
+        notifyListeners();
+        SnackBar snackBar = SnackBar(
+          backgroundColor: Colors.red,
+          content:
+              Text('An error occurred during adding user. Please try again.'),
+        );
+        ScaffoldMessenger.of(context).showSnackBar(snackBar);
       }
     } catch (e) {
       print(e);
       isLoading = false;
       notifyListeners();
       SnackBar snackBar = SnackBar(
-
         backgroundColor: Colors.red,
         content: Text('An error occurred during adding user'),
       );
       ScaffoldMessenger.of(context).showSnackBar(snackBar);
-    }  
     }
-
-
-
+  }
 
   Future<User> getDetailedUser(int userId) async {
     isLoading = true;
     notifyListeners();
     Response? response = await userNetwork.getDetailedUser(userId);
     if (response!.statusCode == 200) {
-      User user = User.fromJson(response.data[0]); // <-- Utilise directement response.data
+      User user = User.fromJson(
+          response.data[0]); // <-- Utilise directement response.data
       isLoading = false;
       selectedUser = user;
       notifyListeners();
@@ -477,39 +482,48 @@ class UserController extends ChangeNotifier {
     }
   }
 
-  Future<void> toggleUserStatus({required int id, required bool isActive,context}) async {
+  Future<void> toggleUserStatus(
+      {required int id, required bool isActive, context}) async {
     isLoading = true;
     notifyListeners();
     Map<String, dynamic> data = {
       'is_active': isActive,
     };
-    
-    Response response =await userNetwork.updateAllUsers(data, id);
-      isLoading = false;
-      if(response.statusCode == 200 || response.statusCode == 201){
-        users.firstWhere((user) => user.id == id).isActive = isActive;
-        ScaffoldMessenger.of(context).showSnackBar(
-          
-          SnackBar(
+
+    Response response = await userNetwork.updateAllUsers(data, id);
+    isLoading = false;
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      users.firstWhere((user) => user.id == id).isActive = isActive;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
             backgroundColor: Colors.green,
             content: Text('User status updated successfully')),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
             backgroundColor: Colors.red,
             content: Text('Failed to update user status')),
-        );
-      }
-      
-      notifyListeners();
+      );
+    }
 
-   
-
-
+    notifyListeners();
   }
 
-   Future<String?> updateAllUser(firstName, lastName, email, username, country, state, city, address, location, zipCode,Role role, dynamic department, BuildContext context) async {
+  Future<String?> updateAllUser(
+      firstName,
+      lastName,
+      email,
+      username,
+      country,
+      state,
+      city,
+      address,
+      location,
+      zipCode,
+      Role role,
+      dynamic department,
+      BuildContext context) async {
     // Log start
     try {
       // ignore: avoid_print
@@ -520,44 +534,48 @@ class UserController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final Map<String, dynamic> data ={};
-      Map<String,dynamic> profileData={};
+      final Map<String, dynamic> data = {};
+      Map<String, dynamic> profileData = {};
 
-      if(username!=selectedUser.username){
+      if (username != selectedUser.username) {
         data['username'] = username;
       }
-      if(email!=selectedUser.email){
+      if (email != selectedUser.email) {
         data['email'] = email;
       }
-      if(firstName!=selectedUser.profile?.firstName||lastName!=selectedUser.profile?.lastName||country!=selectedUser.profile?.country||
-          state!=selectedUser.profile?.state||city!=selectedUser.profile?.city||
-          address!=selectedUser.profile?.address||location!=selectedUser.profile?.location||
-          zipCode!=selectedUser.profile?.zipCode){
-       if(firstName!=selectedUser.profile?.firstName){
-        profileData['first_name'] = firstName;
-      }
-      if(lastName!=selectedUser.profile?.lastName){
-        profileData['last_name'] = lastName;
-      }
-      if(country!=selectedUser.profile?.country){
-        profileData['country'] = country;
-      }
-      if(state!=selectedUser.profile?.state){
-        profileData['state'] = state;
-      }
-      if(city!=selectedUser.profile?.city){
-        profileData['city'] = city;
-      }
-      if(address!=selectedUser.profile?.address){
-        profileData['address'] = address;
-      }
-      if(location!=selectedUser.profile?.location){
-        profileData['location'] = location;
-      }
-      if(zipCode!=selectedUser.profile?.zipCode){
-        profileData['zip_code'] = zipCode;
-      }
-      data['profile'] = profileData;
+      if (firstName != selectedUser.profile?.firstName ||
+          lastName != selectedUser.profile?.lastName ||
+          country != selectedUser.profile?.country ||
+          state != selectedUser.profile?.state ||
+          city != selectedUser.profile?.city ||
+          address != selectedUser.profile?.address ||
+          location != selectedUser.profile?.location ||
+          zipCode != selectedUser.profile?.zipCode) {
+        if (firstName != selectedUser.profile?.firstName) {
+          profileData['first_name'] = firstName;
+        }
+        if (lastName != selectedUser.profile?.lastName) {
+          profileData['last_name'] = lastName;
+        }
+        if (country != selectedUser.profile?.country) {
+          profileData['country'] = country;
+        }
+        if (state != selectedUser.profile?.state) {
+          profileData['state'] = state;
+        }
+        if (city != selectedUser.profile?.city) {
+          profileData['city'] = city;
+        }
+        if (address != selectedUser.profile?.address) {
+          profileData['address'] = address;
+        }
+        if (location != selectedUser.profile?.location) {
+          profileData['location'] = location;
+        }
+        if (zipCode != selectedUser.profile?.zipCode) {
+          profileData['zip_code'] = zipCode;
+        }
+        data['profile'] = profileData;
       }
 
       // Always include role_id when a role is provided (server expects a PK)
@@ -568,7 +586,8 @@ class UserController extends ChangeNotifier {
       // Debug: log department info and payload
       try {
         // ignore: avoid_print
-        print('updateAllUser: department -> id=${department?.id}, name=${department?.name}');
+        print(
+            'updateAllUser: department -> id=${department?.id}, name=${department?.name}');
         // ignore: avoid_print
         print('updateAllUser: payload before send -> $data');
       } catch (e) {}
@@ -587,13 +606,16 @@ class UserController extends ChangeNotifier {
       // Debug: log response
       try {
         // ignore: avoid_print
-        print('updateAllUser: response status=${resp.statusCode}, data=${resp.data}');
+        print(
+            'updateAllUser: response status=${resp.statusCode}, data=${resp.data}');
       } catch (e) {}
       // If server returned non-success, show message and abort further processing
       if (!(resp.statusCode == 200 || resp.statusCode == 201)) {
         try {
           final errorMsg = resp.data?.toString() ?? 'Failed to update user';
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erreur serveur: $errorMsg'), backgroundColor: Colors.red));
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text('Erreur serveur: $errorMsg'),
+              backgroundColor: Colors.red));
         } catch (e) {}
         return 'Erreur serveur: ${resp.statusCode}';
       }
@@ -603,7 +625,8 @@ class UserController extends ChangeNotifier {
         var refreshed = await userNetwork.viewUser(selectedUserId!);
         if (refreshed != null) {
           // ignore: avoid_print
-          print('updateAllUser: refreshed selectedUser.depId=${refreshed.depId}, role=${refreshed.role?.id}');
+          print(
+              'updateAllUser: refreshed selectedUser.depId=${refreshed.depId}, role=${refreshed.role?.id}');
           final idx = users.indexWhere((u) => u.id == selectedUserId);
           if (idx != -1) {
             users[idx] = refreshed;
@@ -612,11 +635,16 @@ class UserController extends ChangeNotifier {
         }
 
         // If we requested a department change but the refreshed user doesn't match, try fallback PATCH variants
-        if (department != null && (refreshed == null || refreshed.depId == null || refreshed.depId != department.id)) {
+        if (department != null &&
+            (refreshed == null ||
+                refreshed.depId == null ||
+                refreshed.depId != department.id)) {
           // Inform user we're attempting a fallback update for department
           try {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Tentative de mise à jour du département...'), backgroundColor: Colors.orange),
+              const SnackBar(
+                  content: Text('Tentative de mise à jour du département...'),
+                  backgroundColor: Colors.orange),
             );
           } catch (e) {}
 
@@ -624,19 +652,23 @@ class UserController extends ChangeNotifier {
             {'dep_id': department.id},
             {'department_id': department.id},
             {'department': department.id},
-            {'department': {'id': department.id}},
+            {
+              'department': {'id': department.id}
+            },
           ];
 
           bool patched = false;
           for (final fb in fallbacks) {
             try {
               // ignore: avoid_print
-              print('updateAllUser: trying fallback patch -> ${fb.keys.first} = ${fb.values.first}');
+              print(
+                  'updateAllUser: trying fallback patch -> ${fb.keys.first} = ${fb.values.first}');
               await userNetwork.partialUpdateUser(fb, selectedUserId!);
               // After patch, refresh
               refreshed = await userNetwork.viewUser(selectedUserId!);
               // ignore: avoid_print
-              print('updateAllUser: after fallback ${fb.keys.first} -> refreshed.depId=${refreshed?.depId}');
+              print(
+                  'updateAllUser: after fallback ${fb.keys.first} -> refreshed.depId=${refreshed?.depId}');
               if (refreshed != null && refreshed.depId == department.id) {
                 final idx2 = users.indexWhere((u) => u.id == selectedUserId);
                 if (idx2 != -1) users[idx2] = refreshed;
@@ -653,11 +685,16 @@ class UserController extends ChangeNotifier {
           try {
             if (patched) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Le département a été mis à jour.'), backgroundColor: Colors.green),
+                const SnackBar(
+                    content: Text('Le département a été mis à jour.'),
+                    backgroundColor: Colors.green),
               );
             } else {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Le serveur n\'a pas appliqué le changement de département.'), backgroundColor: Colors.red),
+                const SnackBar(
+                    content: Text(
+                        'Le serveur n\'a pas appliqué le changement de département.'),
+                    backgroundColor: Colors.red),
               );
             }
           } catch (e) {}
@@ -672,12 +709,13 @@ class UserController extends ChangeNotifier {
 
         // Show a success SnackBar so the user sees the update result with returned values
         try {
-          final msg = 'Mise à jour OK: dep=${selectedUser.depId ?? 'n/a'}, role=${selectedUser.role?.id ?? 'n/a'}';
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.green));
+          final msg =
+              'Mise à jour OK: dep=${selectedUser.depId ?? 'n/a'}, role=${selectedUser.role?.id ?? 'n/a'}';
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(msg), backgroundColor: Colors.green));
         } catch (e) {
           // ignore
         }
-
       } catch (e) {
         // ignore
       }
@@ -722,12 +760,9 @@ class UserController extends ChangeNotifier {
   }
 
   /// Defer notifications to avoid calling listeners during widget build
-  void safeNotify(){
+  void safeNotify() {
     Future.microtask(() => notifyListeners());
   }
 
   void notify() {}
 }
-
-
-
