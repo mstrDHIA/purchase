@@ -13,12 +13,6 @@ class StatsController extends ChangeNotifier {
       required String token,
       required String startDate,
       required String endDate,
-      String? department,
-      String? requester,
-      String? supplier,
-      String? family,
-      String? subfamily,
-      bool? excludeNullDept,
     }) async {
       loadingTotalPriceDinar = true;
       errorTotalPriceDinar = null;
@@ -28,12 +22,6 @@ class StatsController extends ChangeNotifier {
           token: token,
           startDate: startDate,
           endDate: endDate,
-          department: department,
-          requester: requester,
-          supplier: supplier,
-          family: family,
-          subfamily: subfamily,
-          excludeNullDept: excludeNullDept,
         );
       } catch (e) {
         errorTotalPriceDinar = e.toString();
