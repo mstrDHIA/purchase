@@ -382,7 +382,7 @@
   "products": "المنتجات",
   "subfamilyLabel": "الفئة الفرعية",
   "unitPrice": "سعر الوحدة",
-  "totalPrice": "السعر الإجمالي",
+  "totalPrice": "السعر الإجمالي لأوامر الشراء الموافق عليها",
   "purchaseOrderApproved": "تمت الموافقة على الطلب!",
   "purchaseOrderRejected": "تم رفض الطلب!",
   "currency": "العملة",

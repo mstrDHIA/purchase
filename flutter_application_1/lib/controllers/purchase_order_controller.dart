@@ -29,10 +29,13 @@ class PurchaseOrderController extends ChangeNotifier {
 				String? search,
 				int? page,
 				int? pageSize,
+				bool silent = false, // true = don't show loading indicator
 		}) async {
-			_isLoading = true;
+			if (!silent) {
+				_isLoading = true;
+				notifyListeners();
+			}
 			_error = null;
-			notifyListeners();
 			try {
 				_orders = await _network.fetchPurchaseOrders(
 					startDate: startDate,
@@ -47,11 +50,18 @@ class PurchaseOrderController extends ChangeNotifier {
 					page: page,
 					pageSize: pageSize,
 				);
+				if (!silent) notifyListeners();
 			} catch (e) {
 				_error = e.toString();
+				if (!silent) notifyListeners();
 			}
-			_isLoading = false;
-			notifyListeners();
+			if (!silent) {
+				_isLoading = false;
+				notifyListeners();
+			} else {
+				// silent refresh: notify only if data changed
+				notifyListeners();
+			}
 		}
 
 	Future<void> addOrder(dynamic orderOrJson) async {

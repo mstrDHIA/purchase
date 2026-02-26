@@ -357,7 +357,7 @@
   "products": "Produits",
   "subfamilyLabel": "Sous-famille",
   "unitPrice": "Prix Unitaire",
-  "totalPrice": "Prix Total",
+  "totalPrice": "Prix total des BC approuvés",
   "purchaseOrderApproved": "Bon approuvé !",
   "purchaseOrderRejected": "Bon rejeté !",
   "currency": "Devise",

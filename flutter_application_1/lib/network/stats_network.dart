@@ -3,7 +3,12 @@ import 'package:dio/dio.dart';
 import 'api.dart';
 
 class StatsNetwork {
-    Future<double> fetchTotalPriceDinar({
+    /// Fetches total prices grouped by currency from the backend.
+    ///
+    /// The endpoint now returns a JSON object containing keys such as
+    /// `total_price_tnd`, `total_price_usd` and `total_price_eur` with numeric
+    /// values. The method returns a map from the response keys to doubles.
+    Future<Map<String, double>> fetchTotalPriceDinar({
       required String token,
       required String startDate,
       required String endDate,
@@ -37,11 +42,26 @@ class StatsNetwork {
             },
           ),
         );
+        print('📥 Response status: ${response.statusCode}');
+        print('📥 Raw response data: ${response.data}');
         if (response.statusCode == 200) {
-          if (response.data is Map && response.data.containsKey('total_price_dinar')) {
-            return (response.data['total_price_dinar'] as num).toDouble();
-          } else if (response.data is num) {
-            return (response.data as num).toDouble();
+          if (response.data is Map) {
+            // convert any numeric values to double (backend sometimes sends
+            // numbers as strings so handle both cases).
+            final Map<String, double> result = {};
+            response.data.forEach((key, value) {
+              if (value is num) {
+                result[key.toString()] = value.toDouble();
+              } else if (value is String) {
+                // try parsing strings like "123.45" or "0" etc.
+                final parsed = double.tryParse(value.replaceAll(',', ''));
+                if (parsed != null) {
+                  result[key.toString()] = parsed;
+                }
+              }
+            });
+            print('✅ Parsed total price map: $result');
+            return result;
           } else {
             throw Exception('Format de réponse inattendu: ${response.data}');
           }

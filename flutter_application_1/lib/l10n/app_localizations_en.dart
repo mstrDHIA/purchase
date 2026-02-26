@@ -1048,7 +1048,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get unitPrice => 'Unit Price';
 
   @override
-  String get totalPrice => 'Total Price';
+  String get totalPrice => 'Total price of approved PO';
 
   @override
   String get purchaseOrderApproved => 'Order approved!';

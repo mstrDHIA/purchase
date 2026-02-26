@@ -4,9 +4,9 @@ import '../network/stats_network.dart';
 
 class StatsController extends ChangeNotifier {
 
-    // Total price dinar
-    double? totalPriceDinar;
-    bool loadingTotalPriceDinar = false;
+    // Total prices by currency (e.g. {'total_price_tnd':1234.0, 'total_price_usd':56.0})
+    Map<String, double>? totalPriceByCurrency;
+    bool loadingTotalPriceDinar = false; // kept for backwards-compat naming
     String? errorTotalPriceDinar;
 
     Future<void> fetchTotalPriceDinar({
@@ -24,7 +24,7 @@ class StatsController extends ChangeNotifier {
       errorTotalPriceDinar = null;
       notifyListeners();
       try {
-        totalPriceDinar = await _network.fetchTotalPriceDinar(
+        totalPriceByCurrency = await _network.fetchTotalPriceDinar(
           token: token,
           startDate: startDate,
           endDate: endDate,
@@ -37,7 +37,7 @@ class StatsController extends ChangeNotifier {
         );
       } catch (e) {
         errorTotalPriceDinar = e.toString();
-        totalPriceDinar = null;
+        totalPriceByCurrency = null;
       }
       loadingTotalPriceDinar = false;
       notifyListeners();

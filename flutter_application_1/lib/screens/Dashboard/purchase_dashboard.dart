@@ -110,6 +110,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
               subfamily: _selectedSubFamily,
               supplier: _selectedSupplier,
               excludeNullDept: _excludeNullDept,
+              silent: true, // don't show loading indicator for background refresh
             );
       }
     });
@@ -1133,25 +1134,35 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                 const SizedBox(height: 12),
                 // Stats summary cards
                 Consumer2<StatsController, UserController>(builder: (context, statsCtrl, userCtrl, _) {
-                  // Appel du total price dinar si besoin
-                  if (statsCtrl.totalPriceDinar == null && !statsCtrl.loadingTotalPriceDinar) {
+                  // trigger fetch once when necessary
+                  if ((statsCtrl.totalPriceByCurrency == null) &&
+                      !statsCtrl.loadingTotalPriceDinar) {
                     final token = APIS.token;
                     final start = _startDate ?? DateTime.now().subtract(const Duration(days: 90));
                     final end = _endDate ?? DateTime.now();
-                    final startStr = DateTime(start.year, start.month, start.day).toIso8601String().split('T').first;
-                    final endStr = DateTime(end.year, end.month, end.day).toIso8601String().split('T').first;
+                    final startStr = DateTime(start.year, start.month, start.day)
+                        .toIso8601String()
+                        .split('T')
+                        .first;
+                    final endStr = DateTime(end.year, end.month, end.day)
+                        .toIso8601String()
+                        .split('T')
+                        .first;
                     Future.microtask(() => statsCtrl.fetchTotalPriceDinar(
-                      token: token,
-                      startDate: startStr,
-                      endDate: endStr,
-                      department: _selectedDepartment,
-                      requester: _selectedRequester,
-                      supplier: _selectedSupplier,
-                      family: _selectedFamily,
-                      subfamily: _selectedSubFamily,
-                      excludeNullDept: _excludeNullDept,
-                    ));
+                          token: token,
+                          startDate: startStr,
+                          endDate: endStr,
+                          department: _selectedDepartment,
+                          requester: _selectedRequester,
+                          supplier: _selectedSupplier,
+                          family: _selectedFamily,
+                          subfamily: _selectedSubFamily,
+                          excludeNullDept: _excludeNullDept,
+                        ));
                   }
+                  // build basic cards and then currency cards
+                  // debug log current stats map each rebuild
+                  print('🔢 stats map inside widget: ${statsCtrl.totalPriceByCurrency}');
                   return Row(
                     children: [
                       Expanded(
@@ -1196,24 +1207,60 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                         ),
                       ),
                       const SizedBox(width: 12),
+                      // single horizontal card for all currencies with heading
                       Expanded(
                         child: Card(
                           color: Colors.green[50],
                           child: Padding(
                             padding: const EdgeInsets.all(12),
-                            child: Column(children: [
-                              Text(AppLocalizations.of(context)!.totalPrice + ' (TND)', style: TextStyle(color: Colors.green[900])),
-                              const SizedBox(height: 8),
-                              if (statsCtrl.loadingTotalPriceDinar)
-                                const CircularProgressIndicator(strokeWidth: 2)
-                              else if (statsCtrl.errorTotalPriceDinar != null)
-                                Text(AppLocalizations.of(context)!.error, style: TextStyle(color: Colors.red[700]))
-                              else if (statsCtrl.totalPriceDinar != null)
-                                Text('${statsCtrl.totalPriceDinar!.toStringAsFixed(2)} DT',
-                                    style: const TextStyle(fontSize: 18, color: Colors.green))
-                              else
-                                const Text('-', style: TextStyle(fontSize: 18)),
-                            ]),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text('Total price of approved PO ',
+                                    style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.green[900])),
+                                const SizedBox(height: 8),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    if (statsCtrl.loadingTotalPriceDinar)
+                                      const CircularProgressIndicator(
+                                          strokeWidth: 2)
+                                    else if (statsCtrl.errorTotalPriceDinar != null)
+                                      Text(AppLocalizations.of(context)!.error,
+                                          style: TextStyle(
+                                              color: Colors.red[700]))
+                                    else if (statsCtrl.totalPriceByCurrency != null)
+                                      for (var currency in ['TND', 'USD', 'EUR'])
+                                        Builder(builder: (context) {
+                                          final key =
+                                              'total_price_${currency.toLowerCase()}';
+                                          final value = statsCtrl
+                                              .totalPriceByCurrency![key];
+                                          // display symbol if available
+                                          final symbol =
+                                              _currencySymbol(currency);
+                                          final suffix =
+                                              symbol.isNotEmpty ? symbol : currency;
+                                          return Text(
+                                            value != null
+                                                ? '${value.toStringAsFixed(2)} $suffix'
+                                                : '- $suffix',
+                                            style: const TextStyle(
+                                                fontSize: 16,
+                                                color: Colors.green),
+                                          );
+                                        })
+                                    else
+                                      const Text('-',
+                                          style: TextStyle(fontSize: 18)),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),

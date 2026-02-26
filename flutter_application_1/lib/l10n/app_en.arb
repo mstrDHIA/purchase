@@ -343,7 +343,7 @@
   "products": "Products",
   "subfamilyLabel": "Subfamily",
   "unitPrice": "Unit Price",
-  "totalPrice": "Total Price",
+  "totalPrice": "Total price of approved PO",
   "purchaseOrderApproved": "Order approved!",
   "purchaseOrderRejected": "Order rejected!",
   "currency": "Currency",
