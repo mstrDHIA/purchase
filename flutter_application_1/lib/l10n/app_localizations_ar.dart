@@ -550,6 +550,42 @@ class AppLocalizationsAr extends AppLocalizations {
   String get passwordsDoNotMatch => 'كلمات المرور غير متطابقة';
 
   @override
+  String get rejectReasons => 'أسباب الرفض';
+
+  @override
+  String get searchRejectReasons => 'ابحث عن أسباب الرفض...';
+
+  @override
+  String get addRejectReason => 'أضف سبب رفض';
+
+  @override
+  String get editRejectReason => 'تعديل سبب الرفض';
+
+  @override
+  String get rejectReasonLabel => 'السبب';
+
+  @override
+  String get descriptionOptional => 'الوصف (اختياري)';
+
+  @override
+  String get rejectReasonHint => 'أدخل الوصف...';
+
+  @override
+  String get deleteRejectReason => 'حذف السبب';
+
+  @override
+  String get deleteRejectReasonConfirm => 'هل أنت متأكد أنك تريد حذف هذا السبب؟';
+
+  @override
+  String get saved => 'تم الحفظ';
+
+  @override
+  String get noRejectReasons => 'لا توجد أسباب للرفض';
+
+  @override
+  String get refresh => 'تحديث';
+
+  @override
   String get country => 'الدولة';
 
   @override
@@ -1284,9 +1320,6 @@ class AppLocalizationsAr extends AppLocalizations {
   String get pleaseEnterName => 'يرجى إدخال اسم';
 
   @override
-  String get descriptionOptional => 'الوصف (اختياري)';
-
-  @override
   String get departmentAdded => 'تمت إضافة القسم';
 
   @override
@@ -1442,4 +1475,10 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get requestSavedAddAnother => 'تم حفظ الطلب. إضافة آخر؟';
+
+  @override
+  String get excludePoWithoutDepartment => 'استبعاد أوامر الشراء بدون قسم';
+
+  @override
+  String get includePoWithoutDepartment => 'تضمين أوامر الشراء بدون قسم';
 }

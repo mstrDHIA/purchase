@@ -1051,22 +1051,26 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
         textColor = Colors.grey.shade800;
       }
     }
-    // Ajout du badge coloré pour Priority
+    // Ajout du badge coloré et traduction pour Priority
+    String displayValue = value;
     if (label == 'Priority') {
-      if (value.toLowerCase() == 'high') {
+      final lv = value.toLowerCase();
+      if (lv == 'high') {
         badgeColor = Colors.red.shade100;
         textColor = Colors.red.shade800;
-      } else if (value.toLowerCase() == 'medium') {
+        displayValue = AppLocalizations.of(context)!.high;
+      } else if (lv == 'medium') {
         badgeColor = Colors.orange.shade100;
         textColor = Colors.orange.shade800;
-      } else if (value.toLowerCase() == 'low') {
+        displayValue = AppLocalizations.of(context)!.medium;
+      } else if (lv == 'low') {
         badgeColor = Colors.blue.shade100;
         textColor = Colors.blue.shade800;
+        displayValue = AppLocalizations.of(context)!.low;
       }
     }
 
     // Localized display value for Status
-    String displayValue = value;
     if (label == 'Status') {
       final lv = value.toLowerCase();
       displayValue = lv == 'pending'

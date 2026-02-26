@@ -629,21 +629,6 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
     // Backend now returns only approved/rejected orders, so use them directly
     final ordersFromServer = poController.orders;
 
-    // Get suppliers list for dropdown
-    // Combine suppliers present in orders with suppliers from SupplierController
-    final controllerApproved = supplierController.suppliers
-        .where((s) =>
-            (s.approvalStatus ?? '').toLowerCase() == 'approved' &&
-            (s.name?.isNotEmpty ?? false))
-        .map((s) => s.name!.trim())
-        .toSet();
-    final ordersSuppliers = _getSuppliers(ordersFromServer).toSet();
-    final suppliers = (controllerApproved..addAll(ordersSuppliers)).toList()
-      ..sort();
-
-    // Families and Subfamilies for filters
-    final families = _getFamilies(ordersFromServer);
-    final subfamilies = _getSubFamilies(ordersFromServer, _selectedFamily);
 
     // Apply filters (search, supplier and date range)
     final filter = _searchCtrl.text.toLowerCase();
@@ -692,6 +677,74 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
 
       return true;
     }).toList();
+
+    // Recompute dropdown options from filtered data so filters cascade properly
+    final controllerApproved = supplierController.suppliers
+        .where((s) =>
+            (s.approvalStatus ?? '').toLowerCase() == 'approved' &&
+            (s.name?.isNotEmpty ?? false))
+        .map((s) => s.name!.trim())
+        .toSet();
+    final ordersSuppliers = _getSuppliers(filteredOrders).toSet();
+    List<String> suppliers;
+    if (ordersSuppliers.isNotEmpty) {
+      // when we have orders after filtering, show only the suppliers actually
+      // present in those orders (cascade behaviour)
+      suppliers = ordersSuppliers.toList();
+    } else {
+      // no orders yet (initial state or filters removed) – fall back to all
+      // approved suppliers so dropdown isn't empty
+      suppliers = controllerApproved.toList();
+    }
+    suppliers.sort();
+
+    // families/subfamilies cascade like suppliers: use filteredOrders when
+    // available, otherwise fall back to the master list (ordersFromServer).
+    final families = (filteredOrders.isNotEmpty)
+        ? _getFamilies(filteredOrders)
+        : _getFamilies(ordersFromServer);
+    final subfamilies = (filteredOrders.isNotEmpty)
+        ? _getSubFamilies(filteredOrders, _selectedFamily)
+        : _getSubFamilies(ordersFromServer, _selectedFamily);
+
+    // Build requester list based primarily on department users, then narrow
+    // to those having a PO if possible. This ensures the dropdown isn’t empty
+    // even when filteredOrders doesn’t reference any of them.
+    final deptUsers = userController.users.where((u) {
+      final isReq = ((u.role_id == 2) ||
+          (u.role != null && u.role!.id == 2));
+      if (!isReq) return false;
+      if (_selectedDepartment != null && _selectedDepartment!.isNotEmpty) {
+        return u.depId?.toString() == _selectedDepartment;
+      }
+      return true;
+    }).toList();
+
+    List<User> filteredRequesters;
+    if (filteredOrders.isNotEmpty) {
+      // gather requester ids from orders (stringified for safety)
+      final orderIds = filteredOrders
+          .map((o) => o.requestedByUser?.toString())
+          .where((id) => id != null)
+          .toSet();
+      final matched = deptUsers
+          .where((u) => orderIds.contains(u.id?.toString()))
+          .toList();
+      filteredRequesters = matched.isNotEmpty ? matched : deptUsers;
+    } else {
+      filteredRequesters = deptUsers;
+    }
+    filteredRequesters.sort((a, b) {
+      final aName = (a.username ?? a.name ?? '').toLowerCase();
+      final bName = (b.username ?? b.name ?? '').toLowerCase();
+      return aName.compareTo(bName);
+    });
+    // reset selection if no longer valid
+    if (_selectedRequester != null &&
+        !filteredRequesters
+            .any((u) => u.id?.toString() == _selectedRequester)) {
+      _selectedRequester = null;
+    }
 
     // Apply sorting
     _sortOrders(filteredOrders, _sortBy, _sortAscending);
@@ -782,6 +835,8 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                     if (pickedEnd != null) {
                                       setState(() => _endDate = pickedEnd);
                                     }
+                                    // auto apply filters
+                                    _applySharedFilters();
                                   }
                                 },
                                 child: Text(_startDate != null
@@ -800,7 +855,10 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                     firstDate: DateTime(2020),
                                     lastDate: DateTime.now(),
                                   );
-                                  if (picked != null) setState(() => _endDate = picked);
+                                  if (picked != null) {
+                                    setState(() => _endDate = picked);
+                                    _applySharedFilters();
+                                  }
                                 },
                                 child: Text(_endDate != null
                                     ? DateFormat('dd/MM/yyyy').format(_endDate!)
@@ -819,48 +877,49 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                 return DropdownButton<String>(
                                   isExpanded: true,
                                   value: _selectedDepartment,
-                                  hint: const Text('All Department'),
+                                  hint: Text(AppLocalizations.of(context)!.all),
                                   items: [
-                                    const DropdownMenuItem(
+                                    DropdownMenuItem(
                                         value: null,
-                                        child: Text('All Department')),
+                                        child: Text(AppLocalizations.of(context)!.all)),
                                     ...depts.map((dept) => DropdownMenuItem(
                                         value: dept['id'] as String,
                                         child: Text(dept['name'] as String))),
                                   ],
-                                  onChanged: (val) =>
-                                      setState(() => _selectedDepartment = val),
+                                  onChanged: (val) {
+                                      setState(() {
+                                        _selectedDepartment = val;
+                                        // clearing requester whenever department changes
+                                        _selectedRequester = null;
+                                      });
+                                      _applySharedFilters();
+                                    },
                                 );
                               }),
                             ),
                             const SizedBox(width: 12),
-                            // Requester dropdown
+                            // Requester dropdown – options derived from filteredOrders
                             SizedBox(
                               width: 200,
-                              child:
-                                  Consumer<UserController>(builder: (context, uc, _) {
-                                final users = uc.users
-                                    .where((u) =>
-                                        (u.role_id == 2) ||
-                                        (u.role != null && u.role!.id == 2))
-                                    .toList();
-                                return DropdownButton<String>(
-                                  isExpanded: true,
-                                  value: _selectedRequester,
-                                  hint: const Text('All Requester'),
-                                  items: [
-                                  const DropdownMenuItem(
+                              child: DropdownButton<String>(
+                                isExpanded: true,
+                                value: _selectedRequester,
+                                hint: Text(AppLocalizations.of(context)!.all),
+                                items: [
+                                  DropdownMenuItem(
                                     value: null,
-                                    child: Text('All Requester')),
-                                  ...users.map((u) => DropdownMenuItem(
-                                    value: u.id?.toString(),
-                                    child:
-                                      Text(u.username ?? u.name ?? 'Unknown'))),
-                                  ],
-                                  onChanged: (val) =>
-                                    setState(() => _selectedRequester = val),
-                                );
-                              }),
+                                    child: Text(AppLocalizations.of(context)!.all),
+                                  ),
+                                  ...filteredRequesters.map((u) => DropdownMenuItem(
+                                      value: u.id?.toString(),
+                                      child:
+                                          Text(u.username ?? u.name ?? 'Unknown'))),
+                                ],
+                                onChanged: (val) {
+                                  setState(() => _selectedRequester = val);
+                                  _applySharedFilters();
+                                },
+                              ),
                             ),
                             const SizedBox(width: 12),
                             // Supplier (shared)
@@ -944,16 +1003,18 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                       children: [
                         Row(
                           children: [
-                            // Apply button
+                            // Apply button is no longer needed; filters run automatically.
+                            /*
                             ElevatedButton.icon(
                               onPressed: _applySharedFilters,
                               icon: const Icon(Icons.refresh),
-                              label: const Text('Apply'),
+                              label: Text(AppLocalizations.of(context)!.apply),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.deepPurple,
                                 foregroundColor: Colors.white,
                               ),
                             ),
+                            */
                             const SizedBox(width: 8),
                             // Clear Filters button - seulement l'icône X
                             ElevatedButton(
@@ -979,7 +1040,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                               ),
-                              child: const Icon(Icons.clear, size: 20),
+                              child: Icon(Icons.clear, size: 20, semanticLabel: AppLocalizations.of(context)!.clearFilters),
                             ),
                             const SizedBox(width: 8),
                             // Export Excel button - seulement le texte
@@ -1016,7 +1077,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                   foregroundColor: Colors.white,
                                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                                 ),
-                                child: const Text('Export'),
+                                child: Text(AppLocalizations.of(context)!.export),
                               ),
                             ),
                           ],
@@ -1042,9 +1103,9 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                         _excludeNullDept ? Icons.filter_alt_off : Icons.filter_alt,
                         size: 18,
                       ),
-                      label: Text(_excludeNullDept
-                          ? 'Exclude PO without Department'
-                          : 'Include PO without Department'),
+                        label: Text(_excludeNullDept
+                          ? AppLocalizations.of(context)!.excludePoWithoutDepartment
+                          : AppLocalizations.of(context)!.includePoWithoutDepartment),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _excludeNullDept ? Colors.orange.shade100 : Colors.grey.shade100,
                         foregroundColor: _excludeNullDept ? Colors.orange.shade900 : Colors.black87,
@@ -1098,7 +1159,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                           child: Padding(
                             padding: const EdgeInsets.all(12),
                             child: Column(children: [
-                              Text('Total PO'),
+                              Text(AppLocalizations.of(context)!.poStatistics),
                               const SizedBox(height: 8),
                               Text(statsCtrl.summaryTotal.toString(),
                                   style: const TextStyle(fontSize: 18, color: Colors.blue))
@@ -1112,7 +1173,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                           child: Padding(
                             padding: const EdgeInsets.all(12),
                             child: Column(children: [
-                              Text('Rejected'),
+                              Text(AppLocalizations.of(context)!.statusRejected),
                               const SizedBox(height: 8),
                               Text(statsCtrl.summaryRejected.toString(),
                                   style: const TextStyle(fontSize: 18, color: Colors.red))
@@ -1126,7 +1187,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                           child: Padding(
                             padding: const EdgeInsets.all(12),
                             child: Column(children: [
-                              Text('Rejection Rate'),
+                              Text(AppLocalizations.of(context)!.rejectionRate),
                               const SizedBox(height: 8),
                               Text('${(statsCtrl.summaryRejectionRate * 100).toStringAsFixed(2)}%',
                                   style: const TextStyle(fontSize: 18, color: Colors.orange))
@@ -1141,12 +1202,12 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                           child: Padding(
                             padding: const EdgeInsets.all(12),
                             child: Column(children: [
-                              Text('Total en Dinar (TND)', style: TextStyle(color: Colors.green[900])),
+                              Text(AppLocalizations.of(context)!.totalPrice + ' (TND)', style: TextStyle(color: Colors.green[900])),
                               const SizedBox(height: 8),
                               if (statsCtrl.loadingTotalPriceDinar)
                                 const CircularProgressIndicator(strokeWidth: 2)
                               else if (statsCtrl.errorTotalPriceDinar != null)
-                                Text('Erreur', style: TextStyle(color: Colors.red[700]))
+                                Text(AppLocalizations.of(context)!.error, style: TextStyle(color: Colors.red[700]))
                               else if (statsCtrl.totalPriceDinar != null)
                                 Text('${statsCtrl.totalPriceDinar!.toStringAsFixed(2)} DT',
                                     style: const TextStyle(fontSize: 18, color: Colors.green))

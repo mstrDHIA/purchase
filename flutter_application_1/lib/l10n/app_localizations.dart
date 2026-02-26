@@ -1171,6 +1171,78 @@ abstract class AppLocalizations {
   /// **'Passwords do not match'**
   String get passwordsDoNotMatch;
 
+  /// No description provided for @rejectReasons.
+  ///
+  /// In en, this message translates to:
+  /// **'Reject Reasons'**
+  String get rejectReasons;
+
+  /// No description provided for @searchRejectReasons.
+  ///
+  /// In en, this message translates to:
+  /// **'Search reject reasons...'**
+  String get searchRejectReasons;
+
+  /// No description provided for @addRejectReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Reject Reason'**
+  String get addRejectReason;
+
+  /// No description provided for @editRejectReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Reject Reason'**
+  String get editRejectReason;
+
+  /// No description provided for @rejectReasonLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Reason'**
+  String get rejectReasonLabel;
+
+  /// No description provided for @descriptionOptional.
+  ///
+  /// In en, this message translates to:
+  /// **'Description (optional)'**
+  String get descriptionOptional;
+
+  /// No description provided for @rejectReasonHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter description...'**
+  String get rejectReasonHint;
+
+  /// No description provided for @deleteRejectReason.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Reason'**
+  String get deleteRejectReason;
+
+  /// No description provided for @deleteRejectReasonConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this reason?'**
+  String get deleteRejectReasonConfirm;
+
+  /// No description provided for @saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get saved;
+
+  /// No description provided for @noRejectReasons.
+  ///
+  /// In en, this message translates to:
+  /// **'No reject reasons'**
+  String get noRejectReasons;
+
+  /// No description provided for @refresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get refresh;
+
   /// No description provided for @country.
   ///
   /// In en, this message translates to:
@@ -2479,12 +2551,6 @@ abstract class AppLocalizations {
   /// **'Please enter a name'**
   String get pleaseEnterName;
 
-  /// No description provided for @descriptionOptional.
-  ///
-  /// In en, this message translates to:
-  /// **'Description (optional)'**
-  String get descriptionOptional;
-
   /// No description provided for @departmentAdded.
   ///
   /// In en, this message translates to:
@@ -2778,6 +2844,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Request saved. Add another?'**
   String get requestSavedAddAnother;
+
+  /// No description provided for @excludePoWithoutDepartment.
+  ///
+  /// In en, this message translates to:
+  /// **'Exclude PO without Department'**
+  String get excludePoWithoutDepartment;
+
+  /// No description provided for @includePoWithoutDepartment.
+  ///
+  /// In en, this message translates to:
+  /// **'Include PO without Department'**
+  String get includePoWithoutDepartment;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {

@@ -198,6 +198,18 @@
   "openFileToSelectImage": "Ouvrir un fichier pour sélectionner une image",
   "save": "Enregistrer",
   "passwordsDoNotMatch": "Les mots de passe ne correspondent pas",
+  "rejectReasons": "Raisons de rejet",
+  "searchRejectReasons": "Rechercher des raisons de rejet...",
+  "addRejectReason": "Ajouter une raison de rejet",
+  "editRejectReason": "Modifier une raison de rejet",
+  "rejectReasonLabel": "Raison",
+  "descriptionOptional": "Description (facultative)",
+  "rejectReasonHint": "Entrez la description...",
+  "deleteRejectReason": "Supprimer la raison",
+  "deleteRejectReasonConfirm": "Êtes-vous sûr de vouloir supprimer cette raison ?",
+  "saved": "Enregistré",
+  "noRejectReasons": "Pas de raisons de rejet",
+  "refresh": "Rafraîchir",
   "userProfile": "Profil utilisateur",
   "firstName": "Prénom",
   "lastName": "Nom de famille",
@@ -484,5 +496,7 @@
   "userNotLoggedInError": "L'utilisateur n'est pas connecté",
   "pleaseAddAtLeastOneProduct": "Veuillez ajouter au moins un produit",
   "eachProductMustHaveNameAndQuantity": "Chaque produit doit avoir un nom et une quantité",
-  "requestSavedAddAnother": "Demande enregistrée. Ajouter une autre?"
+  "requestSavedAddAnother": "Demande enregistrée. Ajouter une autre?",
+  "excludePoWithoutDepartment": "Exclure les BC sans département",
+  "includePoWithoutDepartment": "Inclure les BC sans département"
 }

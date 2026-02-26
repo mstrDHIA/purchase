@@ -194,6 +194,18 @@
   "save": "حفظ",
   "passwordsDoNotMatch": "كلمات المرور غير متطابقة",
   "userProfile": "ملف المستخدم الشخصي",
+  "rejectReasons": "أسباب الرفض",
+  "searchRejectReasons": "ابحث عن أسباب الرفض...",
+  "addRejectReason": "أضف سبب رفض",
+  "editRejectReason": "تعديل سبب الرفض",
+  "rejectReasonLabel": "السبب",
+  "descriptionOptional": "الوصف (اختياري)",
+  "rejectReasonHint": "أدخل الوصف...",
+  "deleteRejectReason": "حذف السبب",
+  "deleteRejectReasonConfirm": "هل أنت متأكد أنك تريد حذف هذا السبب؟",
+  "saved": "تم الحفظ",
+  "noRejectReasons": "لا توجد أسباب للرفض",
+  "refresh": "تحديث",
   "firstName": "الاسم الأول",
   "lastName": "اسم العائلة",
   "country": "الدولة",
@@ -479,5 +491,7 @@
   "userNotLoggedInError": "المستخدم غير مسجل دخول",
   "pleaseAddAtLeastOneProduct": "يرجى إضافة منتج واحد على الأقل",
   "eachProductMustHaveNameAndQuantity": "يجب أن يكون لكل منتج اسم وكمية",
-  "requestSavedAddAnother": "تم حفظ الطلب. إضافة آخر؟"
+  "requestSavedAddAnother": "تم حفظ الطلب. إضافة آخر؟",
+  "excludePoWithoutDepartment": "استبعاد أوامر الشراء بدون قسم",
+  "includePoWithoutDepartment": "تضمين أوامر الشراء بدون قسم"
 }

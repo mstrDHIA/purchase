@@ -550,6 +550,42 @@ class AppLocalizationsFr extends AppLocalizations {
   String get passwordsDoNotMatch => 'Les mots de passe ne correspondent pas';
 
   @override
+  String get rejectReasons => 'Raisons de rejet';
+
+  @override
+  String get searchRejectReasons => 'Rechercher des raisons de rejet...';
+
+  @override
+  String get addRejectReason => 'Ajouter une raison de rejet';
+
+  @override
+  String get editRejectReason => 'Modifier une raison de rejet';
+
+  @override
+  String get rejectReasonLabel => 'Raison';
+
+  @override
+  String get descriptionOptional => 'Description (optionnelle)';
+
+  @override
+  String get rejectReasonHint => 'Entrez la description...';
+
+  @override
+  String get deleteRejectReason => 'Supprimer la raison';
+
+  @override
+  String get deleteRejectReasonConfirm => 'Êtes-vous sûr de vouloir supprimer cette raison ?';
+
+  @override
+  String get saved => 'Enregistré';
+
+  @override
+  String get noRejectReasons => 'Pas de raisons de rejet';
+
+  @override
+  String get refresh => 'Rafraîchir';
+
+  @override
   String get country => 'Pays';
 
   @override
@@ -1284,9 +1320,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get pleaseEnterName => 'Veuillez entrer un nom';
 
   @override
-  String get descriptionOptional => 'Description (optionnelle)';
-
-  @override
   String get departmentAdded => 'Département ajouté';
 
   @override
@@ -1442,4 +1475,10 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get requestSavedAddAnother => 'Demande enregistrée. Ajouter une autre?';
+
+  @override
+  String get excludePoWithoutDepartment => 'Exclure les BC sans département';
+
+  @override
+  String get includePoWithoutDepartment => 'Inclure les BC sans département';
 }

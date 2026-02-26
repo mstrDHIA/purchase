@@ -182,6 +182,18 @@
   "save": "Save",
   "passwordsDoNotMatch": "Passwords do not match",
   "userProfile": "User Profile",
+  "rejectReasons": "Reject Reasons",
+  "searchRejectReasons": "Search reject reasons...",
+  "addRejectReason": "Add Reject Reason",
+  "editRejectReason": "Edit Reject Reason",
+  "rejectReasonLabel": "Reason",
+  "descriptionOptional": "Description (optional)",
+  "rejectReasonHint": "Enter description...",
+  "deleteRejectReason": "Delete Reason",
+  "deleteRejectReasonConfirm": "Are you sure you want to delete this reason?",
+  "saved": "Saved",
+  "noRejectReasons": "No reject reasons",
+  "refresh": "Refresh",
   "firstName": "First name",
   "lastName": "Last name",
   "country": "Country",
@@ -468,5 +480,7 @@
   "userNotLoggedInError": "User is not logged in",
   "pleaseAddAtLeastOneProduct": "Please add at least one product",
   "eachProductMustHaveNameAndQuantity": "Each product must have a name and quantity",
-  "requestSavedAddAnother": "Request saved. Add another?"
+  "requestSavedAddAnother": "Request saved. Add another?",
+  "excludePoWithoutDepartment": "Exclude PO without Department",
+  "includePoWithoutDepartment": "Include PO without Department"
 }
