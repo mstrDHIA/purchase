@@ -13,6 +13,9 @@ class PurchaseOrder {
   DateTime? updatedAt;
   String? priority;
   String? currency; // ISO code or currency label (e.g. 'USD', 'EUR' or 'Dollar')
+  // department information may be either a simple string or nested object
+  String? department;
+  int? departmentId;
   int? purchaseRequestId;
   String? refuseReason;
   bool? isArchived;
@@ -59,6 +62,22 @@ class PurchaseOrder {
     priority = json['priority'];
     // Accept either 'currency' (ISO code) or older names
     currency = json['currency']?.toString() ?? json['currency_code']?.toString();
+
+    // Department may come as string or nested map
+    if (json['department'] is Map) {
+      final dept = json['department'] as Map<String, dynamic>;
+      department = dept['name']?.toString() ?? dept['department']?.toString();
+      if (dept['id'] != null) {
+        departmentId = dept['id'] is int
+            ? dept['id']
+            : int.tryParse(dept['id'].toString());
+      }
+    } else if (json['department'] != null) {
+      department = json['department']?.toString();
+    } else if (json['department_name'] != null) {
+      department = json['department_name']?.toString();
+    }
+
     refuseReason = json['refuse_reason'];
     isArchived = json['is_archived'] ?? false;
   }
@@ -102,6 +121,8 @@ class PurchaseOrder {
     data['updated_at'] = updatedAt?.toIso8601String();
     data['priority'] = priority;
     data['currency'] = currency;
+    if (department != null) data['department'] = department;
+    if (departmentId != null) data['department_id'] = departmentId;
     data['refuse_reason'] = refuseReason;
     data['is_archived'] = isArchived ?? false;
     purchaseRequestId != null ? data['purchase_request_id'] = purchaseRequestId : null;

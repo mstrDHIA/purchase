@@ -18,6 +18,10 @@ class PurchaseRequest {
   String? requestedByUsername;
   String? priority;
 
+  // department info may come from API and is used by dashboard/export
+  String? department;
+  int? departmentId;
+
   bool? isArchived;
 
   PurchaseRequest(
@@ -94,18 +98,30 @@ class PurchaseRequest {
       approvedBy = json['approved_by'] is int ? json['approved_by'] : int.tryParse(json['approved_by']?.toString() ?? '');
     }
     priority = json['priority'];
+    // parse department similar to PurchaseOrder
+    if (json['department'] is Map) {
+      final dept = json['department'] as Map<String, dynamic>;
+      department = dept['name']?.toString() ?? dept['department']?.toString();
+      if (dept['id'] != null) {
+        departmentId = dept['id'] is int
+            ? dept['id']
+            : int.tryParse(dept['id'].toString());
+      }
+    } else if (json['department'] != null) {
+      department = json['department']?.toString();
+    } else if (json['department_name'] != null) {
+      department = json['department_name']?.toString();
+    }
     isArchived = json['is_archived'] ?? false;
+  }
 
   // get priority => null;
 
   // get quantity => null;
 
-  
-}
-
   DateTime? get dueDate => endDate;
 
-Map<String, dynamic> toJson() {
+  Map<String, dynamic> toJson() {
   final Map<String, dynamic> data = <String, dynamic>{};
   data['id'] = id;
   data['start_date'] = startDate?.toIso8601String();
@@ -124,6 +140,8 @@ Map<String, dynamic> toJson() {
   data['approved_by_username'] = approvedByUsername;
   data['requested_by_username'] = requestedByUsername;
   data['priority'] = priority;
+  if (department != null) data['department'] = department;
+  if (departmentId != null) data['department_id'] = departmentId;
   data['is_archived'] = isArchived ?? false;
   return data;
   }

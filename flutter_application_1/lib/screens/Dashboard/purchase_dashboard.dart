@@ -9,6 +9,8 @@ import 'package:flutter_application_1/controllers/supplier_controller.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
 import 'package:flutter_application_1/controllers/department_controller.dart';
 import 'package:flutter_application_1/controllers/stats_controller.dart';
+import 'package:flutter_application_1/controllers/purchase_request_controller.dart';
+import 'package:flutter_application_1/models/purchase_request.dart';
 import 'package:flutter_application_1/controllers/reset_notifier.dart';
 import 'package:flutter_application_1/models/user_model.dart';
 import 'package:flutter_application_1/network/api.dart';
@@ -59,7 +61,33 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
         await Future.wait<dynamic>([
           context.read<UserController>().getUsers(),
           context.read<DepartmentController>().fetchDepartments(),
+          context.read<PurchaseRequestController>().fetchRequests(
+              context, context.read<UserController>().currentUser),
         ]);
+        // temporary debug output to help diagnosis
+        try {
+          final deptPairs = context
+              .read<DepartmentController>()
+              .departments
+              .map((d) => '${d.id}:${d.name}')
+              .toList();
+          final userPairs = context
+              .read<UserController>()
+              .users
+              .map((u) => '${u.id}:${u.depId}')
+              .toList();
+          debugPrint('DEBUG Departments (id:name): $deptPairs');
+          debugPrint('DEBUG Users (id:depId): $userPairs');
+          // log PR departments for diagnosis
+          try {
+            final prPairs = context
+                .read<PurchaseRequestController>()
+                .requests
+                .map((p) => '${p.id}:${p.department ?? ''}')
+                .toList();
+            debugPrint('DEBUG PRs (id:dept): $prPairs');
+          } catch (_) {}
+        } catch (_) {}
       } catch (_) {}
 
       if (!mounted) return;
@@ -110,7 +138,6 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
               subfamily: _selectedSubFamily,
               supplier: _selectedSupplier,
               excludeNullDept: _excludeNullDept,
-              silent: true, // don't show loading indicator for background refresh
             );
       }
     });
@@ -217,28 +244,55 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
   }
 
   String _getRequesterName(dynamic order, UserController userController) {
-    // Prefer explicit requester username if provided by API
+    // Try explicit fields coming from the API first (several possible keys)
     try {
-      final reqName = (order.requestedByUsername ?? '').toString().trim();
-      if (reqName.isNotEmpty) return reqName;
-    } catch (_) {}
+      final explicitUsername = (order.requestedByUsername ?? order.requested_by_username ?? '').toString().trim();
+      if (explicitUsername.isNotEmpty) return explicitUsername;
 
-    // Fallback: try to resolve from loaded users by id
-    try {
-      final uid = order.requestedByUser;
-      if (uid != null) {
-        // Attempt to find a matching user; if username is empty, return placeholder instead of raw id
-        final found = userController.users.firstWhere(
-          (u) => u.id == uid,
-          orElse: () => User(id: uid, username: ''),
-        );
-        final username = (found.username ?? '').toString().trim();
-        if (username.isNotEmpty) return username;
-        // If users are not yet resolved, show a friendly placeholder
-        return '-';
+      final explicitName = (order.requestedByName ?? order.requested_by_name ?? order.requesterName ?? '').toString().trim();
+      if (explicitName.isNotEmpty) return explicitName;
+
+      // Some payloads include a nested requester object
+      final reqObj = order.requested_by ?? order.requester;
+      if (reqObj != null) {
+        if (reqObj is Map) {
+          final name = (reqObj['first_name'] ?? reqObj['name'] ?? reqObj['username'] ?? reqObj['email'] ?? '').toString().trim();
+          if (name.isNotEmpty) return name;
+        } else {
+          final s = reqObj.toString().trim();
+          if (s.isNotEmpty) return s;
+        }
       }
     } catch (_) {}
+
+    // Fallback: resolve by requester id using loaded users and prefer a readable display name
+    try {
+      final uid = order.requestedByUser ?? order.requested_by_user ?? order.requesterId ?? order.requester;
+      if (uid != null) {
+        final uidIntStr = uid.toString();
+        final found = userController.users.firstWhere(
+          (u) => u.id?.toString() == uidIntStr,
+          orElse: () => User(id: null, username: '', email: ''),
+        );
+        // Prefer full name (first + last), then username, then email, then id
+        final fullName = '${found.firstName ?? ''} ${(found.lastName ?? '')}'.trim();
+        if (fullName.isNotEmpty) return fullName;
+        if ((found.username ?? '').toString().trim().isNotEmpty) return found.username!.toString().trim();
+        if ((found.email ?? '').toString().trim().isNotEmpty) return found.email!.toString().trim();
+        // As a last resort, return the raw id string
+        return uidIntStr;
+      }
+    } catch (_) {}
+
     return '-';
+  }
+
+  String _userDisplayName(User u) {
+    final fullName = '${u.firstName ?? ''} ${(u.lastName ?? '')}'.trim();
+    if (fullName.isNotEmpty) return fullName;
+    if ((u.username ?? '').toString().trim().isNotEmpty) return u.username!.toString().trim();
+    if ((u.email ?? '').toString().trim().isNotEmpty) return u.email!.toString().trim();
+    return u.id?.toString() ?? '-';
   }
 
   String _localizedStatus(BuildContext context, String? status) {
@@ -249,6 +303,152 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
     if (s == 'rejected') return loc.rejected;
     // fallback to raw status or dash
     return status ?? '-';
+  }
+
+  /// Determine department name for an order.  The API often doesn't include
+  /// it, so fall back to looking up the requester user's department and then
+  /// finding the department's name from the controller list.
+  String _getOrderDepartment(dynamic order, DepartmentController deptCtrl,
+      UserController userCtrl,
+      [PurchaseRequestController? prCtrl]) {
+    // First attempt to resolve via requester user, as backend "department" field
+    // often contains the static value "Logistics" and is unreliable.
+    try {
+      final uid = order.requestedByUser ?? order.requested_by_user ?? order.requester;
+      if (uid != null) {
+        final uidStr = uid.toString();
+        User? user;
+        for (var u in userCtrl.users) {
+          if (u.id?.toString() == uidStr) {
+            user = u;
+            break;
+          }
+        }
+        if (user != null && user.depId != null) {
+          final depStr = user.depId!.toString();
+          for (var d in deptCtrl.departments) {
+            if (d.id?.toString() == depStr) return d.name;
+          }
+        }
+      }
+    } catch (_) {}
+
+    // 1) If server provided a department field (string or map) try to use it
+    try {
+      final deptField = order.department;
+      if (deptField != null) {
+        if (deptField is Map) {
+          final name = deptField['name']?.toString() ?? deptField['department']?.toString();
+          if (name != null && name.trim().isNotEmpty) return name.trim();
+          final idVal = deptField['id'] ?? deptField['department_id'];
+          if (idVal != null) {
+            final idStr = idVal.toString();
+            for (var d in deptCtrl.departments) {
+              if (d.id?.toString() == idStr) return d.name;
+            }
+          }
+        } else {
+          final name = deptField.toString();
+          if (name.trim().isNotEmpty) return name.trim();
+        }
+      }
+    } catch (_) {}
+
+    // 2) Try order-level department id fields (department_id, departmentId, etc.)
+    try {
+      // If order is a Map-like object, use its keys as a fallback
+      Map<String, dynamic>? orderMap;
+      if (order is Map<String, dynamic>) orderMap = Map<String, dynamic>.from(order);
+      else {
+        try {
+          final maybeMap = (order as dynamic).toJson();
+          if (maybeMap is Map<String, dynamic>) orderMap = Map<String, dynamic>.from(maybeMap);
+        } catch (_) {}
+      }
+
+      final candidates = <dynamic>[];
+      if (orderMap != null) {
+        candidates.add(orderMap['department_id']);
+        candidates.add(orderMap['departmentId']);
+        candidates.add(orderMap['department']);
+        candidates.add(orderMap['department_name']);
+        candidates.add(orderMap['departmentName']);
+      }
+      // also include direct fields if present on the object
+      try {
+        candidates.add(order.department_id);
+      } catch (_) {}
+      try {
+        candidates.add(order.departmentId);
+      } catch (_) {}
+      try {
+        candidates.add(order.department);
+      } catch (_) {}
+
+      for (var od in candidates) {
+        if (od == null) continue;
+        final odStr = od.toString();
+        // If od is a map with name/id
+        if (od is Map) {
+          final name = od['name'] ?? od['department'] ?? od['department_name'];
+          if (name != null && name.toString().trim().isNotEmpty) return name.toString().trim();
+          final idVal = od['id'] ?? od['department_id'];
+          if (idVal != null) {
+            final idStr = idVal.toString();
+            for (var d in deptCtrl.departments) if (d.id?.toString() == idStr) return d.name;
+          }
+        }
+        for (var d in deptCtrl.departments) if (d.id?.toString() == odStr) return d.name;
+      }
+    } catch (_) {}
+
+    // 3) Fallback: derive from requester user's depId (robustly compare string/int)
+    try {
+      final uid = order.requestedByUser ?? order.requested_by_user ?? order.requester;
+      if (uid != null) {
+        final uidStr = uid.toString();
+        User? user;
+        for (var u in userCtrl.users) {
+          if (u.id?.toString() == uidStr) {
+            user = u;
+            break;
+          }
+        }
+        if (user != null) {
+          final depId = user.depId;
+          if (depId != null) {
+            final depStr = depId.toString();
+            for (var d in deptCtrl.departments) {
+              if (d.id?.toString() == depStr) return d.name;
+            }
+          }
+        }
+      }
+    } catch (_) {}
+
+    // 4) Check linked purchase request if still unresolved
+    try {
+      if (prCtrl != null && order.purchaseRequestId != null) {
+        final prId = order.purchaseRequestId is int
+            ? order.purchaseRequestId
+            : int.tryParse(order.purchaseRequestId.toString());
+        if (prId != null) {
+          final match = prCtrl.requests
+              .firstWhere((p) => p.id == prId, orElse: () => PurchaseRequest());
+          if (match.department != null && match.department!.trim().isNotEmpty) {
+            return match.department!.trim();
+          }
+          if (match.departmentId != null) {
+            final depStr = match.departmentId.toString();
+            for (var d in deptCtrl.departments) {
+              if (d.id?.toString() == depStr) return d.name;
+            }
+          }
+        }
+      }
+    } catch (_) {}
+
+    return ''; // unknown / not resolvable
   }
 
   void _showOrderDetailsDialog(
@@ -712,9 +912,6 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
     // to those having a PO if possible. This ensures the dropdown isn’t empty
     // even when filteredOrders doesn’t reference any of them.
     final deptUsers = userController.users.where((u) {
-      final isReq = ((u.role_id == 2) ||
-          (u.role != null && u.role!.id == 2));
-      if (!isReq) return false;
       if (_selectedDepartment != null && _selectedDepartment!.isNotEmpty) {
         return u.depId?.toString() == _selectedDepartment;
       }
@@ -790,6 +987,35 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
       appBar:
           StandardHeader(title: AppLocalizations.of(context)!.poDashboardTitle),
       backgroundColor: const Color(0xFFF6F7FB),
+      floatingActionButton: FloatingActionButton(
+        tooltip: 'Debug info',
+        child: const Icon(Icons.bug_report),
+        onPressed: () {
+          final deptPairs = context
+              .read<DepartmentController>()
+              .departments
+              .map((d) => '${d.id}:${d.name}')
+              .join(', ');
+          final userPairs = context
+              .read<UserController>()
+              .users
+              .map((u) => '${u.id}:${u.depId}')
+              .join(', ');
+          showDialog(
+              context: context,
+              builder: (_) => AlertDialog(
+                    title: const Text('Debug info'),
+                    content: SingleChildScrollView(
+                      child: Text('Departments: $deptPairs\nUsers(id:depId): $userPairs'),
+                    ),
+                    actions: [
+                      TextButton(
+                          onPressed: () => Navigator.of(context).pop(),
+                          child: const Text('OK'))
+                    ],
+                  ));
+        },
+      ),
       body: Column(
         children: [
           // ========== STATS FILTERS (top) ==========
@@ -906,16 +1132,23 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                 isExpanded: true,
                                 value: _selectedRequester,
                                 hint: Text(AppLocalizations.of(context)!.all),
-                                items: [
-                                  DropdownMenuItem(
+                                items: (() {
+                                  final items = <DropdownMenuItem<String>>[];
+                                  items.add(DropdownMenuItem(
                                     value: null,
                                     child: Text(AppLocalizations.of(context)!.all),
-                                  ),
-                                  ...filteredRequesters.map((u) => DropdownMenuItem(
-                                      value: u.id?.toString(),
-                                      child:
-                                          Text(u.username ?? u.name ?? 'Unknown'))),
-                                ],
+                                  ));
+                                  final seen = <String>{};
+                                  for (var u in filteredRequesters) {
+                                    final key = u.id?.toString() ?? (u.username ?? u.email ?? '');
+                                    if (key.isEmpty || seen.contains(key)) continue;
+                                    seen.add(key);
+                                    items.add(DropdownMenuItem(
+                                        value: u.id?.toString(),
+                                        child: Text(_userDisplayName(u))));
+                                  }
+                                  return items;
+                                })(),
                                 onChanged: (val) {
                                   setState(() => _selectedRequester = val);
                                   _applySharedFilters();
@@ -1161,8 +1394,6 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                         ));
                   }
                   // build basic cards and then currency cards
-                  // debug log current stats map each rebuild
-                  print('🔢 stats map inside widget: ${statsCtrl.totalPriceByCurrency}');
                   return Row(
                     children: [
                       Expanded(
@@ -1216,7 +1447,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text('Total price of approved PO ',
+                                Text(AppLocalizations.of(context)!.totalPrice,
                                     style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,
@@ -1240,15 +1471,10 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                               'total_price_${currency.toLowerCase()}';
                                           final value = statsCtrl
                                               .totalPriceByCurrency![key];
-                                          // display symbol if available
-                                          final symbol =
-                                              _currencySymbol(currency);
-                                          final suffix =
-                                              symbol.isNotEmpty ? symbol : currency;
                                           return Text(
                                             value != null
-                                                ? '${value.toStringAsFixed(2)} $suffix'
-                                                : '- $suffix',
+                                                ? '${value.toStringAsFixed(2)} $currency'
+                                                : '- $currency',
                                             style: const TextStyle(
                                                 fontSize: 16,
                                                 color: Colors.green),
@@ -1534,6 +1760,32 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                           ),
                                         ),
                                       ),
+                                      DataColumn(
+                                        label: SizedBox(
+                                          width: 120,
+                                          child: GestureDetector(
+                                            onTap: () => setState(() {
+                                              if (_sortBy == 'department') {
+                                                _sortAscending = !_sortAscending;
+                                              } else {
+                                                _sortBy = 'department';
+                                                _sortAscending = false;
+                                              }
+                                            }),
+                                            child: Row(
+                                              children: [
+                                                Text(AppLocalizations.of(context)!.department),
+                                                if (_sortBy == 'department')
+                                                  Icon(
+                                                    _sortAscending
+                                                        ? Icons.arrow_upward
+                                                        : Icons.arrow_downward,
+                                                    size: 14),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
                                       DataColumn(label: Text('')),
                                     ],
                                     rows: paginatedProductRows.map((row) {
@@ -1541,6 +1793,11 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                       final product = row['product'];
 
                                       if (product == null) {
+                                        final deptName = _getOrderDepartment(
+                                            order,
+                                            context.read<DepartmentController>(),
+                                            userController,
+                                            context.read<PurchaseRequestController>());
                                         return DataRow(cells: [
                                           DataCell(Text(order.id.toString())),
                                           DataCell(Text(_safeString(order.title ?? ''))),
@@ -1575,6 +1832,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                               ),
                                             ),
                                           ),
+                                          DataCell(Text(deptName)),
                                           DataCell(IconButton(icon: const Icon(Icons.visibility, color: Colors.blue), onPressed: () => _showOrderDetailsDialog(context, order, userController))),
                                         ]);
                                       }
@@ -1583,6 +1841,11 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                       final quantity = product.quantity ?? 0;
                                       final totalAmount = (quantity is int ? quantity.toDouble() : quantity as double) * (unitPrice is int ? unitPrice.toDouble() : unitPrice as double);
 
+                                      final deptName = _getOrderDepartment(
+                                          order,
+                                          context.read<DepartmentController>(),
+                                          userController,
+                                          context.read<PurchaseRequestController>());
                                       return DataRow(cells: [
                                         DataCell(Text(order.id.toString())),
                                         DataCell(Text(_safeString(order.title ?? ''))),
@@ -1617,6 +1880,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                             ),
                                           ),
                                         ),
+                                        DataCell(Text(deptName)),
                                         DataCell(IconButton(icon: const Icon(Icons.visibility, color: Colors.blue), onPressed: () => _showOrderDetailsDialog(context, order, userController))),
                                       ]);
                                     }).toList(),
@@ -1666,6 +1930,8 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
 
       final excel = ex.Excel.createExcel();
       final sheet = excel[AppLocalizations.of(context)!.poDashboardTitle];
+      // make sure the dashboard sheet is selected when opening
+      excel.setDefaultSheet(sheet.sheetName);
 
       // Header row (styled)
       final headerStyle = ex.CellStyle(
@@ -1675,26 +1941,28 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
       final titleCellStyle = ex.CellStyle(fontColorHex: "#1E88E5");
 
       final loc = AppLocalizations.of(context)!;
+      // build header row without title, add currency and department columns (currency moved next to total price)
       sheet.appendRow([
         loc.id,
-        loc.title,
         loc.product,
         loc.supplier,
         loc.quantity,
         loc.unitPrice,
         loc.totalPrice,
+        loc.currency,
         loc.date,
         loc.requester,
         loc.status,
+        loc.department,
       ]);
 
       // Apply header style and set column widths for readability
-      for (var c = 0; c < 10; c++) {
+      for (var c = 0; c < 11; c++) {
         final cell = sheet
             .cell(ex.CellIndex.indexByColumnRow(columnIndex: c, rowIndex: 0));
         cell.cellStyle = headerStyle;
       }
-      // Override ID and Title header styles for improved readability
+      // Override ID and Currency header styles for improved readability
       sheet
           .cell(ex.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0))
           .cellStyle = idCellStyle;
@@ -1703,15 +1971,16 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
           .cellStyle = titleCellStyle;
       // Set some reasonable column widths
       sheet.setColWidth(0, 8); // ID
-      sheet.setColWidth(1, 30); // Title
-      sheet.setColWidth(2, 30); // Product
-      sheet.setColWidth(3, 20); // Supplier
-      sheet.setColWidth(4, 10); // Quantity
-      sheet.setColWidth(5, 12); // Unit Price
-      sheet.setColWidth(6, 14); // Total Amount
+      sheet.setColWidth(1, 30); // Product
+      sheet.setColWidth(2, 20); // Supplier
+      sheet.setColWidth(3, 10); // Quantity
+      sheet.setColWidth(4, 12); // Unit Price
+      sheet.setColWidth(5, 14); // Total Amount
+      sheet.setColWidth(6, 10); // Currency
       sheet.setColWidth(7, 12); // Date
       sheet.setColWidth(8, 18); // Requester
       sheet.setColWidth(9, 12); // Status
+      sheet.setColWidth(10, 18); // Department
 
       for (var order in orders) {
         final products = order.products;
@@ -1721,17 +1990,27 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
 
         if (products == null || products.isEmpty) {
           // Single row when no products
+          String deptName = _getOrderDepartment(
+              order,
+              context.read<DepartmentController>(),
+              context.read<UserController>(),
+              context.read<PurchaseRequestController>());
+          if (deptName.isEmpty) {
+            deptName = (order.department?.toString() ?? '').trim();
+            if (deptName.isEmpty) deptName = '-';
+          }
           sheet.appendRow([
             order.id?.toString() ?? '-',
-            (order.title?.toString() ?? '-'),
             '-', // Product
             '-', // Supplier
             0, // Quantity
             0, // Unit Price
             0.0, // Total Amount
+            order.currency?.toString() ?? '',
             orderDate,
             _getRequesterName(order, context.read<UserController>()),
             _localizedStatus(context, order.status),
+            deptName,
           ]);
         } else {
           for (var product in products) {
@@ -1742,18 +2021,27 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                     (unitPrice is int
                         ? unitPrice.toDouble()
                         : unitPrice as double));
+            String deptName = _getOrderDepartment(
+                order,
+                context.read<DepartmentController>(),
+                context.read<UserController>());
+            if (deptName.isEmpty) {
+              deptName = (order.department?.toString() ?? '').trim();
+              if (deptName.isEmpty) deptName = '-';
+            }
             // Each product line repeats the PO ID and Title (previous behavior)
             sheet.appendRow([
               order.id?.toString() ?? '-',
-              (order.title?.toString() ?? '-'),
               product.product?.toString() ?? '-',
               product.supplier?.toString() ?? '-',
               quantity, // numeric
               unitPrice, // numeric
               totalAmount, // numeric
+              order.currency?.toString() ?? '',
               orderDate,
               _getRequesterName(order, context.read<UserController>()),
               _localizedStatus(context, order.status),
+              deptName,
             ]);
           }
         }
