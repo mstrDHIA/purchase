@@ -11,6 +11,7 @@ import 'package:flutter_application_1/controllers/department_controller.dart';
 import 'package:flutter_application_1/controllers/stats_controller.dart';
 import 'package:flutter_application_1/controllers/reset_notifier.dart';
 import 'package:flutter_application_1/models/user_model.dart';
+import 'package:flutter_application_1/models/department.dart';
 import 'package:flutter_application_1/network/api.dart';
 import '../../l10n/app_localizations.dart';
 import 'package:flutter_application_1/widgets/standard_header.dart';
@@ -43,6 +44,8 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
   String? _selectedSubFamily;
   DateTime? _startDate;
   DateTime? _endDate;
+  // currency filter (for both UI and export)
+  String? _selectedCurrency;
   // Shared stats filters
   String? _selectedDepartment;
   String? _selectedRequester;
@@ -109,6 +112,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
               family: _selectedFamily,
               subfamily: _selectedSubFamily,
               supplier: _selectedSupplier,
+              currency: _selectedCurrency,
               excludeNullDept: _excludeNullDept,
               silent: true, // don't show loading indicator for background refresh
             );
@@ -139,6 +143,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
           family: _selectedFamily,
           subfamily: _selectedSubFamily,
           supplier: _selectedSupplier,
+          currency: _selectedCurrency,
           excludeNullDept: _excludeNullDept,
         );
       } catch (statsError) {
@@ -156,6 +161,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
           supplier: _selectedSupplier,
           family: _selectedFamily,
           subfamily: _selectedSubFamily,
+          currency: _selectedCurrency,
           excludeNullDept: _excludeNullDept,
         );
       } catch (totalError) {
@@ -174,6 +180,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
           family: _selectedFamily,
           subfamily: _selectedSubFamily,
           supplier: _selectedSupplier,
+          currency: _selectedCurrency,
           excludeNullDept: _excludeNullDept,
         );
       } catch (poError) {
@@ -652,6 +659,12 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
         if (!hasSupplier) return false;
       }
 
+      // Filter by currency if selected
+      if (_selectedCurrency != null && _selectedCurrency!.isNotEmpty) {
+        final curr = (order.currency ?? '').toString().trim();
+        if (curr != _selectedCurrency) return false;
+      }
+
       // Filter by family if selected
       if (_selectedFamily != null && _selectedFamily!.isNotEmpty) {
         final hasFamily = order.products?.any(
@@ -707,6 +720,23 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
     final subfamilies = (filteredOrders.isNotEmpty)
         ? _getSubFamilies(filteredOrders, _selectedFamily)
         : _getSubFamilies(ordersFromServer, _selectedFamily);
+
+    // currencies cascade similar to other dropdowns
+    final ordersCurrencies = filteredOrders
+        .map((o) => (o.currency ?? '').toString().trim())
+        .where((c) => c.isNotEmpty)
+        .toSet();
+    List<String> currencies;
+    if (ordersCurrencies.isNotEmpty) {
+      currencies = ordersCurrencies.toList();
+    } else {
+      final masterCurrencies = ordersFromServer
+          .map((o) => (o.currency ?? '').toString().trim())
+          .where((c) => c.isNotEmpty)
+          .toSet();
+      currencies = masterCurrencies.toList();
+    }
+    currencies.sort();
 
     // Build requester list based primarily on department users, then narrow
     // to those having a PO if possible. This ensures the dropdown isn’t empty
@@ -867,6 +897,29 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                               ),
                             ),
                             const SizedBox(width: 12),
+                            // Currency dropdown
+                            SizedBox(
+                              width: 120,
+                              child: DropdownButton<String?>(
+                                isExpanded: true,
+                                value: _selectedCurrency,
+                                hint: Text(AppLocalizations.of(context)!.currency),
+                                items: [
+                                  DropdownMenuItem<String?>(
+                                      value: null,
+                                      child: Text(AppLocalizations.of(context)!.all)),
+                                  ...currencies.map((c) => DropdownMenuItem<String?>(
+                                      value: c, child: Text(c))),
+                                ],
+                                onChanged: (val) {
+                                  setState(() {
+                                    _selectedCurrency = val;
+                                  });
+                                  _applySharedFilters();
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: 12),
                             // Department dropdown
                             SizedBox(
                               width: 200,
@@ -925,7 +978,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                             const SizedBox(width: 12),
                             // Supplier (shared)
                             SizedBox(
-                              width: 200,
+                              width: 150,
                               child: DropdownButton<String?>(
                                 isExpanded: true,
                                 value: _selectedSupplier,
@@ -1657,6 +1710,12 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
   Future<void> _exportOrdersToExcel(List orders) async {
     // Build excel file with same columns as the datatable
     try {
+      // reapply currency filter just in case caller passed unfiltered list
+      if (_selectedCurrency != null && _selectedCurrency!.isNotEmpty) {
+        orders = orders
+            .where((o) => (o.currency ?? '').toString().trim() == _selectedCurrency)
+            .toList();
+      }
       if (orders.isEmpty) {
         if (mounted)
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -1665,7 +1724,9 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
       }
 
       final excel = ex.Excel.createExcel();
-      final sheet = excel[AppLocalizations.of(context)!.poDashboardTitle];
+      final sheetName = AppLocalizations.of(context)!.poDashboardTitle;
+      final sheet = excel[sheetName];
+      excel.setDefaultSheet(sheetName);
 
       // Header row (styled)
       final headerStyle = ex.CellStyle(
@@ -1677,7 +1738,8 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
       final loc = AppLocalizations.of(context)!;
       sheet.appendRow([
         loc.id,
-        loc.title,
+        loc.department,
+        loc.currency,
         loc.product,
         loc.supplier,
         loc.quantity,
@@ -1689,7 +1751,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
       ]);
 
       // Apply header style and set column widths for readability
-      for (var c = 0; c < 10; c++) {
+      for (var c = 0; c < 11; c++) {
         final cell = sheet
             .cell(ex.CellIndex.indexByColumnRow(columnIndex: c, rowIndex: 0));
         cell.cellStyle = headerStyle;
@@ -1704,31 +1766,81 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
       // Set some reasonable column widths
       sheet.setColWidth(0, 8); // ID
       sheet.setColWidth(1, 30); // Title
-      sheet.setColWidth(2, 30); // Product
-      sheet.setColWidth(3, 20); // Supplier
-      sheet.setColWidth(4, 10); // Quantity
-      sheet.setColWidth(5, 12); // Unit Price
-      sheet.setColWidth(6, 14); // Total Amount
-      sheet.setColWidth(7, 12); // Date
-      sheet.setColWidth(8, 18); // Requester
-      sheet.setColWidth(9, 12); // Status
+      sheet.setColWidth(2, 10); // Currency
+      sheet.setColWidth(3, 30); // Product
+      sheet.setColWidth(4, 20); // Supplier
+      sheet.setColWidth(5, 10); // Quantity
+      sheet.setColWidth(6, 12); // Unit Price
+      sheet.setColWidth(7, 14); // Total Amount
+      sheet.setColWidth(8, 12); // Date
+      sheet.setColWidth(9, 18); // Requester
+      sheet.setColWidth(10, 12); // Status
 
       for (var order in orders) {
         final products = order.products;
         final orderDate = order.startDate != null
             ? DateFormat('yyyy-MM-dd').format(order.startDate!)
             : '-';
+        // Determine department name to export. Prefer explicit field on order (parsed
+        // by the model); if missing, fall back to currently selected department
+        // filter or try to resolve from the requester user's department.
+        String deptName = '';
+        try {
+          if (order.department != null &&
+              order.department.toString().trim().isNotEmpty) {
+            deptName = order.department.toString();
+          } else if (_selectedDepartment != null &&
+              _selectedDepartment!.isNotEmpty) {
+            // manually search to avoid null-returning orElse closure
+            Department? deptObj;
+            for (var d
+                in context.read<DepartmentController>().departments) {
+              if (d.id?.toString() == _selectedDepartment) {
+                deptObj = d;
+                break;
+              }
+            }
+            if (deptObj != null) deptName = deptObj.name;
+          } else {
+            // last-chance: lookup via the requester user's department id
+            final uid = order.requestedByUser;
+            if (uid != null) {
+              User? user;
+              for (var u in context.read<UserController>().users) {
+                if (u.id == uid) {
+                  user = u;
+                  break;
+                }
+              }
+              if (user != null && user.depId != null) {
+                Department? deptObj;
+                for (var d
+                    in context.read<DepartmentController>().departments) {
+                  if (d.id == user.depId) {
+                    deptObj = d;
+                    break;
+                  }
+                }
+                if (deptObj != null) deptName = deptObj.name;
+              }
+            }
+          }
+        } catch (_) {
+          deptName = '';
+        }
 
         if (products == null || products.isEmpty) {
           // Single row when no products
+          final currSym = _currencySymbol(order.currency);
           sheet.appendRow([
             order.id?.toString() ?? '-',
-            (order.title?.toString() ?? '-'),
+            deptName,
+            order.currency?.toString() ?? '',
             '-', // Product
             '-', // Supplier
             0, // Quantity
-            0, // Unit Price
-            0.0, // Total Amount
+            currSym + '0', // Unit Price
+            currSym + '0.0', // Total Amount
             orderDate,
             _getRequesterName(order, context.read<UserController>()),
             _localizedStatus(context, order.status),
@@ -1742,15 +1854,17 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                     (unitPrice is int
                         ? unitPrice.toDouble()
                         : unitPrice as double));
-            // Each product line repeats the PO ID and Title (previous behavior)
+            final currSym = _currencySymbol(order.currency);
+            // Each product line repeats the PO ID (dept, product rows)
             sheet.appendRow([
               order.id?.toString() ?? '-',
-              (order.title?.toString() ?? '-'),
+              deptName,
+              order.currency?.toString() ?? '',
               product.product?.toString() ?? '-',
               product.supplier?.toString() ?? '-',
               quantity, // numeric
-              unitPrice, // numeric
-              totalAmount, // numeric
+              currSym + unitPrice.toString(),
+              currSym + totalAmount.toString(),
               orderDate,
               _getRequesterName(order, context.read<UserController>()),
               _localizedStatus(context, order.status),
@@ -1801,6 +1915,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
       _selectedSupplier = null;
       _selectedFamily = null;
       _selectedSubFamily = null;
+      _selectedCurrency = null;
       _startDate = null;
       _endDate = null;
     });

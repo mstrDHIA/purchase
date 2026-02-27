@@ -5,8 +5,7 @@ import 'api.dart';
 
 class PurchaseOrderNetwork {
 	final Dio dio = APIS().dio;
-	// Use the new datatable endpoint which returns paginated JSON: { total, page, page_size, results }
-	static String get endpoint => APIS.baseUrl + APIS.datatablePoList;
+	static String get endpoint => APIS.baseUrl + APIS.purchaseOrderList;
 
 		Future<List<PurchaseOrder>> fetchPurchaseOrders({
 			String? startDate,
@@ -16,10 +15,9 @@ class PurchaseOrderNetwork {
 			String? family,
 			String? subfamily,
 			String? supplier,
+			String? currency,
 			bool? excludeNullDept,
-			String? search,
-		  int? page,
-		  int? pageSize,
+			String? search, int? page, int? pageSize,
 		}) async {
 			final params = <String, dynamic>{};
 			if (startDate != null) params['start_date'] = startDate;
@@ -35,8 +33,6 @@ class PurchaseOrderNetwork {
 				print('🟡 PO SUPPLIER FILTER: supplier is null, not adding to params');
 			}
 			if (excludeNullDept != null) params['exclude_null_dept'] = excludeNullDept ? 'true' : 'false';
-			if (page != null) params['page'] = page;
-			if (pageSize != null) params['page_size'] = pageSize;
 			if (search != null) params['search'] = search;
 
 			print('🌐 PO Network: Calling $endpoint');
@@ -52,21 +48,12 @@ class PurchaseOrderNetwork {
 			);
 			
 			print('📥 PO Response status: ${response.statusCode}');
+			print('📥 PO Response items: ${(response.data as List?)?.length ?? 0}');
 			print('🔥 PO RESPONSE DEBUG: Full response = ${response.data}');
-		
+			
 			if (response.statusCode == 200) {
-				// Support both older list responses and the new datatable response structure
-				final respData = response.data;
-				List<dynamic> items;
-				if (respData is Map && respData.containsKey('results')) {
-					items = respData['results'] as List<dynamic>;
-				} else if (respData is List) {
-					items = respData;
-				} else {
-					items = [];
-				}
-				print('📥 PO Response items: ${items.length}');
-				return items.map((json) => PurchaseOrder.fromJson(json)).toList();
+				final List<dynamic> data = response.data;
+				return data.map((json) => PurchaseOrder.fromJson(json)).toList();
 			} else {
 				throw Exception('Failed to load purchase orders');
 			}

@@ -45,6 +45,7 @@ class PurchaseOrderController extends ChangeNotifier {
 					family: family,
 					subfamily: subfamily,
 					supplier: supplier,
+					currency: currency,
 					excludeNullDept: excludeNullDept,
 					search: search,
 					page: page,

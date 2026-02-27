@@ -3,45 +3,6 @@ import 'package:flutter/material.dart';
 import '../network/stats_network.dart';
 
 class StatsController extends ChangeNotifier {
-
-    // Total prices by currency (e.g. {'total_price_tnd':1234.0, 'total_price_usd':56.0})
-    Map<String, double>? totalPriceByCurrency;
-    bool loadingTotalPriceDinar = false; // kept for backwards-compat naming
-    String? errorTotalPriceDinar;
-
-    Future<void> fetchTotalPriceDinar({
-      required String token,
-      required String startDate,
-      required String endDate,
-      String? department,
-      String? requester,
-      String? supplier,
-      String? family,
-      String? subfamily,
-      bool? excludeNullDept,
-    }) async {
-      loadingTotalPriceDinar = true;
-      errorTotalPriceDinar = null;
-      notifyListeners();
-      try {
-        totalPriceByCurrency = await _network.fetchTotalPriceDinar(
-          token: token,
-          startDate: startDate,
-          endDate: endDate,
-          department: department,
-          requester: requester,
-          supplier: supplier,
-          family: family,
-          subfamily: subfamily,
-          excludeNullDept: excludeNullDept,
-        );
-      } catch (e) {
-        errorTotalPriceDinar = e.toString();
-        totalPriceByCurrency = null;
-      }
-      loadingTotalPriceDinar = false;
-      notifyListeners();
-    }
   final StatsNetwork _network = StatsNetwork();
 
   // PO totals
