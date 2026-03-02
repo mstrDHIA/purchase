@@ -1048,7 +1048,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get unitPrice => 'Prix Unitaire';
 
   @override
-  String get totalPrice => 'Prix total des BC approuvés';
+  String get totalPrice => 'Prix total';
+
+  @override
+  String get totalPriceApprovedPO => 'Prix total des BC approuvés';
 
   @override
   String get purchaseOrderApproved => 'Bon approuvé !';

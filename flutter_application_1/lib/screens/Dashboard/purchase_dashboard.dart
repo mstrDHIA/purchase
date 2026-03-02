@@ -203,6 +203,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
           supplier: _selectedSupplier,
           excludeNullDept: _excludeNullDept,
         );
+        debugPrint('✅ Dashboard: Fetched ${poCtrl.orders.length} POs with status=approved,rejected');
       } catch (poError) {
         debugPrint('❌ PO fetch error: $poError');
       }
@@ -282,7 +283,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
         // As a last resort, return the raw id string
         return uidIntStr;
       }
-    } catch (_) {}
+    } catch  (_) {}
 
     return '-';
   }
@@ -828,7 +829,14 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
     }
 
     // Backend now returns only approved/rejected orders, so use them directly
-    final ordersFromServer = poController.orders;
+    final ordersFromServer = poController.orders
+        .where((order) {
+          final status = order.status ?? '';
+          return status.toLowerCase() == 'approved' || status.toLowerCase() == 'rejected';
+        })
+        .toList();
+
+    debugPrint('📊 Dashboard: Total orders from server: ${poController.orders.length}, Filtered (approved/rejected): ${ordersFromServer.length}');
 
 
     // Apply filters (search, supplier and date range)
@@ -850,6 +858,71 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
             order.products?.any((p) => p.supplier == _selectedSupplier) ??
                 false;
         if (!hasSupplier) return false;
+      }
+
+      // Filter by department if selected – the dropdown stores the department
+      // **id**, but orders coming from the server often only contain a
+      // department **name** (or in some cases no id at all).  Previously we
+      // compared the computed name directly against the selected ID which
+      // always failed unless the order also carried an explicit id field.  As a
+      // result when the backend returned only names (e.g. when the API was
+      // itself filtering on department) the table ended up empty even though the
+      // stats reported the correct count.
+      if (_selectedDepartment != null && _selectedDepartment!.isNotEmpty) {
+        final deptCtrl = context.read<DepartmentController>();
+        final selDeptId = _selectedDepartment!;
+        // try to look up the human readable name for the selected id – this is
+        // what the helper below returns, so we can match either way.
+        String? selDeptName;
+        for (var d in deptCtrl.departments) {
+          if (d.id?.toString() == selDeptId) {
+            selDeptName = d.name;
+            break;
+          }
+        }
+
+        final deptName = _getOrderDepartment(order, deptCtrl, userController,
+            context.read<PurchaseRequestController>());
+
+        // comparison normalized (lowercase/trimmed) so that small
+        // formatting differences don't make us drop otherwise matching rows.
+        String norm(String? s) => s?.toString().toLowerCase().trim() ?? '';
+        final deptNameNorm = norm(deptName);
+        final selNameNorm = norm(selDeptName);
+        final selIdNorm = norm(selDeptId);
+
+        if (deptNameNorm == selNameNorm || deptNameNorm == selIdNorm) {
+          // name matched, OK
+        } else {
+          // try to inspect raw id fields on the order as a last resort
+          String? orderDeptId;
+          try {
+            if (order.departmentId != null) orderDeptId = order.departmentId.toString();
+          } catch (_) {}
+          try {
+            if (order.department != null && order.department is Map) {
+              final m = order.department as Map;
+              orderDeptId ??= m['id']?.toString();
+              orderDeptId ??= m['department_id']?.toString();
+            }
+          } catch (_) {}
+          if (orderDeptId != selDeptId) {
+            // log the information that caused the rejection for debugging
+            debugPrint('❌ Dashboard filter: excluding order ${order.id} '
+                'because computedDept="$deptName" orderDeptId="$orderDeptId" '
+                'selectedId="$selDeptId" selectedName="$selDeptName"');
+            return false;
+          }
+        }
+      }
+
+      // Filter by requester if selected - compare by ID (dropdown stores id)
+      if (_selectedRequester != null && _selectedRequester!.isNotEmpty) {
+        // requester's id can appear under several keys depending on payload
+        final dynamic o = order;
+        final uid = o.requestedByUser ?? o.requested_by_user ?? o.requesterId ?? o.requester;
+        final uidStr = uid?.toString();
+        if (uidStr != _selectedRequester) return false;
       }
 
       // Filter by family if selected
@@ -879,7 +952,19 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
       return true;
     }).toList();
 
-    // Recompute dropdown options from filtered data so filters cascade properly
+    // Log counts to help debugging and recompute dropdown options from filtered data so filters cascade properly
+    // compute the selected department name for easier debugging
+    String? _selDeptName;
+    if (_selectedDepartment != null && _selectedDepartment!.isNotEmpty) {
+      for (var d in context.read<DepartmentController>().departments) {
+        if (d.id?.toString() == _selectedDepartment) {
+          _selDeptName = d.name;
+          break;
+        }
+      }
+    }
+    debugPrint('🔍 ordersFromServer=${ordersFromServer.length}, filteredOrders (after filters)=${filteredOrders.length}, selectedDept=$_selectedDepartment ($_selDeptName), selectedRequester=$_selectedRequester');
+
     final controllerApproved = supplierController.suppliers
         .where((s) =>
             (s.approvalStatus ?? '').toLowerCase() == 'approved' &&
@@ -1447,7 +1532,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text(AppLocalizations.of(context)!.totalPrice,
+                                Text(AppLocalizations.of(context)!.totalPriceApprovedPO,
                                     style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,

@@ -26,11 +26,13 @@ class PurchaseOrderController extends ChangeNotifier {
 			String? subfamily,
 			String? supplier,
 			bool? excludeNullDept,
-				String? search,
-				int? page,
-				int? pageSize,
-				bool silent = false, // true = don't show loading indicator
+			String? search,
+			String? status,
+			int page = 1,
+			int pageSize = 10,
+			bool silent = false, // true = don't show loading indicator
 		}) async {
+			print('📡 PurchaseOrderController.fetchOrders called page=$page pageSize=$pageSize status=$status');
 			if (!silent) {
 				_isLoading = true;
 				notifyListeners();
@@ -47,19 +49,21 @@ class PurchaseOrderController extends ChangeNotifier {
 					supplier: supplier,
 					excludeNullDept: excludeNullDept,
 					search: search,
+					status: status,
 					page: page,
 					pageSize: pageSize,
 				);
+				print('➡️ fetched ${_orders.length} purchase orders');
 				if (!silent) notifyListeners();
 			} catch (e) {
 				_error = e.toString();
+				print('❌ fetchOrders error: $_error');
 				if (!silent) notifyListeners();
 			}
 			if (!silent) {
 				_isLoading = false;
 				notifyListeners();
 			} else {
-				// silent refresh: notify only if data changed
 				notifyListeners();
 			}
 		}

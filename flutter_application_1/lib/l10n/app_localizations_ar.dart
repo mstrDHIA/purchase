@@ -1048,7 +1048,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get unitPrice => 'سعر الوحدة';
 
   @override
-  String get totalPrice => 'السعر الإجمالي لأوامر الشراء الموافق عليها';
+  String get totalPrice => 'السعر الإجمالي';
+
+  @override
+  String get totalPriceApprovedPO => 'السعر الإجمالي لأوامر الشراء الموافق عليها';
 
   @override
   String get purchaseOrderApproved => 'تمت الموافقة على الطلب!';

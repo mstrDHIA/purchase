@@ -2050,8 +2050,14 @@ abstract class AppLocalizations {
   /// No description provided for @totalPrice.
   ///
   /// In en, this message translates to:
-  /// **'Total price of approved PO'**
+  /// **'Total price'**
   String get totalPrice;
+
+  /// No description provided for @totalPriceApprovedPO.
+  ///
+  /// In en, this message translates to:
+  /// **'Total price of approved PO'**
+  String get totalPriceApprovedPO;
 
   /// No description provided for @purchaseOrderApproved.
   ///

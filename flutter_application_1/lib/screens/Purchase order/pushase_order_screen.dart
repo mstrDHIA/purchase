@@ -74,8 +74,8 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final controller = Provider.of<PurchaseOrderController>(context, listen: false);
       
-      // Wait for orders to be fetched
-      await controller.fetchOrders();
+      // Wait for orders to be fetched (use large pageSize to retrieve all records)
+      await controller.fetchOrders(page: 1, pageSize: 1000);
       _fetchProductFamilies();
       
       // Now auto-archive after orders are loaded
@@ -129,7 +129,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
 
     final controller = Provider.of<PurchaseOrderController>(context, listen: false);
     try {
-      await controller.fetchOrders();
+      await controller.fetchOrders(page: 1, pageSize: 1000);
       await _fetchProductFamilies();
     } catch (_) {}
   }
@@ -195,7 +195,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
       
       // Refresh list after archiving/unarchiving
       if ((archivedCount > 0 || unarchivedCount > 0) && mounted) {
-        await controller.fetchOrders();
+        await controller.fetchOrders(page: 1, pageSize: 1000);
         print('✓ Auto-archived $archivedCount, Unarchived $unarchivedCount - refreshing list');
       } else {
         print('ℹ️ No changes needed (archived: $archivedCount, unarchived: $unarchivedCount)');
@@ -448,6 +448,8 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
         }
         final allOrders = controller.orders;
         final filteredOrders = _filteredAndSortedOrders(allOrders);
+        // diagnostic logging
+        debugPrint('🔍 PO page build: allOrders=${allOrders.length}, filtered=${filteredOrders.length}, showArchived=$_showArchived');
         final dataSource = _PurchaseOrderDataSource(
           filteredOrders,
           _dateFormat,
@@ -597,7 +599,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                                   // ignore individual errors; continue
                                 }
                               }
-                              await controller.fetchOrders();
+                              await controller.fetchOrders(page: 1, pageSize: 1000);
                               dataSource.clearSelection();
                               ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(_showArchived ? AppLocalizations.of(context)!.unarchivedPurchaseOrders(ids.length) : AppLocalizations.of(context)!.archivedPurchaseOrders(ids.length))));
                             }
@@ -650,7 +652,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                                   // ignore individual errors
                                 }
                               }
-                              await controller.fetchOrders();
+                              await controller.fetchOrders(page: 1, pageSize: 1000);
                               dataSource.clearSelection();
                               ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.deletedPurchaseOrders(ids.length))));
                             }
@@ -1123,7 +1125,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
       final controller = Provider.of<PurchaseOrderController>(context, listen: false);
       try {
         await controller.deleteOrder(order['id'].toString());
-        await controller.fetchOrders();
+        await controller.fetchOrders(page: 1, pageSize: 1000);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(AppLocalizations.of(context)!.purchaseOrderDeleted(order['id']))) ,
         );
@@ -1205,7 +1207,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
       final controller = Provider.of<PurchaseOrderController>(context, listen: false);
       try {
         await controller.archivePurchaseOrder(order['id']);
-        await controller.fetchOrders();
+        await controller.fetchOrders(page: 1, pageSize: 1000);
         if (mounted) {
           setState(() {});
         }
@@ -1290,7 +1292,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
       final controller = Provider.of<PurchaseOrderController>(context, listen: false);
       try {
         await controller.unarchivePurchaseOrder(order['id']);
-        await controller.fetchOrders();
+        await controller.fetchOrders(page: 1, pageSize: 1000);
         if (mounted) {
           setState(() {});
         }
