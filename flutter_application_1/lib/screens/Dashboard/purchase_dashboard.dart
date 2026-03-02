@@ -32,9 +32,10 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
   bool _initialLoadDone = false;
   Timer? _refreshTimer;
 
-  // Pagination state
-  int _currentPage = 1;
-  final int _itemsPerPage = 10;
+  // Pagination state (server‑driven pages)
+  int _currentPage = 1; // corresponds to backend page
+  final int _serverPageSize = 10; // number of orders per backend page
+  int _totalOrders = 0; // reported by backend
 
   // Sorting state
   String _sortBy = 'id'; // Default sort by ID
@@ -68,7 +69,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
       if (!mounted) return;
 
       // Trigger initial stats load with defaults (also fetches PO with filters)
-      await _applySharedFilters();
+      await _applySharedFilters(page: _currentPage);
 
       if (!mounted) return;
 
@@ -113,6 +114,8 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
               subfamily: _selectedSubFamily,
               supplier: _selectedSupplier,
               excludeNullDept: _excludeNullDept,
+              page: _currentPage,
+              pageSize: _serverPageSize,
               silent: true, // don't show loading indicator for background refresh
             );
       }
@@ -120,13 +123,16 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
   }
 
   // Apply shared filters: refresh stats and update UI
-  Future<void> _applySharedFilters() async {
+  Future<void> _applySharedFilters({int page = 1}) async {
+    // update current page before fetching
+    _currentPage = page;
     if (!mounted) return;
 
     try {
       final statsCtrl = context.read<StatsController>();
       final poCtrl = context.read<PurchaseOrderController>();
       final prCtrl = context.read<PurchaseRequestController>();
+      debugPrint('📄 Applying filters on page $_currentPage');
       // dash: always report current PR list size for debugging
       debugPrint('ℹ️ PR controller currently has ${prCtrl.requests.length} requests');
       // if empty, pull them all; otherwise we'll still self-enrich below
@@ -227,8 +233,13 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
           subfamily: _selectedSubFamily,
           supplier: _selectedSupplier,
           excludeNullDept: _excludeNullDept,
+          search: _searchCtrl.text.isNotEmpty ? _searchCtrl.text : null,
+          page: _currentPage,
+          pageSize: _serverPageSize,
         );
-        debugPrint('✅ Dashboard: server returned ${poCtrl.orders.length} orders (dept=$_selectedDepartment requester=$_selectedRequester)');
+        // update total count after fetch
+        _totalOrders = poCtrl.total ?? poCtrl.orders.length;
+        debugPrint('✅ Dashboard: server returned ${poCtrl.orders.length} orders (dept=$_selectedDepartment requester=$_selectedRequester) total=$_totalOrders page=$_currentPage');
         // If the backend filtered out everything but any filter is active,
         // fall back to fetching without filters and apply locally.
         // This compensates for mismatches between the order endpoint and the stats endpoint.
@@ -262,7 +273,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       // Re-apply current filters when returning to this screen
-      if (mounted) _applySharedFilters();
+      if (mounted) _applySharedFilters(page: _currentPage);
     }
   }
 
@@ -1193,16 +1204,14 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
       }
     }
 
-    // Apply pagination on product rows (not orders)
-    final totalPages = (productRows.isEmpty)
-        ? 1
-        : (productRows.length / _itemsPerPage).ceil();
+    // Server-side pagination: total pages calculated from backend total
+    final serverTotal = _totalOrders;
+    final totalPages = serverTotal > 0
+        ? (serverTotal / _serverPageSize).ceil()
+        : 1;
     if (_currentPage > totalPages) _currentPage = totalPages;
-    final startIndex = (_currentPage - 1) * _itemsPerPage;
-    final endIndex = (startIndex + _itemsPerPage) > productRows.length
-        ? productRows.length
-        : (startIndex + _itemsPerPage);
-    final paginatedProductRows = productRows.sublist(startIndex, endIndex);
+    // We keep all rows returned for the current server page – no slicing
+    final paginatedProductRows = productRows;
 
     return Scaffold(
       appBar:
@@ -1258,7 +1267,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                       setState(() => _endDate = pickedEnd);
                                     }
                                     // auto apply filters
-                                    _applySharedFilters();
+                                    _applySharedFilters(page: _currentPage);
                                   }
                                 },
                                 child: Text(_startDate != null
@@ -1279,7 +1288,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                   );
                                   if (picked != null) {
                                     setState(() => _endDate = picked);
-                                    _applySharedFilters();
+                                    _applySharedFilters(page: _currentPage);
                                   }
                                 },
                                 child: Text(_endDate != null
@@ -1314,7 +1323,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                         _selectedRequester = null;
                                         _currentPage = 1; // Reset pagination
                                       });
-                                      _applySharedFilters();
+                                      _applySharedFilters(page: _currentPage);
                                     },
                                 );
                               }),
@@ -1342,7 +1351,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                     _selectedRequester = val;
                                     _currentPage = 1; // Reset pagination
                                   });
-                                  _applySharedFilters();
+                                  _applySharedFilters(page: _currentPage);
                                 },
                               ),
                             ),
@@ -1368,7 +1377,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                     _selectedSupplier = val;
                                     _currentPage = 1; // Reset pagination
                                   });
-                                  _applySharedFilters();
+                                  _applySharedFilters(page: _currentPage);
                                 },
                               ),
                             ),
@@ -1394,7 +1403,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                     _selectedSubFamily = null;
                                     _currentPage = 1; // Reset pagination
                                   });
-                                  _applySharedFilters();
+                                  _applySharedFilters(page: _currentPage);
                                 },
                               ),
                             ),
@@ -1419,7 +1428,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                     _selectedSubFamily = val;
                                     _currentPage = 1; // Reset pagination
                                   });
-                                  _applySharedFilters();
+                                  _applySharedFilters(page: _currentPage);
                                 },
                               ),
                             ),
@@ -1461,7 +1470,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                   _selectedSubFamily = null;
                                   _excludeNullDept = false;
                                 });
-                                _applySharedFilters();
+                                _applySharedFilters(page: _currentPage);
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.grey.shade200,
@@ -1530,7 +1539,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                           _excludeNullDept = !_excludeNullDept;
                           _currentPage = 1; // Reset pagination
                         });
-                        _applySharedFilters();
+                        _applySharedFilters(page: _currentPage);
                       },
                       icon: Icon(
                         _excludeNullDept ? Icons.filter_alt_off : Icons.filter_alt,
@@ -1724,7 +1733,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                               ),
                               const SizedBox(height: 16),
                               ElevatedButton(
-                                onPressed: () => _applySharedFilters(),
+                                onPressed: () => _applySharedFilters(page: _currentPage),
                                 child: const Text('Retry'),
                               ),
                             ],
@@ -2064,14 +2073,24 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                   IconButton(
                                     icon: const Icon(Icons.chevron_left),
                                     onPressed: _currentPage > 1
-                                        ? () => setState(() => _currentPage--)
+                                        ? () {
+                                            setState(() {
+                                              _currentPage--;
+                                            });
+                                            _applySharedFilters(page: _currentPage);
+                                          }
                                         : null,
                                   ),
-                                  Text('Page $_currentPage of $totalPages'),
+                                  Text('Page $_currentPage of $totalPages (${_totalOrders} orders)'),
                                   IconButton(
                                     icon: const Icon(Icons.chevron_right),
                                     onPressed: _currentPage < totalPages
-                                        ? () => setState(() => _currentPage++)
+                                        ? () {
+                                            setState(() {
+                                              _currentPage++;
+                                            });
+                                            _applySharedFilters(page: _currentPage);
+                                          }
                                         : null,
                                   ),
                                 ],
@@ -2228,6 +2247,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
     setState(() {
       _searchCtrl.clear();
       _currentPage = 1;
+      _totalOrders = 0;
       _sortBy = 'id';
       _sortAscending = false;
       _selectedSupplier = null;
@@ -2237,7 +2257,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
       _endDate = null;
     });
     try {
-      _applySharedFilters();
+      _applySharedFilters(page: _currentPage);
     } catch (_) {}
   }
 

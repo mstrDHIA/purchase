@@ -7,8 +7,13 @@ class PurchaseOrderNetwork {
 	final Dio dio = APIS().dio;
 	// Use the standard purchase order endpoint for fetching lists
 	static String get listEndpoint => APIS.baseUrl + APIS.purchaseOrderList;
-	// For create/update/delete we use the same endpoint
+	// New datatable endpoint for paginated list
+	static String get datatableEndpoint => APIS.baseUrl + APIS.datatablePoList;
+	// For create/update/delete we use the same CRUD endpoint
 	static String get crudEndpoint => APIS.baseUrl + APIS.purchaseOrderList;
+
+	// when the backend returns a paginated response we record the total here
+	int? lastTotal;
 
 	Future<List<PurchaseOrder>> fetchPurchaseOrders({
 		String? startDate,
@@ -48,11 +53,15 @@ class PurchaseOrderNetwork {
 		if (pageSize != null) params['page_size'] = pageSize;
 		if (search != null) params['search'] = search;
 
-		print('🌐 PO Network: Calling $listEndpoint');
+		// choose endpoint based on pagination
+		final endpoint = (page != null && pageSize != null)
+			? datatableEndpoint
+			: listEndpoint;
+		print('🌐 PO Network: Calling $endpoint');
 		print('📤 Query params: $params');
 		print('🔥 PO SUPPLIER DEBUG: supplier parameter in request = ${params['supplier']}');
 
-		final response = await dio.get(listEndpoint,
+		final response = await dio.get(endpoint,
 			queryParameters: params.isEmpty ? null : params,
 			options: Options(headers: {
 				'Authorization': 'Bearer ${APIS.token}',
@@ -69,10 +78,18 @@ class PurchaseOrderNetwork {
 			List<dynamic> items;
 			if (respData is Map && respData.containsKey('results')) {
 				items = respData['results'] as List<dynamic>;
+				// record total count for controller to consume
+				if (respData.containsKey('total')) {
+					lastTotal = respData['total'] as int;
+				} else {
+					lastTotal = null;
+				}
 			} else if (respData is List) {
 				items = respData;
+				lastTotal = null;
 			} else {
 				items = [];
+				lastTotal = null;
 			}
 			print('📥 PO Response items: ${items.length}');
 			return items.map((json) => PurchaseOrder.fromJson(json)).toList();

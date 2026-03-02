@@ -7,10 +7,12 @@ class PurchaseOrderController extends ChangeNotifier {
 	List<PurchaseOrder> _orders = [];
 	bool _isLoading = false;
 	String? _error;
+	int? _total;
 
 	List<PurchaseOrder> get orders => _orders;
 	bool get isLoading => _isLoading;
 	String? get error => _error;
+	int? get total => _total;
 
 
   notify() {
