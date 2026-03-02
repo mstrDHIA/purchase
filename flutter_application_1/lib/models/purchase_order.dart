@@ -63,7 +63,7 @@ class PurchaseOrder {
     // Accept either 'currency' (ISO code) or older names
     currency = json['currency']?.toString() ?? json['currency_code']?.toString();
 
-    // Department may come as string or nested map
+    // Department may come as string, id or nested map
     if (json['department'] is Map) {
       final dept = json['department'] as Map<String, dynamic>;
       department = dept['name']?.toString() ?? dept['department']?.toString();
@@ -73,9 +73,23 @@ class PurchaseOrder {
             : int.tryParse(dept['id'].toString());
       }
     } else if (json['department'] != null) {
-      department = json['department']?.toString();
+      final raw = json['department'];
+      department = raw?.toString();
+      if (departmentId == null) {
+        if (raw is int) {
+          departmentId = raw;
+        } else {
+          departmentId = int.tryParse(raw.toString());
+        }
+      }
     } else if (json['department_name'] != null) {
       department = json['department_name']?.toString();
+    }
+    // also check explicit id field
+    if (departmentId == null && json['department_id'] != null) {
+      departmentId = json['department_id'] is int
+          ? json['department_id']
+          : int.tryParse(json['department_id'].toString());
     }
 
     refuseReason = json['refuse_reason'];

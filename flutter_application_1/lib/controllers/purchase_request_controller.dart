@@ -66,6 +66,12 @@ class PurchaseRequestController extends ChangeNotifier {
       
       print('DEBUG: Items list before filtering: ${items.length} items');
 
+      // log department info for each raw item to diagnose missing data
+      for (var i = 0; i < items.length; i++) {
+        final item = items[i];
+        print('DEBUG: Raw PR item[$i] id=${item['id']} department=${item['department']} department_id=${item['department_id']}');
+      }
+
       requests.clear();
       final currentUser = Provider.of<UserController>(context, listen: false).currentUser;
       print('DEBUG: Current user role ID: ${currentUser.role!.id}');

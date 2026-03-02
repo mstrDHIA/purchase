@@ -7,10 +7,11 @@ import 'package:open_file/open_file.dart';
 import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
 import 'package:flutter_application_1/controllers/supplier_controller.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
-import 'package:flutter_application_1/controllers/department_controller.dart';
-import 'package:flutter_application_1/controllers/stats_controller.dart';
-import 'package:flutter_application_1/controllers/purchase_request_controller.dart';
+import 'package:flutter_application_1/network/purchase_request_network.dart';
 import 'package:flutter_application_1/models/purchase_request.dart';
+import 'package:flutter_application_1/controllers/department_controller.dart';
+import 'package:flutter_application_1/controllers/purchase_request_controller.dart';
+import 'package:flutter_application_1/controllers/stats_controller.dart';
 import 'package:flutter_application_1/controllers/reset_notifier.dart';
 import 'package:flutter_application_1/models/user_model.dart';
 import 'package:flutter_application_1/network/api.dart';
@@ -61,33 +62,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
         await Future.wait<dynamic>([
           context.read<UserController>().getUsers(),
           context.read<DepartmentController>().fetchDepartments(),
-          context.read<PurchaseRequestController>().fetchRequests(
-              context, context.read<UserController>().currentUser),
         ]);
-        // temporary debug output to help diagnosis
-        try {
-          final deptPairs = context
-              .read<DepartmentController>()
-              .departments
-              .map((d) => '${d.id}:${d.name}')
-              .toList();
-          final userPairs = context
-              .read<UserController>()
-              .users
-              .map((u) => '${u.id}:${u.depId}')
-              .toList();
-          debugPrint('DEBUG Departments (id:name): $deptPairs');
-          debugPrint('DEBUG Users (id:depId): $userPairs');
-          // log PR departments for diagnosis
-          try {
-            final prPairs = context
-                .read<PurchaseRequestController>()
-                .requests
-                .map((p) => '${p.id}:${p.department ?? ''}')
-                .toList();
-            debugPrint('DEBUG PRs (id:dept): $prPairs');
-          } catch (_) {}
-        } catch (_) {}
       } catch (_) {}
 
       if (!mounted) return;
@@ -138,6 +113,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
               subfamily: _selectedSubFamily,
               supplier: _selectedSupplier,
               excludeNullDept: _excludeNullDept,
+              silent: true, // don't show loading indicator for background refresh
             );
       }
     });
@@ -150,6 +126,55 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
     try {
       final statsCtrl = context.read<StatsController>();
       final poCtrl = context.read<PurchaseOrderController>();
+      final prCtrl = context.read<PurchaseRequestController>();
+      // dash: always report current PR list size for debugging
+      debugPrint('ℹ️ PR controller currently has ${prCtrl.requests.length} requests');
+      // if empty, pull them all; otherwise we'll still self-enrich below
+      if (prCtrl.requests.isEmpty) {
+        try {
+          debugPrint('🔁 Loading purchase requests for local filtering');
+          // request a large page size so we pull all requests in one call
+          await prCtrl.fetchRequests(context, context.read<UserController>().currentUser, page: 1, pageSizeParam: 1000);
+          debugPrint('🔁 Loaded ${prCtrl.requests.length} purchase requests');
+          // print snippet of department info
+          for (var pr in prCtrl.requests.take(10)) {
+            debugPrint('   🔹 PR ${pr.id} deptId=${pr.departmentId} dept=${pr.department}');
+          }
+        } catch (e) {
+          debugPrint('⚠️ Failed to load purchase requests: $e');
+        }
+      }
+
+      // regardless of emptiness, any remaining requests with null department
+      // might be enriched by hitting the detail endpoint.  This ensures we
+      // capture departments when the list API omits them.
+      try {
+        final network = PurchaseRequestNetwork();
+        bool fetchedExtra = false;
+        for (var pr in prCtrl.requests) {
+          if ((pr.departmentId == null || pr.departmentId == 0) && pr.id != null) {
+            try {
+              final resp = await network.fetchPurchaseRequestById(pr.id!);
+              final raw = resp.data;
+              debugPrint('   🔍 single PR fetch ${pr.id} dept=${raw['department']} dept_id=${raw['department_id']}');
+              final updated = PurchaseRequest.fromJson(raw);
+              if (updated.departmentId != null && updated.departmentId != pr.departmentId) {
+                pr.departmentId = updated.departmentId;
+                pr.department = updated.department;
+                debugPrint('   ✅ updated PR ${pr.id} with deptId=${pr.departmentId}');
+                fetchedExtra = true;
+              }
+            } catch (e) {
+              debugPrint('   ❌ failed to refresh PR ${pr.id}: $e');
+            }
+          }
+        }
+        if (fetchedExtra) {
+          debugPrint('🔁 Some PRs were enriched with department data after detail fetch');
+        }
+      } catch (e) {
+        debugPrint('⚠️ Error during PR enrichment: $e');
+      }
 
       final start = _startDate ?? DateTime.now().subtract(const Duration(days: 90));
       final end = _endDate ?? DateTime.now();
@@ -203,7 +228,24 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
           supplier: _selectedSupplier,
           excludeNullDept: _excludeNullDept,
         );
-        debugPrint('✅ Dashboard: Fetched ${poCtrl.orders.length} POs with status=approved,rejected');
+        debugPrint('✅ Dashboard: server returned ${poCtrl.orders.length} orders (dept=$_selectedDepartment requester=$_selectedRequester)');
+        // If the backend filtered out everything but any filter is active,
+        // fall back to fetching without filters and apply locally.
+        // This compensates for mismatches between the order endpoint and the stats endpoint.
+        final hasAnyFilter = (_selectedDepartment != null && _selectedDepartment!.isNotEmpty) ||
+            (_selectedRequester != null && _selectedRequester!.isNotEmpty) ||
+            (_selectedSupplier != null && _selectedSupplier!.isNotEmpty) ||
+            (_selectedFamily != null && _selectedFamily!.isNotEmpty) ||
+            _excludeNullDept;
+        
+        if (hasAnyFilter && poCtrl.orders.isEmpty) {
+          debugPrint('⚠️ zero orders returned with filters, retrying without any filters');
+          await poCtrl.fetchOrders(
+            startDate: startStr,
+            endDate: endStr,
+          );
+          debugPrint('🔁 Fallback fetch returned ${poCtrl.orders.length} orders');
+        }
       } catch (poError) {
         debugPrint('❌ PO fetch error: $poError');
       }
@@ -245,55 +287,28 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
   }
 
   String _getRequesterName(dynamic order, UserController userController) {
-    // Try explicit fields coming from the API first (several possible keys)
+    // Prefer explicit requester username if provided by API
     try {
-      final explicitUsername = (order.requestedByUsername ?? order.requested_by_username ?? '').toString().trim();
-      if (explicitUsername.isNotEmpty) return explicitUsername;
-
-      final explicitName = (order.requestedByName ?? order.requested_by_name ?? order.requesterName ?? '').toString().trim();
-      if (explicitName.isNotEmpty) return explicitName;
-
-      // Some payloads include a nested requester object
-      final reqObj = order.requested_by ?? order.requester;
-      if (reqObj != null) {
-        if (reqObj is Map) {
-          final name = (reqObj['first_name'] ?? reqObj['name'] ?? reqObj['username'] ?? reqObj['email'] ?? '').toString().trim();
-          if (name.isNotEmpty) return name;
-        } else {
-          final s = reqObj.toString().trim();
-          if (s.isNotEmpty) return s;
-        }
-      }
+      final reqName = (order.requestedByUsername ?? '').toString().trim();
+      if (reqName.isNotEmpty) return reqName;
     } catch (_) {}
 
-    // Fallback: resolve by requester id using loaded users and prefer a readable display name
+    // Fallback: try to resolve from loaded users by id
     try {
-      final uid = order.requestedByUser ?? order.requested_by_user ?? order.requesterId ?? order.requester;
+      final uid = order.requestedByUser;
       if (uid != null) {
-        final uidIntStr = uid.toString();
+        // Attempt to find a matching user; if username is empty, return placeholder instead of raw id
         final found = userController.users.firstWhere(
-          (u) => u.id?.toString() == uidIntStr,
-          orElse: () => User(id: null, username: '', email: ''),
+          (u) => u.id == uid,
+          orElse: () => User(id: uid, username: ''),
         );
-        // Prefer full name (first + last), then username, then email, then id
-        final fullName = '${found.firstName ?? ''} ${(found.lastName ?? '')}'.trim();
-        if (fullName.isNotEmpty) return fullName;
-        if ((found.username ?? '').toString().trim().isNotEmpty) return found.username!.toString().trim();
-        if ((found.email ?? '').toString().trim().isNotEmpty) return found.email!.toString().trim();
-        // As a last resort, return the raw id string
-        return uidIntStr;
+        final username = (found.username ?? '').toString().trim();
+        if (username.isNotEmpty) return username;
+        // If users are not yet resolved, show a friendly placeholder
+        return '-';
       }
-    } catch  (_) {}
-
+    } catch (_) {}
     return '-';
-  }
-
-  String _userDisplayName(User u) {
-    final fullName = '${u.firstName ?? ''} ${(u.lastName ?? '')}'.trim();
-    if (fullName.isNotEmpty) return fullName;
-    if ((u.username ?? '').toString().trim().isNotEmpty) return u.username!.toString().trim();
-    if ((u.email ?? '').toString().trim().isNotEmpty) return u.email!.toString().trim();
-    return u.id?.toString() ?? '-';
   }
 
   String _localizedStatus(BuildContext context, String? status) {
@@ -311,7 +326,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
   /// finding the department's name from the controller list.
   String _getOrderDepartment(dynamic order, DepartmentController deptCtrl,
       UserController userCtrl,
-      [PurchaseRequestController? prCtrl]) {
+      [dynamic prCtrl]) {
     // First attempt to resolve via requester user, as backend "department" field
     // often contains the static value "Logistics" and is unreliable.
     try {
@@ -339,7 +354,8 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
       final deptField = order.department;
       if (deptField != null) {
         if (deptField is Map) {
-          final name = deptField['name']?.toString() ?? deptField['department']?.toString();
+          final name = deptField['name']?.toString() ??
+              deptField['department']?.toString();
           if (name != null && name.trim().isNotEmpty) return name.trim();
           final idVal = deptField['id'] ?? deptField['department_id'];
           if (idVal != null) {
@@ -363,7 +379,8 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
       else {
         try {
           final maybeMap = (order as dynamic).toJson();
-          if (maybeMap is Map<String, dynamic>) orderMap = Map<String, dynamic>.from(maybeMap);
+          if (maybeMap is Map<String, dynamic>) orderMap =
+              Map<String, dynamic>.from(maybeMap);
         } catch (_) {}
       }
 
@@ -392,14 +409,17 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
         // If od is a map with name/id
         if (od is Map) {
           final name = od['name'] ?? od['department'] ?? od['department_name'];
-          if (name != null && name.toString().trim().isNotEmpty) return name.toString().trim();
+          if (name != null && name.toString().trim().isNotEmpty)
+            return name.toString().trim();
           final idVal = od['id'] ?? od['department_id'];
           if (idVal != null) {
             final idStr = idVal.toString();
-            for (var d in deptCtrl.departments) if (d.id?.toString() == idStr) return d.name;
+            for (var d in deptCtrl.departments)
+              if (d.id?.toString() == idStr) return d.name;
           }
         }
-        for (var d in deptCtrl.departments) if (d.id?.toString() == odStr) return d.name;
+        for (var d in deptCtrl.departments)
+          if (d.id?.toString() == odStr) return d.name;
       }
     } catch (_) {}
 
@@ -435,14 +455,16 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
             : int.tryParse(order.purchaseRequestId.toString());
         if (prId != null) {
           final match = prCtrl.requests
-              .firstWhere((p) => p.id == prId, orElse: () => PurchaseRequest());
-          if (match.department != null && match.department!.trim().isNotEmpty) {
-            return match.department!.trim();
-          }
-          if (match.departmentId != null) {
-            final depStr = match.departmentId.toString();
-            for (var d in deptCtrl.departments) {
-              if (d.id?.toString() == depStr) return d.name;
+              .firstWhere((p) => p.id == prId, orElse: () => null);
+          if (match != null) {
+            if (match.department != null && match.department!.trim().isNotEmpty) {
+              return match.department!.trim();
+            }
+            if (match.departmentId != null) {
+              final depStr = match.departmentId.toString();
+              for (var d in deptCtrl.departments) {
+                if (d.id?.toString() == depStr) return d.name;
+              }
             }
           }
         }
@@ -829,14 +851,20 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
     }
 
     // Backend now returns only approved/rejected orders, so use them directly
-    final ordersFromServer = poController.orders
-        .where((order) {
-          final status = order.status ?? '';
-          return status.toLowerCase() == 'approved' || status.toLowerCase() == 'rejected';
-        })
-        .toList();
-
-    debugPrint('📊 Dashboard: Total orders from server: ${poController.orders.length}, Filtered (approved/rejected): ${ordersFromServer.length}');
+    final ordersFromServer = poController.orders;
+    
+    // Debug: log what fields are in the first order (including new dept object)
+    if (ordersFromServer.isNotEmpty) {
+      final first = ordersFromServer.first as dynamic;
+      debugPrint('🔎 FIRST ORDER DEBUG:');
+      debugPrint('  id: ${first.id}');
+      try { debugPrint('  departmentId: ${first.departmentId}'); } catch (_) {}
+      try { debugPrint('  department object: ${first.department}'); } catch (_) {}
+      try { debugPrint('  requested_by_user: ${first.requested_by_user}'); } catch (_) {}
+      try { debugPrint('  requestedByUser: ${first.requestedByUser}'); } catch (_) {}
+      try { debugPrint('  requester: ${first.requester}'); } catch (_) {}
+      try { debugPrint('  supplier (in products): ${first.products?.isNotEmpty == true ? first.products![0].supplier : 'N/A'}'); } catch (_) {}
+    }
 
 
     // Apply filters (search, supplier and date range)
@@ -860,69 +888,175 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
         if (!hasSupplier) return false;
       }
 
-      // Filter by department if selected – the dropdown stores the department
-      // **id**, but orders coming from the server often only contain a
-      // department **name** (or in some cases no id at all).  Previously we
-      // compared the computed name directly against the selected ID which
-      // always failed unless the order also carried an explicit id field.  As a
-      // result when the backend returned only names (e.g. when the API was
-      // itself filtering on department) the table ended up empty even though the
-      // stats reported the correct count.
+      // Filter by department: the backend now sends a structured `department`
+      // object (id/name).  We still have fallbacks for older servers, but try
+      // the new field first to avoid extra loops.
       if (_selectedDepartment != null && _selectedDepartment!.isNotEmpty) {
-        final deptCtrl = context.read<DepartmentController>();
-        final selDeptId = _selectedDepartment!;
-        // try to look up the human readable name for the selected id – this is
-        // what the helper below returns, so we can match either way.
-        String? selDeptName;
-        for (var d in deptCtrl.departments) {
-          if (d.id?.toString() == selDeptId) {
-            selDeptName = d.name;
-            break;
-          }
-        }
+        bool hasDept = false;
+        final selDeptId = _selectedDepartment!.toString();
 
-        final deptName = _getOrderDepartment(order, deptCtrl, userController,
-            context.read<PurchaseRequestController>());
-
-        // comparison normalized (lowercase/trimmed) so that small
-        // formatting differences don't make us drop otherwise matching rows.
-        String norm(String? s) => s?.toString().toLowerCase().trim() ?? '';
-        final deptNameNorm = norm(deptName);
-        final selNameNorm = norm(selDeptName);
-        final selIdNorm = norm(selDeptId);
-
-        if (deptNameNorm == selNameNorm || deptNameNorm == selIdNorm) {
-          // name matched, OK
-        } else {
-          // try to inspect raw id fields on the order as a last resort
-          String? orderDeptId;
+        try {
+          // 0) new object from backend
           try {
-            if (order.departmentId != null) orderDeptId = order.departmentId.toString();
-          } catch (_) {}
-          try {
-            if (order.department != null && order.department is Map) {
-              final m = order.department as Map;
-              orderDeptId ??= m['id']?.toString();
-              orderDeptId ??= m['department_id']?.toString();
+            final Map<dynamic, dynamic>? deptObj =
+                (order.department is Map) ? Map<dynamic, dynamic>.from(order.department as Map) : null;
+            if (deptObj != null) {
+              final dynamic idVal = deptObj['id'];
+              final dynamic nameVal = deptObj['name'];
+              if (idVal?.toString() == selDeptId || nameVal?.toString() == selDeptId) {
+                hasDept = true;
+              }
             }
           } catch (_) {}
-          if (orderDeptId != selDeptId) {
-            // log the information that caused the rejection for debugging
-            debugPrint('❌ Dashboard filter: excluding order ${order.id} '
-                'because computedDept="$deptName" orderDeptId="$orderDeptId" '
-                'selectedId="$selDeptId" selectedName="$selDeptName"');
-            return false;
+
+          // 1) order-level department id fields (legacy)
+          if (!hasDept) {
+            try {
+              final orderDeptId = order.departmentId?.toString();
+              debugPrint('🔎 ORDER FIELD dept: order=${order.id} orderDeptId=$orderDeptId');
+              if (orderDeptId != null && orderDeptId == selDeptId) hasDept = true;
+            } catch (_) {}
           }
+
+          // 2) linked PurchaseRequest department id/name
+          if (!hasDept) {
+            final prId = order.purchaseRequestId;
+            if (prId != null) {
+              final prCtrl = context.read<PurchaseRequestController>();
+              dynamic foundPr;
+              for (var pr in prCtrl.requests) {
+                if (pr.id == prId) {
+                  foundPr = pr;
+                  break;
+                }
+              }
+              final prDepIdLog = foundPr?.departmentId?.toString() ?? 'null';
+              final prDepNameLog = foundPr?.department?.toString() ?? 'null';
+              debugPrint('🔎 ORDER PR lookup: order=${order.id} prId=$prId prFound=${foundPr != null} prDepId=$prDepIdLog prDepName=$prDepNameLog');
+              try {
+                final prDepId = foundPr?.departmentId?.toString();
+                if (prDepId != null && prDepId == selDeptId) hasDept = true;
+                final prDepName = foundPr?.department?.toString() ?? '';
+                if (!hasDept && prDepName.isNotEmpty && prDepName == _selectedDepartment) hasDept = true;
+              } catch (_) {}
+            }
+          }
+
+          // 3) requester user's depId (legacy fallback)
+          if (!hasDept) {
+            try {
+              final userIdRaw = order.requestedByUser;
+              if (userIdRaw != null) {
+                final userIdStr = userIdRaw.toString();
+                User? foundUser;
+                for (var u in userController.users) {
+                  if (u.id?.toString() == userIdStr) {
+                    foundUser = u;
+                    break;
+                  }
+                }
+                debugPrint('🔎 ORDER USER lookup: order=${order.id} userFound=${foundUser != null} userId=${foundUser?.id} userDep=${foundUser?.depId}');
+                final userDepId = foundUser?.depId?.toString();
+                if (userDepId != null && userDepId == selDeptId) hasDept = true;
+              }
+            } catch (_) {}
+          }
+
+          // 4) fallback: compare department names from any field
+          if (!hasDept) {
+            try {
+              final orderDeptName = (order.department ?? '').toString();
+              if (orderDeptName.isNotEmpty && orderDeptName == _selectedDepartment) hasDept = true;
+            } catch (_) {}
+          }
+        } catch (e) {
+          debugPrint('⚠️ Department filter error for order ${order.id}: $e');
         }
+
+        debugPrint('🔎 Dept decision: order=${order.id} matched=$hasDept selectedDeptId=$selDeptId');
+        if (!hasDept) return false;
       }
 
-      // Filter by requester if selected - compare by ID (dropdown stores id)
+      // Filter by requester: prefer ID comparisons (PR.requestedBy id, order.requestedByUser), fallback to names
       if (_selectedRequester != null && _selectedRequester!.isNotEmpty) {
-        // requester's id can appear under several keys depending on payload
-        final dynamic o = order;
-        final uid = o.requestedByUser ?? o.requested_by_user ?? o.requesterId ?? o.requester;
-        final uidStr = uid?.toString();
-        if (uidStr != _selectedRequester) return false;
+        bool hasRequester = false;
+        final selReq = _selectedRequester!.toString();
+
+        try {
+          // 1) Check PR requestedBy id/name
+          final prId = order.purchaseRequestId;
+          if (prId != null) {
+            final prCtrl = context.read<PurchaseRequestController>();
+            dynamic foundPr;
+            for (var pr in prCtrl.requests) {
+              if (pr.id == prId) {
+                foundPr = pr;
+                break;
+              }
+            }
+            try {
+              final prReqIdStr = foundPr?.requestedBy?.toString();
+              if (prReqIdStr != null && prReqIdStr == selReq) hasRequester = true;
+            } catch (_) {}
+            try {
+              final prReqName = (foundPr?.requestedByUsername ?? foundPr?.requestedByName)?.toString() ?? '';
+              if (!hasRequester && prReqName.isNotEmpty && prReqName == _selectedRequester) hasRequester = true;
+            } catch (_) {}
+            debugPrint('🔎 PR requester lookup: order=${order.id} prId=$prId prRequestedId=${foundPr?.requestedBy} prRequestedName=${foundPr?.requestedByUsername} matched=$hasRequester');
+          }
+
+          // 2) Fallback to order.requestedByUser id -> user lookup
+          if (!hasRequester) {
+            try {
+              final userIdRaw = order.requestedByUser;
+              if (userIdRaw != null) {
+                final uid = userIdRaw.toString();
+                if (uid == selReq) hasRequester = true;
+                if (!hasRequester) {
+                  for (var u in userController.users) {
+                    if (u.id?.toString() == uid) {
+                      final uname = (u.username ?? u.name ?? '').toString();
+                      if (uname == _selectedRequester || u.id?.toString() == selReq) hasRequester = true;
+                      break;
+                    }
+                  }
+                }
+              }
+            } catch (_) {}
+            debugPrint('🔎 ORDER USER requester lookup: order=${order.id} requestedBy=${order.requestedByUser} matched=$hasRequester');
+          }
+
+          // 3) Final fallback: compare names on order/pr
+          if (!hasRequester) {
+            try {
+              final uid = order.requestedByUser;
+              if (uid != null) {
+                for (var u in userController.users) {
+                  if (u.id?.toString() == uid.toString()) {
+                    final uname = (u.username ?? u.name ?? '').toString();
+                    if (uname.isNotEmpty && uname == _selectedRequester) {
+                      hasRequester = true;
+                      break;
+                    }
+                  }
+                }
+              }
+            } catch (_) {}
+          }
+        } catch (e) {
+          debugPrint('⚠️ Requester filter error for order ${order.id}: $e');
+        }
+
+        debugPrint('🔎 Requester decision: order=${order.id} matched=$hasRequester selectedRequester=$selReq');
+        if (!hasRequester) return false;
+      }
+
+      // Exclude orders without a department if the toggle is on
+      if (_excludeNullDept) {
+        final deptName = _getOrderDepartment(order,
+            context.read<DepartmentController>(), userController,
+            context.read<PurchaseRequestController>());
+        if (deptName.trim().isEmpty) return false;
       }
 
       // Filter by family if selected
@@ -952,19 +1086,18 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
       return true;
     }).toList();
 
-    // Log counts to help debugging and recompute dropdown options from filtered data so filters cascade properly
-    // compute the selected department name for easier debugging
-    String? _selDeptName;
-    if (_selectedDepartment != null && _selectedDepartment!.isNotEmpty) {
-      for (var d in context.read<DepartmentController>().departments) {
-        if (d.id?.toString() == _selectedDepartment) {
-          _selDeptName = d.name;
-          break;
-        }
-      }
-    }
-    debugPrint('🔍 ordersFromServer=${ordersFromServer.length}, filteredOrders (after filters)=${filteredOrders.length}, selectedDept=$_selectedDepartment ($_selDeptName), selectedRequester=$_selectedRequester');
+    // Log local filtering results for debugging
+    debugPrint('📊 LOCAL FILTERING RESULTS:');
+    debugPrint('  🏠 ordersFromServer: ${ordersFromServer.length}');
+    debugPrint('  🔍 filteredOrders (after local filters): ${filteredOrders.length}');
+    debugPrint('  🔄 Filters applied:');
+    debugPrint('    - dept: $_selectedDepartment');
+    debugPrint('    - requester: $_selectedRequester');
+    debugPrint('    - supplier: $_selectedSupplier');
+    debugPrint('    - family: $_selectedFamily');
+    debugPrint('    - excludeNullDept: $_excludeNullDept');
 
+    // Recompute dropdown options from filtered data so filters cascade properly
     final controllerApproved = supplierController.suppliers
         .where((s) =>
             (s.approvalStatus ?? '').toLowerCase() == 'approved' &&
@@ -997,6 +1130,9 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
     // to those having a PO if possible. This ensures the dropdown isn’t empty
     // even when filteredOrders doesn’t reference any of them.
     final deptUsers = userController.users.where((u) {
+      final isReq = ((u.role_id == 2) ||
+          (u.role != null && u.role!.id == 2));
+      if (!isReq) return false;
       if (_selectedDepartment != null && _selectedDepartment!.isNotEmpty) {
         return u.depId?.toString() == _selectedDepartment;
       }
@@ -1072,35 +1208,6 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
       appBar:
           StandardHeader(title: AppLocalizations.of(context)!.poDashboardTitle),
       backgroundColor: const Color(0xFFF6F7FB),
-      floatingActionButton: FloatingActionButton(
-        tooltip: 'Debug info',
-        child: const Icon(Icons.bug_report),
-        onPressed: () {
-          final deptPairs = context
-              .read<DepartmentController>()
-              .departments
-              .map((d) => '${d.id}:${d.name}')
-              .join(', ');
-          final userPairs = context
-              .read<UserController>()
-              .users
-              .map((u) => '${u.id}:${u.depId}')
-              .join(', ');
-          showDialog(
-              context: context,
-              builder: (_) => AlertDialog(
-                    title: const Text('Debug info'),
-                    content: SingleChildScrollView(
-                      child: Text('Departments: $deptPairs\nUsers(id:depId): $userPairs'),
-                    ),
-                    actions: [
-                      TextButton(
-                          onPressed: () => Navigator.of(context).pop(),
-                          child: const Text('OK'))
-                    ],
-                  ));
-        },
-      ),
       body: Column(
         children: [
           // ========== STATS FILTERS (top) ==========
@@ -1131,7 +1238,10 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                     lastDate: DateTime.now(),
                                   );
                                   if (picked != null) {
-                                    setState(() => _startDate = picked);
+                                    setState(() {
+                                      _startDate = picked;
+                                      _currentPage = 1; // Reset pagination
+                                    });
                                     // Ouvre automatiquement le calendrier To Date
                                     final endInitial =
                                         (_endDate != null && !_endDate!.isBefore(picked))
@@ -1201,8 +1311,8 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                   onChanged: (val) {
                                       setState(() {
                                         _selectedDepartment = val;
-                                        // clearing requester whenever department changes
                                         _selectedRequester = null;
+                                        _currentPage = 1; // Reset pagination
                                       });
                                       _applySharedFilters();
                                     },
@@ -1217,25 +1327,21 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                 isExpanded: true,
                                 value: _selectedRequester,
                                 hint: Text(AppLocalizations.of(context)!.all),
-                                items: (() {
-                                  final items = <DropdownMenuItem<String>>[];
-                                  items.add(DropdownMenuItem(
+                                items: [
+                                  DropdownMenuItem(
                                     value: null,
                                     child: Text(AppLocalizations.of(context)!.all),
-                                  ));
-                                  final seen = <String>{};
-                                  for (var u in filteredRequesters) {
-                                    final key = u.id?.toString() ?? (u.username ?? u.email ?? '');
-                                    if (key.isEmpty || seen.contains(key)) continue;
-                                    seen.add(key);
-                                    items.add(DropdownMenuItem(
-                                        value: u.id?.toString(),
-                                        child: Text(_userDisplayName(u))));
-                                  }
-                                  return items;
-                                })(),
+                                  ),
+                                  ...filteredRequesters.map((u) => DropdownMenuItem(
+                                      value: u.id?.toString(),
+                                      child:
+                                          Text(u.username ?? u.name ?? 'Unknown'))),
+                                ],
                                 onChanged: (val) {
-                                  setState(() => _selectedRequester = val);
+                                  setState(() {
+                                    _selectedRequester = val;
+                                    _currentPage = 1; // Reset pagination
+                                  });
                                   _applySharedFilters();
                                 },
                               ),
@@ -1258,7 +1364,10 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                       value: s, child: Text(s))),
                                 ],
                                 onChanged: (val) {
-                                  setState(() => _selectedSupplier = val);
+                                  setState(() {
+                                    _selectedSupplier = val;
+                                    _currentPage = 1; // Reset pagination
+                                  });
                                   _applySharedFilters();
                                 },
                               ),
@@ -1282,7 +1391,8 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                 onChanged: (val) {
                                   setState(() {
                                     _selectedFamily = val;
-                                    _selectedSubFamily = null; // Reset subfamily when family changes
+                                    _selectedSubFamily = null;
+                                    _currentPage = 1; // Reset pagination
                                   });
                                   _applySharedFilters();
                                 },
@@ -1305,7 +1415,10 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                       value: sf, child: Text(sf))),
                                 ],
                                 onChanged: (val) {
-                                  setState(() => _selectedSubFamily = val);
+                                  setState(() {
+                                    _selectedSubFamily = val;
+                                    _currentPage = 1; // Reset pagination
+                                  });
                                   _applySharedFilters();
                                 },
                               ),
@@ -1415,6 +1528,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                       onPressed: () {
                         setState(() {
                           _excludeNullDept = !_excludeNullDept;
+                          _currentPage = 1; // Reset pagination
                         });
                         _applySharedFilters();
                       },
@@ -1479,6 +1593,8 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                         ));
                   }
                   // build basic cards and then currency cards
+                  // debug log current stats map each rebuild
+                  print('🔢 stats map inside widget: ${statsCtrl.totalPriceByCurrency}');
                   return Row(
                     children: [
                       Expanded(
@@ -1532,7 +1648,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text(AppLocalizations.of(context)!.totalPriceApprovedPO,
+                                Text('Total price of approved PO ',
                                     style: TextStyle(
                                         fontSize: 14,
                                         fontWeight: FontWeight.bold,
@@ -1556,10 +1672,15 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                               'total_price_${currency.toLowerCase()}';
                                           final value = statsCtrl
                                               .totalPriceByCurrency![key];
+                                          // display symbol if available
+                                          final symbol =
+                                              _currencySymbol(currency);
+                                          final suffix =
+                                              symbol.isNotEmpty ? symbol : currency;
                                           return Text(
                                             value != null
-                                                ? '${value.toStringAsFixed(2)} $currency'
-                                                : '- $currency',
+                                                ? '${value.toStringAsFixed(2)} $suffix'
+                                                : '- $suffix',
                                             style: const TextStyle(
                                                 fontSize: 16,
                                                 color: Colors.green),
@@ -1845,32 +1966,6 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                           ),
                                         ),
                                       ),
-                                      DataColumn(
-                                        label: SizedBox(
-                                          width: 120,
-                                          child: GestureDetector(
-                                            onTap: () => setState(() {
-                                              if (_sortBy == 'department') {
-                                                _sortAscending = !_sortAscending;
-                                              } else {
-                                                _sortBy = 'department';
-                                                _sortAscending = false;
-                                              }
-                                            }),
-                                            child: Row(
-                                              children: [
-                                                Text(AppLocalizations.of(context)!.department),
-                                                if (_sortBy == 'department')
-                                                  Icon(
-                                                    _sortAscending
-                                                        ? Icons.arrow_upward
-                                                        : Icons.arrow_downward,
-                                                    size: 14),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ),
                                       DataColumn(label: Text('')),
                                     ],
                                     rows: paginatedProductRows.map((row) {
@@ -1878,11 +1973,6 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                       final product = row['product'];
 
                                       if (product == null) {
-                                        final deptName = _getOrderDepartment(
-                                            order,
-                                            context.read<DepartmentController>(),
-                                            userController,
-                                            context.read<PurchaseRequestController>());
                                         return DataRow(cells: [
                                           DataCell(Text(order.id.toString())),
                                           DataCell(Text(_safeString(order.title ?? ''))),
@@ -1917,7 +2007,6 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                               ),
                                             ),
                                           ),
-                                          DataCell(Text(deptName)),
                                           DataCell(IconButton(icon: const Icon(Icons.visibility, color: Colors.blue), onPressed: () => _showOrderDetailsDialog(context, order, userController))),
                                         ]);
                                       }
@@ -1926,11 +2015,6 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                       final quantity = product.quantity ?? 0;
                                       final totalAmount = (quantity is int ? quantity.toDouble() : quantity as double) * (unitPrice is int ? unitPrice.toDouble() : unitPrice as double);
 
-                                      final deptName = _getOrderDepartment(
-                                          order,
-                                          context.read<DepartmentController>(),
-                                          userController,
-                                          context.read<PurchaseRequestController>());
                                       return DataRow(cells: [
                                         DataCell(Text(order.id.toString())),
                                         DataCell(Text(_safeString(order.title ?? ''))),
@@ -1965,7 +2049,6 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                             ),
                                           ),
                                         ),
-                                        DataCell(Text(deptName)),
                                         DataCell(IconButton(icon: const Icon(Icons.visibility, color: Colors.blue), onPressed: () => _showOrderDetailsDialog(context, order, userController))),
                                       ]);
                                     }).toList(),
@@ -2015,8 +2098,6 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
 
       final excel = ex.Excel.createExcel();
       final sheet = excel[AppLocalizations.of(context)!.poDashboardTitle];
-      // make sure the dashboard sheet is selected when opening
-      excel.setDefaultSheet(sheet.sheetName);
 
       // Header row (styled)
       final headerStyle = ex.CellStyle(
@@ -2026,28 +2107,26 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
       final titleCellStyle = ex.CellStyle(fontColorHex: "#1E88E5");
 
       final loc = AppLocalizations.of(context)!;
-      // build header row without title, add currency and department columns (currency moved next to total price)
       sheet.appendRow([
         loc.id,
+        loc.title,
         loc.product,
         loc.supplier,
         loc.quantity,
         loc.unitPrice,
         loc.totalPrice,
-        loc.currency,
         loc.date,
         loc.requester,
         loc.status,
-        loc.department,
       ]);
 
       // Apply header style and set column widths for readability
-      for (var c = 0; c < 11; c++) {
+      for (var c = 0; c < 10; c++) {
         final cell = sheet
             .cell(ex.CellIndex.indexByColumnRow(columnIndex: c, rowIndex: 0));
         cell.cellStyle = headerStyle;
       }
-      // Override ID and Currency header styles for improved readability
+      // Override ID and Title header styles for improved readability
       sheet
           .cell(ex.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0))
           .cellStyle = idCellStyle;
@@ -2056,16 +2135,15 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
           .cellStyle = titleCellStyle;
       // Set some reasonable column widths
       sheet.setColWidth(0, 8); // ID
-      sheet.setColWidth(1, 30); // Product
-      sheet.setColWidth(2, 20); // Supplier
-      sheet.setColWidth(3, 10); // Quantity
-      sheet.setColWidth(4, 12); // Unit Price
-      sheet.setColWidth(5, 14); // Total Amount
-      sheet.setColWidth(6, 10); // Currency
+      sheet.setColWidth(1, 30); // Title
+      sheet.setColWidth(2, 30); // Product
+      sheet.setColWidth(3, 20); // Supplier
+      sheet.setColWidth(4, 10); // Quantity
+      sheet.setColWidth(5, 12); // Unit Price
+      sheet.setColWidth(6, 14); // Total Amount
       sheet.setColWidth(7, 12); // Date
       sheet.setColWidth(8, 18); // Requester
       sheet.setColWidth(9, 12); // Status
-      sheet.setColWidth(10, 18); // Department
 
       for (var order in orders) {
         final products = order.products;
@@ -2075,27 +2153,17 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
 
         if (products == null || products.isEmpty) {
           // Single row when no products
-          String deptName = _getOrderDepartment(
-              order,
-              context.read<DepartmentController>(),
-              context.read<UserController>(),
-              context.read<PurchaseRequestController>());
-          if (deptName.isEmpty) {
-            deptName = (order.department?.toString() ?? '').trim();
-            if (deptName.isEmpty) deptName = '-';
-          }
           sheet.appendRow([
             order.id?.toString() ?? '-',
+            (order.title?.toString() ?? '-'),
             '-', // Product
             '-', // Supplier
             0, // Quantity
             0, // Unit Price
             0.0, // Total Amount
-            order.currency?.toString() ?? '',
             orderDate,
             _getRequesterName(order, context.read<UserController>()),
             _localizedStatus(context, order.status),
-            deptName,
           ]);
         } else {
           for (var product in products) {
@@ -2106,27 +2174,18 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                     (unitPrice is int
                         ? unitPrice.toDouble()
                         : unitPrice as double));
-            String deptName = _getOrderDepartment(
-                order,
-                context.read<DepartmentController>(),
-                context.read<UserController>());
-            if (deptName.isEmpty) {
-              deptName = (order.department?.toString() ?? '').trim();
-              if (deptName.isEmpty) deptName = '-';
-            }
             // Each product line repeats the PO ID and Title (previous behavior)
             sheet.appendRow([
               order.id?.toString() ?? '-',
+              (order.title?.toString() ?? '-'),
               product.product?.toString() ?? '-',
               product.supplier?.toString() ?? '-',
               quantity, // numeric
               unitPrice, // numeric
               totalAmount, // numeric
-              order.currency?.toString() ?? '',
               orderDate,
               _getRequesterName(order, context.read<UserController>()),
               _localizedStatus(context, order.status),
-              deptName,
             ]);
           }
         }

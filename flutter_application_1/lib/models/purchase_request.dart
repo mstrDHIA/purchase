@@ -108,9 +108,24 @@ class PurchaseRequest {
             : int.tryParse(dept['id'].toString());
       }
     } else if (json['department'] != null) {
-      department = json['department']?.toString();
+      // department could be a simple string, an int id, or even a numeric string
+      final raw = json['department'];
+      department = raw?.toString();
+      if (departmentId == null) {
+        if (raw is int) {
+          departmentId = raw;
+        } else {
+          departmentId = int.tryParse(raw.toString());
+        }
+      }
     } else if (json['department_name'] != null) {
       department = json['department_name']?.toString();
+    }
+    // finally check for explicit id field when backend uses department_id instead
+    if (departmentId == null && json['department_id'] != null) {
+      departmentId = json['department_id'] is int
+          ? json['department_id']
+          : int.tryParse(json['department_id'].toString());
     }
     isArchived = json['is_archived'] ?? false;
   }
