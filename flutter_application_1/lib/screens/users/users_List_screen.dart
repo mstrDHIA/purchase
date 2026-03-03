@@ -185,13 +185,13 @@ class _UserListPageState extends State<UserListPage> {
                                     dividerThickness: 0.6,
                                     columns: [
                                   DataColumn(
-                                    label: Text(_getLocalizedText(context, 'email', 'Email'), style: const TextStyle(fontWeight: FontWeight.bold)),
+                                    label: Text(_getLocalizedText(context, 'name', 'Name'), style: const TextStyle(fontWeight: FontWeight.bold)),
                                     onSort: (columnIndex, ascending) {
                                       userController.sortUsers(columnIndex, ascending);
                                     },
                                   ),
                                   DataColumn(
-                                    label: Text(_getLocalizedText(context, 'name', 'Name'), style: const TextStyle(fontWeight: FontWeight.bold)),
+                                    label: Text(_getLocalizedText(context, 'email', 'Email'), style: const TextStyle(fontWeight: FontWeight.bold)),
                                     onSort: (columnIndex, ascending) {
                                       userController.sortUsers(columnIndex, ascending);
                                     },
@@ -213,8 +213,8 @@ class _UserListPageState extends State<UserListPage> {
                                 rows: userController.filteredUsers.map((user) {
                                   return DataRow(
                                     cells: [
-                                      DataCell(Text(user.email!, style: const TextStyle(fontSize: 15))),
                                       DataCell(Text(user.username!, style: const TextStyle(fontSize: 15))),
+                                      DataCell(Text(user.email!, style: const TextStyle(fontSize: 15))),
                                       DataCell(
                                          GestureDetector(
                                               onTap: () async {

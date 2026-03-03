@@ -77,13 +77,13 @@ class UserController extends ChangeNotifier {
       switch (sortColumnIndex) {
         case 0:
           filtered.sort((a, b) => sortAscending
-              ? a.email!.compareTo(b.email!)
-              : b.email!.compareTo(a.email!));
+              ? a.username!.compareTo(b.username!)
+              : b.username!.compareTo(a.username!));
           break;
         case 1:
           filtered.sort((a, b) => sortAscending
-              ? a.username!.compareTo(b.username!)
-              : b.username!.compareTo(a.username!));
+              ? a.email!.compareTo(b.email!)
+              : b.email!.compareTo(a.email!));
           break;
         case 2:
           // filtered.sort((a, b) => sortAscending
