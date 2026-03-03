@@ -31,6 +31,9 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
   final TextEditingController _searchCtrl = TextEditingController();
   bool _initialLoadDone = false;
   Timer? _refreshTimer;
+  // Debounce timer for filter inputs to avoid repeated network calls
+  Timer? _filterDebounceTimer;
+  final Duration _filterDebounceDuration = const Duration(milliseconds: 300);
 
   // Pagination state (server‑driven pages)
   int _currentPage = 1; // corresponds to backend page
@@ -50,7 +53,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
   // Shared stats filters
   String? _selectedDepartment;
   String? _selectedRequester;
-  bool _excludeNullDept = false;
+
 
   @override
   void initState() {
@@ -113,12 +116,19 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
               family: _selectedFamily,
               subfamily: _selectedSubFamily,
               supplier: _selectedSupplier,
-              excludeNullDept: _excludeNullDept,
               page: _currentPage,
               pageSize: _serverPageSize,
               silent: true, // don't show loading indicator for background refresh
             );
       }
+    });
+  }
+
+  // Debounced wrapper to avoid firing _applySharedFilters too often
+  void _debouncedApplySharedFilters({int page = 1}) {
+    _filterDebounceTimer?.cancel();
+    _filterDebounceTimer = Timer(_filterDebounceDuration, () {
+      if (mounted) _applySharedFilters(page: page);
     });
   }
 
@@ -140,7 +150,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
         try {
           debugPrint('🔁 Loading purchase requests for local filtering');
           // request a large page size so we pull all requests in one call
-          await prCtrl.fetchRequests(context, context.read<UserController>().currentUser, page: 1, pageSizeParam: 1000);
+          await prCtrl.fetchRequests(context, context.read<UserController>().currentUser, page: 1, pageSizeParam: 200);
           debugPrint('🔁 Loaded ${prCtrl.requests.length} purchase requests');
           // print snippet of department info
           for (var pr in prCtrl.requests.take(10)) {
@@ -151,35 +161,34 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
         }
       }
 
-      // regardless of emptiness, any remaining requests with null department
-      // might be enriched by hitting the detail endpoint.  This ensures we
-      // capture departments when the list API omits them.
+      // Kick off PR enrichment in background (non-blocking) so the UI
+      // doesn't wait for many detail requests on slow networks.
       try {
-        final network = PurchaseRequestNetwork();
-        bool fetchedExtra = false;
-        for (var pr in prCtrl.requests) {
-          if ((pr.departmentId == null || pr.departmentId == 0) && pr.id != null) {
-            try {
-              final resp = await network.fetchPurchaseRequestById(pr.id!);
-              final raw = resp.data;
-              debugPrint('   🔍 single PR fetch ${pr.id} dept=${raw['department']} dept_id=${raw['department_id']}');
-              final updated = PurchaseRequest.fromJson(raw);
-              if (updated.departmentId != null && updated.departmentId != pr.departmentId) {
-                pr.departmentId = updated.departmentId;
-                pr.department = updated.department;
-                debugPrint('   ✅ updated PR ${pr.id} with deptId=${pr.departmentId}');
-                fetchedExtra = true;
+        Future(() async {
+          final network = PurchaseRequestNetwork();
+          bool fetchedExtra = false;
+          for (var pr in prCtrl.requests) {
+            if ((pr.departmentId == null || pr.departmentId == 0) && pr.id != null) {
+              try {
+                final resp = await network.fetchPurchaseRequestById(pr.id!);
+                final raw = resp.data;
+                final updated = PurchaseRequest.fromJson(raw);
+                if (updated.departmentId != null && updated.departmentId != pr.departmentId) {
+                  pr.departmentId = updated.departmentId;
+                  pr.department = updated.department;
+                  fetchedExtra = true;
+                }
+              } catch (_) {
+                // ignore individual failures
               }
-            } catch (e) {
-              debugPrint('   ❌ failed to refresh PR ${pr.id}: $e');
             }
           }
-        }
-        if (fetchedExtra) {
-          debugPrint('🔁 Some PRs were enriched with department data after detail fetch');
-        }
+          if (fetchedExtra) {
+            debugPrint('🔁 Some PRs were enriched with department data after detail fetch (background)');
+          }
+        });
       } catch (e) {
-        debugPrint('⚠️ Error during PR enrichment: $e');
+        debugPrint('⚠️ Error scheduling PR enrichment: $e');
       }
 
       final start = _startDate ?? DateTime.now().subtract(const Duration(days: 90));
@@ -187,9 +196,10 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
       final startStr = DateTime(start.year, start.month, start.day).toIso8601String().split('T').first;
       final endStr = DateTime(end.year, end.month, end.day).toIso8601String().split('T').first;
 
-      // Fetch stats (other than total dinar)
+      // Start fetching stats in background while we fetch PO list —
+      // this reduces the total waiting time for the UI.
       try {
-        await statsCtrl.fetchAll(
+        statsCtrl.fetchAll(
           start: start,
           end: end,
           department: _selectedDepartment,
@@ -197,15 +207,9 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
           family: _selectedFamily,
           subfamily: _selectedSubFamily,
           supplier: _selectedSupplier,
-          excludeNullDept: _excludeNullDept,
-        );
-      } catch (statsError) {
-        debugPrint('⚠️ Stats fetch error (continuing with PO): $statsError');
-      }
+        ).catchError((e) => debugPrint('⚠️ Stats fetch error (background): $e'));
 
-      // Force refresh of totalPriceDinar
-      try {
-        await statsCtrl.fetchTotalPriceDinar(
+        statsCtrl.fetchTotalPriceDinar(
           token: APIS.token,
           startDate: startStr,
           endDate: endStr,
@@ -214,10 +218,9 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
           supplier: _selectedSupplier,
           family: _selectedFamily,
           subfamily: _selectedSubFamily,
-          excludeNullDept: _excludeNullDept,
-        );
-      } catch (totalError) {
-        debugPrint('❌ Total Dinar fetch error: $totalError');
+        ).catchError((e) => debugPrint('❌ Total Dinar fetch error (background): $e'));
+      } catch (e) {
+        debugPrint('⚠️ Error starting background stats fetches: $e');
       }
 
       if (!mounted) return;
@@ -232,7 +235,6 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
           family: _selectedFamily,
           subfamily: _selectedSubFamily,
           supplier: _selectedSupplier,
-          excludeNullDept: _excludeNullDept,
           search: _searchCtrl.text.isNotEmpty ? _searchCtrl.text : null,
           page: _currentPage,
           pageSize: _serverPageSize,
@@ -246,8 +248,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
         final hasAnyFilter = (_selectedDepartment != null && _selectedDepartment!.isNotEmpty) ||
             (_selectedRequester != null && _selectedRequester!.isNotEmpty) ||
             (_selectedSupplier != null && _selectedSupplier!.isNotEmpty) ||
-            (_selectedFamily != null && _selectedFamily!.isNotEmpty) ||
-            _excludeNullDept;
+            (_selectedFamily != null && _selectedFamily!.isNotEmpty);
         
         if (hasAnyFilter && poCtrl.orders.isEmpty) {
           debugPrint('⚠️ zero orders returned with filters, retrying without any filters');
@@ -273,7 +274,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       // Re-apply current filters when returning to this screen
-      if (mounted) _applySharedFilters(page: _currentPage);
+      if (mounted) _debouncedApplySharedFilters(page: _currentPage);
     }
   }
 
@@ -1062,13 +1063,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
         if (!hasRequester) return false;
       }
 
-      // Exclude orders without a department if the toggle is on
-      if (_excludeNullDept) {
-        final deptName = _getOrderDepartment(order,
-            context.read<DepartmentController>(), userController,
-            context.read<PurchaseRequestController>());
-        if (deptName.trim().isEmpty) return false;
-      }
+
 
       // Filter by family if selected
       if (_selectedFamily != null && _selectedFamily!.isNotEmpty) {
@@ -1106,7 +1101,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
     debugPrint('    - requester: $_selectedRequester');
     debugPrint('    - supplier: $_selectedSupplier');
     debugPrint('    - family: $_selectedFamily');
-    debugPrint('    - excludeNullDept: $_excludeNullDept');
+
 
     // Recompute dropdown options from filtered data so filters cascade properly
     final controllerApproved = supplierController.suppliers
@@ -1468,9 +1463,8 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                   _selectedSupplier = null;
                                   _selectedFamily = null;
                                   _selectedSubFamily = null;
-                                  _excludeNullDept = false;
                                 });
-                                _applySharedFilters(page: _currentPage);
+                                _debouncedApplySharedFilters(page: _currentPage);
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.grey.shade200,
@@ -1527,52 +1521,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                     ),
                   ],
                 ),
-                
-                // Deuxième ligne : bouton Include/Exclude Null Dept tout seul
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    // Exclude Null Dept toggle
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        setState(() {
-                          _excludeNullDept = !_excludeNullDept;
-                          _currentPage = 1; // Reset pagination
-                        });
-                        _applySharedFilters(page: _currentPage);
-                      },
-                      icon: Icon(
-                        _excludeNullDept ? Icons.filter_alt_off : Icons.filter_alt,
-                        size: 18,
-                      ),
-                        label: Text(_excludeNullDept
-                          ? AppLocalizations.of(context)!.excludePoWithoutDepartment
-                          : AppLocalizations.of(context)!.includePoWithoutDepartment),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _excludeNullDept ? Colors.orange.shade100 : Colors.grey.shade100,
-                        foregroundColor: _excludeNullDept ? Colors.orange.shade900 : Colors.black87,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    // Petit texte d'information
-                    if (_excludeNullDept)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.orange.shade50,
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(color: Colors.orange.shade200),
-                        ),
-                        child: Text(
-                          'Les PO sans département sont exclus',
-                          style: TextStyle(fontSize: 12, color: Colors.orange.shade900),
-                        ),
-                      ),
-                  ],
-                ),
-                
-                const SizedBox(height: 12),
+
                 // Stats summary cards
                 Consumer2<StatsController, UserController>(builder: (context, statsCtrl, userCtrl, _) {
                   // trigger fetch once when necessary
@@ -1598,7 +1547,6 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                           supplier: _selectedSupplier,
                           family: _selectedFamily,
                           subfamily: _selectedSubFamily,
-                          excludeNullDept: _excludeNullDept,
                         ));
                   }
                   // build basic cards and then currency cards

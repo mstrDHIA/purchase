@@ -41,7 +41,7 @@ class _StatsScreenNewState extends State<StatsScreenNew> {
   String? _selectedCategory;
   String? _selectedSubcategory;
   String? _selectedSupplier;
-  bool _excludeNullDept = false;
+
 
   @override
   void initState() {
@@ -129,7 +129,7 @@ class _StatsScreenNewState extends State<StatsScreenNew> {
       }
 
       await statsCtrl.fetchAll(
-          start: _startDate, end: _endDate, excludeNullDept: _excludeNullDept);
+          start: _startDate, end: _endDate);
       setState(() {
         _loading = statsCtrl.loading;
       });
@@ -484,15 +484,7 @@ class _StatsScreenNewState extends State<StatsScreenNew> {
                                     _selectedSupplier = (v == '' ? null : v)),
                               ),
                               const SizedBox(height: 12),
-                              CheckboxListTile(
-                                contentPadding: EdgeInsets.zero,
-                                value: _excludeNullDept,
-                                title:
-                                    const Text('Exclude PO without department'),
-                                onChanged: (v) => setState(
-                                    () => _excludeNullDept = v ?? false),
-                              ),
-                              const SizedBox(height: 12),
+
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
@@ -591,7 +583,6 @@ class _StatsScreenNewState extends State<StatsScreenNew> {
                                                 supplierParam.isNotEmpty)
                                             ? supplierParam
                                             : null,
-                                        excludeNullDept: _excludeNullDept,
                                       );
                                       setState(() {
                                         // Use summary totals extracted directly from API response (backend already calculated)
