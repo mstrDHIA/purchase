@@ -75,7 +75,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
       final controller = Provider.of<PurchaseOrderController>(context, listen: false);
       
       // Wait for orders to be fetched (use large pageSize to retrieve all records)
-      await controller.fetchOrders(page: 1, pageSize: 1000);
+      await controller.fetchOrders(page: null, pageSize: null);
       _fetchProductFamilies();
       
       // Now auto-archive after orders are loaded
@@ -129,7 +129,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
 
     final controller = Provider.of<PurchaseOrderController>(context, listen: false);
     try {
-      await controller.fetchOrders(page: 1, pageSize: 1000);
+      await controller.fetchOrders(page: null, pageSize: null);
       await _fetchProductFamilies();
     } catch (_) {}
   }
@@ -195,7 +195,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
       
       // Refresh list after archiving/unarchiving
       if ((archivedCount > 0 || unarchivedCount > 0) && mounted) {
-        await controller.fetchOrders(page: 1, pageSize: 1000);
+        await controller.fetchOrders(page: null, pageSize: null);
         print('✓ Auto-archived $archivedCount, Unarchived $unarchivedCount - refreshing list');
       } else {
         print('ℹ️ No changes needed (archived: $archivedCount, unarchived: $unarchivedCount)');
@@ -599,7 +599,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                                   // ignore individual errors; continue
                                 }
                               }
-                              await controller.fetchOrders(page: 1, pageSize: 1000);
+                              await controller.fetchOrders(page: null, pageSize: null);
                               dataSource.clearSelection();
                               ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(_showArchived ? AppLocalizations.of(context)!.unarchivedPurchaseOrders(ids.length) : AppLocalizations.of(context)!.archivedPurchaseOrders(ids.length))));
                             }
@@ -652,7 +652,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                                   // ignore individual errors
                                 }
                               }
-                              await controller.fetchOrders(page: 1, pageSize: 1000);
+                              await controller.fetchOrders(page: null, pageSize: null);
                               dataSource.clearSelection();
                               ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.deletedPurchaseOrders(ids.length))));
                             }
@@ -1125,7 +1125,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
       final controller = Provider.of<PurchaseOrderController>(context, listen: false);
       try {
         await controller.deleteOrder(order['id'].toString());
-        await controller.fetchOrders(page: 1, pageSize: 1000);
+        await controller.fetchOrders(page: null, pageSize: null);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(AppLocalizations.of(context)!.purchaseOrderDeleted(order['id']))) ,
         );
@@ -1207,7 +1207,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
       final controller = Provider.of<PurchaseOrderController>(context, listen: false);
       try {
         await controller.archivePurchaseOrder(order['id']);
-        await controller.fetchOrders(page: 1, pageSize: 1000);
+        await controller.fetchOrders(page: null, pageSize: null);
         if (mounted) {
           setState(() {});
         }
@@ -1292,7 +1292,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
       final controller = Provider.of<PurchaseOrderController>(context, listen: false);
       try {
         await controller.unarchivePurchaseOrder(order['id']);
-        await controller.fetchOrders(page: 1, pageSize: 1000);
+        await controller.fetchOrders(page: null, pageSize: null);
         if (mounted) {
           setState(() {});
         }

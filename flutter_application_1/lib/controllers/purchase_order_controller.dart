@@ -30,8 +30,8 @@ class PurchaseOrderController extends ChangeNotifier {
 			bool? excludeNullDept,
 			String? search,
 			String? status,
-			int page = 1,
-			int pageSize = 10,
+			int? page,
+			int? pageSize,
 			bool silent = false, // true = don't show loading indicator
 		}) async {
 			print('📡 PurchaseOrderController.fetchOrders called page=$page pageSize=$pageSize status=$status');
