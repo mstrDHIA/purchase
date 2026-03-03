@@ -2092,6 +2092,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
         loc.quantity,
         loc.unitPrice,
         loc.totalPrice,
+        'Currency',
         loc.date,
         loc.requester,
         'Department', // Nouvelle colonne
@@ -2099,7 +2100,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
       ]);
 
       // Apply header style and set column widths for readability
-      for (var c = 0; c < 10; c++) {
+      for (var c = 0; c < 11; c++) {
         final cell = sheet
             .cell(ex.CellIndex.indexByColumnRow(columnIndex: c, rowIndex: 0));
         cell.cellStyle = headerStyle;
@@ -2115,10 +2116,11 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
       sheet.setColWidth(3, 10); // Quantity
       sheet.setColWidth(4, 12); // Unit Price
       sheet.setColWidth(5, 14); // Total Amount
-      sheet.setColWidth(6, 12); // Date
-      sheet.setColWidth(7, 18); // Requester
-      sheet.setColWidth(8, 20); // Department
-      sheet.setColWidth(9, 12); // Status
+      sheet.setColWidth(6, 8); // Currency
+      sheet.setColWidth(7, 12); // Date
+      sheet.setColWidth(8, 18); // Requester
+      sheet.setColWidth(9, 20); // Department
+      sheet.setColWidth(10, 12); // Status
 
       for (var order in orders) {
         final products = order.products;
@@ -2149,6 +2151,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
             0, // Quantity
             0, // Unit Price
             0.0, // Total Amount
+            (_currencySymbol(order.currency).isNotEmpty ? _currencySymbol(order.currency) : '-'), // Currency
             orderDate,
             _getRequesterName(order, context.read<UserController>()),
             deptName, // Department
@@ -2171,6 +2174,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
               quantity, // numeric
               unitPrice, // numeric
               totalAmount, // numeric
+              (_currencySymbol(order.currency).isNotEmpty ? _currencySymbol(order.currency) : '-'), // Currency
               orderDate,
               _getRequesterName(order, context.read<UserController>()),
               deptName, // Department
