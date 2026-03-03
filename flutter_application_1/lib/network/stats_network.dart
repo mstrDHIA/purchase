@@ -88,6 +88,7 @@ class StatsNetwork {
     String? supplier,
     String? family,
     String? subfamily,
+    String? status,
   }) async {
     final params = <String, dynamic>{'group_by': groupBy};
     if (start != null && start.isNotEmpty) params['start_date'] = start;
@@ -95,6 +96,7 @@ class StatsNetwork {
     if (department != null && department.isNotEmpty) params['department'] = department;
     if (requester != null && requester.isNotEmpty) params['requester'] = requester;
     if (excludeNullDept != null) params['exclude_null_dept'] = excludeNullDept ? 'true' : 'false';
+    if (status != null && status.isNotEmpty) params['status'] = status;
 
     // Respect both keys if provided; backend supports filtering by any of these
     if (category != null && category.isNotEmpty) params['category'] = category;

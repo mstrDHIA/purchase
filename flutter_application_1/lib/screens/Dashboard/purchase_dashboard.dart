@@ -207,6 +207,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
           family: _selectedFamily,
           subfamily: _selectedSubFamily,
           supplier: _selectedSupplier,
+          status: 'approved,rejected',
         ).catchError((e) => debugPrint('⚠️ Stats fetch error (background): $e'));
 
         statsCtrl.fetchTotalPriceDinar(
@@ -2052,7 +2053,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
       ),
     );
   }
-
+ 
   Future<void> _exportOrdersToExcel(List orders) async {
     // Build excel file with same columns as the datatable
     try {

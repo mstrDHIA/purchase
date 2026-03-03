@@ -55,7 +55,9 @@ class PurchaseOrderController extends ChangeNotifier {
 					page: page,
 					pageSize: pageSize,
 				);
-				print('➡️ fetched ${_orders.length} purchase orders');
+				// Capture the total from the network's last response (if paginated)
+				_total = _network.lastTotal;
+				print('➡️ fetched ${_orders.length} purchase orders, total=$_total');
 				if (!silent) notifyListeners();
 			} catch (e) {
 				_error = e.toString();

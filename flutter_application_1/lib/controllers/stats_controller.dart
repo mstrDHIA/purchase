@@ -89,6 +89,7 @@ class StatsController extends ChangeNotifier {
     bool? excludeNullDept,
     String? groupBy,
     List<String>? groupByList,
+    String? status,
   }) async {
     loading = true;
     error = null;
@@ -142,6 +143,7 @@ class StatsController extends ChangeNotifier {
         family: family,
         subfamily: subfamily,
         excludeNullDept: excludeNullDept,
+        status: status,
       );
 
       final dataList = response is List ? response : (response is Map ? [response] : []);
