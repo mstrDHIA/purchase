@@ -20,7 +20,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
 import 'package:flutter_application_1/utils/download_helper.dart';
 import 'package:printing/printing.dart';
-import 'package:flutter_application_1/screens/Purchase order/refuse_purchase_screen.dart';
+
 import 'package:flutter_application_1/screens/Purchase order/pushase_order_screen.dart';
 import 'package:flutter_application_1/screens/Purchase order/Edit_purchase_screen.dart';
 
@@ -936,74 +936,27 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                 final id = widget.purchaseRequest.id;
                                 if (id == null) throw Exception('ID missing');
 
-                                // Coordinator (role id 3) sees a choice dialog before entering the refuse reason
-                                if (userController.currentUser.role!.id == 3) {
-                                  final choice = await showDialog<String>(
-                                    context: context,
-                                    builder: (context) => AlertDialog(
-                                      title: Text(AppLocalizations.of(context)!.reject),
-                                      content: Text('Reject type:'),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () => Navigator.of(context).pop('modify'),
-                                          child: const Text('Reject for modification'),
-                                        ),
-                                        ElevatedButton(
-                                          onPressed: () => Navigator.of(context).pop('total'),
-                                          child: const Text('Reject completely'),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                  if (choice == null) return;
-
-                                  // Show reason dialog
-                                  final result = await showDialog<Map<String, dynamic>>(
-                                    context: context,
-                                    builder: (context) => const RefusePurchaseDialog(),
-                                  );
-
-                                  if (result == null) return;
-
-                                  final payload = {
-                                    'status': choice == 'total' ? 'rejected' : 'edited',
-                                    'approved_by': userController.currentUser.id,
-                                    if (result['reason_id'] != null) 'rejected_reason': result['reason_id'],
-                                    'refuse_reason': result['reason_text'] ?? result['comment'] ?? '',
-                                  };
-
-                                  await PurchaseRequestNetwork().updatePurchaseRequest(id, payload, method: 'PATCH');
-
-                                  setState(() {
-                                    _showActionButtons = false;
-                                    _status = payload['status'];
-                                  });
-
-                                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                                    if (mounted) Navigator.pop(context, true);
-                                  });
-
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text(choice == 'total' ? AppLocalizations.of(context)!.purchaseOrderRejected : '${AppLocalizations.of(context)!.rejected} (for modification)'), backgroundColor: choice == 'total' ? Colors.red : Colors.orange),
-                                  );
-
-                                  return;
-                                }
-
-                                // Default behavior for other roles: immediate reject (backwards compatible)
+                                // immediately reject without dialogs
                                 final payload = {
                                   'status': 'rejected',
                                   'approved_by': userController.currentUser.id,
                                 };
+
                                 await PurchaseRequestNetwork().updatePurchaseRequest(id, payload, method: 'PATCH');
+
                                 setState(() {
                                   _showActionButtons = false;
+                                  _status = 'rejected';
                                 });
+
                                 WidgetsBinding.instance.addPostFrameCallback((_) {
-                                  if (mounted) {
-                                    Navigator.pop(context, true);
-                                  }
+                                  if (mounted) Navigator.pop(context, true);
                                 });
+
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(AppLocalizations.of(context)!.purchaseOrderRejected), backgroundColor: Colors.red),
+                                );
+                                return;
                               } catch (e) {
                                 String errorMsg = e.toString();
                                 if (e is DioException && e.response != null) {
@@ -1013,10 +966,6 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                                   SnackBar(backgroundColor: const Color.fromARGB(255, 245, 3, 3), content: Text(errorMsg)),
                                 );
                               }
-
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(backgroundColor: const Color.fromARGB(255, 243, 5, 5), content: Text(AppLocalizations.of(context)!.rejected)),
-                              );
                             },
                             child: Text(AppLocalizations.of(context)?.reject ?? 'Reject'),
                           ),

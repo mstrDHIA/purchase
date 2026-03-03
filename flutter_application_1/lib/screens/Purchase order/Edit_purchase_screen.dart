@@ -827,7 +827,20 @@ bottomNavigationBar: Container(
         // Set both keys to maximize backend compatibility
         'statuss': statusToUse,
         'status': statusToUse,
-        'currency': _currencyCodes[_currency] ?? _currency,
+        'currency': (() {
+          // similar fallback logic as in creation form
+          String cur = _currency;
+          if ((cur == 'Dollar' || cur.isEmpty) && productsList.isNotEmpty) {
+            final pc = productsList.first['currency']?.toString();
+            if (pc != null && pc.isNotEmpty) {
+              // convert code back to textual form if necessary
+              cur = _codeToCurrency[pc] ?? pc;
+            }
+          }
+          final codeVal = _currencyCodes[cur] ?? cur;
+          print('🔁 edit screen sending currency code: $codeVal (from $cur)');
+          return codeVal;
+        })(),
         'created_at': DateFormat('yyyy-MM-dd').format(DateTime.now()).toString(),
         'updated_at': DateFormat('yyyy-MM-dd').format(_updatedAt ?? DateTime.now()).toString(),
         'supplier_delivery_date': parsedSupplierDeliveryDate != null ? DateFormat('yyyy-MM-dd').format(parsedSupplierDeliveryDate) : null,
@@ -1191,7 +1204,14 @@ bottomNavigationBar: Container(
                 child: DropdownButtonFormField<String>(
                   value: product.currency,
                   items: _currencySymbols.keys.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-                  onChanged: (val) => setState(() => product.currency = val ?? _currency),
+                  onChanged: (val) {
+                    final newCur = val ?? _currency;
+                    print('🔧 product line currency changed to $newCur, updating order currency');
+                    setState(() {
+                      product.currency = newCur;
+                      _currency = newCur; // keep order-level in sync
+                    });
+                  },
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: Colors.white,

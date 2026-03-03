@@ -69,11 +69,6 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
     'Euro': '€',
     'Dinar': 'DT',
   };
-  final Map<String, String> _currencyCodes = {
-    'Dollar': 'USD',
-    'Euro': 'EUR',
-    'Dinar': 'TND',
-  };
   final TextEditingController noteController = TextEditingController();
   final TextEditingController dueDateController = TextEditingController();
   final TextEditingController supplierNameController = TextEditingController();
@@ -91,6 +86,18 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
     _fetchSuppliers();
     final initial = widget.initialOrder;
     if (initial.isNotEmpty) {
+      // populate currency from existing order if present
+      if (initial['currency'] != null) {
+        final raw = initial['currency'].toString().toUpperCase();
+        if (raw.contains('EUR')) {
+          _currency = 'Euro';
+        } else if (raw.contains('TND') || raw.contains('DINAR')) {
+          _currency = 'Dinar';
+        } else if (raw.contains('USD') || raw.contains('DOLLAR')) {
+          _currency = 'Dollar';
+        }
+      }
+
       _priority = initial['priority']?.toString();
       _id = initial['id'] is int ? initial['id'] : int.tryParse(initial['id']?.toString() ?? '');
       final userController = Provider.of<UserController>(context, listen: false);
@@ -259,7 +266,11 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
                     items: _currencySymbols.keys
                         .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                         .toList(),
-                    onChanged: (val) => setState(() => _currency = val ?? 'Dollar'),
+                    onChanged: (val) {
+                      final newVal = val ?? 'Dollar';
+                      print('⚙️ order currency changed to $newVal');
+                      setState(() => _currency = newVal);
+                    },
                   ),
                 ),
               ],
@@ -527,7 +538,22 @@ Row(
         'title': AppLocalizations.of(context)!.purchaseOrder,
         'description': noteController.text,
         'statuss': 'pending', // Always set to pending
-        'currency': _currencyCodes[_currency] ?? _currency,
+        // derive effective order currency - if user left dropdown at default,
+      // fall back to first product's currency (common case when editing items only)
+      'currency': (() {
+        String cur = _currency;
+        String code = 'USD';
+        final low = cur.toLowerCase();
+        if (low.contains('euro')) {
+          code = 'EUR';
+        } else if (low.contains('dinar')) {
+          code = 'TND';
+        } else if (low.contains('dollar')) {
+          code = 'USD';
+        }
+        print('🔁 sending currency code: $code (from $cur)');
+        return code;
+      })(),
         'created_at': DateFormat('yyyy-MM-dd').format(DateTime.now()),
         'updated_at': DateFormat('yyyy-MM-dd').format(_updatedAt ?? DateTime.now()),
         'priority': _priority,
