@@ -2064,20 +2064,29 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
         return;
       }
 
+      final sheetName = AppLocalizations.of(context)!.poDashboardTitle;
       final excel = ex.Excel.createExcel();
-      final sheet = excel[AppLocalizations.of(context)!.poDashboardTitle];
+      
+      // Créer la feuille avec le bon nom EN PREMIER
+      final sheet = excel[sheetName];
+      
+      // Supprimer Sheet1 du workbook complètement
+      if (excel.sheets.containsKey('Sheet1')) {
+        excel.sheets.remove('Sheet1');
+      }
+      
+      // Définir PO Dashboard comme la feuille active (celle qui s'ouvre par défaut)
+      excel.setDefaultSheet(sheetName);
 
       // Header row (styled)
       final headerStyle = ex.CellStyle(
           bold: true, backgroundColorHex: "#6A1B9A", fontColorHex: "#FFFFFF");
       final idCellStyle = ex.CellStyle(
           bold: true, backgroundColorHex: "#EDE7F6", fontColorHex: "#4A148C");
-      final titleCellStyle = ex.CellStyle(fontColorHex: "#1E88E5");
 
       final loc = AppLocalizations.of(context)!;
       sheet.appendRow([
         loc.id,
-        loc.title,
         loc.product,
         loc.supplier,
         loc.quantity,
@@ -2085,6 +2094,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
         loc.totalPrice,
         loc.date,
         loc.requester,
+        'Department', // Nouvelle colonne
         loc.status,
       ]);
 
@@ -2094,23 +2104,20 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
             .cell(ex.CellIndex.indexByColumnRow(columnIndex: c, rowIndex: 0));
         cell.cellStyle = headerStyle;
       }
-      // Override ID and Title header styles for improved readability
+      // Override ID header style for improved readability
       sheet
           .cell(ex.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0))
           .cellStyle = idCellStyle;
-      sheet
-          .cell(ex.CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: 0))
-          .cellStyle = titleCellStyle;
       // Set some reasonable column widths
       sheet.setColWidth(0, 8); // ID
-      sheet.setColWidth(1, 30); // Title
-      sheet.setColWidth(2, 30); // Product
-      sheet.setColWidth(3, 20); // Supplier
-      sheet.setColWidth(4, 10); // Quantity
-      sheet.setColWidth(5, 12); // Unit Price
-      sheet.setColWidth(6, 14); // Total Amount
-      sheet.setColWidth(7, 12); // Date
-      sheet.setColWidth(8, 18); // Requester
+      sheet.setColWidth(1, 30); // Product
+      sheet.setColWidth(2, 20); // Supplier
+      sheet.setColWidth(3, 10); // Quantity
+      sheet.setColWidth(4, 12); // Unit Price
+      sheet.setColWidth(5, 14); // Total Amount
+      sheet.setColWidth(6, 12); // Date
+      sheet.setColWidth(7, 18); // Requester
+      sheet.setColWidth(8, 20); // Department
       sheet.setColWidth(9, 12); // Status
 
       for (var order in orders) {
@@ -2118,12 +2125,25 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
         final orderDate = order.startDate != null
             ? DateFormat('yyyy-MM-dd').format(order.startDate!)
             : '-';
+        
+        // Extraire le département
+        String deptName = '-';
+        try {
+          final deptField = order.department;
+          if (deptField != null) {
+            if (deptField is Map) {
+              final name = deptField['name'] ?? deptField['department_name'];
+              if (name != null) deptName = name.toString();
+            } else {
+              deptName = deptField.toString();
+            }
+          }
+        } catch (_) {}
 
         if (products == null || products.isEmpty) {
           // Single row when no products
           sheet.appendRow([
             order.id?.toString() ?? '-',
-            (order.title?.toString() ?? '-'),
             '-', // Product
             '-', // Supplier
             0, // Quantity
@@ -2131,6 +2151,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
             0.0, // Total Amount
             orderDate,
             _getRequesterName(order, context.read<UserController>()),
+            deptName, // Department
             _localizedStatus(context, order.status),
           ]);
         } else {
@@ -2142,10 +2163,9 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                     (unitPrice is int
                         ? unitPrice.toDouble()
                         : unitPrice as double));
-            // Each product line repeats the PO ID and Title (previous behavior)
+            // Each product line repeats the PO ID (previous behavior)
             sheet.appendRow([
               order.id?.toString() ?? '-',
-              (order.title?.toString() ?? '-'),
               product.product?.toString() ?? '-',
               product.supplier?.toString() ?? '-',
               quantity, // numeric
@@ -2153,6 +2173,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
               totalAmount, // numeric
               orderDate,
               _getRequesterName(order, context.read<UserController>()),
+              deptName, // Department
               _localizedStatus(context, order.status),
             ]);
           }
