@@ -2087,20 +2087,22 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
       final loc = AppLocalizations.of(context)!;
       sheet.appendRow([
         loc.id,
+        'Family',
+        'Subfamily',
         loc.product,
-        loc.supplier,
         loc.quantity,
         loc.unitPrice,
         loc.totalPrice,
         'Currency',
-        loc.date,
+        loc.supplier,
+        'Department',
         loc.requester,
-        'Department', // Nouvelle colonne
         loc.status,
+        loc.date,
       ]);
 
       // Apply header style and set column widths for readability
-      for (var c = 0; c < 11; c++) {
+      for (var c = 0; c < 13; c++) {
         final cell = sheet
             .cell(ex.CellIndex.indexByColumnRow(columnIndex: c, rowIndex: 0));
         cell.cellStyle = headerStyle;
@@ -2111,24 +2113,27 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
           .cellStyle = idCellStyle;
       // Set some reasonable column widths
       sheet.setColWidth(0, 8); // ID
-      sheet.setColWidth(1, 30); // Product
-      sheet.setColWidth(2, 20); // Supplier
-      sheet.setColWidth(3, 10); // Quantity
-      sheet.setColWidth(4, 12); // Unit Price
-      sheet.setColWidth(5, 14); // Total Amount
-      sheet.setColWidth(6, 8); // Currency
-      sheet.setColWidth(7, 12); // Date
-      sheet.setColWidth(8, 18); // Requester
+      sheet.setColWidth(1, 20); // Family
+      sheet.setColWidth(2, 20); // Subfamily
+      sheet.setColWidth(3, 30); // Product
+      sheet.setColWidth(4, 10); // Quantity
+      sheet.setColWidth(5, 12); // Unit Price
+      sheet.setColWidth(6, 14); // Total Amount
+      sheet.setColWidth(7, 8); // Currency
+      sheet.setColWidth(8, 20); // Supplier
       sheet.setColWidth(9, 20); // Department
-      sheet.setColWidth(10, 12); // Status
+      sheet.setColWidth(10, 18); // Requester
+      sheet.setColWidth(11, 12); // Status
+      sheet.setColWidth(12, 12); // Date
 
       for (var order in orders) {
         final products = order.products;
+        // Extraire le département
+        // Order date string for Excel
         final orderDate = order.startDate != null
             ? DateFormat('yyyy-MM-dd').format(order.startDate!)
             : '-';
-        
-        // Extraire le département
+
         String deptName = '-';
         try {
           final deptField = order.department;
@@ -2146,16 +2151,18 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
           // Single row when no products
           sheet.appendRow([
             order.id?.toString() ?? '-',
+            '-', // Family
+            '-', // Subfamily
             '-', // Product
-            '-', // Supplier
             0, // Quantity
             0, // Unit Price
             0.0, // Total Amount
             (_currencySymbol(order.currency).isNotEmpty ? _currencySymbol(order.currency) : '-'), // Currency
-            orderDate,
-            _getRequesterName(order, context.read<UserController>()),
+            '-', // Supplier
             deptName, // Department
+            _getRequesterName(order, context.read<UserController>()),
             _localizedStatus(context, order.status),
+            orderDate,
           ]);
         } else {
           for (var product in products) {
@@ -2168,17 +2175,19 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                         : unitPrice as double));
             // Each product line repeats the PO ID (previous behavior)
             sheet.appendRow([
-              order.id?.toString() ?? '-',
+                order.id?.toString() ?? '-',
+              product.family?.toString() ?? '-',
+              product.subFamily?.toString() ?? '-',
               product.product?.toString() ?? '-',
-              product.supplier?.toString() ?? '-',
               quantity, // numeric
               unitPrice, // numeric
               totalAmount, // numeric
               (_currencySymbol(order.currency).isNotEmpty ? _currencySymbol(order.currency) : '-'), // Currency
-              orderDate,
-              _getRequesterName(order, context.read<UserController>()),
+              product.supplier?.toString() ?? '-',
               deptName, // Department
+              _getRequesterName(order, context.read<UserController>()),
               _localizedStatus(context, order.status),
+              orderDate,
             ]);
           }
         }
