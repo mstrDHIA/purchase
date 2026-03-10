@@ -194,7 +194,7 @@ class _UserListPageState extends State<UserListPage> {
                                     label: Text(_getLocalizedText(context, 'email', 'Email'), style: const TextStyle(fontWeight: FontWeight.bold)),
                                     onSort: (columnIndex, ascending) {
                                       userController.sortUsers(columnIndex, ascending);
-                                    },
+                                    },                                                                                      
                                   ),
                                   DataColumn(
                                     label: Text(_getLocalizedText(context, 'status', 'Status'), style: const TextStyle(fontWeight: FontWeight.bold)),

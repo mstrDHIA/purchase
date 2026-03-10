@@ -299,14 +299,44 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
     return '';
   }
 
-  String _getRequesterName(dynamic order, UserController userController) {
-    // Prefer explicit requester username if provided by API
+  String _getRequesterName(dynamic order, UserController userController,
+    PurchaseRequestController prCtrl) {
+    // 0) if the PO is tied to a purchase request, prefer the PR creator info
+    try {
+      final prId = order.purchaseRequestId ?? order.purchase_request_id;
+      if (prId != null) {
+        dynamic foundPr;
+        for (var pr in prCtrl.requests) {
+          if (pr.id == prId) {
+            foundPr = pr;
+            break;
+          }
+        }
+        if (foundPr != null) {
+          // prefer username/name from the request itself
+          final prName = (foundPr.requestedByUsername ?? foundPr.requestedByName)?.toString().trim() ?? '';
+          if (prName.isNotEmpty) return prName;
+          // fall back to id lookup on users if username not available
+          final prUserId = foundPr.requestedBy;
+          if (prUserId != null) {
+            final found = userController.users.firstWhere(
+              (u) => u.id == prUserId,
+              orElse: () => User(id: prUserId, username: ''),
+            );
+            final uname = (found.username ?? found.name ?? '').toString().trim();
+            if (uname.isNotEmpty) return uname;
+          }
+        }
+      }
+    } catch (_) {}
+
+    // 1) Prefer explicit requester username if provided by API on the order
     try {
       final reqName = (order.requestedByUsername ?? '').toString().trim();
       if (reqName.isNotEmpty) return reqName;
     } catch (_) {}
 
-    // Fallback: try to resolve from loaded users by id
+    // 2) Fallback: try to resolve from loaded users by id on the order
     try {
       final uid = order.requestedByUser;
       if (uid != null) {
@@ -550,7 +580,8 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                         ),
                         _buildInfoRow(
                           AppLocalizations.of(context)!.requester,
-                          _getRequesterName(order, userController),
+                          _getRequesterName(order, userController,
+                              context.read<PurchaseRequestController>()),
                         ),
                         _buildStatusRow(AppLocalizations.of(context)!.status,
                             _localizedStatus(context, order.status)),
@@ -847,6 +878,8 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
   Widget build(BuildContext context) {
     final poController = context.watch<PurchaseOrderController>();
     final supplierController = context.watch<SupplierController>();
+    // watch purchase requests too so that requester names update when PR list loads
+    final prController = context.watch<PurchaseRequestController>();
     // Use watch so the UI rebuilds when the users list is loaded/updated
     final userController = context.watch<UserController>();
 
@@ -1153,8 +1186,29 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
           .map((o) => o.requestedByUser?.toString())
           .where((id) => id != null)
           .toSet();
+      // also include any requester ids coming from the originating PR
+      final prCtrl = prController; // already watched above
+      final prIds = <String>{};
+      for (var o in filteredOrders) {
+        try {
+          final prId = o.purchaseRequestId;
+          if (prId != null) {
+            dynamic foundPr;
+            for (var p in prCtrl.requests) {
+              if (p.id == prId) {
+                foundPr = p;
+                break;
+              }
+            }
+            if (foundPr != null && foundPr.requestedBy != null) {
+              prIds.add(foundPr.requestedBy.toString());
+            }
+          }
+        } catch (_) {}
+      }
+      final combinedIds = {...orderIds, ...prIds};
       final matched = deptUsers
-          .where((u) => orderIds.contains(u.id?.toString()))
+          .where((u) => combinedIds.contains(u.id?.toString()))
           .toList();
       filteredRequesters = matched.isNotEmpty ? matched : deptUsers;
     } else {
@@ -1940,7 +1994,8 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                           DataCell(const Text('-')),
                                           DataCell(const Text('-')),
                                           DataCell(Text(order.startDate != null ? DateFormat('yyyy-MM-dd').format(order.startDate!) : '-')),
-                                          DataCell(Text(_getRequesterName(order, userController))),
+                                          DataCell(Text(_getRequesterName(order, userController,
+                                              context.read<PurchaseRequestController>()))),
                                           DataCell(
                                             Container(
                                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -1982,7 +2037,8 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                         DataCell(Text(unitPrice.toString())),
                                         DataCell(Text(totalAmount.toStringAsFixed(2) + (_currencySymbol(order.currency).isNotEmpty ? ' ' + _currencySymbol(order.currency) : ''))),
                                         DataCell(Text(order.startDate != null ? DateFormat('yyyy-MM-dd').format(order.startDate!) : '-')),
-                                        DataCell(Text(_getRequesterName(order, userController))),
+                                        DataCell(Text(_getRequesterName(order, userController,
+                                              context.read<PurchaseRequestController>()))),
                                         DataCell(
                                           Container(
                                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -2160,7 +2216,8 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
             (_currencySymbol(order.currency).isNotEmpty ? _currencySymbol(order.currency) : '-'), // Currency
             '-', // Supplier
             deptName, // Department
-            _getRequesterName(order, context.read<UserController>()),
+            _getRequesterName(order, context.read<UserController>(),
+                context.read<PurchaseRequestController>()),
             _localizedStatus(context, order.status),
             orderDate,
           ]);
@@ -2185,7 +2242,8 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
               (_currencySymbol(order.currency).isNotEmpty ? _currencySymbol(order.currency) : '-'), // Currency
               product.supplier?.toString() ?? '-',
               deptName, // Department
-              _getRequesterName(order, context.read<UserController>()),
+              _getRequesterName(order, context.read<UserController>(),
+                  context.read<PurchaseRequestController>()),
               _localizedStatus(context, order.status),
               orderDate,
             ]);
