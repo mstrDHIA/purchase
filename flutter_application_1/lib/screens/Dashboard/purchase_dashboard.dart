@@ -738,13 +738,78 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
             ),
             child: Text(
               status,
-              style: TextStyle(
-                color: status == 'approved' ? Colors.green : Colors.orange,
-                fontWeight: FontWeight.bold,
-              ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildStatCard(String title, String value, {Color? color}) {
+    return SizedBox(
+      width: 200,
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(title),
+              const SizedBox(height: 8),
+              Text(value,
+                  style: TextStyle(fontSize: 18, color: color ?? Colors.black)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCurrencyCard(StatsController statsCtrl) {
+    return SizedBox(
+      width: 200,
+      child: Card(
+        color: Colors.green[50],
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Total price of approved PO ',
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green[900])),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  if (statsCtrl.loadingTotalPriceDinar)
+                    const CircularProgressIndicator(strokeWidth: 2)
+                  else if (statsCtrl.errorTotalPriceDinar != null)
+                    Text(AppLocalizations.of(context)!.error,
+                        style: TextStyle(color: Colors.red[700]))
+                  else if (statsCtrl.totalPriceByCurrency != null)
+                    for (var currency in ['TND', 'USD', 'EUR'])
+                      Builder(builder: (context) {
+                        final key = 'total_price_${currency.toLowerCase()}';
+                        final value = statsCtrl.totalPriceByCurrency![key];
+                        final symbol = _currencySymbol(currency);
+                        final suffix = symbol.isNotEmpty ? symbol : currency;
+                        return Text(
+                          value != null
+                              ? '${value.toStringAsFixed(2)} $suffix'
+                              : '- $suffix',
+                          style: const TextStyle(fontSize: 16, color: Colors.green),
+                        );
+                      })
+                  else
+                    const Text('-', style: TextStyle(fontSize: 18)),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -1275,309 +1340,281 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Première ligne : tous les filtres principaux
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Left side - all filter dropdowns in a SingleChildScrollView
-                    Expanded(
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: [
-                            // Date range
-                            SizedBox(
-                              width: 180,
-                              child: OutlinedButton(
-                                onPressed: () async {
-                                  final picked = await showDatePicker(
-                                    context: context,
-                                    initialDate: _startDate ?? DateTime.now(),
-                                    firstDate: DateTime(2020),
-                                    lastDate: DateTime.now(),
-                                  );
-                                  if (picked != null) {
-                                    setState(() {
-                                      _startDate = picked;
-                                      _currentPage = 1; // Reset pagination
-                                    });
-                                    // Ouvre automatiquement le calendrier To Date
-                                    final endInitial =
-                                        (_endDate != null && !_endDate!.isBefore(picked))
-                                            ? _endDate!
-                                            : picked;
-                                    final pickedEnd = await showDatePicker(
-                                      context: context,
-                                      initialDate: endInitial,
-                                      firstDate: picked,
-                                      lastDate: DateTime.now(),
-                                      helpText: AppLocalizations.of(context)!.selectToDate,
-                                    );
-                                    if (pickedEnd != null) {
-                                      setState(() => _endDate = pickedEnd);
-                                    }
-                                    // auto apply filters
-                                    _applySharedFilters(page: _currentPage);
-                                  }
-                                },
-                                child: Text(_startDate != null
-                                    ? DateFormat('dd/MM/yyyy').format(_startDate!)
-                                    : AppLocalizations.of(context)!.fromDate),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            SizedBox(
-                              width: 180,
-                              child: OutlinedButton(
-                                onPressed: () async {
-                                  final picked = await showDatePicker(
-                                    context: context,
-                                    initialDate: _endDate ?? DateTime.now(),
-                                    firstDate: DateTime(2020),
-                                    lastDate: DateTime.now(),
-                                  );
-                                  if (picked != null) {
-                                    setState(() => _endDate = picked);
-                                    _applySharedFilters(page: _currentPage);
-                                  }
-                                },
-                                child: Text(_endDate != null
-                                    ? DateFormat('dd/MM/yyyy').format(_endDate!)
-                                    : AppLocalizations.of(context)!.toDate),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            // Department dropdown
-                            SizedBox(
-                              width: 200,
-                              child: Consumer<DepartmentController>(builder: (context, dc, _) {
-                                final depts = dc.departments
-                                    .map((d) =>
-                                        {'id': d.id?.toString() ?? '', 'name': d.name})
-                                    .toList();
-                                return DropdownButton<String>(
-                                  isExpanded: true,
-                                  value: _selectedDepartment,
-                                  hint: Text(AppLocalizations.of(context)!.all),
-                                  items: [
-                                    DropdownMenuItem(
-                                        value: null,
-                                        child: Text(AppLocalizations.of(context)!.all)),
-                                    ...depts.map((dept) => DropdownMenuItem(
-                                        value: dept['id'] as String,
-                                        child: Text(dept['name'] as String))),
-                                  ],
-                                  onChanged: (val) {
-                                      setState(() {
-                                        _selectedDepartment = val;
-                                        _selectedRequester = null;
-                                        _currentPage = 1; // Reset pagination
-                                      });
-                                      _applySharedFilters(page: _currentPage);
-                                    },
+                // Première ligne : tous les filtres principaux (responsive)
+                LayoutBuilder(builder: (context, constraints) {
+                  return Wrap(
+                    spacing: 16,
+                    runSpacing: 16,
+                    crossAxisAlignment: WrapCrossAlignment.start,
+                    children: [
+                      // group of filters that can wrap to new lines
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 12,
+                        children: [
+                          // Date range start
+                          SizedBox(
+                            width: 180,
+                            child: OutlinedButton(
+                              onPressed: () async {
+                                final picked = await showDatePicker(
+                                  context: context,
+                                  initialDate: _startDate ?? DateTime.now(),
+                                  firstDate: DateTime(2020),
+                                  lastDate: DateTime.now(),
                                 );
-                              }),
+                                if (picked != null) {
+                                  setState(() {
+                                    _startDate = picked;
+                                    _currentPage = 1; // Reset pagination
+                                  });
+                                  final endInitial =
+                                      (_endDate != null && !_endDate!.isBefore(picked))
+                                          ? _endDate!
+                                          : picked;
+                                  final pickedEnd = await showDatePicker(
+                                    context: context,
+                                    initialDate: endInitial,
+                                    firstDate: picked,
+                                    lastDate: DateTime.now(),
+                                    helpText: AppLocalizations.of(context)!.selectToDate,
+                                  );
+                                  if (pickedEnd != null) {
+                                    setState(() => _endDate = pickedEnd);
+                                  }
+                                  _applySharedFilters(page: _currentPage);
+                                }
+                              },
+                              child: Text(_startDate != null
+                                  ? DateFormat('dd/MM/yyyy').format(_startDate!)
+                                  : AppLocalizations.of(context)!.fromDate),
                             ),
-                            const SizedBox(width: 12),
-                            // Requester dropdown – options derived from filteredOrders
-                            SizedBox(
-                              width: 200,
-                              child: DropdownButton<String>(
+                          ),
+                          // Date range end
+                          SizedBox(
+                            width: 180,
+                            child: OutlinedButton(
+                              onPressed: () async {
+                                final picked = await showDatePicker(
+                                  context: context,
+                                  initialDate: _endDate ?? DateTime.now(),
+                                  firstDate: DateTime(2020),
+                                  lastDate: DateTime.now(),
+                                );
+                                if (picked != null) {
+                                  setState(() => _endDate = picked);
+                                  _applySharedFilters(page: _currentPage);
+                                }
+                              },
+                              child: Text(_endDate != null
+                                  ? DateFormat('dd/MM/yyyy').format(_endDate!)
+                                  : AppLocalizations.of(context)!.toDate),
+                            ),
+                          ),
+                          // Department dropdown
+                          SizedBox(
+                            width: 200,
+                            child: Consumer<DepartmentController>(builder: (context, dc, _) {
+                              final depts = dc.departments
+                                  .map((d) =>
+                                      {'id': d.id?.toString() ?? '', 'name': d.name})
+                                  .toList();
+                              return DropdownButton<String>(
                                 isExpanded: true,
-                                value: _selectedRequester,
+                                value: _selectedDepartment,
                                 hint: Text(AppLocalizations.of(context)!.all),
                                 items: [
                                   DropdownMenuItem(
-                                    value: null,
-                                    child: Text(AppLocalizations.of(context)!.all),
-                                  ),
-                                  ...filteredRequesters.map((u) => DropdownMenuItem(
-                                      value: u.id?.toString(),
-                                      child:
-                                          Text(u.username ?? u.name ?? 'Unknown'))),
-                                ],
-                                onChanged: (val) {
-                                  setState(() {
-                                    _selectedRequester = val;
-                                    _currentPage = 1; // Reset pagination
-                                  });
-                                  _applySharedFilters(page: _currentPage);
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            // Supplier (shared)
-                            SizedBox(
-                              width: 200,
-                              child: DropdownButton<String?>(
-                                isExpanded: true,
-                                value: _selectedSupplier,
-                                hint:
-                                    Text(AppLocalizations.of(context)!.selectSupplier),
-                                items: [
-                                  DropdownMenuItem<String?>(
                                       value: null,
-                                      child: Text(
-                                          AppLocalizations.of(context)!.allSuppliers)),
-                                  ...suppliers.map((s) => DropdownMenuItem<String>(
-                                      value: s, child: Text(s))),
+                                      child: Text(AppLocalizations.of(context)!.all)),
+                                  ...depts.map((dept) => DropdownMenuItem(
+                                      value: dept['id'] as String,
+                                      child: Text(dept['name'] as String))),
                                 ],
                                 onChanged: (val) {
                                   setState(() {
-                                    _selectedSupplier = val;
+                                    _selectedDepartment = val;
+                                    _selectedRequester = null;
                                     _currentPage = 1; // Reset pagination
                                   });
                                   _applySharedFilters(page: _currentPage);
                                 },
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            // Family filter for stats
-                            SizedBox(
-                              width: 200,
-                              child: DropdownButton<String?>(
-                                isExpanded: true,
-                                value: _selectedFamily,
-                                hint: Text(AppLocalizations.of(context)!.familyLabel),
-                                items: [
-                                  DropdownMenuItem<String?>(
-                                      value: null,
-                                      child: Text(
-                                          AppLocalizations.of(context)!.allFamilies)),
-                                  ...families.map((f) => DropdownMenuItem<String>(
-                                      value: f, child: Text(f))),
-                                ],
-                                onChanged: (val) {
-                                  setState(() {
-                                    _selectedFamily = val;
-                                    _selectedSubFamily = null;
-                                    _currentPage = 1; // Reset pagination
-                                  });
-                                  _applySharedFilters(page: _currentPage);
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            // Subfamily filter for stats
-                            SizedBox(
-                              width: 200,
-                              child: DropdownButton<String?>(
-                                isExpanded: true,
-                                value: _selectedSubFamily,
-                                hint: Text(AppLocalizations.of(context)!.subfamilyLabel),
-                                items: [
-                                  DropdownMenuItem<String?>(
-                                      value: null,
-                                      child: Text(AppLocalizations.of(context)!
-                                          .allSubfamilies)),
-                                  ...subfamilies.map((sf) => DropdownMenuItem<String>(
-                                      value: sf, child: Text(sf))),
-                                ],
-                                onChanged: (val) {
-                                  setState(() {
-                                    _selectedSubFamily = val;
-                                    _currentPage = 1; // Reset pagination
-                                  });
-                                  _applySharedFilters(page: _currentPage);
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    
-                    const SizedBox(width: 16),
-                    
-                    // Right side - action buttons
-                    Column(
-                      children: [
-                        Row(
-                          children: [
-                            // Apply button is no longer needed; filters run automatically.
-                            /*
-                            ElevatedButton.icon(
-                              onPressed: _applySharedFilters,
-                              icon: const Icon(Icons.refresh),
-                              label: Text(AppLocalizations.of(context)!.apply),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.deepPurple,
-                                foregroundColor: Colors.white,
-                              ),
-                            ),
-                            */
-                            const SizedBox(width: 8),
-                            // Clear Filters button - seulement l'icône X
-                            ElevatedButton(
-                              onPressed: () {
+                              );
+                            }),
+                          ),
+                          // Requester dropdown
+                          SizedBox(
+                            width: 200,
+                            child: DropdownButton<String>(
+                              isExpanded: true,
+                              value: _selectedRequester,
+                              hint: Text(AppLocalizations.of(context)!.all),
+                              items: [
+                                DropdownMenuItem(
+                                  value: null,
+                                  child: Text(AppLocalizations.of(context)!.all),
+                                ),
+                                ...filteredRequesters.map((u) => DropdownMenuItem(
+                                    value: u.id?.toString(),
+                                    child: Text(u.username ?? u.name ?? 'Unknown'))),
+                              ],
+                              onChanged: (val) {
                                 setState(() {
-                                  _startDate = null;
-                                  _endDate = null;
-                                  _selectedDepartment = null;
-                                  _selectedRequester = null;
-                                  _selectedSupplier = null;
-                                  _selectedFamily = null;
-                                  _selectedSubFamily = null;
+                                  _selectedRequester = val;
+                                  _currentPage = 1; // Reset pagination
                                 });
-                                _debouncedApplySharedFilters(page: _currentPage);
+                                _applySharedFilters(page: _currentPage);
+                              },
+                            ),
+                          ),
+                          // Supplier
+                          SizedBox(
+                            width: 200,
+                            child: DropdownButton<String?>(
+                              isExpanded: true,
+                              value: _selectedSupplier,
+                              hint:
+                                  Text(AppLocalizations.of(context)!.selectSupplier),
+                              items: [
+                                DropdownMenuItem<String?>(
+                                    value: null,
+                                    child: Text(
+                                        AppLocalizations.of(context)!.allSuppliers)),
+                                ...suppliers.map((s) => DropdownMenuItem<String>(
+                                    value: s, child: Text(s))),
+                              ],
+                              onChanged: (val) {
+                                setState(() {
+                                  _selectedSupplier = val;
+                                  _currentPage = 1; // Reset pagination
+                                });
+                                _applySharedFilters(page: _currentPage);
+                              },
+                            ),
+                          ),
+                          // Family
+                          SizedBox(
+                            width: 200,
+                            child: DropdownButton<String?>(
+                              isExpanded: true,
+                              value: _selectedFamily,
+                              hint: Text(AppLocalizations.of(context)!.familyLabel),
+                              items: [
+                                DropdownMenuItem<String?>(
+                                    value: null,
+                                    child: Text(
+                                        AppLocalizations.of(context)!.allFamilies)),
+                                ...families.map((f) => DropdownMenuItem<String>(
+                                    value: f, child: Text(f))),
+                              ],
+                              onChanged: (val) {
+                                setState(() {
+                                  _selectedFamily = val;
+                                  _selectedSubFamily = null;
+                                  _currentPage = 1; // Reset pagination
+                                });
+                                _applySharedFilters(page: _currentPage);
+                              },
+                            ),
+                          ),
+                          // Subfamily
+                          SizedBox(
+                            width: 200,
+                            child: DropdownButton<String?>(
+                              isExpanded: true,
+                              value: _selectedSubFamily,
+                              hint: Text(AppLocalizations.of(context)!.subfamilyLabel),
+                              items: [
+                                DropdownMenuItem<String?>(
+                                    value: null,
+                                    child: Text(AppLocalizations.of(context)!
+                                        .allSubfamilies)),
+                                ...subfamilies.map((sf) => DropdownMenuItem<String>(
+                                    value: sf, child: Text(sf))),
+                              ],
+                              onChanged: (val) {
+                                setState(() {
+                                  _selectedSubFamily = val;
+                                  _currentPage = 1; // Reset pagination
+                                });
+                                _applySharedFilters(page: _currentPage);
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      // action buttons
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          ElevatedButton(
+                            onPressed: () {
+                              setState(() {
+                                _startDate = null;
+                                _endDate = null;
+                                _selectedDepartment = null;
+                                _selectedRequester = null;
+                                _selectedSupplier = null;
+                                _selectedFamily = null;
+                                _selectedSubFamily = null;
+                              });
+                              _debouncedApplySharedFilters(page: _currentPage);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.grey.shade200,
+                              foregroundColor: Colors.black87,
+                              padding: const EdgeInsets.all(12),
+                              minimumSize: const Size(48, 48),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: Icon(Icons.clear, size: 20, semanticLabel: AppLocalizations.of(context)!.clearFilters),
+                          ),
+                          Builder(
+                            builder: (ctx) => ElevatedButton(
+                              onPressed: () async {
+                                final ordersToExport = filteredOrders;
+                                if (ordersToExport.isEmpty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                      content: Text(AppLocalizations.of(context)!.noOrdersToExportForSelectedRange)));
+                                  return;
+                                }
+                                final confirm = await showDialog<bool>(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: Text(AppLocalizations.of(context)!.exportConfirmTitle(ordersToExport.length)),
+                                    content: Text(AppLocalizations.of(context)!.exportConfirmContent(ordersToExport.length)),
+                                    actions: [
+                                      TextButton(
+                                          onPressed: () => Navigator.of(context).pop(false),
+                                          child: Text(AppLocalizations.of(context)!.cancel)),
+                                      ElevatedButton(
+                                          onPressed: () => Navigator.of(context).pop(true),
+                                          child: Text(AppLocalizations.of(context)!.export)),
+                                    ],
+                                  ),
+                                );
+                                if (confirm == true) {
+                                  await _exportOrdersToExcel(ordersToExport);
+                                }
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.grey.shade200,
-                                foregroundColor: Colors.black87,
-                                padding: const EdgeInsets.all(12),
-                                minimumSize: const Size(48, 48),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
+                                backgroundColor: Colors.green[700],
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                               ),
-                              child: Icon(Icons.clear, size: 20, semanticLabel: AppLocalizations.of(context)!.clearFilters),
+                              child: Text(AppLocalizations.of(context)!.export),
                             ),
-                            const SizedBox(width: 8),
-                            // Export Excel button - seulement le texte
-                            Builder(
-                              builder: (context) => ElevatedButton(
-                                onPressed: () async {
-                                  final ordersToExport = filteredOrders;
-                                  if (ordersToExport.isEmpty) {
-                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                        content: Text(AppLocalizations.of(context)!.noOrdersToExportForSelectedRange)));
-                                    return;
-                                  }
-                                  final confirm = await showDialog<bool>(
-                                    context: context,
-                                    builder: (context) => AlertDialog(
-                                      title: Text(AppLocalizations.of(context)!.exportConfirmTitle(ordersToExport.length)),
-                                      content: Text(AppLocalizations.of(context)!.exportConfirmContent(ordersToExport.length)),
-                                      actions: [
-                                        TextButton(
-                                            onPressed: () => Navigator.of(context).pop(false),
-                                            child: Text(AppLocalizations.of(context)!.cancel)),
-                                        ElevatedButton(
-                                            onPressed: () => Navigator.of(context).pop(true),
-                                            child: Text(AppLocalizations.of(context)!.export)),
-                                      ],
-                                    ),
-                                  );
-                                  if (confirm == true) {
-                                    await _exportOrdersToExcel(ordersToExport);
-                                  }
-                                },
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.green[700],
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                ),
-                                child: Text(AppLocalizations.of(context)!.export),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  );
+                }),
 
-                // Stats summary cards
+                // Stats summary cards (responsive wrap)
                 Consumer2<StatsController, UserController>(builder: (context, statsCtrl, userCtrl, _) {
                   // trigger fetch once when necessary
                   if ((statsCtrl.totalPriceByCurrency == null) &&
@@ -1604,110 +1641,24 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                           subfamily: _selectedSubFamily,
                         ));
                   }
-                  // build basic cards and then currency cards
-                  // debug log current stats map each rebuild
                   print('🔢 stats map inside widget: ${statsCtrl.totalPriceByCurrency}');
-                  return Row(
+                  return Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
                     children: [
-                      Expanded(
-                        child: Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Column(children: [
-                              Text(AppLocalizations.of(context)!.poStatistics),
-                              const SizedBox(height: 8),
-                              Text(statsCtrl.summaryTotal.toString(),
-                                  style: const TextStyle(fontSize: 18, color: Colors.blue))
-                            ]),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Column(children: [
-                              Text(AppLocalizations.of(context)!.statusRejected),
-                              const SizedBox(height: 8),
-                              Text(statsCtrl.summaryRejected.toString(),
-                                  style: const TextStyle(fontSize: 18, color: Colors.red))
-                            ]),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Column(children: [
-                              Text(AppLocalizations.of(context)!.rejectionRate),
-                              const SizedBox(height: 8),
-                              Text('${(statsCtrl.summaryRejectionRate * 100).toStringAsFixed(2)}%',
-                                  style: const TextStyle(fontSize: 18, color: Colors.orange))
-                            ]),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      // single horizontal card for all currencies with heading
-                      Expanded(
-                        child: Card(
-                          color: Colors.green[50],
-                          child: Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text('Total price of approved PO ',
-                                    style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.green[900])),
-                                const SizedBox(height: 8),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceEvenly,
-                                  children: [
-                                    if (statsCtrl.loadingTotalPriceDinar)
-                                      const CircularProgressIndicator(
-                                          strokeWidth: 2)
-                                    else if (statsCtrl.errorTotalPriceDinar != null)
-                                      Text(AppLocalizations.of(context)!.error,
-                                          style: TextStyle(
-                                              color: Colors.red[700]))
-                                    else if (statsCtrl.totalPriceByCurrency != null)
-                                      for (var currency in ['TND', 'USD', 'EUR'])
-                                        Builder(builder: (context) {
-                                          final key =
-                                              'total_price_${currency.toLowerCase()}';
-                                          final value = statsCtrl
-                                              .totalPriceByCurrency![key];
-                                          // display symbol if available
-                                          final symbol =
-                                              _currencySymbol(currency);
-                                          final suffix =
-                                              symbol.isNotEmpty ? symbol : currency;
-                                          return Text(
-                                            value != null
-                                                ? '${value.toStringAsFixed(2)} $suffix'
-                                                : '- $suffix',
-                                            style: const TextStyle(
-                                                fontSize: 16,
-                                                color: Colors.green),
-                                          );
-                                        })
-                                    else
-                                      const Text('-',
-                                          style: TextStyle(fontSize: 18)),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
+                      _buildStatCard(
+                          AppLocalizations.of(context)!.poStatistics,
+                          statsCtrl.summaryTotal.toString(),
+                          color: Colors.blue),
+                      _buildStatCard(
+                          AppLocalizations.of(context)!.statusRejected,
+                          statsCtrl.summaryRejected.toString(),
+                          color: Colors.red),
+                      _buildStatCard(
+                          AppLocalizations.of(context)!.rejectionRate,
+                          '${(statsCtrl.summaryRejectionRate * 100).toStringAsFixed(2)}%',
+                          color: Colors.orange),
+                      _buildCurrencyCard(statsCtrl),
                     ],
                   );
                 }),
