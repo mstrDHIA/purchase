@@ -368,6 +368,8 @@
   "toPrefix": "To: ",
   "selectFromDate": "Select From Date",
   "selectToDate": "Select To Date",
+  "allDepartments": "All Departments",
+  "allRequesters": "All Requesters",
   "exportExcel": "Export Excel",
   "exportConfirmTitle": "Export {count} orders?",
   "exportConfirmContent": "This will export the {count} purchase orders currently shown on the dashboard.",

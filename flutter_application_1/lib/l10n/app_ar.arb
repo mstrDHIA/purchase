@@ -326,6 +326,8 @@
   "toPrefix": "إلى: ",
   "selectFromDate": "اختر تاريخ البدء",
   "selectToDate": "اختر تاريخ الانتهاء",
+  "allDepartments": "جميع الأقسام",
+  "allRequesters": "جميع مقدمي الطلب",
   "exportExcel": "تصدير إلى Excel",
   "exportConfirmTitle": "تصدير {count} طلب؟",
   "exportConfirmContent": "سيتم تصدير {count} أوامر الشراء المعروضة حاليًا على لوحة التحكم.",

@@ -1095,6 +1095,12 @@ class AppLocalizationsAr extends AppLocalizations {
   String get selectSupplier => 'اختر المورد';
 
   @override
+  String get allDepartments => 'جميع الأقسام';
+
+  @override
+  String get allRequesters => 'جميع مقدمي الطلب';
+
+  @override
   String get allSuppliers => 'كل الموردين';
 
   @override

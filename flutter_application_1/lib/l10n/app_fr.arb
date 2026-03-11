@@ -383,6 +383,8 @@
   "toPrefix": "À : ",
   "selectFromDate": "Sélectionnez la date de début",
   "selectToDate": "Sélectionnez la date de fin",
+  "allDepartments": "Tous les départements",
+  "allRequesters": "Tous les demandeurs",
   "exportExcel": "Exporter Excel",
   "exportConfirmTitle": "Exporter {count} commandes ?",
   "exportConfirmContent": "Ceci exportera les {count} bons de commande actuellement affichés sur le tableau de bord.",

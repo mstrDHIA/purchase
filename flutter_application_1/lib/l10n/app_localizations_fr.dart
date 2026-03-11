@@ -1095,6 +1095,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get selectSupplier => 'Sélectionner un fournisseur';
 
   @override
+  String get allDepartments => 'Tous les départements';
+
+  @override
+  String get allRequesters => 'Tous les demandeurs';
+
+  @override
   String get allSuppliers => 'Tous les fournisseurs';
 
   @override

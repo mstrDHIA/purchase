@@ -2137,6 +2137,18 @@ abstract class AppLocalizations {
   /// **'Select Supplier'**
   String get selectSupplier;
 
+  /// No description provided for @allDepartments.
+  ///
+  /// In en, this message translates to:
+  /// **'All Departments'**
+  String get allDepartments;
+
+  /// No description provided for @allRequesters.
+  ///
+  /// In en, this message translates to:
+  /// **'All Requesters'**
+  String get allRequesters;
+
   /// No description provided for @allSuppliers.
   ///
   /// In en, this message translates to:

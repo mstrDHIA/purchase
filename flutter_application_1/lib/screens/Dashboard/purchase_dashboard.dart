@@ -1358,11 +1358,11 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                 return DropdownButton<String>(
                                   isExpanded: true,
                                   value: _selectedDepartment,
-                                  hint: Text(AppLocalizations.of(context)!.all),
+                                  hint: Text(AppLocalizations.of(context)!.allDepartments),
                                   items: [
                                     DropdownMenuItem(
                                         value: null,
-                                        child: Text(AppLocalizations.of(context)!.all)),
+                                        child: Text(AppLocalizations.of(context)!.allDepartments)),
                                     ...depts.map((dept) => DropdownMenuItem(
                                         value: dept['id'] as String,
                                         child: Text(dept['name'] as String))),
@@ -1385,11 +1385,11 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                               child: DropdownButton<String>(
                                 isExpanded: true,
                                 value: _selectedRequester,
-                                hint: Text(AppLocalizations.of(context)!.all),
+                                hint: Text(AppLocalizations.of(context)!.allRequesters),
                                 items: [
                                   DropdownMenuItem(
                                     value: null,
-                                    child: Text(AppLocalizations.of(context)!.all),
+                                    child: Text(AppLocalizations.of(context)!.allRequesters),
                                   ),
                                   ...filteredRequesters.map((u) => DropdownMenuItem(
                                       value: u.id?.toString(),
@@ -1978,7 +1978,10 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                           ),
                                         ),
                                       ),
-                                      DataColumn(label: Text('')),
+                                      DataColumn(label: SizedBox(
+                                        width: 40,
+                                        child: Text(''),
+                                      )),
                                     ],
                                     rows: paginatedProductRows.map((row) {
                                       final order = row['order'];
@@ -2020,7 +2023,15 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                               ),
                                             ),
                                           ),
-                                          DataCell(IconButton(icon: const Icon(Icons.visibility, color: Colors.blue), onPressed: () => _showOrderDetailsDialog(context, order, userController))),
+                                          DataCell(
+                                            SizedBox(
+                                              width: 40,
+                                              child: IconButton(
+                                                icon: const Icon(Icons.visibility, color: Colors.blue),
+                                                onPressed: () => _showOrderDetailsDialog(context, order, userController),
+                                              ),
+                                            ),
+                                          ),
                                         ]);
                                       }
 
@@ -2063,7 +2074,15 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
                                             ),
                                           ),
                                         ),
-                                        DataCell(IconButton(icon: const Icon(Icons.visibility, color: Colors.blue), onPressed: () => _showOrderDetailsDialog(context, order, userController))),
+                                        DataCell(
+                                          SizedBox(
+                                            width: 40,
+                                            child: IconButton(
+                                              icon: const Icon(Icons.visibility, color: Colors.blue),
+                                              onPressed: () => _showOrderDetailsDialog(context, order, userController),
+                                            ),
+                                          ),
+                                        ),
                                       ]);
                                     }).toList(),
                                   ),

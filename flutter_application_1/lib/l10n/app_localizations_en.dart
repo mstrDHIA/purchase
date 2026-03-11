@@ -1094,6 +1094,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get selectSupplier => 'Select Supplier';
 
   @override
+  String get allDepartments => 'All Departments';
+
+  @override
+  String get allRequesters => 'All Requesters';
+
+  @override
   String get allSuppliers => 'All Suppliers';
 
   @override
