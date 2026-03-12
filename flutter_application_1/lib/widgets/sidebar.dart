@@ -154,7 +154,11 @@ class _AppSidebarState extends State<AppSidebar> {
   }
 
   void initSideBarItems() {
-    final roleId = userController.currentUser.role?.id ?? userController.currentUser.role_id;
+    int? roleId = userController.currentUser.role?.id ?? userController.currentUser.role_id;
+    // backend may return null role for initial admin user; treat explicit "admin" username as role 1
+    if (roleId == null && userController.currentUser.username?.toLowerCase() == 'admin') {
+      roleId = 1;
+    }
     
     if(roleId == 1){
       items.addAll([

@@ -74,20 +74,21 @@ class PurchaseRequestController extends ChangeNotifier {
 
       requests.clear();
       final currentUser = Provider.of<UserController>(context, listen: false).currentUser;
-      print('DEBUG: Current user role ID: ${currentUser.role!.id}');
-      
+      final roleId = currentUser.role?.id;
+      print('DEBUG: Current user role ID: $roleId');
+
       // Admin (role id 1) sees all requests - no filtering
-      if (currentUser.role!.id == 1) {
+      if (roleId == 1) {
         print('DEBUG: Admin user detected - showing all requests. Total items: ${items.length}');
       }
       // Supervisor (role id 4) sees only approved requests
-      else if (currentUser.role!.id == 4) {
+      else if (roleId == 4) {
         print('DEBUG: Supervisor user detected - filtering to approved only');
         items = items.where((item) => item['status'] == 'approved').toList();
         print('DEBUG: After supervisor filter: ${items.length} items');
       }
       // Manager (role id 3) should see only requests where the requester is in the same department
-      else if (currentUser.role!.id == 3) {
+      else if (roleId == 3) {
         print('DEBUG: Manager user detected - filtering by department');
         final managerDepId = currentUser.depId;
         print('DEBUG: Manager department ID: $managerDepId');

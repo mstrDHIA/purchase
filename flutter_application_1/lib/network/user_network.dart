@@ -61,27 +61,32 @@ class UserNetwork {
   APIS api = APIS();
 
 // login
-  Future<Response?>? login(String email, String password) async {
-    final response = await api.dio.post(
-      '${APIS.baseUrl}${APIS.login}',
-      data: {'username': email, 'password': password},
-      options: Options(
-        headers: {
-          'ngrok-skip-browser-warning': 'true',
-          'Content-Type': 'application/json',
-        },
-      ),
-    );
+  Future<Response?> login(String email, String password) async {
+    try {
+      final response = await api.dio.post(
+        '${APIS.baseUrl}${APIS.login}',
+        data: {'username': email, 'password': password},
+        options: Options(
+          headers: {
+            'ngrok-skip-browser-warning': 'true',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
 
-    if (response.statusCode == 200) {
-      APIS.token = response.data['access'];
-      final data = response.data;
-      final accessToken = data['access'];
-      if (accessToken != null) {
-        return response;
+      // store token if present
+      if (response.statusCode == 200) {
+        final accessToken = response.data?['access'];
+        if (accessToken != null) {
+          APIS.token = accessToken;
+        }
       }
+      return response;
+    } catch (e) {
+      // let caller handle exception
+      print('UserNetwork.login error: $e');
+      rethrow;
     }
-    return null;
   }
 
   // Refresh token

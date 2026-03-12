@@ -25,10 +25,12 @@ class PurchaseRequestDataSource extends DataTableSource {
 
   @override
   DataRow? getRow(int index) {
-    User user=Provider.of<UserController>(context, listen: false).currentUser;
+    User user = Provider.of<UserController>(context, listen: false).currentUser;
+    // if backend returns null role for admin user, treat as id=1
+    final int roleId = user.role?.id ?? 1;
     if (index >= requests.length) return null;
     final request = requests[index];
-    final bool canEdit = (user.role!.id == 1) || (user.role!.id != 4 && StatusUtils.isPendingLike(request.status));
+    final bool canEdit = (roleId == 1) || (roleId != 4 && StatusUtils.isPendingLike(request.status));
     return DataRow(
       selected: request.id != null && _selectedIds.contains(request.id),
       onSelectChanged: (sel) {
@@ -47,7 +49,8 @@ class PurchaseRequestDataSource extends DataTableSource {
         DataCell(Builder(builder: (cellContext) {
           // The API may return either an id or a nested user object for requested_by/approved_by.
           // Prefer any name provided on the request model (requestedByName/approvedByName).
-          final isRequester = Provider.of<UserController>(cellContext, listen: false).currentUser.role!.id != 2;
+          final int roleId2 = Provider.of<UserController>(cellContext, listen: false).currentUser.role?.id ?? 1;
+          final isRequester = roleId2 != 2;
           final dynamic userField = isRequester ? request.requestedBy : request.approvedBy;
           final String? modelName = isRequester ? request.requestedByName : request.approvedByName;
           if (modelName != null && modelName.isNotEmpty) return Text(modelName);
@@ -129,7 +132,7 @@ class PurchaseRequestDataSource extends DataTableSource {
             ),
           ),
         )),
-        if(user.role!.id!=4)
+        if (roleId != 4)
         DataCell(Padding(
           padding: const EdgeInsets.symmetric(
             vertical: 8.0),

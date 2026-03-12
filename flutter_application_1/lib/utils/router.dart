@@ -24,10 +24,33 @@ import 'package:flutter_application_1/controllers/user_controller.dart';
 
 
 final GoRouter router = GoRouter(
-  initialLocation: '/login',
+  initialLocation: '/',
+  redirect: (context, state) {
+    final userController = Provider.of<UserController>(context, listen: false);
+    final bool loggedIn = userController.currentUserId != null;
+    final currentPath = state.uri.path;
 
+    if (!loggedIn) {
+      if (currentPath != '/login') return '/login';
+      return null;
+    }
+
+    if (currentPath == '/login' || currentPath == '/') {
+      final rid = userController.currentUser.role_id ?? 0;
+      if (rid == 1 || rid == 4 || rid == 6) return '/dashboard';
+      if (rid == 2 || rid == 3) return '/purchase_requests';
+      return '/dashboard';
+    }
+
+    // prevent unauthorized access to dashboard
+    final rid = userController.currentUser.role_id ?? 0;
+    if ((rid == 2 || rid == 3 || rid == 5) && currentPath == '/dashboard') {
+      return '/purchase_requests';
+    }
+
+    return null;
+  },
   routes: [
-    
     GoRoute(
       path: '/login',
       builder: (context, state) => SignInPage(),

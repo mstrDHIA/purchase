@@ -286,7 +286,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                 ),
               ),
               ],
-              if(Provider.of<UserController>(context, listen: false).currentUser.role!.id!=4)
+              if (_roleId != 4)
               PopupMenuButton<String>(
                 onSelected: (value) { setState(() { _statusFilter = value.isEmpty ? null : value; }); },
                 itemBuilder: (context) => [
@@ -379,6 +379,8 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
     );
   }
   late UserController userController;
+  // convenience getter for current user's role id (fallback to admin if missing)
+  int get _roleId => userController.currentUser.role?.id ?? 1;
   // Reset notifier to handle sidebar reset events
   ResetNotifier? _resetNotifier;
   
@@ -594,7 +596,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
       appBar: StandardHeader(
         title: AppLocalizations.of(context)!.purchaseRequests,
         actions: [
-          if(userController.currentUser.role!.id==2||userController.currentUser.role!.id==1)
+          if (_roleId == 2 || _roleId == 1)
           ElevatedButton.icon(
             onPressed: _openAddRequestForm,
             icon: const Icon(Icons.add, color: Colors.white),
@@ -922,7 +924,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                                 ),
                                 DataColumn(
                                   label: Text(
-                                    userController.currentUser.role!.id != 2
+                                    _roleId != 2
                                         ? AppLocalizations.of(context)!.createdBy
                                         : AppLocalizations.of(context)!.validatedBy,
                                   ),
@@ -948,7 +950,7 @@ class _PurchaseRequestPageState extends State<PurchaseRequestPage> {
                                     _sort<String>((req) => req.priority?.toString() ?? '', columnIndex, ascending);
                                   },
                                 ),
-                                if(userController.currentUser.role!.id!=4)
+                                if (_roleId != 4)
                                 DataColumn(
                                   label: Text(AppLocalizations.of(context)!.status),
                                   onSort: (columnIndex, ascending) {

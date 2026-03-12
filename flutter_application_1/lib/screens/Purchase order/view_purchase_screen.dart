@@ -742,7 +742,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                           if (id == null) throw Exception('ID missing');
 
                           // Coordinator (role id 6): ask for reject type first
-                          if (userController.currentUser.role!.id == 6) {
+                          if ((userController.currentUser.role?.id ?? 1) == 6) {
                             final choice = await _showRejectTypeDialog();
                             if (choice == null) return;
 

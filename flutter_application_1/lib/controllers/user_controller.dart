@@ -114,17 +114,24 @@ class UserController extends ChangeNotifier {
         if (response.data is List) {
           users = (response.data as List).map((user) {
             print('👤 Parsing user: $user');
-
-            return User.fromJson(user);
+            final u = User.fromJson(user);
+            if (u.role == null && u.username != null && u.username!.toLowerCase() == 'admin') {
+              u.role = Role(id: 1, name: 'Admin');
+            }
+            return u;
           }).toList();
           isLoading = false;
           safeNotify();
           print('✅ Successfully loaded ${users.length} users');
         } else if (response.data is Map && response.data['results'] is List) {
           // Handle paginated response
-          users = (response.data['results'] as List)
-              .map((user) => User.fromJson(user))
-              .toList();
+          users = (response.data['results'] as List).map((user) {
+            final u = User.fromJson(user);
+            if (u.role == null && u.username != null && u.username!.toLowerCase() == 'admin') {
+              u.role = Role(id: 1, name: 'Admin');
+            }
+            return u;
+          }).toList();
           isLoading = false;
           safeNotify();
           print('✅ Successfully loaded ${users.length} users (paginated)');
@@ -205,18 +212,41 @@ class UserController extends ChangeNotifier {
       // if ((!(_formKey!.currentState!.validate()))&&_formKey!=null) {
       isLoading = true;
       notifyListeners();
-      Response? response = await userNetwork.login(email, password);
-      if (response!.statusCode == 200) {
-        Map<String, dynamic> decodedToken =
-            JwtDecoder.decode(response.data['access']);
-        currentUserId = decodedToken['user_id'];
-        selectedUserId = currentUserId;
-        currentUser = User.fromJson(response.data['user']);
+      Response? response;
+      try {
+        response = await userNetwork.login(email, password);
+      } catch (e) {
+        // network-level error
+        response = null;
+      }
+      if (response != null && response.statusCode == 200) { 
+        print('login response data: ${response.data}');
+        final accessToken = response.data?['access'];
+        if (accessToken != null && accessToken is String && accessToken.isNotEmpty) {
+          Map<String, dynamic> decodedToken = JwtDecoder.decode(accessToken);
+          // user_id sometimes arrives as String from token
+          final dynamic uid = decodedToken['user_id'];
+          currentUserId = uid is int ? uid : int.tryParse(uid?.toString() ?? '') ?? 0;
+          selectedUserId = currentUserId;
+          currentUser = User.fromJson(response.data['user']);
+          // if backend returned null role for admin user, provide fallback
+          if (currentUser.role == null) {
+            if (currentUser.username != null && currentUser.username!.toLowerCase() == 'admin') {
+              currentUser.role = Role(id: 1, name: 'Admin');
+            } else if (currentUser.role_id != null) {
+              currentUser.role = Role(id: currentUser.role_id!, name: '');
+            }
+          }
+          // role_id is already handled in User.fromJson, no need to mutate final field
 
-        // Sauvegarder les données utilisateur, token d'accès et refresh token
-        final refreshToken = response.data['refresh'];
-        await saveUserData(response.data['access'], response.data['user'],
-            refreshToken: refreshToken);
+          // Sauvegarder les données utilisateur, token d'accès et refresh token
+          final refreshToken = response.data['refresh'];
+          await saveUserData(accessToken, response.data['user'],
+              refreshToken: refreshToken);
+        } else {
+          // login response didn't include expected token
+          throw Exception('No access token returned');
+        }
 
         // navigation decided by role id
         final int? roleId = currentUser.role?.id;
@@ -229,12 +259,13 @@ class UserController extends ChangeNotifier {
             // regular users and managers go to purchase requests
             router.go('/purchase_requests');
           } else {
-            router.go('/main_screen');
+            // unknown/other roles should still land somewhere valid
+            router.go('/dashboard');
           }
         });
         isLoading = false;
         notifyListeners();
-      } else if (response.statusCode == 401) {
+      } else if (response != null && response.statusCode == 401) {
         isLoading = false;
         notifyListeners();
         SnackBar snackBar = SnackBar(
@@ -245,9 +276,18 @@ class UserController extends ChangeNotifier {
       } else {
         isLoading = false;
         notifyListeners();
+        // attempt to extract message returned by server
+        String message = 'An error occurred during login. Please try again.';
+        try {
+          if (response?.data is Map && response?.data['detail'] != null) {
+            message = response!.data['detail'].toString();
+          } else if (response?.data is Map && response?.data['message'] != null) {
+            message = response!.data['message'].toString();
+          }
+        } catch (_) {}
         SnackBar snackBar = SnackBar(
           backgroundColor: Colors.red,
-          content: Text('An error occurred during login. Please try again.'),
+          content: Text(message),
         );
         ScaffoldMessenger.of(context).showSnackBar(snackBar);
       }
@@ -306,10 +346,18 @@ class UserController extends ChangeNotifier {
             Map<String, dynamic> userData = jsonDecode(userDataJson);
             if (userData.isNotEmpty) {
               currentUser = User.fromJson(userData);
-              // Mettre à jour le token global
-              APIS.token = token;
-              notifyListeners();
-              return true;
+            // fallback for null role
+            if (currentUser.role == null) {
+              if (currentUser.username != null && currentUser.username!.toLowerCase() == 'admin') {
+                currentUser.role = Role(id: 1, name: 'Admin');
+              } else if (currentUser.role_id != null) {
+                currentUser.role = Role(id: currentUser.role_id!, name: '');
+              }
+            }
+            // Mettre à jour le token global
+            APIS.token = token;
+            notifyListeners();
+            return true;
             }
           } else {
             // Token expiré, essayer de le rafraîchir

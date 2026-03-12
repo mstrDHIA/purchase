@@ -12,11 +12,15 @@ class PurchaseRequestNetwork {
     // Add pagination params (Django REST Framework style: page & page_size)
     queryParameters['page'] = page;
     queryParameters['page_size'] = pageSize;
-    if (user.role!.id == 2) {
-      queryParameters['requested_by'] = user.id!;
+    // only restrict to own requests if role id is 2 (user)
+    if (user.role?.id == 2) {
+      if (user.id != null) queryParameters['requested_by'] = user.id!;
     }
+    // build url without double slash; baseUrl already ends with '/'
+    final url = '${APIS.baseUrl}purchase_request/purchaseRequests/';
+    print('DEBUG fetchPurchaseRequests URL: $url params: $queryParameters');
     Response response = await api.dio.get(
-      '${APIS.baseUrl}/purchase_request/purchaseRequests/',
+      url,
       queryParameters: queryParameters,
       options: Options(
         headers: {
@@ -36,7 +40,7 @@ class PurchaseRequestNetwork {
   Future<Response> createPurchaseRequest(Map<String, dynamic> data) async {
     // try {
       Response response = await api.dio.post(
-        '${APIS.baseUrl}/purchase_request/purchaseRequests/',
+        '${APIS.baseUrl}purchase_request/purchaseRequests/',
         data: data,
         options: Options(
           headers: {
@@ -60,7 +64,8 @@ class PurchaseRequestNetwork {
   // Update a purchase request
   Future<Map<String, dynamic>> updatePurchaseRequest(int id, Map<String, dynamic> data, {required String method}) async {
     late Response response;
-    final url = '${APIS.baseUrl}/purchase_request/purchaseRequests/$id/';
+    // avoid double slash when baseUrl ends with '/'
+    final url = '${APIS.baseUrl}purchase_request/purchaseRequests/$id/';
     final options = Options(
       headers: {
         'Authorization': 'Bearer ${APIS.token}',
@@ -110,7 +115,7 @@ class PurchaseRequestNetwork {
   // Delete a purchase request
   Future<void> deletePurchaseRequest(int id) async {
     try {
-      final url = '${APIS.baseUrl}/purchase_request/purchaseRequests/$id/';
+      final url = '${APIS.baseUrl}purchase_request/purchaseRequests/$id/';
      
       Response response = await api.dio.delete(
         url,
@@ -135,7 +140,7 @@ class PurchaseRequestNetwork {
 
   // Fetch a single purchase request by id
   Future<Response> fetchPurchaseRequestById(int id) async {
-    final url = '${APIS.baseUrl}/purchase_request/purchaseRequests/$id/';
+    final url = '${APIS.baseUrl}purchase_request/purchaseRequests/$id/';
     final response = await api.dio.get(
       url,
       options: Options(
@@ -154,7 +159,7 @@ class PurchaseRequestNetwork {
 
   // Archive a purchase request
   Future<void> archivePurchaseRequest(int id) async {
-    final response = await api.dio.patch('${APIS.baseUrl}/purchase_request/purchaseRequests/$id/',
+    final response = await api.dio.patch('${APIS.baseUrl}purchase_request/purchaseRequests/$id/',
       data: {'is_archived': true},
       options: Options(headers: {
         'Authorization': 'Bearer ${APIS.token}',
@@ -169,7 +174,7 @@ class PurchaseRequestNetwork {
 
   // Unarchive a purchase request
   Future<void> unarchivePurchaseRequest(int id) async {
-    final response = await api.dio.patch('${APIS.baseUrl}/purchase_request/purchaseRequests/$id/',
+    final response = await api.dio.patch('${APIS.baseUrl}purchase_request/purchaseRequests/$id/',
       data: {'is_archived': false},
       options: Options(headers: {
         'Authorization': 'Bearer ${APIS.token}',

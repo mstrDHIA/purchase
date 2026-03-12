@@ -48,7 +48,10 @@ class User {
         ? json['last_name']
         : (profile?.lastName ?? '');
     final profileId = json['profile_id'] ?? (profile?.id);
-    final roleId = json['role_id'];
+    final rawRoleId = json['role_id'];
+    final roleId = rawRoleId is int
+        ? rawRoleId
+        : (rawRoleId is String ? int.tryParse(rawRoleId) : null);
     final isActive = json['is_active'] ?? true; // Default to true if not provided
     final depId = json['dep_id'] is int ? json['dep_id'] as int : (json['dep_id'] is String ? int.tryParse(json['dep_id']) : null) ??
         (json['department_id'] is int ? json['department_id'] as int : (json['department_id'] is String ? int.tryParse(json['department_id']) : null)) ??

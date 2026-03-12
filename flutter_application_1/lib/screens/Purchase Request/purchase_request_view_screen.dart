@@ -262,7 +262,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                     child: Padding(
                       padding: const EdgeInsets.only(right: 4.0),
                       child: Visibility(
-                        visible: userController.currentUser.role!.id == 4 || userController.currentUser.role!.id == 1,
+                        visible: (userController.currentUser.role?.id ?? 1) == 4 || (userController.currentUser.role?.id ?? 1) == 1,
                         child: GestureDetector(
                           onTap: () async {
                             try {
@@ -672,7 +672,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                     ),
                     const SizedBox(width: 12),
                     const Spacer(),
-                    if((userController.currentUser.role!.id==4||userController.currentUser.role!.id==1)&&(_status=='approved') && !_poCreated)
+                    if (((userController.currentUser.role?.id ?? 1)==4 || (userController.currentUser.role?.id ?? 1)==1) && (_status=='approved') && !_poCreated)
                     ElevatedButton(onPressed: () async {
                                 final shouldCreate = await showDialog<bool>(
                                   context: context,
@@ -835,7 +835,7 @@ class _PurchaseRequestViewState extends State<PurchaseRequestView> {
                               ),
                               elevation: 0,
                             ),),
-                    if (_showActionButtons && !isApproved && !isRejected && widget.purchaseRequest.status!='transformed' && (userController.currentUser.role!.id == 1 || userController.currentUser.role!.id == 3 || userController.currentUser.role!.id == 4))
+                    if (_showActionButtons && !isApproved && !isRejected && widget.purchaseRequest.status!='transformed' && ((userController.currentUser.role?.id ?? 1) == 1 || (userController.currentUser.role?.id ?? 1) == 3 || (userController.currentUser.role?.id ?? 1) == 4))
                       Row(
                         children: [
                           ElevatedButton(
