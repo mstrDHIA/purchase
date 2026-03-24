@@ -381,9 +381,12 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
     final poPrId = _normalizeId(_getOrderField(['purchaseRequestId', 'purchase_request_id', 'purchase_request']));
     debugPrint('🔎 _getRequesterName: poId=$poId prId=$poPrId requesterId=$poRequesterId requesterName=$poRequesterNameRaw');
 
-    // 0) If the PO is linked to a PR, prefer PR creator data
+    // 0) If the PO is linked to a PR, prefer PR creator data.
+    // If the PR id exists but the PR is not yet loaded, defer fallback to avoid
+    // showing incorrect supervisor value based on stale order-level request fields.
+    final bool hasLinkedPr = poPrId.isNotEmpty;
     try {
-      if (poPrId.isNotEmpty) {
+      if (hasLinkedPr) {
         PurchaseRequest? pr;
         for (var p in prCtrl.requests) {
           if (_idEquals(p.id, poPrId)) {
@@ -406,8 +409,13 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
             final name = (requesterUser.username ?? requesterUser.name ?? '').toString().trim();
             if (name.isNotEmpty) return name;
           }
+
+          // PR exists but has no delegated requester data; continue to order-level fallback below.
         } else {
           debugPrint('⚠️ _getRequesterName: linked PR id=$poPrId not found in cache (size=${prCtrl.requests.length})');
+          // Take conservative approach: don't infer order requester when PR should exist
+          // (prevents showing supervisor during async loading).
+          return '-';
         }
       }
     } catch (e) {
