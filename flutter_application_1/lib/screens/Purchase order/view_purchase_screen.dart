@@ -660,9 +660,9 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                         try {
                           final updatedOrderJson = {
                             ..._order.toJson(),
-                            // Ajout pour role 6 : approved_by_user
+                            // Ajout pour role 6 : approved_by
                             if (userController.currentUser.role?.id == 6)
-                              'approved_by_user': userController.currentUser.id,
+                              'approved_by': userController.currentUser.id,
                             // Correction format date pour l'API
                             if (_order.startDate != null)
                               'start_date': DateFormat('yyyy-MM-dd').format(_order.startDate!),
@@ -672,6 +672,10 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                               'supplier_delivery_date': DateFormat('yyyy-MM-dd').format(_order.supplierDeliveryDate!),
                             // Set status to approved
                             'statuss': 'approved',
+                            // Clear old reject metadata when approving
+                            'rejected_reason': null,
+                            'refuse_reason': null,
+                            'for_modification': false,
                           };
                           await purchaseOrderController.updateOrder(updatedOrderJson);
                           

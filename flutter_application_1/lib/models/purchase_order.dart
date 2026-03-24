@@ -13,6 +13,11 @@ class PurchaseOrder {
   DateTime? updatedAt;
   String? priority;
   String? currency; // ISO code or currency label (e.g. 'USD', 'EUR' or 'Dollar')
+
+  // requester info extracted from nested or flattened payload
+  String? requestedByName;
+  String? requestedByUsername;
+
   // department information may be either a simple string or nested object
   String? department;
   int? departmentId;
@@ -39,14 +44,43 @@ class PurchaseOrder {
 
   PurchaseOrder.fromJson(Map<String, dynamic> json) {
     id = json['id'];
-    requestedByUser = json['requested_by_user'];
+    requestedByUser = json['requested_by_user'] is int
+        ? json['requested_by_user']
+        : int.tryParse(json['requested_by_user']?.toString() ?? '');
+
+    // Parse nested 'requested_by' object when present
+    if (json['requested_by'] is Map) {
+      final rb = json['requested_by'] as Map<String, dynamic>;
+      requestedByUser ??= rb['id'] is int ? rb['id'] : int.tryParse(rb['id']?.toString() ?? '');
+      requestedByName = (rb['first_name'] ?? rb['username'] ?? rb['name'])?.toString();
+      requestedByUsername = rb['username']?.toString();
+    }
+
     // Backwards-compatible parsing: accept both 'approved_by' and 'approved_by_user' field names
     approvedBy = json['approved_by'] ?? json['approved_by_user'] ?? json['approvedBy'];
     startDate = _parseDate(json['start_date'] ?? json['startDate']);
     endDate = _parseDate(json['end_date'] ?? json['endDate']);
     // Accept both snake_case and camelCase keys from different backends
     supplierDeliveryDate = _parseDate(json['supplier_delivery_date'] ?? json['supplierDeliveryDate']);
-    purchaseRequestId = json['purchase_request_id'] ?? json['purchaseRequestId'] ?? json['purchase_request'];
+
+    // Normalize purchase request link to integer id
+    if (json['purchase_request_id'] != null) {
+      purchaseRequestId = json['purchase_request_id'] is int
+          ? json['purchase_request_id']
+          : int.tryParse(json['purchase_request_id'].toString());
+    } else if (json['purchaseRequestId'] != null) {
+      purchaseRequestId = json['purchaseRequestId'] is int
+          ? json['purchaseRequestId']
+          : int.tryParse(json['purchaseRequestId'].toString());
+    } else if (json['purchase_request'] is int || json['purchase_request'] is String) {
+      purchaseRequestId = json['purchase_request'] is int
+          ? json['purchase_request']
+          : int.tryParse(json['purchase_request'].toString());
+    } else if (json['purchase_request'] is Map) {
+      final pr = json['purchase_request'] as Map<String, dynamic>;
+      purchaseRequestId = pr['id'] is int ? pr['id'] : int.tryParse(pr['id']?.toString() ?? '');
+    }
+
     if (json['products'] != null) {
       products = <Products>[];
       json['products'].forEach((v) {

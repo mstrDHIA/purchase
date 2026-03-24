@@ -243,6 +243,27 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
         // update total count after fetch
         _totalOrders = poCtrl.total ?? poCtrl.orders.length;
         debugPrint('✅ Dashboard: server returned ${poCtrl.orders.length} orders (dept=$_selectedDepartment requester=$_selectedRequester) total=$_totalOrders page=$_currentPage');
+
+        // Ensure PR cache includes any PRs linked from the returned POs, even if role filtering in PurchaseRequestController reduced the list.
+        try {
+          final requiredPrIds = poCtrl.orders
+              .map((o) => (o.purchaseRequestId ?? (o as dynamic).purchase_request_id))
+              .where((id) => id != null)
+              .map((id) => id is int ? id : int.tryParse(id.toString()))
+              .where((id) => id != null)
+              .cast<int>()
+              .toSet();
+
+          for (final prId in requiredPrIds) {
+            if (!prCtrl.requests.any((pr) => pr.id == prId)) {
+              debugPrint('🔍 Loading missing PR for PO-based requester mapping: PR id=$prId');
+              await prCtrl.fetchRequestById(prId, context);
+            }
+          }
+        } catch (e) {
+          debugPrint('⚠️ Error augmenting PR cache: $e');
+        }
+
         // If the backend filtered out everything but any filter is active,
         // fall back to fetching without filters and apply locally.
         // This compensates for mismatches between the order endpoint and the stats endpoint.
@@ -301,56 +322,129 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
 
   String _getRequesterName(dynamic order, UserController userController,
     PurchaseRequestController prCtrl) {
-    // 0) if the PO is tied to a purchase request, prefer the PR creator info
+    String _normalizeId(dynamic id) {
+      if (id is int) return id.toString();
+      if (id is String) return id;
+      if (id == null) return '';
+      if (id is Map && id['id'] != null) return _normalizeId(id['id']);
+      return id.toString();
+    }
+
+    bool _idEquals(dynamic candidate, dynamic reference) {
+      final c = _normalizeId(candidate);
+      final r = _normalizeId(reference);
+      return c.isNotEmpty && r.isNotEmpty && c == r;
+    }
+
+    dynamic _getOrderField(List<String> fieldNames) {
+      if (order == null) return null;
+      // Map-based object
+      if (order is Map) {
+        for (var key in fieldNames) {
+          if (order.containsKey(key) && order[key] != null) {
+            return order[key];
+          }
+        }
+        return null;
+      }
+
+      // Structured PurchaseOrder object support
+      for (var key in fieldNames) {
+        try {
+          switch (key) {
+            case 'id':
+              return order.id;
+            case 'requestedByUser':
+              return order.requestedByUser;
+            case 'purchaseRequestId':
+              return order.purchaseRequestId;
+            case 'requestedByUsername':
+              return order.requestedByUsername;
+            case 'requestedByName':
+              return order.requestedByName;
+            default:
+              // allow legacy names when the order might be dynamic object
+              try {
+                final dynamic v = order[key];
+                if (v != null) return v;
+              } catch (_) {}
+              break;
+          }
+        } catch (_) {}
+      }
+      return null;
+    }
+
+    final poId = _getOrderField(['id']);
+    final poRequesterId = _getOrderField(['requestedByUser', 'requester', 'requested_by_user']);
+    final poRequesterNameRaw = _getOrderField(['requestedByUsername', 'requestedByName', 'requested_by_username', 'requested_by_name']);
+    final poPrId = _normalizeId(_getOrderField(['purchaseRequestId', 'purchase_request_id', 'purchase_request']));
+    debugPrint('🔎 _getRequesterName: poId=$poId prId=$poPrId requesterId=$poRequesterId requesterName=$poRequesterNameRaw');
+
+    // 0) If the PO is linked to a PR, prefer PR creator data
     try {
-      final prId = order.purchaseRequestId ?? order.purchase_request_id;
-      if (prId != null) {
-        dynamic foundPr;
-        for (var pr in prCtrl.requests) {
-          if (pr.id == prId) {
-            foundPr = pr;
+      if (poPrId.isNotEmpty) {
+        PurchaseRequest? pr;
+        for (var p in prCtrl.requests) {
+          if (_idEquals(p.id, poPrId)) {
+            pr = p;
             break;
           }
         }
-        if (foundPr != null) {
-          // prefer username/name from the request itself
-          final prName = (foundPr.requestedByUsername ?? foundPr.requestedByName)?.toString().trim() ?? '';
+
+        if (pr != null) {
+          final prName = (pr.requestedByUsername ?? pr.requestedByName ?? '').toString().trim();
+          debugPrint('🔎 _getRequesterName: linked PR id=$poPrId found, prName=$prName, prRequestedBy=${pr.requestedBy}');
           if (prName.isNotEmpty) return prName;
-          // fall back to id lookup on users if username not available
-          final prUserId = foundPr.requestedBy;
-          if (prUserId != null) {
-            final found = userController.users.firstWhere(
-              (u) => u.id == prUserId,
-              orElse: () => User(id: prUserId, username: ''),
+
+          if (pr.requestedBy != null) {
+            final prRequestedBy = pr.requestedBy;
+            final requesterUser = userController.users.firstWhere(
+              (u) => _idEquals(u.id, prRequestedBy),
+              orElse: () => User(id: prRequestedBy, username: ''),
             );
-            final uname = (found.username ?? found.name ?? '').toString().trim();
-            if (uname.isNotEmpty) return uname;
+            final name = (requesterUser.username ?? requesterUser.name ?? '').toString().trim();
+            if (name.isNotEmpty) return name;
           }
+        } else {
+          debugPrint('⚠️ _getRequesterName: linked PR id=$poPrId not found in cache (size=${prCtrl.requests.length})');
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('⚠️ _getRequesterName PR lookup error: $e');
+    }
 
-    // 1) Prefer explicit requester username if provided by API on the order
+    // 1) Order-level explicit requester name
     try {
-      final reqName = (order.requestedByUsername ?? '').toString().trim();
-      if (reqName.isNotEmpty) return reqName;
-    } catch (_) {}
+      final reqName = (poRequesterNameRaw ?? '').toString().trim();
+      if (reqName.isNotEmpty) {
+        debugPrint('🔎 _getRequesterName: using order requester name: $reqName');
+        return reqName;
+      }
+    } catch (e) {
+      debugPrint('⚠️ _getRequesterName explicit name fallback error: $e');
+    }
 
-    // 2) Fallback: try to resolve from loaded users by id on the order
+    // 2) Fallback to order requester id
     try {
-      final uid = order.requestedByUser;
-      if (uid != null) {
-        // Attempt to find a matching user; if username is empty, return placeholder instead of raw id
-        final found = userController.users.firstWhere(
-          (u) => u.id == uid,
-          orElse: () => User(id: uid, username: ''),
+      if (poRequesterId != null) {
+        final user = userController.users.firstWhere(
+          (u) => _idEquals(u.id, poRequesterId),
+          orElse: () => User(id: poRequesterId, username: ''),
         );
-        final username = (found.username ?? '').toString().trim();
-        if (username.isNotEmpty) return username;
-        // If users are not yet resolved, show a friendly placeholder
+        final username = (user.username ?? user.name ?? '').toString().trim();
+        if (username.isNotEmpty) {
+          debugPrint('🔎 _getRequesterName: fallback user lookup id=$poRequesterId username=$username');
+          return username;
+        }
+        debugPrint('⚠️ _getRequesterName: fallback user id=$poRequesterId no username');
         return '-';
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('⚠️ _getRequesterName fallback lookup error: $e');
+    }
+
+    debugPrint('⚠️ _getRequesterName: final fallback - for poId=$poId');
     return '-';
   }
 
@@ -367,6 +461,7 @@ class _PurchaseDashboardPageState extends State<PurchaseDashboardPage>
   /// Determine department name for an order.  The API often doesn't include
   /// it, so fall back to looking up the requester user's department and then
   /// finding the department's name from the controller list.
+  // ignore: unused_element
   String _getOrderDepartment(dynamic order, DepartmentController deptCtrl,
       UserController userCtrl,
       [dynamic prCtrl]) {

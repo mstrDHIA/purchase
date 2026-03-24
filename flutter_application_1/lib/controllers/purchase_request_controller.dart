@@ -241,6 +241,36 @@ class PurchaseRequestController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Fetch a single PR by ID and keep it in the local cache for dashboard requester resolution.
+  Future<PurchaseRequest?> fetchRequestById(int id, BuildContext context) async {
+    try {
+      final response = await _network.fetchPurchaseRequestById(id);
+      if (response.statusCode == 200) {
+        final pr = PurchaseRequest.fromJson(response.data);
+        final index = requests.indexWhere((x) => x.id == id);
+        if (index != -1) {
+          requests[index] = pr;
+        } else {
+          requests.add(pr);
+        }
+        requests.sort((a, b) {
+          if (a.id == null && b.id == null) return 0;
+          if (a.id == null) return 1;
+          if (b.id == null) return -1;
+          return a.id!.compareTo(b.id!);
+        });
+        dataSource = PurchaseRequestDataSource(requests, context, 'someArgument');
+        notifyListeners();
+        return pr;
+      }
+    } catch (e) {
+      print('DEBUG: fetchRequestById failed for id=$id error=$e');
+      _error = e.toString();
+      notifyListeners();
+    }
+    return null;
+  }
+
   @override
   String toString() {
     return 'PurchaseRequestController(requests: $requests, isLoading: $isLoading, error: $_error)';
