@@ -323,8 +323,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             child: Text(loc.cancel),
                           ),
                           TextButton(
-                            onPressed: () {
-                              userController.logout(context);
+                            onPressed: () async {
+                              await userController.logout(context);
                             },
                             child: Text(loc.logout),
                           ),

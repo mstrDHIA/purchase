@@ -148,15 +148,11 @@ class UserController extends ChangeNotifier {
     } on DioException catch (e) {
       isLoading = false;
       safeNotify();
-      print('❌ Dio Error: ${e.message}');
-      print('❌ Error type: ${e.type}');
-      print('❌ Response status: ${e.response?.statusCode}');
-      print('❌ Response data: ${e.response?.data}');
-      print('❌ Error detail: ${e.error}');
+     
     } catch (e) {
       isLoading = false;
       safeNotify();
-      print('❌ Unexpected error while fetching users: $e');
+     
     }
   }
 
@@ -193,16 +189,29 @@ class UserController extends ChangeNotifier {
     );
   }
 
-  void logout(BuildContext context) {
+  Future<void> logout(BuildContext context) async {
     isLoading = true;
     notifyListeners();
+    // Mettre le statut à false et le sauvegarder au backend
+    if (currentUser.id != null) {
+      try {
+        await userNetwork.partialUpdateUser({'statut': false}, currentUser.id!);
+      } catch (e) {
+        print('Error updating statut on logout: $e');
+      }
+    }
     currentUser = User();
     currentUserId = null;
     selectedUserId = null;
     selectedUser = User();
     clearUserData(); // Effacer les données sauvegardées
     isLoading = false;
-    context.go('/login');
+    // Navigate before final notifyListeners to avoid context issues
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (context.mounted) {
+        context.go('/login');
+      }
+    });
     notifyListeners();
   }
 
@@ -229,6 +238,15 @@ class UserController extends ChangeNotifier {
           currentUserId = uid is int ? uid : int.tryParse(uid?.toString() ?? '') ?? 0;
           selectedUserId = currentUserId;
           currentUser = User.fromJson(response.data['user']);
+          currentUser.statut = true; // Mettre le statut à true au login
+          // Sauvegarder le statut au backend
+          try {
+            if (currentUser.id != null) {
+              await userNetwork.partialUpdateUser({'statut': true}, currentUser.id!);
+            }
+          } catch (e) {
+            print('Error updating statut on login: $e');
+          }
           // if backend returned null role for admin user, provide fallback
           if (currentUser.role == null) {
             if (currentUser.username != null && currentUser.username!.toLowerCase() == 'admin') {

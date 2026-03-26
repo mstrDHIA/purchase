@@ -222,25 +222,28 @@ class _UserListPageState extends State<UserListPage> {
                                                 userController.selectedUser = user;
                                                 await userController.toggleUserStatus(id:user.id!,isActive:  !user.isActive!,context:  context);
                                               },
-                                              child: Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                                                decoration: BoxDecoration(
-                                                  color: user.isActive!
-                                                      ? Colors.green.shade100
-                                                      : Colors.red.shade200,
-                                                  borderRadius: BorderRadius.circular(18),
-                                                ),
-                                                child: Text(
-                                                  user.isActive! ? _getLocalizedText(context, 'active', 'Active') : _getLocalizedText(context, 'inactive', 'Inactive'),
-                                                  style: TextStyle(
-                                                    color: user.isActive!
-                                                        ? Colors.green.shade800
-                                                        : Colors.red.shade800,
-                                                    fontWeight: FontWeight.w600,
-                                                    fontSize: 14,
+                                              child: Builder(builder: (context) {
+                                                final isActive = user.statut ?? true;
+                                                final statusText = isActive
+                                                    ? _getLocalizedText(context, 'active', 'Active')
+                                                    : _getLocalizedText(context, 'inactive', 'Inactive');
+
+                                                return Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                                                  decoration: BoxDecoration(
+                                                    color: isActive ? Colors.green.shade100 : Colors.red.shade200,
+                                                    borderRadius: BorderRadius.circular(18),
                                                   ),
-                                                ),
-                                              ),
+                                                  child: Text(
+                                                    statusText,
+                                                    style: TextStyle(
+                                                      color: isActive ? Colors.green.shade800 : Colors.red.shade800,
+                                                      fontWeight: FontWeight.w600,
+                                                      fontSize: 14,
+                                                    ),
+                                                  ),
+                                                );
+                                              }),
                                             )
                                       ),
                                       DataCell(Text(user.role!=null?user.role!.name??_getLocalizedText(context, 'unknown', 'Unknown'):_getLocalizedText(context, 'none', 'None'), style: const TextStyle(fontSize: 15))),

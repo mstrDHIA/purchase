@@ -384,7 +384,7 @@ class _AppSidebarState extends State<AppSidebar> {
     if (confirmed == true) {
       // show a brief feedback before logout (optional)
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.logout), duration: const Duration(milliseconds: 600)));
-      userController.logout(context);
+      await userController.logout(context);
     }
   }
 

@@ -17,23 +17,27 @@ class User {
   final int? role_id;
   final int? depId;
   final Profile? profile;
-   Role? role;
-   bool? isActive;
+  Role? role;
+  bool? isActive;
+  final String? status;
+  bool? statut;
 
-  User( {
-     this.id,
+  User({
+    this.id,
     this.role_id,
     this.profile,
-     this.username,
-     this.email,
-     this.firstName,
-     this.lastName,
-     this.isSuperuser,
-     this.password,
+    this.username,
+    this.email,
+    this.firstName,
+    this.lastName,
+    this.isSuperuser,
+    this.password,
     this.profileId,
     this.depId,
     this.role,
-    this.isActive, 
+    this.isActive,
+    this.status,
+    this.statut,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -53,6 +57,8 @@ class User {
         ? rawRoleId
         : (rawRoleId is String ? int.tryParse(rawRoleId) : null);
     final isActive = json['is_active'] ?? true; // Default to true if not provided
+    final status = (json['status'] ?? json['user_status'] ?? json['online_status'])?.toString() ?? 'active';
+    final statut = json['statut'] ?? true;
     final depId = json['dep_id'] is int ? json['dep_id'] as int : (json['dep_id'] is String ? int.tryParse(json['dep_id']) : null) ??
         (json['department_id'] is int ? json['department_id'] as int : (json['department_id'] is String ? int.tryParse(json['department_id']) : null)) ??
         (json['department'] is Map ? (json['department']['id'] is int ? json['department']['id'] : (json['department']['id'] is String ? int.tryParse(json['department']['id']) : null)) : null);
@@ -70,6 +76,8 @@ class User {
       depId: depId,
       role: role, // If you want to parse role object, add here,
       isActive: isActive,
+      status: status,
+      statut: statut,
     );
   }
 
@@ -103,6 +111,12 @@ class User {
     };
     if (password != null && password!.isNotEmpty) {
       data['password'] = password;
+    }
+    if (status != null) {
+      data['status'] = status;
+    }
+    if (statut != null) {
+      data['statut'] = statut;
     }
     return data;
   }
