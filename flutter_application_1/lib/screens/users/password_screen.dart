@@ -109,7 +109,9 @@ class _PasswordScreenState extends State<PasswordScreen> {
                         }
                         if (newPassword != confirmPassword) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(l10n.passwordsDoNotMatch)),
+                            SnackBar(
+                              backgroundColor: Colors.red,
+                              content: Text(l10n.passwordsDoNotMatch)),
                           );
                           return;
                         }
@@ -120,12 +122,27 @@ class _PasswordScreenState extends State<PasswordScreen> {
                           newPassword: newPassword,
                           confirmPassword: confirmPassword,
                         );
+                        
+                        // Display result with better error messages
+                        String displayMessage = result;
+                        Color backgroundColor = Colors.red;
+                        
+                        if (result.contains('success')) {
+                          displayMessage = 'Password updated successfully';
+                          backgroundColor = Colors.green;
+                        } else if (result.toLowerCase().contains('400') || result.toLowerCase().contains('bad')) {
+                          displayMessage = 'Current password is incorrect';
+                        } else if (result.toLowerCase().contains('current') || result.toLowerCase().contains('incorrect')) {
+                          displayMessage = 'Current password is incorrect';
+                        }
+                        
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            backgroundColor: result.contains('success') ? Colors.green : Colors.red,
-                            content: Text(result)),
+                            backgroundColor: backgroundColor,
+                            content: Text(displayMessage)),
                         );
-                        if (result.contains('success')) {
+                        if (result.contains('success') && mounted) {
+                          Navigator.pop(context);
                         }
                       },
                       style: ElevatedButton.styleFrom(
@@ -185,7 +202,9 @@ class _PasswordScreenState extends State<PasswordScreen> {
                       }
                       if (newPassword != confirmPassword) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(l10n.passwordsDoNotMatch)),
+                          SnackBar(
+                            backgroundColor: Colors.red,
+                            content: Text(l10n.passwordsDoNotMatch)),
                         );
                         return;
                       }
@@ -195,10 +214,24 @@ class _PasswordScreenState extends State<PasswordScreen> {
                         newPassword: newPassword,
                         confirmPassword: confirmPassword,
                       );
+                      
+                      // Display result with better error messages
+                      String displayMessage = result;
+                      Color backgroundColor = Colors.red;
+                      
+                      if (result.contains('success')) {
+                        displayMessage = 'Password updated successfully';
+                        backgroundColor = Colors.green;
+                      } else if (result.toLowerCase().contains('400') || result.toLowerCase().contains('bad')) {
+                        displayMessage = 'Current password is incorrect';
+                      } else if (result.toLowerCase().contains('current') || result.toLowerCase().contains('incorrect')) {
+                        displayMessage = 'Current password is incorrect';
+                      }
+                      
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          backgroundColor: result.contains('success') ? Colors.green : Colors.red,
-                          content: Text(result)),
+                          backgroundColor: backgroundColor,
+                          content: Text(displayMessage)),
                       );
                     }
                   : null,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // Import for Clipboard
 import 'package:flutter_application_1/controllers/user_controller.dart';
+import 'package:flutter_application_1/controllers/department_controller.dart';
 import 'package:flutter_application_1/widgets/standard_header.dart';
 import 'package:flutter_application_1/l10n/app_localizations.dart';
 import 'package:flutter_application_1/screens/users/modify_user_screen.dart';
@@ -213,6 +214,31 @@ class _ProfilePageScreenState extends State<ProfilePageScreen> {
                 ),
                 const SizedBox(height: 24),
                 InfoWidget(txt: userController.selectedUser.role?.name ?? "Role is not set", field: 'Role'),
+                const SizedBox(height: 32),
+                Text("Department",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.deepPurple[700],
+                ),
+                ),
+                const SizedBox(height: 24),
+                Consumer<DepartmentController>(
+                  builder: (context, departmentController, child) {
+                    String deptName = "Department is not set";
+                    if (userController.selectedUser.depId != null) {
+                      try {
+                        final department = departmentController.departments.firstWhere(
+                          (dept) => dept.id == userController.selectedUser.depId,
+                        );
+                        deptName = department.name;
+                      } catch (e) {
+                        deptName = "Department not found";
+                      }
+                    }
+                    return InfoWidget(txt: deptName, field: 'Department');
+                  },
+                ),
                 const SizedBox(height: 32),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,

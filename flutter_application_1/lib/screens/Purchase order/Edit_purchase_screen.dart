@@ -900,7 +900,7 @@ bottomNavigationBar: Container(
           }
           
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Purchase order saved!')),
+            const SnackBar(backgroundColor: Colors.green, content: Text('Purchase order saved!')),
           );
           Navigator.of(context).pop(true); // Return true to indicate PR list was updated
         }

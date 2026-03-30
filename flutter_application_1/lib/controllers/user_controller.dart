@@ -775,10 +775,10 @@ class UserController extends ChangeNotifier {
 
         // Show a success SnackBar so the user sees the update result with returned values
         try {
-          final msg =
-              'Mise à jour OK: dep=${selectedUser.depId ?? 'n/a'}, role=${selectedUser.role?.id ?? 'n/a'}';
-          ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(msg), backgroundColor: Colors.green));
+          // final msg =
+          //     'Mise à jour OK: dep=${selectedUser.depId ?? 'n/a'}, role=${selectedUser.role?.id ?? 'n/a'}';
+          // ScaffoldMessenger.of(context).showSnackBar(
+          //     SnackBar(content: Text(msg), backgroundColor: Colors.green));
         } catch (e) {
           // ignore
         }

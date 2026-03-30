@@ -55,6 +55,10 @@ class _ModifyUserPageState extends State<ModifyUserPage> {
     _addressController = TextEditingController();
     _locationController = TextEditingController();
     _zipCodeController = TextEditingController();
+    // Initialize selectedRole with the user's current role
+    if (widget.user.role != null) {
+      selectedRole = widget.user.role;
+    }
     _userFuture = _fetchUserDetails();
   }
 
@@ -294,20 +298,22 @@ class _ModifyUserPageState extends State<ModifyUserPage> {
                     border: OutlineInputBorder(),
                   ),
                 ),
-                const Divider(height: 32),
-                const Text('Role', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF6F4DBF))),
-                const SizedBox(height: 16),
-                Consumer<RoleController>(
-                  builder: (context, roleController, child) {
-                    // Find the matching role instance from the list
-                    if (widget.user.role != null) {
-                      selectedRole = roleController.roles.firstWhere(
-                        (role) => role.id == widget.user.role!.id,
-                        // orElse: () => roleController.roles.isNotEmpty ? roleController.roles.first : null,
-                      );
-                    }
+                // Afficher Role et Department seulement si role_id != 2 (pas un utilisateur régulier)
+                if (widget.user.role_id != 2) ...[
+                  const Divider(height: 32),
+                  const Text('Role', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF6F4DBF))),
+                  const SizedBox(height: 16),
+                  Consumer<RoleController>(
+                    builder: (context, roleController, child) {
+                      // Find the matching role instance from the list
+                      if (widget.user.role != null) {
+                        selectedRole = roleController.roles.firstWhere(
+                          (role) => role.id == widget.user.role!.id,
+                          // orElse: () => roleController.roles.isNotEmpty ? roleController.roles.first : null,
+                        );
+                      }
 
-                    return DropdownButtonFormField<Role>(
+                      return DropdownButtonFormField<Role>(
                       initialValue: selectedRole,
                       items: roleController.roles.map((role) {
                         return DropdownMenuItem<Role>(
@@ -356,6 +362,7 @@ class _ModifyUserPageState extends State<ModifyUserPage> {
                     );
                   },
                 ),
+                ],
               ],
             ),
           );
