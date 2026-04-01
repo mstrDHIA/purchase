@@ -191,7 +191,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                             border: Border.all(color: Colors.grey.shade300),
                           ),
                           child: Text(
-                            AppLocalizations.of(context)!.idLabel(_order.id?.toString() ?? '-'),
+                            'PO: ${_order.poNumber ?? _order.id?.toString() ?? '-'}',
                             style: const TextStyle(fontWeight: FontWeight.w600),
                           ),
                         ),
@@ -1049,7 +1049,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
           userIdToUsername: userIdToUsername,
         );
         if (bytes != null) {
-          await _saveOrDownload(Uint8List.fromList(bytes), 'purchase_order_${_order.id ?? 'po'}.xlsx', preferAppDocs: true);
+          await _saveOrDownload(Uint8List.fromList(bytes), 'purchase_order_${_order.poNumber ?? _order.id ?? 'po'}.xlsx', preferAppDocs: true);
         } else {
           if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error encoding Excel file'), backgroundColor: Colors.red));
         }
@@ -1065,7 +1065,7 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
           accountantApprovalDate: accountantApprovalDate,
           userIdToUsername: userIdToUsername,
         );
-        await _saveOrDownload(bytes, 'purchase_order_${_order.id ?? 'po'}.pdf', preferAppDocs: true);
+        await _saveOrDownload(bytes, 'purchase_order_${_order.poNumber ?? _order.id ?? 'po'}.pdf', preferAppDocs: true);
       }
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error generating file: $e'), backgroundColor: Colors.red));

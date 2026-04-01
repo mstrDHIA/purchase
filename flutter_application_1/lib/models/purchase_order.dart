@@ -1,5 +1,6 @@
 class PurchaseOrder {
   int? id;
+  String? poNumber;  // FORMAT: "PR_ID-1", "PR_ID-2", etc.
   int? requestedByUser;
   int? approvedBy;
   DateTime? startDate;
@@ -27,6 +28,7 @@ class PurchaseOrder {
 
   PurchaseOrder(
       {this.id,
+      this.poNumber,
       this.requestedByUser,
       this.purchaseRequestId,
       this.approvedBy,
@@ -44,6 +46,7 @@ class PurchaseOrder {
 
   PurchaseOrder.fromJson(Map<String, dynamic> json) {
     id = json['id'];
+    poNumber = json['po_number'];  // NEW: Custom PO number (PR_ID-1, PR_ID-2, etc.)
     requestedByUser = json['requested_by_user'] is int
         ? json['requested_by_user']
         : int.tryParse(json['requested_by_user']?.toString() ?? '');
@@ -150,6 +153,7 @@ class PurchaseOrder {
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['id'] = id;
+    if (poNumber != null) data['po_number'] = poNumber;  // NEW: Include custom PO number
     data['requested_by_user'] = requestedByUser;
     data['approved_by'] = approvedBy;
     data['start_date'] = startDate?.toIso8601String();

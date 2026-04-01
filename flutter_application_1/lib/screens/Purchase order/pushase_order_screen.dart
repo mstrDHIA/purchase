@@ -693,7 +693,10 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
                             horizontalMargin: 16,
                             columns: [
                               DataColumn(
-                                  label: Text(AppLocalizations.of(context)!.idShort),
+                                  label: const Text('PO Number'),
+                                  onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
+                              DataColumn(
+                                  label: const Text('PR ID'),
                                   onSort: (columnIndex, ascending) => _sort(columnIndex, ascending)),
                               DataColumn(
                                   label: Text(AppLocalizations.of(context)!.createdBy),
@@ -1359,7 +1362,8 @@ class _PurchaseOrderDataSource extends DataTableSource {
         notifyListeners();
       },
       cells: [
-        DataCell(Text(item['id']?.toString() ?? '-')),
+        DataCell(Text(item['po_number']?.toString() ?? item['id']?.toString() ?? '-')),
+        DataCell(Text(item['purchase_request_id']?.toString() ?? item['purchaseRequestId']?.toString() ?? '-')),
         DataCell(Text(item['actionCreatedBy'] ?? '-')),
         DataCell(Text(formatDateCell(item['dateSubmitted']))),
         DataCell(Text(formatDateCell(item['dueDate']))),

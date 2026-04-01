@@ -178,5 +178,108 @@ class PurchaseOrderNetwork {
 			throw Exception('Failed to unarchive purchase order: status=${response.statusCode}');
 		}
 	}
+
+	/// Créer plusieurs PO à partir d'une PR (une par une)
+	Future<List<PurchaseOrder>> createMultiplePOs(int prId, List<Map<String, dynamic>> poList) async {
+		final createdPOs = <PurchaseOrder>[];
+		
+		for (int i = 0; i < poList.length; i++) {
+			final poData = poList[i];
+			
+			// Build products array from individual product data
+			final products = [];
+			if (poData['product'] != null) {
+				products.add({
+					'name': poData['product'],
+					'quantity': poData['quantity'] ?? 1,
+				});
+			}
+			
+			// Map currency values: "Dollar" -> "USD", etc.
+			String mappedCurrency = poData['currency'] ?? 'TND';
+			if (mappedCurrency == 'Dollar') {
+				mappedCurrency = 'USD';
+			} else if (mappedCurrency == 'Euro') {
+				mappedCurrency = 'EUR';
+			} else if (mappedCurrency == 'Dinar') {
+				mappedCurrency = 'TND';
+			}
+			
+			// Préparer les données de la PO avec les champs requis
+			final payload = {
+				'title': poData['title'] ?? 'Purchase Order ${i + 1}',
+				'description': poData['description'] ?? '',
+				'products': products,
+				'purchase_request': prId,
+				'requested_by_user': poData['requested_by_user'],
+				'priority': poData['priority'] ?? 'medium',
+				'currency': mappedCurrency,
+				'statuss': poData['statuss'] ?? 'pending',
+			};
+			
+			print('🌐 PO Network (create #${i+1}): POST $crudEndpoint');
+			print('📤 Payload: $payload');
+			
+			final response = await dio.post(
+				crudEndpoint,
+				data: payload,
+				options: Options(headers: {
+					'Authorization': 'Bearer ${APIS.token}',
+					'Content-Type': 'application/json',
+					'ngrok-skip-browser-warning': 'true',
+				}),
+			);
+			
+			print('📥 PO create #${i+1} status: ${response.statusCode}');
+			print('📥 PO create #${i+1} response: ${response.data}');
+			
+			if (response.statusCode == 201) {
+				final po = PurchaseOrder.fromJson(response.data as Map<String, dynamic>);
+				createdPOs.add(po);
+			} else {
+				throw Exception('Failed to create purchase order #${i+1}: status=${response.statusCode}, data=${response.data}');
+			}
+		}
+		
+		return createdPOs;
+	}
+
+	/// Récupérer les PO liées à une PR
+	Future<List<PurchaseOrder>> getPOsByPR(int prId) async {
+		final endpoint = listEndpoint;
+		final params = {'purchase_request_id': prId};
+		
+		print('🌐 PO Network (get by PR): GET $endpoint');
+		print('📤 Query params: $params');
+		
+		final response = await dio.get(
+			endpoint,
+			queryParameters: params,
+			options: Options(headers: {
+				'Authorization': 'Bearer ${APIS.token}',
+				'ngrok-skip-browser-warning': 'true',
+			}),
+		);
+		
+		print('📥 PO get by PR status: ${response.statusCode}');
+		print('📥 PO get by PR response: ${response.data}');
+		
+		if (response.statusCode == 200) {
+			final respData = response.data;
+			List<dynamic> items;
+			
+			if (respData is Map && respData.containsKey('results')) {
+				items = respData['results'] as List<dynamic>;
+			} else if (respData is List) {
+				items = respData;
+			} else {
+				items = [];
+			}
+			
+			return items.map((json) => PurchaseOrder.fromJson(json as Map<String, dynamic>)).toList();
+		} else {
+			throw Exception('Failed to load purchase orders: status=${response.statusCode}');
+		}
+	}
 }
 

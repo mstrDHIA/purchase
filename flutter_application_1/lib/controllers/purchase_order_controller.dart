@@ -134,4 +134,39 @@ class PurchaseOrderController extends ChangeNotifier {
 		_isLoading = false;
 		notifyListeners();
 	}
+
+	/// Créer plusieurs PO à partir d'une PR
+	Future<List<PurchaseOrder>> createMultiplePOs(int prId, List<Map<String, dynamic>> poList) async {
+		try {
+			_isLoading = true;
+			notifyListeners();
+			final createdPOs = await _network.createMultiplePOs(prId, poList);
+			await fetchOrders();
+			_isLoading = false;
+			notifyListeners();
+			return createdPOs;
+		} catch (e) {
+			_error = e.toString();
+			_isLoading = false;
+			notifyListeners();
+			rethrow;
+		}
+	}
+
+	/// Récupérer les PO liées à une PR
+	Future<List<PurchaseOrder>> fetchPOsByPR(int prId) async {
+		try {
+			_isLoading = true;
+			notifyListeners();
+			_orders = await _network.getPOsByPR(prId);
+			_isLoading = false;
+			notifyListeners();
+			return _orders;
+		} catch (e) {
+			_error = e.toString();
+			_isLoading = false;
+			notifyListeners();
+			rethrow;
+		}
+	}
 }

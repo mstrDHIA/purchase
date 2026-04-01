@@ -661,7 +661,7 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
 
   Future<void> _showViewSupplierDialog(Supplier supplier) async {
     final userController = context.read<UserController>();
-    final isAccountant = userController.currentUser.role_id == 6;
+    final isAccountant = userController.currentUser.role_id == 6 || userController.currentUser.role_id == 1;
     bool isSubmitting = false;
     
     await showDialog<void>(
@@ -726,42 +726,41 @@ class _SupplierRegistrationPageState extends State<SupplierRegistrationPage> {
                     onPressed: isSubmitting ? null : () => Navigator.of(context).pop(),
                     child: Text(AppLocalizations.of(context)!.supplierBack, style: const TextStyle(color: Colors.white)),
                   ),
-                  if (supplier.approvalStatus == 'pending')
-                    Row(
-                      children: [
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                          onPressed: isSubmitting ? null : () async {
-                            setDialogState(() => isSubmitting = true);
-                            try {
-                              await _updateSupplierStatus(supplier, 'rejected');
-                              if (mounted) Navigator.of(context).pop();
-                            } finally {
-                              if (mounted) setDialogState(() => isSubmitting = false);
-                            }
-                          },
-                          child: isSubmitting
-                              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(Colors.white)))
-                              : Text(AppLocalizations.of(context)!.supplierReject, style: const TextStyle(color: Colors.white)),
-                        ),
-                        const SizedBox(width: 8),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                          onPressed: isSubmitting ? null : () async {
-                            setDialogState(() => isSubmitting = true);
-                            try {
-                              await _updateSupplierStatus(supplier, 'approved');
-                              if (mounted) Navigator.of(context).pop();
-                            } finally {
-                              if (mounted) setDialogState(() => isSubmitting = false);
-                            }
-                          },
-                          child: isSubmitting
-                              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(Colors.white)))
-                              : Text(AppLocalizations.of(context)!.supplierApprove, style: const TextStyle(color: Colors.white)),
-                        ),
-                      ],
-                    ),
+                  Row(
+                    children: [
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                        onPressed: isSubmitting ? null : () async {
+                          setDialogState(() => isSubmitting = true);
+                          try {
+                            await _updateSupplierStatus(supplier, 'rejected');
+                            if (mounted) Navigator.of(context).pop();
+                          } finally {
+                            if (mounted) setDialogState(() => isSubmitting = false);
+                          }
+                        },
+                        child: isSubmitting
+                            ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(Colors.white)))
+                            : Text(AppLocalizations.of(context)!.supplierReject, style: const TextStyle(color: Colors.white)),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                        onPressed: isSubmitting ? null : () async {
+                          setDialogState(() => isSubmitting = true);
+                          try {
+                            await _updateSupplierStatus(supplier, 'approved');
+                            if (mounted) Navigator.of(context).pop();
+                          } finally {
+                            if (mounted) setDialogState(() => isSubmitting = false);
+                          }
+                        },
+                        child: isSubmitting
+                            ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(Colors.white)))
+                            : Text(AppLocalizations.of(context)!.supplierApprove, style: const TextStyle(color: Colors.white)),
+                      ),
+                    ],
+                  ),
                 ],
               )
             else

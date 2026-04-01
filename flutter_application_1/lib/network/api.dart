@@ -31,8 +31,8 @@ class APIS {
   //   ));
   // }
 
-  static const String baseUrl = "http://72.60.90.60:8000/";
-  // static const String baseUrl = "http://127.0.0.1:8000/";
+  // static const String baseUrl = "http://72.60.90.60:8000/";
+  static const String baseUrl = "http://127.0.0.1:8000/";
   // static const String httpbaseUrl = "72.60.90.60:8000/";
 
   // Remove leading slash to allow safe concatenation with baseUrl
@@ -44,7 +44,7 @@ class APIS {
   static const String updateProduct = "product/products/";
   static const String deleteProduct = "product/products/";
 
-  static const String purchaseOrderList = "purchase_order/purchaseOrders/";
+  static const String purchaseOrderList = "purchase_order/purchase-orders/";
   // New datatable endpoint for paginated PO lists provided by the backend app `datatable`
   static const String datatablePoList = "datatable/po/list/";
 
@@ -68,18 +68,18 @@ class APIS {
   static const String updatePurchaseRequest =
       "purchase_request/purchaseRequests/";
 
-  static const String viewPurchaseOrder = "purchase_order/purchaseOrders/";
-  static const String createPurchaseOrder = "purchase_order/purchaseOrders/";
-  static const String updatePurchaseOrder = "purchase_order/purchaseOrders/";
-  static const String deletePurchaseOrder = "purchase_order/purchaseOrders/";
+  static const String viewPurchaseOrder = "purchase_order/purchase-orders/";
+  static const String createPurchaseOrder = "purchase_order/purchase-orders/";
+  static const String updatePurchaseOrder = "purchase_order/purchase-orders/";
+  static const String deletePurchaseOrder = "purchase_order/purchase-orders/";
 
   // adapte selon ton endpoint réel
 
-  static const String viewPurchaseOrderById = "purchase_order/purchaseOrders/";
+  static const String viewPurchaseOrderById = "purchase_order/purchase-orders/";
   static const String updatePurchaseOrderById =
-      "purchase_order/purchaseOrders/";
+      "purchase_order/purchase-orders/";
   static const String deletePurchaseOrderById =
-      "purchase_order/purchaseOrders/";
+      "purchase_order/purchase-orders/";
   // Stats endpoints
   static const String poTotals = "stats/po/totals/";
   static const String poRejectionRate = "stats/po/rejection-rate/";

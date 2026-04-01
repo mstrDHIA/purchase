@@ -7,6 +7,7 @@ import 'package:flutter_application_1/utils/status_utils.dart';
 import 'package:flutter_application_1/models/user_model.dart';
 import 'package:flutter_application_1/screens/Purchase%20Request/Request_Edit_screen.dart';
 import 'package:flutter_application_1/screens/Purchase%20Request/purchase_request_view_screen.dart';
+import 'package:flutter_application_1/screens/Purchase%20order/create_multiple_pos_from_pr.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_application_1/l10n/app_localizations.dart';
@@ -353,6 +354,27 @@ class PurchaseRequestDataSource extends DataTableSource {
                   },
                   tooltip: 'Archive',
                 );
+              },
+            ),
+            // Create Purchase Orders button
+            IconButton(
+              icon: const Icon(Icons.note_add_outlined, size: 25),
+              padding: const EdgeInsets.all(8),
+              constraints: const BoxConstraints(),
+              color: Colors.purple,
+              tooltip: 'Create Purchase Orders',
+              onPressed: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CreateMultiplePOsFromPR(
+                      purchaseRequest: request,
+                    ),
+                  ),
+                );
+                // Refresh the list after returning from the create POs screen
+                await Provider.of<PurchaseRequestController>(context, listen: false)
+                    .fetchRequests(context, Provider.of<UserController>(context, listen: false).currentUser);
               },
             ),
             IconButton(
