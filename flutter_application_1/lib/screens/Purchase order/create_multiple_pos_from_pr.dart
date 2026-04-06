@@ -127,7 +127,7 @@ class _CreateMultiplePOsFromPRState extends State<CreateMultiplePOsFromPR> {
           subFamily: firstProduct.subFamily ?? '',
           quantity: firstProduct.quantity,
           unitPrice: 0.0,
-          currency: 'Dollar',
+          currency: 'USD',
           status: 'pending',
         ));
       } else {
@@ -209,19 +209,8 @@ class _CreateMultiplePOsFromPRState extends State<CreateMultiplePOsFromPR> {
         _isSaving = false;
       });
 
-      // Refresh PO list and navigate to main PO screen after 2 seconds
-      await Future.delayed(const Duration(seconds: 2));
-      if (mounted) {
-        // Refresh the PO controller to fetch updated list
-        await poController.fetchOrders(page: null, pageSize: null);
-        
-        // Navigate to PO list screen with the updated controller
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => PurchaseOrderPage(controller: poController),
-          ),
-        );
-      }
+      // Refresh PO list data but keep the current screen so the user can review created POs
+      await poController.fetchOrders(page: null, pageSize: null);
     } catch (e) {
       setState(() {
         _error = 'Error: $e';
@@ -339,9 +328,6 @@ class _CreateMultiplePOsFromPRState extends State<CreateMultiplePOsFromPR> {
                             )).toList(),
                           ),
                         ),
-                        const SizedBox(height: 16),
-                        Text('Returning to PO list in 2 seconds...', 
-                          style: TextStyle(fontSize: 12, color: Colors.grey[600], fontStyle: FontStyle.italic)),
                         const SizedBox(height: 16),
                         ElevatedButton(
                           onPressed: () async {
