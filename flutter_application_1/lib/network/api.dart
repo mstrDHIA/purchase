@@ -31,8 +31,8 @@ class APIS {
   //   ));
   // }
 
-  static const String baseUrl = "http://72.60.90.60:8000/";
-  // static const String baseUrl = "http://127.0.0.1:8000/";
+  // static const String baseUrl = "http://72.60.90.60:8000/";
+  static const String baseUrl = "http://127.0.0.1:8000/";
   // static const String httpbaseUrl = "72.60.90.60:8000/";
 
   // Remove leading slash to allow safe concatenation with baseUrl
