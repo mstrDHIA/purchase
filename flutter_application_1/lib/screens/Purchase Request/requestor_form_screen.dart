@@ -113,28 +113,19 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
 
   Future<void> _loadProductsForSubfamily(String subfamilyId) async {
     try {
-      final response = await productControllerProvider.getCategories(int.tryParse(subfamilyId));
-      if (response is List<dynamic>) {
-        final products = response.cast<Map<String, dynamic>>();
-        final names = <String>[];
-        for (final product in products) {
-          final name = product['name']?.toString() ?? '';
-          if (name.isNotEmpty) {
-            names.add(name);
-          }
+      final response = await productControllerProvider.getProducts(subcategoryId: int.tryParse(subfamilyId));
+      final names = <String>[];
+      for (final product in response) {
+        final name = product.name;
+        if (name.isNotEmpty) {
+          names.add(name);
         }
-        setState(() {
-          productOptions = names.toSet().toList()..sort();
-          selectedProduct = null;
-          productController.clear();
-        });
-      } else {
-        setState(() {
-          productOptions = [];
-          selectedProduct = null;
-          productController.clear();
-        });
       }
+      setState(() {
+        productOptions = names.toSet().toList()..sort();
+        selectedProduct = null;
+        productController.clear();
+      });
     } catch (e) {
       if (mounted) {
         setState(() {
