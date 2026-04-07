@@ -19,7 +19,11 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
   final TextEditingController productController = TextEditingController();
   String? selectedFamily;
   String? selectedSubFamily;
+  String? selectedProduct;
   late Map<String, List<String>> dynamicProductFamilies = {};
+  final Map<String, String> familyIds = {};
+  final Map<String, String> subfamilyIds = {};
+  List<String> productOptions = [];
   late ProductController productControllerProvider;
   final TextEditingController quantityController = TextEditingController();
   final TextEditingController noteController = TextEditingController();
@@ -78,12 +82,17 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
 
         final parentCategories = allCategories.where((cat) => cat['parent_category'] == null).toList();
         for (final family in parentCategories) {
-          final familyId = family['id'];
+          final familyId = family['id']?.toString() ?? '';
           final familyName = family['name'] as String;
+          familyIds[familyName] = familyId;
 
           final subfamilies = allCategories
-              .where((cat) => cat['parent_category'] == familyId)
-              .map((cat) => cat['name'] as String)
+              .where((cat) => cat['parent_category'] == family['id'])
+              .map((cat) {
+                final subName = cat['name'] as String;
+                subfamilyIds[subName] = cat['id']?.toString() ?? '';
+                return subName;
+              })
               .toList();
 
           families[familyName] = subfamilies.isNotEmpty ? subfamilies : [familyName];
@@ -95,6 +104,44 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
       }
     } catch (e) {
       if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context)!.failedToLoadFamilies(e.toString()))),
+        );
+      }
+    }
+  }
+
+  Future<void> _loadProductsForSubfamily(String subfamilyId) async {
+    try {
+      final response = await productControllerProvider.getCategories(int.tryParse(subfamilyId));
+      if (response is List<dynamic>) {
+        final products = response.cast<Map<String, dynamic>>();
+        final names = <String>[];
+        for (final product in products) {
+          final name = product['name']?.toString() ?? '';
+          if (name.isNotEmpty) {
+            names.add(name);
+          }
+        }
+        setState(() {
+          productOptions = names.toSet().toList()..sort();
+          selectedProduct = null;
+          productController.clear();
+        });
+      } else {
+        setState(() {
+          productOptions = [];
+          selectedProduct = null;
+          productController.clear();
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          productOptions = [];
+          selectedProduct = null;
+          productController.clear();
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(AppLocalizations.of(context)!.failedToLoadFamilies(e.toString()))),
         );
@@ -217,7 +264,7 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
   void _addProduct() {
     final family = selectedFamily;
     final subFamily = selectedSubFamily;
-    final product = productController.text.trim();
+    final product = productController.text.trim().isNotEmpty ? productController.text.trim() : selectedProduct?.trim();
     final quantity = int.tryParse(quantityController.text.trim()) ?? 0;
 
     if ((family == null || family.isEmpty) ||
@@ -233,13 +280,14 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
       products.add({
         'family': family,
         'subFamily': subFamily,
-        'product': product.isNotEmpty ? product : subFamily,
+        'product': product != null && product.isNotEmpty ? product : subFamily,
         'quantity': quantity,
         'brand': null,
         'unit_price': 0.0,
       });
 
       productController.clear();
+      selectedProduct = null;
       quantityController.clear();
       selectedFamily = null;
       selectedSubFamily = null;
@@ -330,6 +378,36 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
                         onChanged: (val) {
                           setState(() {
                             selectedSubFamily = val;
+                            selectedProduct = null;
+                            productController.clear();
+                            productOptions = [];
+                          });
+                          if (val != null) {
+                            final subfamilyId = subfamilyIds[val];
+                            if (subfamilyId != null && subfamilyId.isNotEmpty) {
+                              _loadProductsForSubfamily(subfamilyId);
+                            }
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<String>(
+                        value: selectedProduct,
+                        decoration: InputDecoration(
+                          labelText: AppLocalizations.of(context)!.product,
+                          border: const OutlineInputBorder(),
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                        items: productOptions
+                            .map((prod) => DropdownMenuItem(value: prod, child: Text(prod)))
+                            .toList(),
+                        onChanged: (value) {
+                          setState(() {
+                            selectedProduct = value;
+                            if (value != null) {
+                              productController.text = value;
+                            }
                           });
                         },
                       ),
@@ -338,6 +416,7 @@ class _PurchaseRequestorFormState extends State<PurchaseRequestorForm> {
                         controller: productController,
                         decoration: InputDecoration(
                           labelText: AppLocalizations.of(context)!.product,
+                          helperText: 'Ou saisissez manuellement',
                           border: const OutlineInputBorder(),
                           filled: true,
                           fillColor: Colors.white,

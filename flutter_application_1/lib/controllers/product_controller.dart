@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../network/product_network.dart';
 import '../models/category.dart';
+import '../models/product.dart';
 
 class ProductController extends ChangeNotifier {
 	final ProductNetwork network=ProductNetwork();
@@ -48,6 +49,52 @@ class ProductController extends ChangeNotifier {
           rethrow;
       }
   }
+
+	// PRODUCT MANAGEMENT METHODS
+	Future<List<Product>> getProducts({int? subcategoryId}) async {
+		try {
+			return await network.fetchProducts(subcategoryId: subcategoryId);
+		} catch (e) {
+			rethrow;
+		}
+	}
+
+	Future<Product> getProductById(int id) async {
+		try {
+			return await network.getProductById(id);
+		} catch (e) {
+			rethrow;
+		}
+	}
+
+	Future<Product> createProduct(Product product) async {
+		try {
+			final result = await network.createProduct(product);
+			notifyListeners();
+			return result;
+		} catch (e) {
+			rethrow;
+		}
+	}
+
+	Future<Product> updateProduct(int id, Product product) async {
+		try {
+			final result = await network.updateProduct(id, product);
+			notifyListeners();
+			return result;
+		} catch (e) {
+			rethrow;
+		}
+	}
+
+	Future<void> deleteProduct(int id) async {
+		try {
+			await network.deleteProduct(id);
+			notifyListeners();
+		} catch (e) {
+			rethrow;
+		}
+	}
 
 	// Future<void> createSubfamily(Map<String, dynamic> subfamilyData) async {
   //   try {

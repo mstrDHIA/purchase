@@ -449,7 +449,7 @@ class _PurchaseOrderPageBodyState extends State<_PurchaseOrderPageBody> {
         final allOrders = controller.orders;
         final filteredOrders = _filteredAndSortedOrders(allOrders);
         // diagnostic logging
-        debugPrint('🔍 PO page build: allOrders=${allOrders.length}, filtered=${filteredOrders.length}, showArchived=$_showArchived');
+        // debugPrint('🔍 PO page build: allOrders=${allOrders.length}, filtered=${filteredOrders.length}, showArchived=$_showArchived');
         final dataSource = _PurchaseOrderDataSource(
           filteredOrders,
           _dateFormat,

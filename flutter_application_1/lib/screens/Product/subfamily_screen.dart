@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/controllers/product_controller.dart';
 import 'package:flutter_application_1/models/category.dart';
+import 'package:flutter_application_1/screens/Product/product_list_screen.dart';
 import 'package:provider/provider.dart';
 
 class SubfamiliesPage extends StatefulWidget {
@@ -322,6 +323,18 @@ class _SubfamiliesPageState extends State<SubfamiliesPage> {
                                             ],
                                           ),
                                         ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.shopping_bag, color: Colors.deepPurple),
+                                  tooltip: 'View Products',
+                                  onPressed: () => Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => ProductListScreen(
+                                        subcategoryId: s['id'],
+                                        subcategoryName: s['name'],
                                       ),
                                     ),
                                   ),

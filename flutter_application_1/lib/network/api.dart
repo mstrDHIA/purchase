@@ -31,18 +31,18 @@ class APIS {
   //   ));
   // }
 
-  // static const String baseUrl = "http://72.60.90.60:8000/";
-  static const String baseUrl = "http://127.0.0.1:8000/";
+  static const String baseUrl = "http://72.60.90.60:8000/";
+  // static const String baseUrl = "http://127.0.0.1:8000/";
   // static const String httpbaseUrl = "72.60.90.60:8000/";
 
   // Remove leading slash to allow safe concatenation with baseUrl
   // (baseUrl already ends with a slash).
   static const String login = "user/login/";
-  // Product endpoints
-  static const String productList = "product/products/";
-  static const String addProduct = "product/products/";
-  static const String updateProduct = "product/products/";
-  static const String deleteProduct = "product/products/";
+  // Product endpoints - NEW API
+  static const String productList = "product/product/";
+  static const String addProduct = "product/product/";
+  static const String updateProduct = "product/product/";
+  static const String deleteProduct = "product/product/";
 
   static const String purchaseOrderList = "purchase_order/purchaseOrders/";
   // New datatable endpoint for paginated PO lists provided by the backend app `datatable`
@@ -88,6 +88,10 @@ class APIS {
   static const String editCategory = "category/category/";
   static const String deleteCategory = "category/category/";
   static const String createSubfamily = "category/category/?parent_category=";
+
+  // Product endpoints - OLD (kept for backward compatibility)
+  static const String productListLegacy = "product/products/";
+  static const String addProductLegacy = "product/products/";
 
   static const String fetchSuppliers = "supplier/supplier/";
   static const String createSupplier = "supplier/supplier/";
