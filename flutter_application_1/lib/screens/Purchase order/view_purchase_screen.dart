@@ -543,6 +543,38 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                                 ),
                               ],
                             ),
+                            if (canShowActions) ...[
+                              const SizedBox(height: 12),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      // TODO: Approve this product
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF635BFF),
+                                      foregroundColor: Colors.white,
+                                      minimumSize: const Size(80, 36),
+                                    ),
+                                    child: Text(AppLocalizations.of(context)!.approve),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      // TODO: Reject this product
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFFF5F5F5),
+                                      foregroundColor: Colors.black87,
+                                      side: const BorderSide(color: Color(0xFFE0E0E0)),
+                                      minimumSize: const Size(80, 36),
+                                    ),
+                                    child: Text(AppLocalizations.of(context)!.reject),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ],
                         ),
                       ),
