@@ -189,8 +189,42 @@ class Products {
   String? unit; // unit of measure (e.g., pcs)
   String? family;
   String? subFamily;
+  // New fields for line-level approval/rejection
+  int? id; // line id
+  String? status; // 'pending', 'approved', 'rejected'
+  int? approvedBy;
+  String? approvedByUsername;
+  DateTime? approvedAt;
+  int? rejectedBy;
+  String? rejectedByUsername;
+  DateTime? rejectedAt;
+  int? rejectedReason;
+  String? rejectedReasonText;
+  String? rejectComment;
 
-  Products({this.product, this.quantity, this.brand, this.supplier, this.supplierId, this.price, this.unitPrice, this.unit, this.family, this.subFamily});
+  Products({
+    this.product,
+    this.quantity,
+    this.brand,
+    this.supplier,
+    this.supplierId,
+    this.price,
+    this.unitPrice,
+    this.unit,
+    this.family,
+    this.subFamily,
+    this.id,
+    this.status,
+    this.approvedBy,
+    this.approvedByUsername,
+    this.approvedAt,
+    this.rejectedBy,
+    this.rejectedByUsername,
+    this.rejectedAt,
+    this.rejectedReason,
+    this.rejectedReasonText,
+    this.rejectComment,
+  });
 
   Products.fromJson(Map<String, dynamic> json) {
     product = json['product'];
@@ -222,6 +256,18 @@ class Products {
             : double.tryParse(json['unit_price']?.toString() ?? '');
     // unit may be provided under different keys
     unit = json['unit']?.toString() ?? json['unit_name']?.toString() ?? json['unit_label']?.toString();
+    // New fields
+    id = json['id'];
+    status = json['status'];
+    approvedBy = json['approved_by'];
+    approvedByUsername = json['approved_by_username'];
+    approvedAt = json['approved_at'] != null ? DateTime.tryParse(json['approved_at']) : null;
+    rejectedBy = json['rejected_by'];
+    rejectedByUsername = json['rejected_by_username'];
+    rejectedAt = json['rejected_at'] != null ? DateTime.tryParse(json['rejected_at']) : null;
+    rejectedReason = json['rejected_reason'];
+    rejectedReasonText = json['rejected_reason_text'];
+    rejectComment = json['reject_comment'];
   }
 
   Map<String, dynamic> toJson() {
@@ -236,6 +282,18 @@ class Products {
     data['price'] = price;
     data['unit_price'] = unitPrice;
     data['unit'] = unit;
+    // New fields
+    if (id != null) data['id'] = id;
+    if (status != null) data['status'] = status;
+    if (approvedBy != null) data['approved_by'] = approvedBy;
+    if (approvedByUsername != null) data['approved_by_username'] = approvedByUsername;
+    if (approvedAt != null) data['approved_at'] = approvedAt?.toIso8601String();
+    if (rejectedBy != null) data['rejected_by'] = rejectedBy;
+    if (rejectedByUsername != null) data['rejected_by_username'] = rejectedByUsername;
+    if (rejectedAt != null) data['rejected_at'] = rejectedAt?.toIso8601String();
+    if (rejectedReason != null) data['rejected_reason'] = rejectedReason;
+    if (rejectedReasonText != null) data['rejected_reason_text'] = rejectedReasonText;
+    if (rejectComment != null) data['reject_comment'] = rejectComment;
     return data;
   }
 }

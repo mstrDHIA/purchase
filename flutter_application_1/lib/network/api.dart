@@ -98,7 +98,9 @@ class APIS {
   static const String editSupplier = "supplier/supplier/";
   static const String deleteSupplier = "supplier/supplier/";
 
-  // Reject reasons endpoints
+  // Purchase order line endpoints
+  static const String approvePurchaseOrderLine = "purchase_order/lines/";
+  static const String rejectPurchaseOrderLine = "purchase_order/lines/";
   static const String fetchRejectReasons = "reject_reasons/rejectReasons/";
   static const String createRejectReason = "reject_reasons/rejectReasons/";
   static const String editRejectReason = "reject_reasons/rejectReasons/";

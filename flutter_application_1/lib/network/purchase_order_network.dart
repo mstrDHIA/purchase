@@ -178,5 +178,36 @@ class PurchaseOrderNetwork {
 			throw Exception('Failed to unarchive purchase order: status=${response.statusCode}');
 		}
 	}
+
+	Future<void> approvePurchaseOrderLine(int lineId) async {
+		final response = await dio.post('${APIS.baseUrl}${APIS.approvePurchaseOrderLine}$lineId/approve/',
+			options: Options(headers: {
+				'Authorization': 'Bearer ${APIS.token}',
+				'Content-Type': 'application/json',
+				'ngrok-skip-browser-warning': 'true',
+			}),
+		);
+		if (response.statusCode != 200) {
+			throw Exception('Failed to approve purchase order line: status=${response.statusCode}');
+		}
+	}
+
+	Future<void> rejectPurchaseOrderLine(int lineId, {int? rejectedReason, String? rejectComment}) async {
+		final data = <String, dynamic>{};
+		if (rejectedReason != null) data['rejected_reason'] = rejectedReason;
+		if (rejectComment != null) data['reject_comment'] = rejectComment;
+		
+		final response = await dio.post('${APIS.baseUrl}${APIS.rejectPurchaseOrderLine}$lineId/reject/',
+			data: data,
+			options: Options(headers: {
+				'Authorization': 'Bearer ${APIS.token}',
+				'Content-Type': 'application/json',
+				'ngrok-skip-browser-warning': 'true',
+			}),
+		);
+		if (response.statusCode != 200) {
+			throw Exception('Failed to reject purchase order line: status=${response.statusCode}');
+		}
+	}
 }
 

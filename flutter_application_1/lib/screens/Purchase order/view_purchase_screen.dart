@@ -49,6 +49,60 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
     _order = widget.order;
   }
 
+  // Dialog for rejecting a line
+  Widget _RejectLineDialog(int lineId) {
+    int? selectedReason;
+    final commentController = TextEditingController();
+
+    return StatefulBuilder(
+      builder: (context, setState) => AlertDialog(
+        title: const Text('Reject Line'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Select rejection reason:'),
+            const SizedBox(height: 8),
+            // TODO: Fetch reject reasons from API
+            DropdownButtonFormField<int>(
+              value: selectedReason,
+              items: [
+                const DropdownMenuItem(value: 1, child: Text('Price too high')),
+                const DropdownMenuItem(value: 2, child: Text('Wrong product')),
+                const DropdownMenuItem(value: 3, child: Text('Supplier unavailable')),
+                const DropdownMenuItem(value: 4, child: Text('Other')),
+              ],
+              onChanged: (value) => setState(() => selectedReason = value),
+              decoration: const InputDecoration(labelText: 'Reason'),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: commentController,
+              decoration: const InputDecoration(
+                labelText: 'Comment (optional)',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 3,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: selectedReason == null ? null : () => Navigator.of(context).pop({
+              'reason': selectedReason,
+              'comment': commentController.text.trim().isEmpty ? null : commentController.text.trim(),
+            }),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Reject', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   // Shows a polished dialog allowing the coordinator to choose how to reject
   Future<String?> _showRejectTypeDialog() async {
     String? _selected;
@@ -380,6 +434,46 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            // Status indicator for the line
+                            if (prod.status != null) ...[
+                              Row(
+                                children: [
+                                  Icon(
+                                    prod.status == 'approved' ? Icons.check_circle : 
+                                    prod.status == 'rejected' ? Icons.cancel :
+                                    Icons.pending,
+                                    color: prod.status == 'approved' ? Colors.green :
+                                           prod.status == 'rejected' ? Colors.red :
+                                           Colors.orange,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    prod.status == 'approved' ? 'Approved' :
+                                    prod.status == 'rejected' ? 'Rejected' :
+                                    'Pending',
+                                    style: TextStyle(
+                                      color: prod.status == 'approved' ? Colors.green :
+                                             prod.status == 'rejected' ? Colors.red :
+                                             Colors.orange,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  if (prod.status == 'rejected' && prod.rejectedReasonText != null) ...[
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        '(${prod.rejectedReasonText})',
+                                        style: const TextStyle(color: Colors.red, fontSize: 12),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                            ],
                             Row(
                               children: [
                                 Expanded(
@@ -543,6 +637,75 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                                 ),
                               ],
                             ),
+                            // Line approval/rejection buttons for user ID 6
+                            if (userController.currentUser.id == 6 && prod.id != null) ...[
+                              const SizedBox(height: 12),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  ElevatedButton.icon(
+                                    onPressed: () async {
+                                      try {
+                                        await purchaseOrderController.approvePurchaseOrderLine(prod.id!);
+                                        setState(() {
+                                          // Refresh the order data
+                                          _order = _order; // Trigger rebuild
+                                        });
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('Line approved successfully')),
+                                        );
+                                      } catch (e) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text('Failed to approve line: $e')),
+                                        );
+                                      }
+                                    },
+                                    icon: const Icon(Icons.check, color: Colors.white),
+                                    label: const Text('Approve'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.green,
+                                      foregroundColor: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  ElevatedButton.icon(
+                                    onPressed: () async {
+                                      // Show reject dialog
+                                      final result = await showDialog<Map<String, dynamic>>(
+                                        context: context,
+                                        builder: (context) => _RejectLineDialog(prod.id!),
+                                      );
+                                      if (result != null) {
+                                        try {
+                                          await purchaseOrderController.rejectPurchaseOrderLine(
+                                            prod.id!,
+                                            rejectedReason: result['reason'],
+                                            rejectComment: result['comment'],
+                                          );
+                                          setState(() {
+                                            // Refresh the order data
+                                            _order = _order; // Trigger rebuild
+                                          });
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(content: Text('Line rejected successfully')),
+                                          );
+                                        } catch (e) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(content: Text('Failed to reject line: $e')),
+                                          );
+                                        }
+                                      }
+                                    },
+                                    icon: const Icon(Icons.close, color: Colors.white),
+                                    label: const Text('Reject'),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.red,
+                                      foregroundColor: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ],
                         ),
                       ),

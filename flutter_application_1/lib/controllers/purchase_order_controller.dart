@@ -134,4 +134,26 @@ class PurchaseOrderController extends ChangeNotifier {
 		_isLoading = false;
 		notifyListeners();
 	}
+
+	Future<void> approvePurchaseOrderLine(int lineId) async {
+		try {
+			await _network.approvePurchaseOrderLine(lineId);
+			await fetchOrders(); // Refresh to get updated line status
+		} catch (e) {
+			_error = e.toString();
+			notifyListeners();
+			rethrow;
+		}
+	}
+
+	Future<void> rejectPurchaseOrderLine(int lineId, {int? rejectedReason, String? rejectComment}) async {
+		try {
+			await _network.rejectPurchaseOrderLine(lineId, rejectedReason: rejectedReason, rejectComment: rejectComment);
+			await fetchOrders(); // Refresh to get updated line status
+		} catch (e) {
+			_error = e.toString();
+			notifyListeners();
+			rethrow;
+		}
+	}
 }
