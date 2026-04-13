@@ -96,6 +96,12 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
   bool _loadingFamilies = false;
   String? _familiesError;
 
+  List<String> allProductOptions = [];
+  final Map<ProductLine, List<String>> _productOptions = {};
+  final Map<ProductLine, TextEditingController> _productTextControllers = {};
+  final Map<String, String> familyIds = {};
+  final Map<String, String> subfamilyIds = {};
+
   bool _isSaving = false;
   String? supplierName;
   String? _dateWarning; // For displaying date conflict warning
@@ -107,7 +113,11 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
     _fetchSuppliers();
     // initialize product controller and fetch families
     productController = Provider.of<ProductController>(context, listen: false);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _fetchProductFamilies());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchProductFamilies();
+      _fetchProductOptions();
+      _syncProductLineControllers();
+    });
     final initial = widget.initialOrder;
     if (initial.isNotEmpty) {
       // Correction : forcer la casse pour correspondre aux DropdownMenuItem
@@ -241,7 +251,66 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
     noteController.dispose();
     dueDateController.dispose();
     supplierNameController.dispose();
+    for (final controller in _productTextControllers.values) {
+      controller.dispose();
+    }
     super.dispose();
+  }
+
+  Future<void> _fetchProductOptions() async {
+    try {
+      final products = await productController.getProducts(subcategoryId: null);
+      final names = products
+          .where((item) => item.name.isNotEmpty)
+          .map((item) => item.name)
+          .toSet()
+          .toList()
+        ..sort();
+      if (mounted) {
+        setState(() {
+          allProductOptions = names;
+        });
+      }
+    } catch (e) {
+      print('Error fetching product options: $e');
+    }
+  }
+
+  Future<void> _loadProductsForSubfamily(ProductLine line, String subfamilyId) async {
+    try {
+      final products = await productController.getProducts(subcategoryId: int.tryParse(subfamilyId));
+      final names = products
+          .where((item) => item.name.isNotEmpty)
+          .map((item) => item.name)
+          .toSet()
+          .toList()
+        ..sort();
+      if (mounted) {
+        setState(() {
+          _productOptions[line] = names;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _productOptions[line] = [];
+        });
+      }
+      print('Error loading products for subfamily $subfamilyId: $e');
+    }
+  }
+
+  void _syncProductLineControllers() {
+    final removedKeys = _productTextControllers.keys.where((line) => !productLines.contains(line)).toList();
+    for (final removed in removedKeys) {
+      _productTextControllers[removed]?.dispose();
+      _productTextControllers.remove(removed);
+    }
+
+    for (final line in productLines) {
+      _productTextControllers.putIfAbsent(line, () => TextEditingController(text: line.product ?? ''));
+      _productTextControllers[line]?.text = line.product ?? '';
+    }
   }
 
   double get totalPrice => productLines.fold(
@@ -284,13 +353,20 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
         final allCategories = categories.cast<Map<String, dynamic>>();
 
         final parentCategories = allCategories.where((cat) => cat['parent_category'] == null).toList();
+        familyIds.clear();
+        subfamilyIds.clear();
         for (final family in parentCategories) {
-          final familyId = family['id'];
+          final familyId = family['id']?.toString() ?? '';
           final familyName = family['name'] as String;
+          familyIds[familyName] = familyId;
 
           final subfamilies = allCategories
-              .where((cat) => cat['parent_category'] == familyId)
-              .map((cat) => cat['name'] as String)
+              .where((cat) => cat['parent_category'] == family['id'])
+              .map((cat) {
+                final subName = cat['name'] as String;
+                subfamilyIds[subName] = cat['id']?.toString() ?? '';
+                return subName;
+              })
               .toList();
 
           families[familyName] = subfamilies.isNotEmpty ? subfamilies : [familyName];
@@ -964,8 +1040,21 @@ bottomNavigationBar: Container(
                                 }(),
                                 onChanged: (val) => setState(() {
                                   product.family = val;
+                                  product.subFamily = null;
+                                  product.product = null;
+                                  final controller = _productTextControllers[product];
+                                  if (controller != null) {
+                                    controller.text = '';
+                                  }
                                   final subs = dynamicProductFamilies[val] ?? [];
                                   product.subFamily = subs.isNotEmpty ? subs.first : null;
+                                  _productOptions[product] = [];
+                                  if (product.subFamily != null) {
+                                    final subId = subfamilyIds[product.subFamily!];
+                                    if (subId != null && subId.isNotEmpty) {
+                                      _loadProductsForSubfamily(product, subId);
+                                    }
+                                  }
                                 }),
                                 decoration: InputDecoration(
                                   filled: true,
@@ -1004,7 +1093,23 @@ bottomNavigationBar: Container(
                               }
                               return list.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList();
                             }(),
-                            onChanged: (val) => setState(() => product.subFamily = val),
+                            onChanged: (val) {
+                              setState(() {
+                                product.subFamily = val;
+                                product.product = null;
+                                final controller = _productTextControllers[product];
+                                if (controller != null) {
+                                  controller.text = '';
+                                }
+                                _productOptions[product] = [];
+                              });
+                              if (val != null && val.isNotEmpty) {
+                                final subId = subfamilyIds[val];
+                                if (subId != null && subId.isNotEmpty) {
+                                  _loadProductsForSubfamily(product, subId);
+                                }
+                              }
+                            },
                             decoration: InputDecoration(
                               filled: true,
                               fillColor: Colors.white,
@@ -1049,10 +1154,46 @@ bottomNavigationBar: Container(
                   children: [
                     Text('Product ${productLines.length > 1 ? index + 1 : ''}'),
                     const SizedBox(height: 4),
+                    DropdownButtonFormField<String>(
+                      value: ((_productOptions[product] ?? allProductOptions).contains(product.product)) ? product.product : null,
+                      items: ((_productOptions[product] ?? allProductOptions)
+                          .map((prod) => DropdownMenuItem(value: prod, child: Text(prod)))
+                          .toList()),
+                      onChanged: (val) {
+                        setState(() {
+                          product.product = val;
+                          final controller = _productTextControllers.putIfAbsent(
+                            product,
+                            () => TextEditingController(text: product.product ?? ''),
+                          );
+                          if (val != null) {
+                            controller.text = val;
+                          }
+                        });
+                      },
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: Colors.white,
+                        enabledBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(color: Colors.black87),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: const BorderSide(color: Colors.deepPurple),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
                     TextFormField(
-                      initialValue: product.product,
+                      controller: _productTextControllers.putIfAbsent(
+                        product,
+                        () => TextEditingController(text: product.product ?? ''),
+                      ),
                       onChanged: (val) => setState(() => product.product = val),
                       decoration: InputDecoration(
+                        hintText: 'Ou saisissez manuellement',
                         filled: true,
                         fillColor: Colors.white,
                         enabledBorder: OutlineInputBorder(

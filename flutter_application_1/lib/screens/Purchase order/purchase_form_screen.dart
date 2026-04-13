@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../l10n/app_localizations.dart';
+import 'package:flutter_application_1/controllers/product_controller.dart';
 import 'package:flutter_application_1/controllers/purchase_order_controller.dart';
 import 'package:flutter_application_1/controllers/supplier_controller.dart';
 import 'package:flutter_application_1/controllers/user_controller.dart';
@@ -77,13 +78,18 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
   String? supplierName;
 
   late SupplierController supplierController;
+  late ProductController productController;
   late List<String> suppliers = [];
+  List<String> productOptions = [];
+  final Map<ProductLine, TextEditingController> _productTextControllers = {};
 
   @override
   void initState() {
     super.initState();
     supplierController = Provider.of<SupplierController>(context, listen: false);
+    productController = Provider.of<ProductController>(context, listen: false);
     _fetchSuppliers();
+    _fetchProductOptions();
     final initial = widget.initialOrder;
     if (initial.isNotEmpty) {
       // populate currency from existing order if present
@@ -178,25 +184,7 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
   _updatedAt = DateTime.now();
       supplierDeliveryDateController.text = '';
     }
-  }
-
-  Future<void> _fetchSuppliers() async {
-    try {
-      await supplierController.fetchSuppliers();
-      final approvedOnly = <String>[];
-      for (var s in supplierController.suppliers) {
-        final status = (s.approvalStatus ?? '').trim().toLowerCase();
-        if (status == 'approved') {
-          approvedOnly.add(s.name ?? '');
-        }
-      }
-      setState(() {
-        suppliers = approvedOnly;
-        suppliers.add('Autre');
-      });
-    } catch (e) {
-      print('Error fetching suppliers: $e');
-    }
+    _syncProductLineControllers();
   }
 
   double get totalPrice => productLines.fold(
@@ -210,7 +198,63 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
     noteController.dispose();
     dueDateController.dispose();
     supplierNameController.dispose();
+    for (final controller in _productTextControllers.values) {
+      controller.dispose();
+    }
     super.dispose();
+  }
+
+  Future<void> _fetchSuppliers() async {
+    try {
+      await supplierController.fetchSuppliers();
+      final approvedOnly = <String>[];
+      for (var s in supplierController.suppliers) {
+        final status = (s.approvalStatus ?? '').trim().toLowerCase();
+        if (status == 'approved') {
+          approvedOnly.add(s.name ?? '');
+        }
+      }
+      if (mounted) {
+        setState(() {
+          suppliers = approvedOnly;
+          suppliers.add('Autre');
+        });
+      }
+    } catch (e) {
+      print('Error fetching suppliers: $e');
+    }
+  }
+
+  Future<void> _fetchProductOptions() async {
+    try {
+      final products = await productController.getProducts(subcategoryId: null);
+      final names = products
+          .where((item) => item.name.isNotEmpty)
+          .map((item) => item.name)
+          .toSet()
+          .toList()
+        ..sort();
+      if (mounted) {
+        setState(() {
+          productOptions = names;
+        });
+      }
+    } catch (e) {
+      print('Error fetching product options: $e');
+    }
+  }
+
+  void _syncProductLineControllers() {
+    final removedKeys = _productTextControllers.keys.where((line) => !productLines.contains(line)).toList();
+    for (final key in removedKeys) {
+      _productTextControllers[key]?.dispose();
+      _productTextControllers.remove(key);
+    }
+
+    for (final line in productLines) {
+      _productTextControllers.putIfAbsent(line, () => TextEditingController(text: line.product ?? ''));
+      _productTextControllers[line]?.text = line.product ?? '';
+    }
   }
 
   @override
@@ -291,7 +335,10 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
                   backgroundColor: const Color(0xFF8C7AE6),
                   foregroundColor: Colors.white,
                 ),
-                onPressed: () => setState(() => productLines.add(ProductLine())),
+                onPressed: () => setState(() {
+                  productLines.add(ProductLine());
+                  _syncProductLineControllers();
+                }),
               ),
             ),
 const SizedBox(height: 24),
@@ -593,13 +640,39 @@ Row(
               // Product ID field removed
               Expanded(
                 flex: 3,
-                child: TextFormField(
-                  initialValue: product.product,
-                  decoration: InputDecoration(
-                    labelText: AppLocalizations.of(context)!.product,
-                    border: const OutlineInputBorder(),
-                  ),
-                  onChanged: (val) => setState(() => product.product = val),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    DropdownButtonFormField<String>(
+                      value: productOptions.contains(product.product) ? product.product : null,
+                      decoration: InputDecoration(
+                        labelText: AppLocalizations.of(context)!.product,
+                        border: const OutlineInputBorder(),
+                      ),
+                      items: productOptions
+                          .map((prod) => DropdownMenuItem(value: prod, child: Text(prod)))
+                          .toList(),
+                      onChanged: (val) {
+                        setState(() {
+                          product.product = val;
+                          final controller = _productTextControllers[product];
+                          if (controller != null && val != null) {
+                            controller.text = val;
+                          }
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 8),
+                    TextFormField(
+                      controller: _productTextControllers[product],
+                      decoration: InputDecoration(
+                        labelText: AppLocalizations.of(context)!.product,
+                        helperText: 'Ou saisissez manuellement',
+                        border: const OutlineInputBorder(),
+                      ),
+                      onChanged: (val) => setState(() => product.product = val),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(width: 12),
@@ -716,7 +789,9 @@ Row(
                 onPressed: () {
                   if (productLines.length > 1) {
                     setState(() {
-                      productLines.removeAt(index);
+                      final removed = productLines.removeAt(index);
+                      _productTextControllers[removed]?.dispose();
+                      _productTextControllers.remove(removed);
                     });
                   }
                 },

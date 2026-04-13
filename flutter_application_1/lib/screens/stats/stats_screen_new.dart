@@ -198,63 +198,6 @@ class _StatsScreenNewState extends State<StatsScreenNew> {
     }
   }
 
-  Widget _buildStatTable(
-      String title, Map<String, dynamic> data, String valueLabel) {
-    final entries = data.entries.toList()
-      ..sort((a, b) {
-        final aVal = a.value is int ? a.value : (a.value as double).toInt();
-        final bVal = b.value is int ? b.value : (b.value as double).toInt();
-        return bVal.compareTo(aVal);
-      });
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 16),
-            if (entries.isEmpty)
-              Text(AppLocalizations.of(context)?.noDataAvailable ??
-                  'No data available')
-            else
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: DataTable(
-                  columns: [
-                    DataColumn(
-                        label: Text(entries[0]
-                                .key
-                                .runtimeType
-                                .toString()
-                                .contains('Department')
-                            ? (AppLocalizations.of(context)?.department ??
-                                'Department')
-                            : (AppLocalizations.of(context)?.name ?? 'Name'))),
-                    DataColumn(label: Text(valueLabel)),
-                  ],
-                  rows: entries
-                      .map((e) => DataRow(
-                            cells: [
-                              DataCell(Text(e.key)),
-                              DataCell(Text(e.value is double
-                                  ? '${(e.value as double).toStringAsFixed(2)}%'
-                                  : '${e.value}')),
-                            ],
-                          ))
-                      .toList(),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);

@@ -145,7 +145,7 @@ class UserController extends ChangeNotifier {
         safeNotify();
         throw Exception('Failed to load users: Status ${response.statusCode}');
       }
-    } on DioException catch (e) {
+    } on DioException {
       isLoading = false;
       safeNotify();
      

@@ -187,7 +187,7 @@ class ProductNetwork {
           print('Products fetched successfully');
           final data = response.data;
           if (data is List) {
-            return (data as List).map((item) => Product.fromJson(item as Map<String, dynamic>)).toList();
+            return data.map((item) => Product.fromJson(item as Map<String, dynamic>)).toList();
           } else if (data is Map && data.containsKey('results')) {
             final results = data['results'] as List?;
             return (results ?? []).map((item) => Product.fromJson(item as Map<String, dynamic>)).toList();
