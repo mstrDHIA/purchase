@@ -18,6 +18,7 @@ class ProductLine {
   int quantity;
   double unitPrice;
   String currency; // e.g. 'Dollar'
+  String? statutLine;
 
   ProductLine({
     this.product,
@@ -28,7 +29,10 @@ class ProductLine {
     this.quantity = 1,
     this.unitPrice = 12.33,
     this.currency = 'Dollar',
-  });
+    this.statutLine,
+  }) {
+    statutLine ??= 'pending';
+  }
 
   Map<String, dynamic> toJson() {
     return {
@@ -40,6 +44,7 @@ class ProductLine {
       'quantity': quantity,
       'unit_price': unitPrice,
       'currency': currency,
+      'statut_line': statutLine,
     };
   }
 } 
@@ -216,6 +221,7 @@ class _EditPurchaseOrderState extends State<EditPurchaseOrder> {
               if (c == null) return _currency;
               return _codeToCurrency[c.toString()] ?? c.toString();
             })(),
+            statutLine: p['statut_line']?.toString(),
           );
         }).toList();
         // no-op: product brands are kept in productLines; supplier delivery date is order-level

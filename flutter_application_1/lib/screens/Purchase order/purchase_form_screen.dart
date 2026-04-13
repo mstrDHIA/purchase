@@ -16,6 +16,7 @@ class ProductLine {
   int quantity;
   String? supplier;
   double unitPrice;
+  String? statutLine;
 
   ProductLine({
     this.product,
@@ -25,7 +26,10 @@ class ProductLine {
     this.supplier,
     this.quantity = 1,
     this.unitPrice = 12.33,
-  });
+    this.statutLine,
+  }) {
+    statutLine ??= 'pending';
+  }
 
   Map<String, dynamic> toJson() {
     return {
@@ -37,6 +41,7 @@ class ProductLine {
       'supplier': supplier,
       'quantity': quantity,
       'unit_price': unitPrice,
+      'statut_line': statutLine,
     };
   }
 }
@@ -159,7 +164,9 @@ class _PurchaseOrderFormState extends State<PurchaseOrderForm> {
                 ? p['unit_price']
                 : (p['unit_price'] is int)
                     ? (p['unit_price'] as int).toDouble()
-                    : double.tryParse(p['unit_price']?.toString() ?? '') ?? 0.0,            supplier: p['supplier'] is Map ? (p['supplier']['name']?.toString()) : (p['supplier']?.toString()),          );
+                    : double.tryParse(p['unit_price']?.toString() ?? '') ?? 0.0,            supplier: p['supplier'] is Map ? (p['supplier']['name']?.toString()) : (p['supplier']?.toString()),
+            statutLine: p['statut_line']?.toString(),
+          );
         }).toList();
         // product brands kept on productLines; supplier delivery is order-level
       }

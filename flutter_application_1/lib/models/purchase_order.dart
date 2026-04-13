@@ -147,16 +147,22 @@ class PurchaseOrder {
     return null;
   }
 
+  static String? _formatDateForApi(DateTime? date) {
+    if (date == null) return null;
+    return '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  }
+
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['id'] = id;
     data['requested_by_user'] = requestedByUser;
     data['approved_by'] = approvedBy;
-    data['start_date'] = startDate?.toIso8601String();
-    data['end_date'] = endDate?.toIso8601String();
-    data['supplier_delivery_date'] = supplierDeliveryDate?.toIso8601String();
+    // Format dates as YYYY-MM-DD (not ISO8601 with time)
+    data['start_date'] = _formatDateForApi(startDate);
+    data['end_date'] = _formatDateForApi(endDate);
+    data['supplier_delivery_date'] = _formatDateForApi(supplierDeliveryDate);
     // Also provide camelCase key for compatibility
-    data['supplierDeliveryDate'] = supplierDeliveryDate?.toIso8601String();
+    data['supplierDeliveryDate'] = _formatDateForApi(supplierDeliveryDate);
     if (products != null) {
       data['products'] = products!.map((v) => v.toJson()).toList();
     }
@@ -189,8 +195,9 @@ class Products {
   String? unit; // unit of measure (e.g., pcs)
   String? family;
   String? subFamily;
+  String? statutLine; // Status of the product line: pending, approved, rejected, for_modification
 
-  Products({this.product, this.quantity, this.brand, this.supplier, this.supplierId, this.price, this.unitPrice, this.unit, this.family, this.subFamily});
+  Products({this.product, this.quantity, this.brand, this.supplier, this.supplierId, this.price, this.unitPrice, this.unit, this.family, this.subFamily, this.statutLine});
 
   Products.fromJson(Map<String, dynamic> json) {
     product = json['product'];
@@ -222,6 +229,7 @@ class Products {
             : double.tryParse(json['unit_price']?.toString() ?? '');
     // unit may be provided under different keys
     unit = json['unit']?.toString() ?? json['unit_name']?.toString() ?? json['unit_label']?.toString();
+    statutLine = json['statut_line']?.toString();
   }
 
   Map<String, dynamic> toJson() {
@@ -236,6 +244,7 @@ class Products {
     data['price'] = price;
     data['unit_price'] = unitPrice;
     data['unit'] = unit;
+    if (statutLine != null) data['statut_line'] = statutLine;
     return data;
   }
 }

@@ -548,30 +548,111 @@ class _PurchaseOrderViewState extends State<PurchaseOrderView> {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      // TODO: Approve this product
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF635BFF),
-                                      foregroundColor: Colors.white,
-                                      minimumSize: const Size(80, 36),
+                                  // Check if product has a statutLine status
+                                  if (prod.statutLine != null && (prod.statutLine as String).isNotEmpty && prod.statutLine != 'pending')
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: prod.statutLine == 'approved'
+                                            ? Colors.green.shade100
+                                            : prod.statutLine == 'rejected'
+                                                ? Colors.red.shade100
+                                                : Colors.orange.shade100,
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Text(
+                                        prod.statutLine == 'approved'
+                                            ? 'Approuvé'
+                                            : prod.statutLine == 'rejected'
+                                                ? 'Rejeté'
+                                                : 'Rejeté pour modification',
+                                        style: TextStyle(
+                                          color: prod.statutLine == 'approved'
+                                              ? Colors.green.shade800
+                                              : prod.statutLine == 'rejected'
+                                                  ? Colors.red.shade800
+                                                  : Colors.orange.shade800,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    )
+                                  else
+                                    Row(
+                                      children: [
+                                        ElevatedButton(
+                                          onPressed: () async {
+                                            setState(() {
+                                              prod.statutLine = 'approved';
+                                            });
+                                            try {
+                                              await purchaseOrderController.updateOrder(_order.toJson());
+                                              if (mounted) {
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  SnackBar(
+                                                    content: Text('Product approved successfully'),
+                                                    backgroundColor: Colors.green,
+                                                  ),
+                                                );
+                                              }
+                                            } catch (e) {
+                                              if (mounted) {
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  SnackBar(
+                                                    content: Text('Error: $e'),
+                                                    backgroundColor: Colors.red,
+                                                  ),
+                                                );
+                                              }
+                                            }
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(0xFF635BFF),
+                                            foregroundColor: Colors.white,
+                                            minimumSize: const Size(80, 36),
+                                          ),
+                                          child: Text(AppLocalizations.of(context)!.approve),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        ElevatedButton(
+                                          onPressed: () async {
+                                            final result = await _showRejectTypeDialog();
+                                            if (result != null) {
+                                              setState(() {
+                                                prod.statutLine = result == 'total' ? 'rejected' : 'for_modification';
+                                              });
+                                              try {
+                                                await purchaseOrderController.updateOrder(_order.toJson());
+                                                if (mounted) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    SnackBar(
+                                                      content: Text('Product rejected successfully'),
+                                                      backgroundColor: Colors.orange,
+                                                    ),
+                                                  );
+                                                }
+                                              } catch (e) {
+                                                if (mounted) {
+                                                  ScaffoldMessenger.of(context).showSnackBar(
+                                                    SnackBar(
+                                                      content: Text('Error: $e'),
+                                                      backgroundColor: Colors.red,
+                                                    ),
+                                                  );
+                                                }
+                                              }
+                                            }
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(0xFFF5F5F5),
+                                            foregroundColor: Colors.black87,
+                                            side: const BorderSide(color: Color(0xFFE0E0E0)),
+                                            minimumSize: const Size(80, 36),
+                                          ),
+                                          child: Text(AppLocalizations.of(context)!.reject),
+                                        ),
+                                      ],
                                     ),
-                                    child: Text(AppLocalizations.of(context)!.approve),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      // TODO: Reject this product
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFFF5F5F5),
-                                      foregroundColor: Colors.black87,
-                                      side: const BorderSide(color: Color(0xFFE0E0E0)),
-                                      minimumSize: const Size(80, 36),
-                                    ),
-                                    child: Text(AppLocalizations.of(context)!.reject),
-                                  ),
                                 ],
                               ),
                             ],
