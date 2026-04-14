@@ -638,6 +638,10 @@ Row(
   }
 
   Widget _buildProductLine(ProductLine product, int index) {
+    // Check if product is locked (approved or rejected)
+    final isLocked = product.statutLine != null && 
+                     (product.statutLine == 'approved' || product.statutLine == 'rejected');
+    
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Column(
@@ -659,7 +663,7 @@ Row(
                       items: productOptions
                           .map((prod) => DropdownMenuItem(value: prod, child: Text(prod)))
                           .toList(),
-                      onChanged: (val) {
+                      onChanged: isLocked ? null : (val) {
                         setState(() {
                           product.product = val;
                           final controller = _productTextControllers[product];
@@ -672,6 +676,7 @@ Row(
                     const SizedBox(height: 8),
                     TextFormField(
                       controller: _productTextControllers[product],
+                      enabled: !isLocked,
                       decoration: InputDecoration(
                         labelText: AppLocalizations.of(context)!.product,
                         helperText: 'Ou saisissez manuellement',
@@ -686,6 +691,7 @@ Row(
               Expanded(
                 flex: 2,
                 child: TextFormField(
+                  enabled: !isLocked,
                   keyboardType: TextInputType.number,
                   initialValue: product.quantity.toString(),
                   decoration: InputDecoration(
@@ -705,6 +711,7 @@ Row(
               Expanded(
                 flex: 3,
                 child: TextFormField(
+                  enabled: !isLocked,
                   initialValue: product.brand,
                   decoration: InputDecoration(
                     labelText: AppLocalizations.of(context)!.brand,
@@ -728,7 +735,7 @@ Row(
                     DropdownButtonFormField<String>(
                       value: suppliers.contains(product.supplier) ? product.supplier : (product.supplier != null && product.supplier!.isNotEmpty ? 'Autre' : null),
                       items: suppliers.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
-                      onChanged: (val) => setState(() {
+                      onChanged: isLocked ? null : (val) => setState(() {
                         if (val == 'Autre') {
                           product.supplier = '';
                         } else {
@@ -738,6 +745,7 @@ Row(
                     ),
                     if (product.supplier != null && product.supplier!.isNotEmpty && !suppliers.contains(product.supplier))
                       TextFormField(
+                        enabled: !isLocked,
                         initialValue: product.supplier,
                         onChanged: (v) => setState(() => product.supplier = v),
                         decoration: InputDecoration(hintText: AppLocalizations.of(context)!.supplierLabel),
@@ -752,6 +760,7 @@ Row(
               Expanded(
                 flex: 3,
                 child: TextFormField(
+                  enabled: !isLocked,
                 //  initialValue: product.unitPrice.toStringAsFixed(2),
                   keyboardType:
                        TextInputType.numberWithOptions(decimal: true),
@@ -793,7 +802,7 @@ Row(
               IconButton(
                 icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
                 tooltip: AppLocalizations.of(context)!.removeProductLine,
-                onPressed: () {
+                onPressed: isLocked ? null : () {
                   if (productLines.length > 1) {
                     setState(() {
                       final removed = productLines.removeAt(index);

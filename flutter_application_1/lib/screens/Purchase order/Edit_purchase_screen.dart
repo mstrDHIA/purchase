@@ -997,6 +997,10 @@ bottomNavigationBar: Container(
   }
 
   Widget _buildProductLine(ProductLine product, int index) {
+    // Check if product is locked (approved or rejected)
+    final isLocked = product.statutLine != null && 
+                     (product.statutLine == 'approved' || product.statutLine == 'rejected');
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Column(
@@ -1017,6 +1021,7 @@ bottomNavigationBar: Container(
                         ? const SizedBox(height: 48, child: Center(child: CircularProgressIndicator()))
                         : (dynamicProductFamilies.isEmpty)
                             ? TextFormField(
+                                enabled: !isLocked,
                                 initialValue: product.family,
                                 decoration: InputDecoration(
                                   hintText: 'Family',
@@ -1044,7 +1049,7 @@ bottomNavigationBar: Container(
                                   }
                                   return list.map((f) => DropdownMenuItem(value: f, child: Text(f))).toList();
                                 }(),
-                                onChanged: (val) => setState(() {
+                                onChanged: isLocked ? null : (val) => setState(() {
                                   product.family = val;
                                   product.subFamily = null;
                                   product.product = null;
@@ -1099,7 +1104,7 @@ bottomNavigationBar: Container(
                               }
                               return list.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList();
                             }(),
-                            onChanged: (val) {
+                            onChanged: isLocked ? null : (val) {
                               setState(() {
                                 product.subFamily = val;
                                 product.product = null;
@@ -1131,6 +1136,7 @@ bottomNavigationBar: Container(
                             ),
                           )
                         : TextFormField(
+                            enabled: !isLocked,
                             initialValue: product.subFamily,
                             decoration: InputDecoration(
                               hintText: 'Optional subfamily',
@@ -1165,7 +1171,7 @@ bottomNavigationBar: Container(
                       items: ((_productOptions[product] ?? allProductOptions)
                           .map((prod) => DropdownMenuItem(value: prod, child: Text(prod)))
                           .toList()),
-                      onChanged: (val) {
+                      onChanged: isLocked ? null : (val) {
                         setState(() {
                           product.product = val;
                           final controller = _productTextControllers.putIfAbsent(
@@ -1193,6 +1199,7 @@ bottomNavigationBar: Container(
                     ),
                     const SizedBox(height: 8),
                     TextFormField(
+                      enabled: !isLocked,
                       controller: _productTextControllers.putIfAbsent(
                         product,
                         () => TextEditingController(text: product.product ?? ''),
@@ -1226,6 +1233,7 @@ bottomNavigationBar: Container(
                     Text(AppLocalizations.of(context)!.quantity),
                     const SizedBox(height: 4),
                     TextFormField(
+                      enabled: !isLocked,
                       initialValue: product.quantity.toString(),
                       keyboardType: TextInputType.number,
                       onChanged: (val) => setState(() => product.quantity = int.tryParse(val) ?? 1),
@@ -1252,7 +1260,7 @@ bottomNavigationBar: Container(
                   padding: const EdgeInsets.only(left: 8.0),
                   child: IconButton(
                     icon: const Icon(Icons.remove_circle, color: Colors.red),
-                    onPressed: () => _removeProductAt(index),
+                    onPressed: isLocked ? null : () => _removeProductAt(index),
                     tooltip: 'Remove product',
                   ),
                 ),
@@ -1272,6 +1280,7 @@ bottomNavigationBar: Container(
                     // If no suppliers fetched, show a text field; otherwise show styled dropdown
                     if (suppliers.isEmpty)
                       TextFormField(
+                        enabled: !isLocked,
                         initialValue: product.supplier,
                         onChanged: (v) => setState(() => product.supplier = v),
                         decoration: InputDecoration(
@@ -1295,7 +1304,7 @@ bottomNavigationBar: Container(
                             ? product.supplier
                             : (product.supplier != null && product.supplier!.isNotEmpty ? 'Autre' : null),
                         items: suppliers.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
-                        onChanged: (val) => setState(() {
+                        onChanged: isLocked ? null : (val) => setState(() {
                           if (val == 'Autre') {
                             product.supplier = '';
                           } else {
@@ -1321,6 +1330,7 @@ bottomNavigationBar: Container(
                       const SizedBox(height: 8),
                     if (product.supplier != null && product.supplier!.isNotEmpty && !suppliers.contains(product.supplier))
                       TextFormField(
+                        enabled: !isLocked,
                         initialValue: product.supplier,
                         onChanged: (v) => setState(() => product.supplier = v),
                         decoration: InputDecoration(
@@ -1351,7 +1361,7 @@ bottomNavigationBar: Container(
                 child: DropdownButtonFormField<String>(
                   value: product.currency,
                   items: _currencySymbols.keys.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-                  onChanged: (val) {
+                  onChanged: isLocked ? null : (val) {
                     final newCur = val ?? _currency;
                     print('🔧 product line currency changed to $newCur, updating order currency');
                     setState(() {
@@ -1379,6 +1389,7 @@ bottomNavigationBar: Container(
               Expanded(
                 flex: 2, // réduit de 3 -> 2 pour diminuer le champ Unit Price
                 child: TextFormField(
+                  enabled: !isLocked,
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   decoration: InputDecoration(
                     hintText: '0.00',
@@ -1427,7 +1438,7 @@ bottomNavigationBar: Container(
               IconButton(
                 icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
                 tooltip: 'Remove line',
-                onPressed: () {
+                onPressed: isLocked ? null : () {
                   if (productLines.length > 1) {
                     _removeProductAt(index);
                   }
